@@ -60,10 +60,11 @@ function lineupRows(players = []) {
     const y = 735 + row * 126;
     return [
       `<g transform="translate(${x} ${y})">`,
-      '<rect width="410" height="96" fill="#ffffff"/>',
-      '<rect width="88" height="96" fill="#a8cbb4"/>',
-      `<text x="44" y="63" text-anchor="middle" class="number">${xmlEscape(player.number ?? '–')}</text>`,
-      `<text x="112" y="61" class="player">${xmlEscape(truncate(player.name, 22))}</text>`,
+      '<rect width="410" height="96" rx="32" fill="#ffffff"/>',
+      '<circle cx="49" cy="48" r="35" fill="#dce9df"/>',
+      '<circle cx="49" cy="48" r="30" fill="#a8cbb4"/>',
+      `<text x="49" y="61" text-anchor="middle" class="number">${xmlEscape(player.number ?? '–')}</text>`,
+      `<text x="102" y="61" class="player">${xmlEscape(truncate(player.name, 22))}</text>`,
       '</g>',
     ].join('');
   }).join('');
@@ -78,6 +79,10 @@ function outcome(match) {
   return 'UNENTSCHIEDEN';
 }
 
+function fittedSize(value, regularSize, compactSize, threshold) {
+  return text(value).length > threshold ? compactSize : regularSize;
+}
+
 export async function renderStorySvg({ rootDir, type, match, lineup = { players: [] } }) {
   if (!STORY_TYPES.includes(type)) throw new Error(`Unbekannter Story-Typ: ${type}`);
 
@@ -88,6 +93,8 @@ export async function renderStorySvg({ rootDir, type, match, lineup = { players:
     fileDataUri(logoPath),
   ]);
 
+  const resultLabel = text(match.resultLabel, outcome(match));
+  const resultMessage = truncate(match.resultMessage, 52);
   const values = {
     LOGO_DATA_URI: logoDataUri,
     KICKER: type === 'announcement' ? 'MATCHDAY · MORGEN' : type === 'lineup' ? 'MATCHDAY · STARTELF' : 'ABPFIFF · ERGEBNIS',
@@ -102,8 +109,10 @@ export async function renderStorySvg({ rootDir, type, match, lineup = { players:
     PLAYER_ROWS: lineupRows(lineup.players),
     HOME_SCORE: Number.isFinite(Number(match.homeScore)) ? Number(match.homeScore) : '–',
     AWAY_SCORE: Number.isFinite(Number(match.awayScore)) ? Number(match.awayScore) : '–',
-    RESULT_LABEL: text(match.resultLabel, outcome(match)),
-    RESULT_MESSAGE: truncate(match.resultMessage, 52),
+    RESULT_LABEL: resultLabel,
+    RESULT_LABEL_SIZE: fittedSize(resultLabel, 126, 98, 10),
+    RESULT_MESSAGE: resultMessage,
+    RESULT_MESSAGE_SIZE: fittedSize(resultMessage, 48, 39, 38),
   };
 
   return fillTemplate(template, values, new Set(['PLAYER_ROWS']));

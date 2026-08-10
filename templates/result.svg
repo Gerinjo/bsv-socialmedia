@@ -1,9 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#f4f1e8"/>
-      <stop offset="1" stop-color="#e4ece6"/>
+    <linearGradient id="top" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#071f16"/>
+      <stop offset="1" stop-color="#164f32"/>
     </linearGradient>
+    <radialGradient id="glow">
+      <stop offset="0" stop-color="#a8cbb4" stop-opacity=".32"/>
+      <stop offset="1" stop-color="#a8cbb4" stop-opacity="0"/>
+    </radialGradient>
     <style>
       .sans{font-family:Inter,Arial,sans-serif}.serif{font-family:Georgia,'Times New Roman',serif}
       .caps{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:5px}
@@ -11,38 +15,64 @@
     </style>
   </defs>
 
-  <rect width="1080" height="1920" fill="url(#bg)"/>
-  <rect x="0" y="0" width="1080" height="665" fill="#092f20"/>
-  <path d="M0 665h1080L0 1040z" fill="#092f20"/>
-  <g opacity=".13" fill="none" stroke="#a8cbb4" stroke-width="3">
-    <circle cx="980" cy="530" r="340"/>
-    <circle cx="980" cy="530" r="140"/>
-    <line x1="640" y1="0" x2="640" y2="870"/>
-  </g>
+  <rect width="1080" height="1920" fill="#f4f1e8"/>
+  <rect width="1080" height="1260" fill="url(#top)"/>
+  <circle cx="962" cy="358" r="430" fill="url(#glow)"/>
+  <circle cx="982" cy="380" r="255" fill="none" stroke="#a8cbb4" stroke-width="3" opacity=".18"/>
+  <circle cx="982" cy="380" r="135" fill="none" stroke="#ffffff" stroke-width="3" opacity=".09"/>
+  <path d="M0 1165c265 118 520 75 720-10 145-62 258-55 360-8v280H0z" fill="#f4f1e8"/>
+  <path d="M0 1165c265 118 520 75 720-10 145-62 258-55 360-8" fill="none" stroke="#a8cbb4" stroke-width="5" opacity=".58"/>
 
   <image href="{{LOGO_DATA_URI}}" x="72" y="64" width="104" height="104"/>
   <text x="208" y="106" fill="#a8cbb4" font-size="22" class="caps">BSV NORDSTERN</text>
-  <text x="208" y="141" fill="#ffffff" font-size="24" class="sans" font-weight="700">Radolfzell · Fußball</text>
-  <rect x="72" y="192" width="936" height="4" fill="#a8cbb4"/>
+  <text x="208" y="141" fill="#ffffff" font-size="24" class="sans" font-weight="800">Radolfzell · Fußball</text>
+  <circle cx="982" cy="116" r="38" fill="#f4d638"/>
+  <circle cx="982" cy="116" r="17" fill="#092f20"/>
 
-  <text x="72" y="292" fill="#a8cbb4" font-size="22" class="caps">{{KICKER}}</text>
-  <text x="72" y="435" fill="#ffffff" font-size="124" class="team">{{RESULT_LABEL}}</text>
-  <text x="72" y="548" fill="#a8cbb4" font-size="74" class="serif" font-style="italic">{{COMPETITION}}</text>
-
-  <g transform="translate(72 800)">
-    <rect x="18" y="18" width="936" height="648" fill="#a8cbb4"/>
-    <rect width="936" height="648" fill="#ffffff"/>
-    <text x="468" y="76" text-anchor="middle" fill="#6c7b71" font-size="19" class="caps">ENDSTAND</text>
-    <text x="468" y="270" text-anchor="middle" fill="#092f20" font-size="204" class="team">{{HOME_SCORE}} : {{AWAY_SCORE}}</text>
-    <line x1="54" y1="322" x2="882" y2="322" stroke="#a8cbb4" stroke-width="3"/>
-    <text x="468" y="411" text-anchor="middle" fill="#10251a" font-size="38" class="team">{{HOME_TEAM}}</text>
-    <text x="468" y="463" text-anchor="middle" fill="#6c7b71" font-size="19" class="caps">GEGEN</text>
-    <text x="468" y="538" text-anchor="middle" fill="#10251a" font-size="38" class="team">{{AWAY_TEAM}}</text>
-    <text x="468" y="600" text-anchor="middle" fill="#164f32" font-size="23" class="sans" font-weight="800">{{DATE}}</text>
+  <g transform="translate(72 242)">
+    <rect width="410" height="54" rx="27" fill="#a8cbb4"/>
+    <text x="205" y="36" text-anchor="middle" fill="#092f20" font-size="18" class="caps">{{KICKER}}</text>
   </g>
 
-  <text x="72" y="1592" fill="#164f32" font-size="49" class="serif" font-style="italic">{{RESULT_MESSAGE}}</text>
-  <rect x="72" y="1642" width="936" height="4" fill="#164f32"/>
-  <text x="72" y="1704" fill="#164f32" font-size="20" class="caps">DANKE FÜR EURE UNTERSTÜTZUNG</text>
-  <text x="1008" y="1760" text-anchor="end" fill="#092f20" font-size="25" class="sans" font-weight="900">#nurderbsv</text>
+  <text x="72" y="455" fill="#ffffff" font-size="{{RESULT_LABEL_SIZE}}" class="team">{{RESULT_LABEL}}</text>
+  <text x="72" y="548" fill="#a8cbb4" font-size="62" class="serif" font-style="italic">{{COMPETITION}}</text>
+  <g transform="translate(650 417)">
+    <rect width="342" height="108" rx="54" fill="#ffffff" opacity=".08"/>
+    <text x="171" y="64" text-anchor="middle" fill="#ffffff" font-size="18" class="caps">90 MINUTEN · 1 TEAM</text>
+  </g>
+
+  <g transform="translate(72 664)">
+    <rect x="14" y="20" width="936" height="612" rx="62" fill="#071f16" opacity=".28"/>
+    <rect width="936" height="612" rx="62" fill="#ffffff"/>
+    <rect x="350" y="36" width="236" height="50" rx="25" fill="#dce9df"/>
+    <text x="468" y="69" text-anchor="middle" fill="#164f32" font-size="18" class="caps">ENDSTAND</text>
+
+    <g transform="translate(148 112)">
+      <rect width="640" height="200" rx="100" fill="#f4f1e8"/>
+      <text x="320" y="153" text-anchor="middle" fill="#092f20" font-size="188" class="team">{{HOME_SCORE}} : {{AWAY_SCORE}}</text>
+    </g>
+
+    <text x="468" y="388" text-anchor="middle" fill="#10251a" font-size="38" class="team">{{HOME_TEAM}}</text>
+    <g transform="translate(398 417)">
+      <rect width="140" height="48" rx="24" fill="#092f20"/>
+      <text x="70" y="32" text-anchor="middle" fill="#ffffff" font-size="17" class="caps">GEGEN</text>
+    </g>
+    <text x="468" y="520" text-anchor="middle" fill="#10251a" font-size="38" class="team">{{AWAY_TEAM}}</text>
+    <text x="468" y="574" text-anchor="middle" fill="#164f32" font-size="22" class="sans" font-weight="900">{{DATE}}</text>
+  </g>
+
+  <g transform="translate(72 1372)">
+    <rect width="936" height="218" rx="58" fill="#ffffff"/>
+    <circle cx="836" cy="109" r="66" fill="#dce9df"/>
+    <circle cx="836" cy="109" r="26" fill="#91c82f"/>
+    <text x="42" y="88" fill="#164f32" font-size="{{RESULT_MESSAGE_SIZE}}" class="serif" font-style="italic">{{RESULT_MESSAGE}}</text>
+    <text x="42" y="150" fill="#6c7b71" font-size="18" class="caps">DANKE, NORDSTERN-FAMILIE!</text>
+  </g>
+
+  <g transform="translate(72 1652)">
+    <rect width="344" height="62" rx="31" fill="#092f20"/>
+    <text x="172" y="40" text-anchor="middle" fill="#ffffff" font-size="23" class="sans" font-weight="900">#nurderbsv</text>
+  </g>
+  <text x="72" y="1800" fill="#164f32" font-size="20" class="sans" font-weight="900">WAS. FÜR. EIN. SPIEL.</text>
+  <text x="1008" y="1800" text-anchor="end" fill="#092f20" font-size="20" class="sans" font-weight="900">bsvnordstern.de</text>
 </svg>

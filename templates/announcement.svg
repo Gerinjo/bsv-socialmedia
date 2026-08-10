@@ -2,12 +2,15 @@
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#071f16"/>
-      <stop offset="0.62" stop-color="#092f20"/>
+      <stop offset="0.58" stop-color="#092f20"/>
       <stop offset="1" stop-color="#164f32"/>
     </linearGradient>
-    <pattern id="grain" width="26" height="26" patternUnits="userSpaceOnUse">
-      <circle cx="3" cy="4" r="1" fill="#ffffff" opacity=".035"/>
-      <circle cx="17" cy="15" r="1" fill="#ffffff" opacity=".025"/>
+    <radialGradient id="glow">
+      <stop offset="0" stop-color="#a8cbb4" stop-opacity=".34"/>
+      <stop offset="1" stop-color="#a8cbb4" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="dots" width="38" height="38" patternUnits="userSpaceOnUse">
+      <circle cx="4" cy="4" r="2" fill="#ffffff" opacity=".04"/>
     </pattern>
     <style>
       .sans{font-family:Inter,Arial,sans-serif}.serif{font-family:Georgia,'Times New Roman',serif}
@@ -17,47 +20,74 @@
   </defs>
 
   <rect width="1080" height="1920" fill="url(#bg)"/>
-  <rect width="1080" height="1920" fill="url(#grain)"/>
+  <rect width="1080" height="1920" fill="url(#dots)"/>
+  <circle cx="1000" cy="420" r="440" fill="url(#glow)"/>
+  <circle cx="1018" cy="454" r="280" fill="none" stroke="#a8cbb4" stroke-width="3" opacity=".18"/>
+  <circle cx="1018" cy="454" r="172" fill="none" stroke="#ffffff" stroke-width="3" opacity=".1"/>
+  <path d="M-100 1450C180 1260 420 1350 630 1250s390-90 550-260v930H-100z" fill="#164f32" opacity=".58"/>
+  <path d="M-120 1580c290-210 550-120 770-260 180-116 350-84 530-250" fill="none" stroke="#a8cbb4" stroke-width="5" opacity=".24"/>
 
-  <g opacity=".12" fill="none" stroke="#a8cbb4" stroke-width="3">
-    <circle cx="1020" cy="960" r="430"/>
-    <circle cx="1020" cy="960" r="175"/>
-    <path d="M590 0v1920M590 960h490"/>
-    <rect x="590" y="530" width="490" height="860"/>
-    <rect x="815" y="705" width="265" height="510"/>
-  </g>
-
-  <rect x="72" y="192" width="936" height="4" fill="#a8cbb4"/>
   <image href="{{LOGO_DATA_URI}}" x="72" y="64" width="104" height="104"/>
   <text x="208" y="106" fill="#a8cbb4" font-size="22" class="caps">BSV NORDSTERN</text>
-  <text x="208" y="141" fill="#ffffff" font-size="24" class="sans" font-weight="700">Radolfzell · Fußball</text>
+  <text x="208" y="141" fill="#ffffff" font-size="24" class="sans" font-weight="800">Radolfzell · Fußball</text>
+  <circle cx="982" cy="116" r="38" fill="#f4d638"/>
+  <circle cx="982" cy="116" r="17" fill="#092f20"/>
 
-  <text x="72" y="292" fill="#a8cbb4" font-size="22" class="caps">{{KICKER}}</text>
-  <text x="72" y="446" fill="#ffffff" font-size="148" class="team">SPIEL</text>
-  <text x="72" y="566" fill="#a8cbb4" font-size="120" class="serif" font-style="italic">tag.</text>
-
-  <g transform="translate(72 665)">
-    <rect x="18" y="18" width="918" height="496" fill="#a8cbb4" opacity=".28"/>
-    <rect width="918" height="496" fill="#f4f1e8"/>
-    <text x="44" y="58" fill="#164f32" font-size="19" class="caps">{{COMPETITION}}</text>
-    <text x="44" y="142" fill="#10251a" font-size="50" class="team">{{HOME_TEAM}}</text>
-    <text x="44" y="199" fill="#6c7b71" font-size="23" class="caps">GEGEN</text>
-    <text x="44" y="280" fill="#10251a" font-size="50" class="team">{{AWAY_TEAM}}</text>
-    <line x1="44" y1="323" x2="874" y2="323" stroke="#a8cbb4" stroke-width="3"/>
-    <text x="44" y="388" fill="#164f32" font-size="35" class="team">{{DATE}}</text>
-    <text x="874" y="388" text-anchor="end" fill="#164f32" font-size="35" class="team">{{TIME}}</text>
-    <text x="44" y="447" fill="#6c7b71" font-size="25" class="sans" font-weight="700">{{VENUE}}</text>
+  <g transform="translate(72 242)">
+    <rect width="354" height="54" rx="27" fill="#a8cbb4"/>
+    <text x="177" y="36" text-anchor="middle" fill="#092f20" font-size="18" class="caps">{{KICKER}}</text>
   </g>
 
-  <g transform="translate(72 1290)">
-    <path d="M0 0h936v310H0z" fill="none" stroke="#a8cbb4" stroke-width="3"/>
-    <circle cx="468" cy="155" r="89" fill="none" stroke="#a8cbb4" stroke-width="3"/>
-    <line x1="468" y1="0" x2="468" y2="310" stroke="#a8cbb4" stroke-width="3"/>
-    <text x="44" y="92" fill="#a8cbb4" font-size="20" class="caps">MORGEN GEMEINSAM</text>
-    <text x="44" y="169" fill="#ffffff" font-size="48" class="team">AM PLATZ.</text>
-    <text x="892" y="246" text-anchor="end" fill="#ffffff" font-size="30" class="sans" font-weight="800">#nurderbsv</text>
+  <text x="72" y="455" fill="#ffffff" font-size="150" class="team">SPIEL</text>
+  <text x="72" y="568" fill="#a8cbb4" font-size="109" class="serif" font-style="italic">tag.</text>
+  <g transform="translate(654 410)">
+    <rect width="338" height="116" rx="58" fill="#ffffff" opacity=".08"/>
+    <circle cx="58" cy="58" r="35" fill="#91c82f"/>
+    <path d="m43 58 11 11 21-24" fill="none" stroke="#092f20" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="110" y="50" fill="#ffffff" font-size="18" class="caps">MORGEN</text>
+    <text x="110" y="82" fill="#a8cbb4" font-size="18" class="caps">WIRD LAUT.</text>
   </g>
 
-  <text x="72" y="1681" fill="#a8cbb4" font-size="18" class="caps">SPIEL-ID · {{MATCH_ID_SHORT}}</text>
-  <text x="1008" y="1681" text-anchor="end" fill="#ffffff" font-size="19" class="sans" font-weight="800">bsvnordstern.de</text>
+  <g transform="translate(72 660)">
+    <rect x="16" y="22" width="936" height="596" rx="54" fill="#071f16" opacity=".32"/>
+    <rect width="936" height="596" rx="54" fill="#f4f1e8"/>
+    <rect x="36" y="36" width="256" height="46" rx="23" fill="#dce9df"/>
+    <text x="164" y="67" text-anchor="middle" fill="#164f32" font-size="17" class="caps">{{COMPETITION}}</text>
+
+    <text x="468" y="177" text-anchor="middle" fill="#10251a" font-size="48" class="team">{{HOME_TEAM}}</text>
+    <g transform="translate(398 213)">
+      <rect width="140" height="58" rx="29" fill="#092f20"/>
+      <text x="70" y="39" text-anchor="middle" fill="#ffffff" font-size="18" class="caps">GEGEN</text>
+    </g>
+    <text x="468" y="344" text-anchor="middle" fill="#10251a" font-size="48" class="team">{{AWAY_TEAM}}</text>
+
+    <line x1="58" y1="395" x2="878" y2="395" stroke="#cbd8ce" stroke-width="3" stroke-linecap="round"/>
+    <g transform="translate(58 432)">
+      <rect width="410" height="104" rx="34" fill="#ffffff"/>
+      <text x="28" y="42" fill="#6c7b71" font-size="16" class="caps">DATUM</text>
+      <text x="28" y="78" fill="#164f32" font-size="29" class="team">{{DATE}}</text>
+    </g>
+    <g transform="translate(488 432)">
+      <rect width="390" height="104" rx="34" fill="#ffffff"/>
+      <text x="362" y="42" text-anchor="end" fill="#6c7b71" font-size="16" class="caps">ANPFIFF</text>
+      <text x="362" y="78" text-anchor="end" fill="#164f32" font-size="29" class="team">{{TIME}}</text>
+    </g>
+    <text x="468" y="576" text-anchor="middle" fill="#6c7b71" font-size="22" class="sans" font-weight="800">{{VENUE}}</text>
+  </g>
+
+  <g transform="translate(72 1344)">
+    <rect width="936" height="244" rx="64" fill="#071f16" stroke="#a8cbb4" stroke-width="3"/>
+    <circle cx="824" cy="122" r="78" fill="#164f32"/>
+    <circle cx="824" cy="122" r="48" fill="#91c82f" opacity=".8"/>
+    <text x="44" y="66" fill="#a8cbb4" font-size="18" class="caps">ALLE IN GRÜN.</text>
+    <text x="44" y="138" fill="#ffffff" font-size="54" class="team">ALLE LAUT!</text>
+    <text x="44" y="193" fill="#a8cbb4" font-size="23" class="sans" font-weight="800">Kommt vorbei. Bringt Energie.</text>
+  </g>
+
+  <g transform="translate(72 1658)">
+    <rect width="540" height="52" rx="26" fill="#ffffff" opacity=".1"/>
+    <text x="24" y="34" fill="#a8cbb4" font-size="16" class="caps">SPIEL-ID · {{MATCH_ID_SHORT}}</text>
+  </g>
+  <text x="72" y="1780" fill="#ffffff" font-size="24" class="sans" font-weight="900">#nurderbsv</text>
+  <text x="1008" y="1780" text-anchor="end" fill="#ffffff" font-size="20" class="sans" font-weight="900">bsvnordstern.de</text>
 </svg>

@@ -1,18 +1,19 @@
 # Corporate Design · BSV Nordstern Social Media
 
-Stand: 10. August 2026 · Version 0.1
+Stand: 11. August 2026 · Version 0.2
 
 Dieses Dokument überträgt den visuellen Charakter der BSV-Website auf Social Media. Es ist kein neues Erscheinungsbild, sondern dieselbe Marke im Hochformat: sportlich, klar, lokal und selbstbewusst.
 
 ## 1. Markenidee
 
-Der BSV kommuniziert als bodenständiger Verein mit sportlichem Anspruch. Die Gestaltung verbindet drei Eigenschaften:
+Der BSV kommuniziert als bodenständiger Verein mit sportlichem Anspruch. Die Gestaltung verbindet vier Eigenschaften:
 
 - **Nordstern:** klare Orientierung, hohe Kontraste, markante Achsen.
 - **Fußballplatz:** Linien, Kreise und Flächen strukturieren die Motive.
 - **Vereinsnähe:** echte Fotos und direkte Sprache stehen vor dekorativen Effekten.
+- **Emotion:** weiche Bögen, große Kreise und kurze Ausrufe übersetzen die Energie am Platz ins Hochformat.
 
-Die Gestaltung darf lebendig sein, wirkt aber nie beliebig oder verspielt.
+Die Gestaltung darf verspielt, nahbar und emotional sein. Mannschaften, Ergebnis, Zeit und Ort bleiben dabei immer schnell erfassbar.
 
 ## 2. Logo
 
@@ -27,17 +28,19 @@ Für eine 1080 × 1920 Story beträgt die empfohlene Wappenbreite 104 bis 140 Pi
 | Nordstern Dunkel | `#071f16` | tiefe Verläufe und große Hintergründe |
 | Vereinsgrün Dunkel | `#092f20` | Hauptflächen, Text auf hellen Flächen |
 | Vereinsgrün | `#164f32` | Buttons, Linien und sekundäre Flächen |
-| Salbei | `#a8cbb4` | Akzent, Markierungen und Serif-Highlights |
+| Aktionsgelb | `#f4d638` | sehr sparsamer Website-Akzent und kleine Blickpunkte |
+| Lime | `#91c82f` | kleine Statuspunkte und positive Impulse |
+| Salbei | `#a8cbb4` | ruhige sekundäre Information |
 | Creme | `#f4f1e8` | helle Hintergründe und Karten |
 | Tinte | `#10251a` | Fließtext auf hellen Flächen |
 
-Gelb ist kein tragendes Gestaltungsmittel. Salbei übernimmt die Akzentfunktion, damit die Vereinsfarbe Grün klar im Vordergrund bleibt.
+Aktionsgelb und Lime stammen direkt aus der `main`-Version der BSV-Website. Beide werden bewusst sparsam eingesetzt; Grün, Creme und Salbei prägen die Motive.
 
 ### Farbverhältnisse
 
-- Dunkle Stories: ungefähr 70 % Dunkelgrün, 20 % Weiß/Creme, 10 % Salbei.
-- Helle Stories: ungefähr 70 % Creme/Weiß, 20 % Dunkelgrün, 10 % Salbei.
-- Pro Motiv höchstens eine Akzentfarbe einsetzen.
+- Dunkle Stories: ungefähr 70 % Dunkelgrün, 20 % Weiß/Creme, 7 % Salbei und höchstens 3 % Gelb/Lime.
+- Helle Bereiche: ungefähr 75 % Creme/Weiß, 20 % Dunkelgrün und höchstens 5 % Akzentfarben.
+- Gelb und Lime markieren einzelne Blickpunkte. Große Akzentflächen werden vermieden.
 
 ## 4. Typografie
 
@@ -55,15 +58,15 @@ Empfohlene Story-Größen:
 
 ## 5. Layoutsystem
 
-Alle Stories haben 1080 × 1920 Pixel. Der Inhalt folgt einer strengen linken Achse bei 72 Pixel. Flächen sind grundsätzlich eckig; unnötige Rundungen werden vermieden.
+Alle Stories haben 1080 × 1920 Pixel. Der Inhalt folgt grundsätzlich einer linken Achse bei 72 Pixel. Runde Karten, Kapseln und organische Bögen lockern diese Achse weich auf.
 
 Wiederkehrende Motive:
 
 - dünne Spielfeldlinien und Mittelkreise mit geringer Deckkraft,
-- cremefarbene Karten mit versetztem Salbei-Schatten,
-- starke diagonale oder vertikale Flächen,
+- helle Karten mit großen Radien und weichen, dunklen Schatten,
+- Kreise, Kapseln, organische Wellen und dezente Punktmuster,
 - kleine Versal-Kicker oberhalb der Hauptüberschrift,
-- viel ruhiger Raum um die wichtigste Botschaft.
+- große, kurze Ausrufe als emotionale zweite Ebene.
 
 ## 6. Instagram-Sicherheitszonen
 
@@ -100,8 +103,10 @@ Fotos werden nur verwendet, wenn die nötigen Einwilligungen vorliegen. Für Min
 Kurze, direkte Sätze. Teamnamen und Fakten sind wichtiger als Werbesprache. Bevorzugte Formulierungen:
 
 - „Morgen gemeinsam am Platz.“
+- „Alle in Grün. Alle laut!“
 - „Unsere Startelf.“
 - „Drei Punkte bleiben beim Nordstern.“
+- „Was. Für. Ein. Spiel.“
 - „Danke für eure Unterstützung.“
 
 Hashtags werden auf wenige konstante Begriffe reduziert, beispielsweise `#nurderbsv`.
