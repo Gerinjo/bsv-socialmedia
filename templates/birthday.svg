@@ -13,9 +13,11 @@
       <circle cx="4" cy="4" r="2" fill="#ffffff" opacity=".045"/>
     </pattern>
     <style>
+      @font-face{font-family:'Capture it';src:url('{{HANDWRITTEN_FONT_DATA_URI}}') format('truetype');font-weight:400;font-style:normal}
       .sans{font-family:Inter,Arial,sans-serif}.serif{font-family:Georgia,'Times New Roman',serif}
+      .handwritten{font-family:'Capture it',Impact,Inter,sans-serif;font-weight:400;letter-spacing:1px}
       .caps{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:5px}
-      .headline{font-family:Georgia,'Times New Roman',serif;font-weight:700;letter-spacing:-5px}
+      .headline{font-family:'Capture it',Impact,Inter,sans-serif;font-weight:400;letter-spacing:2px}
     </style>
   </defs>
 
@@ -32,14 +34,14 @@
   <circle cx="982" cy="116" r="17" fill="#092f20"/>
 
   <text x="540" y="278" text-anchor="middle" fill="#a8cbb4" font-size="{{BIRTHDAY_NAME_SIZE}}" class="caps">{{BIRTHDAY_NAME}}</text>
-  <text x="540" y="430" text-anchor="middle" fill="#ffffff" font-size="154" class="headline">HAPPY</text>
-  <text x="540" y="574" text-anchor="middle" fill="#91c82f" font-size="136" class="headline">BIRTHDAY</text>
+  <text x="540" y="430" text-anchor="middle" fill="#ffffff" font-size="150" class="headline">HAPPY</text>
+  <text x="540" y="574" text-anchor="middle" fill="#91c82f" font-size="126" class="headline">BIRTHDAY</text>
 
   <path d="M0 1254c237 48 397 24 569-58 185-89 338-151 511-227v951H0z" fill="#164f32"/>
   <path d="M0 1368c265 58 493 20 692-88 155-84 274-126 388-151v791H0z" fill="#91c82f"/>
   <path d="M0 1254c237 48 397 24 569-58 185-89 338-151 511-227" fill="none" stroke="#a8cbb4" stroke-width="5" opacity=".48"/>
 
-  <image href="{{PLAYER_PHOTO_DATA_URI}}" x="140" y="430" width="800" height="1200" preserveAspectRatio="xMidYMid meet"/>
+  <image href="{{PLAYER_PHOTO_DATA_URI}}" x="100" y="360" width="880" height="1564" preserveAspectRatio="xMidYMid meet"/>
 
   <g transform="translate(72 1514)">
     <rect width="936" height="246" rx="62" fill="#071f16" opacity=".94"/>
@@ -50,6 +52,6 @@
     <text x="46" y="193" fill="#a8cbb4" font-size="25" class="sans" font-weight="800">{{BIRTHDAY_MESSAGE}}</text>
   </g>
 
-  <text x="72" y="1838" fill="#071f16" font-size="24" class="sans" font-weight="900">#aufgehtsgrün</text>
+  <text x="72" y="1838" fill="#071f16" font-size="36" class="handwritten">#aufgehtsgrün</text>
   <text x="1008" y="1838" text-anchor="end" fill="#071f16" font-size="20" class="sans" font-weight="900">bsvnordstern.de</text>
 </svg>

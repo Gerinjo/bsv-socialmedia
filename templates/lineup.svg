@@ -9,7 +9,9 @@
       <stop offset="1" stop-color="#a8cbb4" stop-opacity="0"/>
     </radialGradient>
     <style>
+      @font-face{font-family:'Capture it';src:url('{{HANDWRITTEN_FONT_DATA_URI}}') format('truetype');font-weight:400;font-style:normal}
       .sans{font-family:Inter,Arial,sans-serif}.serif{font-family:Georgia,'Times New Roman',serif}
+      .handwritten{font-family:'Capture it',Impact,Inter,sans-serif;font-weight:400;letter-spacing:1px}
       .caps{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:5px}
       .team{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:-2px}
       .number{font-family:Inter,Arial,sans-serif;font-size:35px;font-weight:950;fill:#092f20}
@@ -37,7 +39,7 @@
   </g>
 
   <text x="72" y="445" fill="#ffffff" font-size="122" class="team">UNSERE</text>
-  <text x="72" y="555" fill="#a8cbb4" font-size="103" class="serif" font-style="italic">Startelf.</text>
+  <text x="72" y="555" fill="#a8cbb4" font-size="105" class="handwritten">Startelf.</text>
   <g transform="translate(676 417)">
     <rect width="316" height="112" rx="56" fill="#ffffff" opacity=".08"/>
     <text x="158" y="48" text-anchor="middle" fill="#91c82f" font-size="18" class="caps">EIN TEAM.</text>
@@ -67,5 +69,5 @@
     <rect width="260" height="48" rx="24" fill="#ffffff" opacity=".1"/>
     <text x="130" y="32" text-anchor="middle" fill="#a8cbb4" font-size="16" class="caps">{{COMPETITION}}</text>
   </g>
-  <text x="1008" y="1774" text-anchor="end" fill="#ffffff" font-size="24" class="sans" font-weight="900">#aufgehtsgrün</text>
+  <text x="1008" y="1774" text-anchor="end" fill="#ffffff" font-size="36" class="handwritten">#aufgehtsgrün</text>
 </svg>

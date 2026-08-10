@@ -50,6 +50,6 @@ test('birthday rendert Namen, Glückwunsch und Spielerbild', async () => {
   });
   assert.match(svg, /Max &amp; Freunde/);
   assert.match(svg, /Alles Gute vom ganzen Verein!/);
-  assert.match(svg, /data:image\/svg\+xml;base64,/);
+  assert.match(svg, /data:image\/png;base64,/);
   assert.doesNotMatch(svg, /\{\{[A-Z0-9_]+\}\}/);
 });

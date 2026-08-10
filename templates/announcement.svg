@@ -12,9 +12,13 @@
     <pattern id="dots" width="38" height="38" patternUnits="userSpaceOnUse">
       <circle cx="4" cy="4" r="2" fill="#ffffff" opacity=".04"/>
     </pattern>
+    <clipPath id="matchCardClip">
+      <rect width="936" height="596" rx="54"/>
+    </clipPath>
     <style>
+      @font-face{font-family:'Capture it';src:url('{{HANDWRITTEN_FONT_DATA_URI}}') format('truetype');font-weight:400;font-style:normal}
       .sans{font-family:Inter,Arial,sans-serif}.serif{font-family:Georgia,'Times New Roman',serif}
-      .handwritten{font-family:Z003,'URW Chancery L','Brush Script MT',cursive;font-style:italic}
+      .handwritten{font-family:'Capture it',Impact,Inter,sans-serif;font-weight:400;letter-spacing:2px}
       .caps{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:5px}
       .team{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:-2px}
     </style>
@@ -34,9 +38,14 @@
   <circle cx="982" cy="116" r="38" fill="#f4d638"/>
   <circle cx="982" cy="116" r="17" fill="#092f20"/>
 
-  <g transform="translate(72 222) rotate(-3 185 60)">
-    <text x="0" y="82" fill="#a8cbb4" font-size="104" class="handwritten">{{KICKER}}</text>
-    <path d="M18 101c118 15 252 8 358-5" fill="none" stroke="#91c82f" stroke-width="7" stroke-linecap="round" opacity=".9"/>
+  <g transform="translate(62 186) rotate(-4 350 64)">
+    <text x="7" y="115" fill="#91c82f" font-size="132" class="handwritten" opacity=".72">{{KICKER}}</text>
+    <text x="0" y="106" fill="#f4f1e8" font-size="132" class="handwritten">{{KICKER}}</text>
+  </g>
+  <g fill="none" stroke-linecap="round">
+    <path d="M842 218v34M825 235h34" stroke="#f4d638" stroke-width="6"/>
+    <path d="M902 284v21M892 294h20" stroke="#a8cbb4" stroke-width="5"/>
+    <path d="m873 185 9 9m0-9-9 9" stroke="#91c82f" stroke-width="5"/>
   </g>
 
   <text x="72" y="455" fill="#ffffff" font-size="150" class="team">SPIEL</text>
@@ -52,6 +61,7 @@
   <g transform="translate(72 660)">
     <rect x="16" y="22" width="936" height="596" rx="54" fill="#071f16" opacity=".32"/>
     <rect width="936" height="596" rx="54" fill="#f4f1e8"/>
+    <image href="{{ACTION_PLAYER_DATA_URI}}" x="520" y="-70" width="390" height="693" opacity=".09" clip-path="url(#matchCardClip)"/>
     <rect x="36" y="36" width="256" height="46" rx="23" fill="#dce9df"/>
     <text x="164" y="67" text-anchor="middle" fill="#164f32" font-size="17" class="caps">{{COMPETITION}}</text>
 
@@ -76,19 +86,8 @@
     <text x="468" y="576" text-anchor="middle" fill="#6c7b71" font-size="22" class="sans" font-weight="800">{{VENUE}}</text>
   </g>
 
-  <g transform="translate(72 1344)">
-    <rect width="936" height="244" rx="64" fill="#071f16" stroke="#a8cbb4" stroke-width="3"/>
-    <circle cx="824" cy="122" r="78" fill="#164f32"/>
-    <circle cx="824" cy="122" r="48" fill="#91c82f" opacity=".8"/>
-    <text x="44" y="66" fill="#a8cbb4" font-size="18" class="caps">ALLE IN GRÜN.</text>
-    <text x="44" y="138" fill="#ffffff" font-size="54" class="team">ALLE LAUT!</text>
-    <text x="44" y="193" fill="#a8cbb4" font-size="23" class="sans" font-weight="800">Kommt vorbei. Bringt Energie.</text>
-  </g>
+  <image href="{{SPARKASSE_LOGO_DATA_URI}}" x="150" y="1328" width="780" height="320" preserveAspectRatio="xMidYMid meet"/>
 
-  <g transform="translate(72 1658)">
-    <rect width="540" height="52" rx="26" fill="#ffffff" opacity=".1"/>
-    <text x="24" y="34" fill="#a8cbb4" font-size="16" class="caps">SPIEL-ID · {{MATCH_ID_SHORT}}</text>
-  </g>
-  <text x="72" y="1780" fill="#ffffff" font-size="24" class="sans" font-weight="900">#aufgehtsgrün</text>
+  <text x="72" y="1780" fill="#ffffff" font-size="34" class="handwritten" letter-spacing="1px">#aufgehtsgrün</text>
   <text x="1008" y="1780" text-anchor="end" fill="#ffffff" font-size="20" class="sans" font-weight="900">bsvnordstern.de</text>
 </svg>

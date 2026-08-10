@@ -9,7 +9,9 @@
       <stop offset="1" stop-color="#a8cbb4" stop-opacity="0"/>
     </radialGradient>
     <style>
+      @font-face{font-family:'Capture it';src:url('{{HANDWRITTEN_FONT_DATA_URI}}') format('truetype');font-weight:400;font-style:normal}
       .sans{font-family:Inter,Arial,sans-serif}.serif{font-family:Georgia,'Times New Roman',serif}
+      .handwritten{font-family:'Capture it',Impact,Inter,sans-serif;font-weight:400;letter-spacing:1px}
       .caps{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:5px}
       .team{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:-2px}
     </style>
@@ -65,13 +67,13 @@
     <rect width="936" height="218" rx="58" fill="#ffffff"/>
     <circle cx="836" cy="109" r="66" fill="#dce9df"/>
     <circle cx="836" cy="109" r="26" fill="#91c82f"/>
-    <text x="42" y="88" fill="#164f32" font-size="{{RESULT_MESSAGE_SIZE}}" class="serif" font-style="italic">{{RESULT_MESSAGE}}</text>
+    <text x="42" y="88" fill="#164f32" font-size="{{RESULT_MESSAGE_SIZE}}" class="handwritten">{{RESULT_MESSAGE}}</text>
     <text x="42" y="150" fill="#6c7b71" font-size="18" class="caps">DANKE, NORDSTERN-FAMILIE!</text>
   </g>
 
   <g transform="translate(72 1652)">
     <rect width="344" height="62" rx="31" fill="#092f20"/>
-    <text x="172" y="40" text-anchor="middle" fill="#ffffff" font-size="23" class="sans" font-weight="900">#aufgehtsgrün</text>
+    <text x="172" y="42" text-anchor="middle" fill="#ffffff" font-size="32" class="handwritten">#aufgehtsgrün</text>
   </g>
   <text x="72" y="1800" fill="#164f32" font-size="20" class="sans" font-weight="900">WAS. FÜR. EIN. SPIEL.</text>
   <text x="1008" y="1800" text-anchor="end" fill="#092f20" font-size="20" class="sans" font-weight="900">bsvnordstern.de</text>

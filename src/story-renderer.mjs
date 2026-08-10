@@ -9,6 +9,8 @@ const MIME_TYPES = new Map([
   ['.jpg', 'image/jpeg'],
   ['.jpeg', 'image/jpeg'],
   ['.png', 'image/png'],
+  ['.otf', 'font/otf'],
+  ['.ttf', 'font/ttf'],
   ['.webp', 'image/webp'],
   ['.svg', 'image/svg+xml'],
 ]);
@@ -88,10 +90,16 @@ export async function renderStorySvg({ rootDir, type, match, lineup = { players:
 
   const templatePath = resolve(rootDir, 'templates', `${type}.svg`);
   const logoPath = resolve(rootDir, 'brand/logos/bsv-nordstern.png');
-  const playerPhotoPath = photoPath ?? resolve(rootDir, 'brand/placeholders/player-silhouette.svg');
-  const [template, logoDataUri, playerPhotoDataUri] = await Promise.all([
+  const sparkasseLogoPath = resolve(rootDir, 'brand/logos/sparkasse-hegau-bodensee-white.png');
+  const actionPlayerPath = resolve(rootDir, 'brand/graphics/footballer-action-v2.png');
+  const handwrittenFontPath = resolve(rootDir, 'brand/fonts/Capture it.ttf');
+  const playerPhotoPath = photoPath ?? actionPlayerPath;
+  const [template, logoDataUri, sparkasseLogoDataUri, actionPlayerDataUri, handwrittenFontDataUri, playerPhotoDataUri] = await Promise.all([
     readFile(templatePath, 'utf8'),
     fileDataUri(logoPath),
+    fileDataUri(sparkasseLogoPath),
+    fileDataUri(actionPlayerPath),
+    fileDataUri(handwrittenFontPath),
     fileDataUri(playerPhotoPath),
   ]);
 
@@ -99,8 +107,11 @@ export async function renderStorySvg({ rootDir, type, match, lineup = { players:
   const resultMessage = truncate(match.resultMessage, 52);
   const values = {
     LOGO_DATA_URI: logoDataUri,
+    SPARKASSE_LOGO_DATA_URI: sparkasseLogoDataUri,
+    ACTION_PLAYER_DATA_URI: actionPlayerDataUri,
+    HANDWRITTEN_FONT_DATA_URI: handwrittenFontDataUri,
     PLAYER_PHOTO_DATA_URI: playerPhotoDataUri,
-    KICKER: type === 'announcement' ? 'Matchday' : type === 'lineup' ? 'MATCHDAY · STARTELF' : 'ABPFIFF · ERGEBNIS',
+    KICKER: type === 'announcement' ? 'MATCHDAY' : type === 'lineup' ? 'MATCHDAY · STARTELF' : 'ABPFIFF · ERGEBNIS',
     HOME_TEAM: truncate(match.homeTeam, 32),
     AWAY_TEAM: truncate(match.awayTeam, 32),
     COMPETITION: truncate(match.competition, 36),
@@ -115,7 +126,7 @@ export async function renderStorySvg({ rootDir, type, match, lineup = { players:
     RESULT_LABEL: resultLabel,
     RESULT_LABEL_SIZE: fittedSize(resultLabel, 126, 98, 10),
     RESULT_MESSAGE: resultMessage,
-    RESULT_MESSAGE_SIZE: fittedSize(resultMessage, 48, 39, 38),
+    RESULT_MESSAGE_SIZE: fittedSize(resultMessage, 40, 32, 38),
     BIRTHDAY_NAME: truncate(match.birthdayName, 28),
     BIRTHDAY_NAME_SIZE: fittedSize(match.birthdayName, 27, 21, 18),
     BIRTHDAY_MESSAGE: truncate(match.birthdayMessage, 54),
@@ -140,7 +151,13 @@ export async function writeStoryFiles({ rootDir, type, match, lineup, photoPath,
     '-sampling-factor', '4:2:0',
     '-quality', '90',
     jpgPath,
-  ], { encoding: 'utf8' });
+  ], {
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      FONTCONFIG_FILE: resolve(rootDir, 'brand/fonts/fonts.conf'),
+    },
+  });
 
   if (result.error?.code === 'ENOENT') {
     throw new Error('ImageMagick fehlt. Bitte den Befehl `magick` installieren.');
