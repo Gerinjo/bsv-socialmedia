@@ -1,0 +1,14 @@
+:root {
+  --bsv-green-deep: #071f16;
+  --bsv-green-dark: #092f20;
+  --bsv-green: #164f32;
+  --bsv-sage: #a8cbb4;
+  --bsv-cream: #f4f1e8;
+  --bsv-white: #ffffff;
+  --bsv-ink: #10251a;
+  --bsv-muted: #6c7b71;
+  --bsv-font-sans: Inter, Arial, sans-serif;
+  --bsv-font-serif: Georgia, "Times New Roman", serif;
+  --bsv-story-width: 1080px;
+  --bsv-story-height: 1920px;
+}

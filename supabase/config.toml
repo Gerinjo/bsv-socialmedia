@@ -1,0 +1,4 @@
+project_id = "bsv-socialmedia"
+
+[functions.social-media-worker]
+verify_jwt = false

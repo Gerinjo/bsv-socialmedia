@@ -1,0 +1,7 @@
+-- Im Supabase Dashboard unter Integrations → Cron als HTTP-Job konfigurieren.
+-- Zeitplan: */5 * * * *
+-- Methode: POST
+-- URL: https://<PROJECT_REF>.supabase.co/functions/v1/social-media-worker
+-- Header: apikey: <DEDIZIERTER_SECRET_KEY>
+--
+-- Den Secret Key niemals in eine Migration oder dieses Repository kopieren.

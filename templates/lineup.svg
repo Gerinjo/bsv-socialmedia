@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#092f20"/>
+      <stop offset="1" stop-color="#071f16"/>
+    </linearGradient>
+    <style>
+      .sans{font-family:Inter,Arial,sans-serif}.serif{font-family:Georgia,'Times New Roman',serif}
+      .caps{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:5px}
+      .team{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:-2px}
+      .number{font-family:Georgia,'Times New Roman',serif;font-size:40px;font-weight:700;fill:#092f20}
+      .player{font-family:Inter,Arial,sans-serif;font-size:27px;font-weight:900;fill:#10251a}
+      .empty{font-family:Inter,Arial,sans-serif;font-size:42px;font-weight:900;letter-spacing:4px;fill:#a8cbb4}
+    </style>
+  </defs>
+
+  <rect width="1080" height="1920" fill="url(#bg)"/>
+  <path d="M0 1710 1080 1215v705H0z" fill="#164f32" opacity=".42"/>
+  <g opacity=".12" fill="none" stroke="#a8cbb4" stroke-width="3">
+    <rect x="70" y="625" width="940" height="930"/>
+    <circle cx="540" cy="1090" r="170"/>
+    <line x1="70" y1="1090" x2="1010" y2="1090"/>
+  </g>
+
+  <image href="{{LOGO_DATA_URI}}" x="72" y="64" width="104" height="104"/>
+  <text x="208" y="106" fill="#a8cbb4" font-size="22" class="caps">BSV NORDSTERN</text>
+  <text x="208" y="141" fill="#ffffff" font-size="24" class="sans" font-weight="700">Radolfzell · Fußball</text>
+  <rect x="72" y="192" width="936" height="4" fill="#a8cbb4"/>
+
+  <text x="72" y="292" fill="#a8cbb4" font-size="22" class="caps">{{KICKER}}</text>
+  <text x="72" y="435" fill="#ffffff" font-size="126" class="team">UNSERE</text>
+  <text x="72" y="548" fill="#a8cbb4" font-size="108" class="serif" font-style="italic">Startelf.</text>
+
+  <g transform="translate(72 603)">
+    <text x="0" y="0" fill="#ffffff" font-size="25" class="sans" font-weight="800">{{HOME_TEAM}}</text>
+    <text x="936" y="0" text-anchor="end" fill="#a8cbb4" font-size="19" class="caps">{{FORMATION}}</text>
+  </g>
+
+  {{PLAYER_ROWS}}
+
+  <g transform="translate(72 1528)">
+    <rect width="936" height="142" fill="#a8cbb4"/>
+    <text x="32" y="59" fill="#092f20" font-size="19" class="caps">HEUTE · {{TIME}}</text>
+    <text x="32" y="108" fill="#092f20" font-size="31" class="team">VS. {{AWAY_TEAM}}</text>
+  </g>
+
+  <text x="72" y="1736" fill="#a8cbb4" font-size="18" class="caps">{{COMPETITION}}</text>
+  <text x="1008" y="1736" text-anchor="end" fill="#ffffff" font-size="19" class="sans" font-weight="800">#nurderbsv</text>
+</svg>

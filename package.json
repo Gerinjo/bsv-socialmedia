@@ -1,0 +1,15 @@
+{
+  "name": "bsv-socialmedia",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "render": "node scripts/render-story.mjs",
+    "render:all": "node scripts/render-all.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "check": "node scripts/check-project.mjs && npm test"
+  }
+}

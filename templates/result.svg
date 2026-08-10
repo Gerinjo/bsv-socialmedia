@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f4f1e8"/>
+      <stop offset="1" stop-color="#e4ece6"/>
+    </linearGradient>
+    <style>
+      .sans{font-family:Inter,Arial,sans-serif}.serif{font-family:Georgia,'Times New Roman',serif}
+      .caps{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:5px}
+      .team{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:-2px}
+    </style>
+  </defs>
+
+  <rect width="1080" height="1920" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1080" height="665" fill="#092f20"/>
+  <path d="M0 665h1080L0 1040z" fill="#092f20"/>
+  <g opacity=".13" fill="none" stroke="#a8cbb4" stroke-width="3">
+    <circle cx="980" cy="530" r="340"/>
+    <circle cx="980" cy="530" r="140"/>
+    <line x1="640" y1="0" x2="640" y2="870"/>
+  </g>
+
+  <image href="{{LOGO_DATA_URI}}" x="72" y="64" width="104" height="104"/>
+  <text x="208" y="106" fill="#a8cbb4" font-size="22" class="caps">BSV NORDSTERN</text>
+  <text x="208" y="141" fill="#ffffff" font-size="24" class="sans" font-weight="700">Radolfzell · Fußball</text>
+  <rect x="72" y="192" width="936" height="4" fill="#a8cbb4"/>
+
+  <text x="72" y="292" fill="#a8cbb4" font-size="22" class="caps">{{KICKER}}</text>
+  <text x="72" y="435" fill="#ffffff" font-size="124" class="team">{{RESULT_LABEL}}</text>
+  <text x="72" y="548" fill="#a8cbb4" font-size="74" class="serif" font-style="italic">{{COMPETITION}}</text>
+
+  <g transform="translate(72 800)">
+    <rect x="18" y="18" width="936" height="648" fill="#a8cbb4"/>
+    <rect width="936" height="648" fill="#ffffff"/>
+    <text x="468" y="76" text-anchor="middle" fill="#6c7b71" font-size="19" class="caps">ENDSTAND</text>
+    <text x="468" y="270" text-anchor="middle" fill="#092f20" font-size="204" class="team">{{HOME_SCORE}} : {{AWAY_SCORE}}</text>
+    <line x1="54" y1="322" x2="882" y2="322" stroke="#a8cbb4" stroke-width="3"/>
+    <text x="468" y="411" text-anchor="middle" fill="#10251a" font-size="38" class="team">{{HOME_TEAM}}</text>
+    <text x="468" y="463" text-anchor="middle" fill="#6c7b71" font-size="19" class="caps">GEGEN</text>
+    <text x="468" y="538" text-anchor="middle" fill="#10251a" font-size="38" class="team">{{AWAY_TEAM}}</text>
+    <text x="468" y="600" text-anchor="middle" fill="#164f32" font-size="23" class="sans" font-weight="800">{{DATE}}</text>
+  </g>
+
+  <text x="72" y="1592" fill="#164f32" font-size="49" class="serif" font-style="italic">{{RESULT_MESSAGE}}</text>
+  <rect x="72" y="1642" width="936" height="4" fill="#164f32"/>
+  <text x="72" y="1704" fill="#164f32" font-size="20" class="caps">DANKE FÜR EURE UNTERSTÜTZUNG</text>
+  <text x="1008" y="1760" text-anchor="end" fill="#092f20" font-size="25" class="sans" font-weight="900">#nurderbsv</text>
+</svg>
