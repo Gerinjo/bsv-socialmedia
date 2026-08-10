@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#071f16"/>
+      <stop offset=".7" stop-color="#092f20"/>
+      <stop offset="1" stop-color="#164f32"/>
+    </linearGradient>
+    <radialGradient id="halo">
+      <stop offset="0" stop-color="#a8cbb4" stop-opacity=".32"/>
+      <stop offset="1" stop-color="#a8cbb4" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="dots" width="38" height="38" patternUnits="userSpaceOnUse">
+      <circle cx="4" cy="4" r="2" fill="#ffffff" opacity=".045"/>
+    </pattern>
+    <style>
+      .sans{font-family:Inter,Arial,sans-serif}.serif{font-family:Georgia,'Times New Roman',serif}
+      .caps{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:5px}
+      .headline{font-family:Georgia,'Times New Roman',serif;font-weight:700;letter-spacing:-5px}
+    </style>
+  </defs>
+
+  <rect width="1080" height="1920" fill="url(#bg)"/>
+  <rect width="1080" height="1920" fill="url(#dots)"/>
+  <circle cx="540" cy="760" r="510" fill="url(#halo)"/>
+  <circle cx="950" cy="550" r="360" fill="none" stroke="#a8cbb4" stroke-width="3" opacity=".13"/>
+  <circle cx="950" cy="550" r="226" fill="none" stroke="#ffffff" stroke-width="3" opacity=".08"/>
+
+  <image href="{{LOGO_DATA_URI}}" x="72" y="64" width="104" height="104"/>
+  <text x="208" y="106" fill="#a8cbb4" font-size="22" class="caps">BSV NORDSTERN</text>
+  <text x="208" y="141" fill="#ffffff" font-size="24" class="sans" font-weight="800">Radolfzell · Fußball</text>
+  <circle cx="982" cy="116" r="38" fill="#f4d638"/>
+  <circle cx="982" cy="116" r="17" fill="#092f20"/>
+
+  <text x="540" y="278" text-anchor="middle" fill="#a8cbb4" font-size="{{BIRTHDAY_NAME_SIZE}}" class="caps">{{BIRTHDAY_NAME}}</text>
+  <text x="540" y="430" text-anchor="middle" fill="#ffffff" font-size="154" class="headline">HAPPY</text>
+  <text x="540" y="574" text-anchor="middle" fill="#91c82f" font-size="136" class="headline">BIRTHDAY</text>
+
+  <path d="M0 1254c237 48 397 24 569-58 185-89 338-151 511-227v951H0z" fill="#164f32"/>
+  <path d="M0 1368c265 58 493 20 692-88 155-84 274-126 388-151v791H0z" fill="#91c82f"/>
+  <path d="M0 1254c237 48 397 24 569-58 185-89 338-151 511-227" fill="none" stroke="#a8cbb4" stroke-width="5" opacity=".48"/>
+
+  <image href="{{PLAYER_PHOTO_DATA_URI}}" x="140" y="430" width="800" height="1200" preserveAspectRatio="xMidYMid meet"/>
+
+  <g transform="translate(72 1514)">
+    <rect width="936" height="246" rx="62" fill="#071f16" opacity=".94"/>
+    <circle cx="824" cy="123" r="72" fill="#164f32"/>
+    <circle cx="824" cy="123" r="37" fill="#f4d638"/>
+    <text x="46" y="75" fill="#a8cbb4" font-size="18" class="caps">DER BSV GRATULIERT</text>
+    <text x="46" y="139" fill="#ffffff" font-size="54" class="sans" font-weight="900">ALLES GUTE!</text>
+    <text x="46" y="193" fill="#a8cbb4" font-size="25" class="sans" font-weight="800">{{BIRTHDAY_MESSAGE}}</text>
+  </g>
+
+  <text x="72" y="1838" fill="#071f16" font-size="24" class="sans" font-weight="900">#aufgehtsgrün</text>
+  <text x="1008" y="1838" text-anchor="end" fill="#071f16" font-size="20" class="sans" font-weight="900">bsvnordstern.de</text>
+</svg>

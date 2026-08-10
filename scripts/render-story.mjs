@@ -23,8 +23,10 @@ if (!STORY_TYPES.includes(type)) {
 const match = await json(option('input', 'examples/match.json'));
 const lineupPath = option('lineup', 'examples/lineup.json');
 const lineup = type === 'lineup' ? await json(lineupPath) : { players: [] };
+const photoOption = option('photo');
+const photoPath = photoOption ? resolve(rootDir, photoOption) : undefined;
 const outputDir = resolve(rootDir, option('output', 'output'));
-const files = await writeStoryFiles({ rootDir, type, match, lineup, outputDir });
+const files = await writeStoryFiles({ rootDir, type, match, lineup, photoPath, outputDir });
 
 console.log(`SVG: ${files.svgPath}`);
 console.log(`JPG: ${files.jpgPath}`);

@@ -5,7 +5,7 @@ Eigenständiges Projekt für die Gestaltung und spätere Automatisierung von Ins
 Der aktuelle Stand liefert:
 
 - ein aus der Website abgeleitetes Corporate Design,
-- editierbare Story-Vorlagen in 1080 × 1920 Pixel,
+- editierbare Story-Vorlagen in 1080 × 1920 Pixel, einschließlich eines Geburtstagsmotivs,
 - einen lokalen Renderer für Spielankündigung, Aufstellung und Ergebnis,
 - Beispieldaten für die fussball.de-Spiel-ID `0316BRN2AC000000VS5489BTVU7GTVLE`,
 - eine vorbereitete Supabase-Struktur für Spiele und Story-Jobs,
@@ -16,6 +16,10 @@ Der aktuelle Stand liefert:
 | Spielankündigung | Aufstellung | Ergebnis |
 | --- | --- | --- |
 | ![Spielankündigung](previews/announcement.jpg) | ![Aufstellung](previews/lineup.jpg) | ![Ergebnis](previews/result.jpg) |
+
+| Geburtstag |
+| --- |
+| ![Geburtstagsmotiv](previews/birthday.jpg) |
 
 Das vollständige Gestaltungssystem ist als [Corporate-Design-Dokument](docs/corporate-design.md) und als [visuelle HTML-Fassung](docs/corporate-design.html) enthalten.
 
@@ -36,7 +40,10 @@ Ein einzelnes Motiv lässt sich so erzeugen:
 npm run render -- --type announcement --input examples/match.json
 npm run render -- --type lineup --input examples/match.json --lineup examples/lineup.json
 npm run render -- --type result --input examples/match.json
+npm run render -- --type birthday --input examples/birthday.json --photo bilder/spieler.png
 ```
+
+Für das Geburtstagsmotiv eignet sich ein freigestelltes PNG. Ohne `--photo` wird automatisch die neutrale Spieler-Silhouette verwendet.
 
 ## Sicherheitsstandard
 

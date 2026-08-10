@@ -92,6 +92,10 @@ Enthält genau die freigegebenen Namen oder Kürzel und optional Rückennummern.
 
 Enthält Endstand, Mannschaften und einen kurzen, sachlichen Ergebnissatz. Sieg, Remis und Niederlage verwenden dasselbe Farbsystem. Niederlagen werden nicht visuell „bestraft“ und Siege nicht mit einer fremden Signalfarbe überladen.
 
+### Geburtstag
+
+Das Geburtstagsmotiv stellt die Person mit einer freigestellten Aufnahme zentral in den Vordergrund. Name und Glückwunsch bleiben innerhalb der Sicherheitszone. Es wird manuell erstellt und veröffentlicht; Geburtstag, Namensschreibweise, Bildrecht und Einwilligung müssen vorher bestätigt sein. Ohne freigegebenes Foto dient die neutrale Silhouette ausschließlich als Entwurfsplatzhalter.
+
 ## 8. Bildsprache
 
 Bevorzugt werden echte Spielszenen, Teamnähe, Bewegung und Emotion. Personen sollen erkennbar und natürlich wirken. Harte Filter, künstliche Freisteller und übersteigerte Sättigung werden vermieden.
@@ -109,7 +113,7 @@ Kurze, direkte Sätze. Teamnamen und Fakten sind wichtiger als Werbesprache. Bev
 - „Was. Für. Ein. Spiel.“
 - „Danke für eure Unterstützung.“
 
-Hashtags werden auf wenige konstante Begriffe reduziert, beispielsweise `#nurderbsv`.
+Hashtags werden auf wenige konstante Begriffe reduziert, insbesondere `#aufgehtsgrün`.
 
 ## 10. Freigabecheck
 

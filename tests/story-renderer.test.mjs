@@ -38,3 +38,18 @@ for (const type of ['announcement', 'lineup', 'result']) {
     assert.match(svg, /BSV Nordstern &amp; Freunde/);
   });
 }
+
+test('birthday rendert Namen, Glückwunsch und Spielerbild', async () => {
+  const svg = await renderStorySvg({
+    rootDir,
+    type: 'birthday',
+    match: {
+      birthdayName: 'Max & Freunde',
+      birthdayMessage: 'Alles Gute vom ganzen Verein!',
+    },
+  });
+  assert.match(svg, /Max &amp; Freunde/);
+  assert.match(svg, /Alles Gute vom ganzen Verein!/);
+  assert.match(svg, /data:image\/svg\+xml;base64,/);
+  assert.doesNotMatch(svg, /\{\{[A-Z0-9_]+\}\}/);
+});

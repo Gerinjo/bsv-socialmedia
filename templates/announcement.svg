@@ -14,6 +14,7 @@
     </pattern>
     <style>
       .sans{font-family:Inter,Arial,sans-serif}.serif{font-family:Georgia,'Times New Roman',serif}
+      .handwritten{font-family:Z003,'URW Chancery L','Brush Script MT',cursive;font-style:italic}
       .caps{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:5px}
       .team{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:-2px}
     </style>
@@ -33,9 +34,9 @@
   <circle cx="982" cy="116" r="38" fill="#f4d638"/>
   <circle cx="982" cy="116" r="17" fill="#092f20"/>
 
-  <g transform="translate(72 242)">
-    <rect width="354" height="54" rx="27" fill="#a8cbb4"/>
-    <text x="177" y="36" text-anchor="middle" fill="#092f20" font-size="18" class="caps">{{KICKER}}</text>
+  <g transform="translate(72 222) rotate(-3 185 60)">
+    <text x="0" y="82" fill="#a8cbb4" font-size="104" class="handwritten">{{KICKER}}</text>
+    <path d="M18 101c118 15 252 8 358-5" fill="none" stroke="#91c82f" stroke-width="7" stroke-linecap="round" opacity=".9"/>
   </g>
 
   <text x="72" y="455" fill="#ffffff" font-size="150" class="team">SPIEL</text>
@@ -88,6 +89,6 @@
     <rect width="540" height="52" rx="26" fill="#ffffff" opacity=".1"/>
     <text x="24" y="34" fill="#a8cbb4" font-size="16" class="caps">SPIEL-ID · {{MATCH_ID_SHORT}}</text>
   </g>
-  <text x="72" y="1780" fill="#ffffff" font-size="24" class="sans" font-weight="900">#nurderbsv</text>
+  <text x="72" y="1780" fill="#ffffff" font-size="24" class="sans" font-weight="900">#aufgehtsgrün</text>
   <text x="1008" y="1780" text-anchor="end" fill="#ffffff" font-size="20" class="sans" font-weight="900">bsvnordstern.de</text>
 </svg>

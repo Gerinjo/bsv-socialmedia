@@ -2,7 +2,7 @@ import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import { extname, resolve } from 'node:path';
 
-export const STORY_TYPES = ['announcement', 'lineup', 'result'];
+export const STORY_TYPES = ['announcement', 'lineup', 'result', 'birthday'];
 
 const MIME_TYPES = new Map([
   ['.gif', 'image/gif'],
@@ -83,21 +83,24 @@ function fittedSize(value, regularSize, compactSize, threshold) {
   return text(value).length > threshold ? compactSize : regularSize;
 }
 
-export async function renderStorySvg({ rootDir, type, match, lineup = { players: [] } }) {
+export async function renderStorySvg({ rootDir, type, match, lineup = { players: [] }, photoPath }) {
   if (!STORY_TYPES.includes(type)) throw new Error(`Unbekannter Story-Typ: ${type}`);
 
   const templatePath = resolve(rootDir, 'templates', `${type}.svg`);
   const logoPath = resolve(rootDir, 'brand/logos/bsv-nordstern.png');
-  const [template, logoDataUri] = await Promise.all([
+  const playerPhotoPath = photoPath ?? resolve(rootDir, 'brand/placeholders/player-silhouette.svg');
+  const [template, logoDataUri, playerPhotoDataUri] = await Promise.all([
     readFile(templatePath, 'utf8'),
     fileDataUri(logoPath),
+    fileDataUri(playerPhotoPath),
   ]);
 
   const resultLabel = text(match.resultLabel, outcome(match));
   const resultMessage = truncate(match.resultMessage, 52);
   const values = {
     LOGO_DATA_URI: logoDataUri,
-    KICKER: type === 'announcement' ? 'MATCHDAY · MORGEN' : type === 'lineup' ? 'MATCHDAY · STARTELF' : 'ABPFIFF · ERGEBNIS',
+    PLAYER_PHOTO_DATA_URI: playerPhotoDataUri,
+    KICKER: type === 'announcement' ? 'Matchday' : type === 'lineup' ? 'MATCHDAY · STARTELF' : 'ABPFIFF · ERGEBNIS',
     HOME_TEAM: truncate(match.homeTeam, 32),
     AWAY_TEAM: truncate(match.awayTeam, 32),
     COMPETITION: truncate(match.competition, 36),
@@ -113,13 +116,16 @@ export async function renderStorySvg({ rootDir, type, match, lineup = { players:
     RESULT_LABEL_SIZE: fittedSize(resultLabel, 126, 98, 10),
     RESULT_MESSAGE: resultMessage,
     RESULT_MESSAGE_SIZE: fittedSize(resultMessage, 48, 39, 38),
+    BIRTHDAY_NAME: truncate(match.birthdayName, 28),
+    BIRTHDAY_NAME_SIZE: fittedSize(match.birthdayName, 27, 21, 18),
+    BIRTHDAY_MESSAGE: truncate(match.birthdayMessage, 54),
   };
 
   return fillTemplate(template, values, new Set(['PLAYER_ROWS']));
 }
 
-export async function writeStoryFiles({ rootDir, type, match, lineup, outputDir, basename = type }) {
-  const svg = await renderStorySvg({ rootDir, type, match, lineup });
+export async function writeStoryFiles({ rootDir, type, match, lineup, photoPath, outputDir, basename = type }) {
+  const svg = await renderStorySvg({ rootDir, type, match, lineup, photoPath });
   await mkdir(outputDir, { recursive: true });
 
   const svgPath = resolve(outputDir, `${basename}.svg`);
