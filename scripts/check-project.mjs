@@ -8,7 +8,7 @@ const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const required = [
   'README.md',
   'brand/tokens.json',
-  'brand/logos/bsv-nordstern.gif',
+  'brand/logos/bsv-nordstern.png',
   'docs/corporate-design.md',
   'docs/corporate-design.html',
   'docs/automation-architecture.md',

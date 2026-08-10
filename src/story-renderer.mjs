@@ -82,7 +82,7 @@ export async function renderStorySvg({ rootDir, type, match, lineup = { players:
   if (!STORY_TYPES.includes(type)) throw new Error(`Unbekannter Story-Typ: ${type}`);
 
   const templatePath = resolve(rootDir, 'templates', `${type}.svg`);
-  const logoPath = resolve(rootDir, 'brand/logos/bsv-nordstern.gif');
+  const logoPath = resolve(rootDir, 'brand/logos/bsv-nordstern.png');
   const [template, logoDataUri] = await Promise.all([
     readFile(templatePath, 'utf8'),
     fileDataUri(logoPath),
