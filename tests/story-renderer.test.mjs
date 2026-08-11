@@ -52,6 +52,17 @@ test('Heim- und Gastwappen bilden in der Spielankündigung ein diagonales Duell'
   assert.doesNotMatch(svg, />GEGEN</);
 });
 
+test('Abgesagte und abgebrochene Spiele erhalten einen roten Querhinweis', async () => {
+  for (const [gameStatus, label, size] of [['cancelled', 'ABGESAGT', 160], ['aborted', 'ABGEBROCHEN', 130]]) {
+    const svg = await renderStorySvg({
+      rootDir,
+      type: 'announcement',
+      match: { ...match, gameStatus },
+    });
+    assert.match(svg, new RegExp(`opacity="1"[\\s\\S]*fill="#d62828"[\\s\\S]*font-size="${size}"[\\s\\S]*>${label}<`));
+  }
+});
+
 test('Story-SVG verwendet den abgekürzten SG-Mannschaftsnamen', async () => {
   const fullName = 'SG Nordstern Radolfzell/Öhningen-Gaienhofen/Bankholzen-Moos';
   const svg = await renderStorySvg({

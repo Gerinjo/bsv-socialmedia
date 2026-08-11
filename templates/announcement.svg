@@ -84,6 +84,11 @@
     <text x="468" y="590" text-anchor="middle" fill="#6c7b71" font-size="22" class="sans" font-weight="800">{{VENUE}}</text>
   </g>
 
+  <g transform="translate(540 1010) rotate(-12)" opacity="{{GAME_STATUS_OPACITY}}">
+    <text x="7" y="8" text-anchor="middle" dominant-baseline="middle" fill="#071f16" opacity=".52" font-size="{{GAME_STATUS_SIZE}}" class="handwritten">{{GAME_STATUS_LABEL}}</text>
+    <text x="0" y="0" text-anchor="middle" dominant-baseline="middle" fill="#d62828" stroke="#f4f1e8" stroke-width="7" paint-order="stroke" font-size="{{GAME_STATUS_SIZE}}" class="handwritten">{{GAME_STATUS_LABEL}}</text>
+  </g>
+
   <image href="{{SPARKASSE_LOGO_DATA_URI}}" x="150" y="1328" width="780" height="320" preserveAspectRatio="xMidYMid meet"/>
 
   <text x="72" y="1780" fill="#ffffff" font-size="34" class="handwritten" letter-spacing="1px">#aufgehtsgrün</text>

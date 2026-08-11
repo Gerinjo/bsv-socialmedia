@@ -68,6 +68,7 @@ function gameInput(game: Record<string, unknown>) {
       awayScore: game.away_score,
       resultLabel: game.result_label,
       resultMessage: game.result_message,
+      gameStatus: game.status,
       homeCrestPath: homeClub.crest_status === 'approved' ? homeClub.crest_transparent_path : null,
       awayCrestPath: awayClub.crest_status === 'approved' ? awayClub.crest_transparent_path : null,
     },

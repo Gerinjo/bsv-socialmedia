@@ -10,6 +10,7 @@ const corsHeaders = {
 const bucket = 'social-story-previews';
 const homeVenues = new Set(['Hauptplatz', 'Nebenplatz', 'Kunstrasenplatz 1', 'Kunstrasenplatz 2']);
 const crestStatuses = new Set(['missing', 'needs_review', 'approved', 'rejected']);
+const stoppedGameStatuses = new Set(['cancelled', 'aborted']);
 const originalMimeTypes = new Map([
   ['image/jpeg', 'jpg'],
   ['image/png', 'png'],
@@ -379,6 +380,38 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         return json({ ok: true, automation });
       }
       return json({ ok: true });
+    }
+
+    if (action === 'set_game_status') {
+      const gameId = required(body.gameId, 'Spiel-ID');
+      const nextStatus = required(body.status, 'Spielstatus');
+      if (!stoppedGameStatuses.has(nextStatus)) throw new Error('Der Spielstatus ist ungültig.');
+      const { data: game, error: gameError } = await context.supabaseAdmin
+        .from('social_games')
+        .select('id, status, home_score, away_score')
+        .eq('id', gameId)
+        .maybeSingle();
+      if (gameError) throw gameError;
+      if (!game) throw new Error('Das Spiel wurde nicht gefunden.');
+      if (game.status === 'finished' || game.home_score !== null || game.away_score !== null) {
+        throw new Error('Ein bereits gespieltes Spiel kann nicht abgesagt oder abgebrochen werden.');
+      }
+      if (stoppedGameStatuses.has(game.status)) throw new Error('Das Spiel wurde bereits beendet.');
+      const { error: statusError } = await context.supabaseAdmin
+        .from('social_games')
+        .update({ status: nextStatus })
+        .eq('id', gameId);
+      if (statusError) throw statusError;
+      const statusLabel = nextStatus === 'cancelled' ? 'abgesagt' : 'abgebrochen';
+      const { error: jobsError } = await context.supabaseAdmin
+        .from('social_story_jobs')
+        .update({ status: 'skipped', last_error: `Das Spiel wurde ${statusLabel}.` })
+        .eq('game_id', gameId)
+        .in('story_type', ['lineup', 'result'])
+        .in('status', ['pending', 'preview_ready', 'failed', 'needs_input', 'skipped']);
+      if (jobsError) throw jobsError;
+      const automation = await renderGameJobNow(context.supabaseAdmin, gameId, 'announcement');
+      return json({ ok: true, status: nextStatus, automation });
     }
 
     if (action === 'save_result') {

@@ -169,6 +169,11 @@ export async function renderStorySvg({ rootDir, type, match, lineup = { players:
   const hasHomeCrest = Boolean(homeCrestKey);
   const hasAwayCrest = Boolean(awayCrestKey);
   const birthdayRole = birthdayRoleText(match.birthdayRoles ?? match.birthdayRole);
+  const gameStatusLabel = match.gameStatus === 'cancelled'
+    ? 'ABGESAGT'
+    : match.gameStatus === 'aborted'
+      ? 'ABGEBROCHEN'
+      : '';
   const values = {
     LOGO_DATA_URI: logoDataUri,
     SPARKASSE_LOGO_DATA_URI: sparkasseLogoDataUri,
@@ -180,6 +185,9 @@ export async function renderStorySvg({ rootDir, type, match, lineup = { players:
     AWAY_CREST_DATA_URI: awayCrestDataUri,
     AWAY_CREST_OPACITY: hasAwayCrest ? 1 : 0,
     DUEL_MARK_OPACITY: hasHomeCrest && hasAwayCrest ? 1 : 0.3,
+    GAME_STATUS_LABEL: gameStatusLabel,
+    GAME_STATUS_OPACITY: gameStatusLabel ? 1 : 0,
+    GAME_STATUS_SIZE: gameStatusLabel === 'ABGEBROCHEN' ? 130 : 160,
     KICKER: type === 'announcement' ? 'MATCHDAY' : type === 'lineup' ? 'MATCHDAY · STARTELF' : 'ABPFIFF · ERGEBNIS',
     HOME_TEAM: truncate(displayTeamName(match.homeTeam), 32),
     HOME_TEAM_SIZE: fittedSize(displayTeamName(match.homeTeam), 44, 36, 24),

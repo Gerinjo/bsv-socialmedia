@@ -20,6 +20,7 @@ type GameJob = {
     away_score: number | null;
     result_label: string | null;
     result_message: string | null;
+    status: 'scheduled' | 'live' | 'finished' | 'postponed' | 'cancelled' | 'aborted';
     lineup: { players?: unknown[]; formation?: string; approvedAt?: string } | null;
     home_club: {
       crest_status: 'missing' | 'needs_review' | 'approved' | 'rejected';
@@ -94,7 +95,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
         id, attempts, status, story_type,
         game:social_games!inner(
           id, source_match_id, home_team, away_team, competition, venue,
-          kickoff_at, home_score, away_score, result_label, result_message,
+          kickoff_at, home_score, away_score, result_label, result_message, status,
           lineup, enabled,
           home_club:social_clubs!social_games_home_club_id_fkey(
             crest_status, crest_transparent_path
@@ -124,7 +125,18 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       summary.claimed += 1;
 
       const kickoffHasPassed = new Date(candidate.game.kickoff_at).getTime() <= Date.now();
-      if (kickoffHasPassed && candidate.story_type !== 'result') {
+      const stoppedGame = candidate.game.status === 'cancelled' || candidate.game.status === 'aborted';
+      if (stoppedGame && candidate.story_type !== 'announcement') {
+        await context.supabaseAdmin
+          .from('social_story_jobs')
+          .update({
+            status: 'skipped',
+            last_error: `Das Spiel wurde ${candidate.game.status === 'cancelled' ? 'abgesagt' : 'abgebrochen'}.`,
+          })
+          .eq('id', candidate.id);
+        continue;
+      }
+      if (kickoffHasPassed && candidate.story_type !== 'result' && !stoppedGame) {
         await context.supabaseAdmin
           .from('social_story_jobs')
           .update({ status: 'skipped', last_error: 'Das Spiel hat bereits begonnen.' })
