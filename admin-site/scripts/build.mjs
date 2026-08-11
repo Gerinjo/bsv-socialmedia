@@ -13,7 +13,7 @@ export default {
     return new Response(html, {
       headers: {
         'content-type': 'text/html; charset=utf-8',
-        'content-security-policy': "default-src 'self'; script-src 'unsafe-inline' https://esm.sh; connect-src 'self' https://maejihwjzxkmthjavgnx.supabase.co; img-src 'self' data: https://maejihwjzxkmthjavgnx.supabase.co; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'",
+        'content-security-policy': "default-src 'self'; script-src 'unsafe-inline' https://esm.sh; connect-src 'self' https://maejihwjzxkmthjavgnx.supabase.co; img-src 'self' data: https://maejihwjzxkmthjavgnx.supabase.co https://gerinjo.github.io; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'",
         'x-content-type-options': 'nosniff',
         'referrer-policy': 'no-referrer',
       },

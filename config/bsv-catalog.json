@@ -1,0 +1,1227 @@
+{
+  "source": "bsv-website",
+  "sourceUrl": "https://gerinjo.github.io/bsv-website",
+  "generatedAt": "2026-08-11T08:02:11.068Z",
+  "venues": [
+    "Hauptplatz",
+    "Nebenplatz",
+    "Kunstrasenplatz 1",
+    "Kunstrasenplatz 2"
+  ],
+  "teams": [
+    {
+      "slug": "herren-1",
+      "name": "BSV Nordstern Radolfzell",
+      "competition": "Kreisliga B Staffel 1",
+      "websitePath": "fussball/herren/bezirksliga",
+      "fussballDeUrl": "https://www.fussball.de/mannschaft/bsv-nordstern-radolfzell-bsv-nordstern-radolfzell-suedbaden/-/saison/2627/team-id/011MICLVK0000000VTVG0001VTR8C1K7",
+      "sortOrder": 1
+    },
+    {
+      "slug": "herren-2",
+      "name": "SG Markelfingen/BSV Nordstern Radolfzell 2",
+      "competition": "Kreisliga C Staffel 1",
+      "websitePath": "fussball/herren/kreisliga-2",
+      "fussballDeUrl": "https://www.fussball.de/mannschaft/sg-markelfingen-bsv-n-radolfz-2-sv-markelfingen-suedbaden/-/saison/2627/team-id/011MIBT808000000VTVG0001VTR8C1K7",
+      "sortOrder": 2
+    },
+    {
+      "slug": "frauen-1",
+      "name": "SG Nordstern Radolfzell/Öhningen-Gaienhofen/Bankholzen-Moos",
+      "competition": "Frauen Bezirksliga Bodensee",
+      "websitePath": "fussball/frauen/bezirksliga",
+      "fussballDeUrl": "https://www.fussball.de/mannschaft/sg-no-radolfz-oehning-gai-bankh-moos-bsv-nordstern-radolfzell-suedbaden/-/saison/2627/team-id/01A2FGUHDO000000VV0AG80NVSEJ47CH",
+      "sortOrder": 3
+    },
+    {
+      "slug": "frauen-2",
+      "name": "SG Nordstern Radolfzell/Öhningen-Gaienhofen/Bankholzen-Moos 2",
+      "competition": "Frauen Kreisliga A",
+      "websitePath": "fussball/frauen/kreisliga",
+      "fussballDeUrl": "https://www.fussball.de/mannschaft/sg-no-radolfz-oehning-gai-bankh-moos-2-bsv-nordstern-radolfzell-suedbaden/-/saison/2627/team-id/03163NI9R0000000VS5489BSVSCPI5U4",
+      "sortOrder": 4
+    }
+  ],
+  "people": [
+    {
+      "slug": "aaron-kucharz",
+      "displayName": "Aaron Kucharz",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "abdul-al-darwish",
+      "displayName": "Abdul Al Darwish",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "alexander-gerber",
+      "displayName": "Alexander Gerber",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "alexander-kaiser",
+      "displayName": "Alexander Kaiser",
+      "roles": [
+        "Trainer"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "alexander-kramer",
+      "displayName": "Alexander Kramer",
+      "roles": [
+        "Trainer"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "andre-giesler",
+      "displayName": "Andre Giesler",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "andrea-basile",
+      "displayName": "Andrea Basile",
+      "roles": [
+        "Co-Trainer",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/andrea-basile.jpg"
+    },
+    {
+      "slug": "andreas-wolfmuller",
+      "displayName": "Andreas Wolfmüller",
+      "roles": [
+        "Trainer",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/andreas-wolfmueller.jpg"
+    },
+    {
+      "slug": "ann-kathrin-sugg",
+      "displayName": "Ann-Kathrin Sugg",
+      "roles": [
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/ann-kathrin-sugg.jpg"
+    },
+    {
+      "slug": "annika-peglau",
+      "displayName": "Annika Peglau",
+      "roles": [
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/annika-peglau.jpeg"
+    },
+    {
+      "slug": "aulon-krasniqi",
+      "displayName": "Aulon Krasniqi",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "axel-schauble",
+      "displayName": "Axel Schäuble",
+      "roles": [
+        "Cheftrainer",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/axel-schaeuble.jpg"
+    },
+    {
+      "slug": "baqer-al-daraji",
+      "displayName": "Baqer Al Daraji",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "bjorn-adler",
+      "displayName": "Björn Adler",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "christoph-luthje",
+      "displayName": "Christoph Lüthje",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "christoph-nowack",
+      "displayName": "Christoph Nowack",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "christoph-pabst",
+      "displayName": "Christoph Pabst",
+      "roles": [
+        "Trainer"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "claudia-gastaudo",
+      "displayName": "Claudia Gastaudo",
+      "roles": [
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/claudia-gastaudo.jpg"
+    },
+    {
+      "slug": "dana-bulander",
+      "displayName": "Dana Bulander",
+      "roles": [
+        "Trainerin",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/dana-bulander.jpg"
+    },
+    {
+      "slug": "david-mohr",
+      "displayName": "David Mohr",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "domenik-wannemacher",
+      "displayName": "Domenik Wannemacher",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "dominik-saur",
+      "displayName": "Dominik Saur",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "eberhard-klinkenberg",
+      "displayName": "Eberhard Klinkenberg",
+      "roles": [
+        "Betreuer",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/eberhard-klinkenberg.jpg"
+    },
+    {
+      "slug": "elias-arfa",
+      "displayName": "Elias Arfa",
+      "roles": [
+        "Trainer"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "ella-kramer",
+      "displayName": "Ella Kramer",
+      "roles": [
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/ella-kramer.jpeg"
+    },
+    {
+      "slug": "emel-bayram",
+      "displayName": "Emel Bayram",
+      "roles": [
+        "Co-Trainerin",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/emel-bayram.jpg"
+    },
+    {
+      "slug": "fabian-keller",
+      "displayName": "Fabian Keller",
+      "roles": [
+        "Trainer",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/fabian-keller.jpg"
+    },
+    {
+      "slug": "fabio-vincenti",
+      "displayName": "Fabio Vincenti",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "felix-schule",
+      "displayName": "Felix Schüle",
+      "roles": [
+        "Spieler:in",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/felix-schuele.jpg"
+    },
+    {
+      "slug": "frieder-demmer",
+      "displayName": "Frieder Demmer",
+      "roles": [
+        "Athletik- und Fitnesscoach",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/frieder-demmer.jpg"
+    },
+    {
+      "slug": "geronimo-frick",
+      "displayName": "Geronimo Frick",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "hamid-hassanzadah",
+      "displayName": "Hamid Hassanzadah",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "heike-seidel",
+      "displayName": "Heike Seidel",
+      "roles": [
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/heike-seidel.jpg"
+    },
+    {
+      "slug": "hieu-ho",
+      "displayName": "Hieu Ho",
+      "roles": [
+        "Trainerin"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "humberto-vicente-agudo-torres",
+      "displayName": "Humberto Vicente Agudo Torres",
+      "roles": [
+        "Trainer"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "ilia-gogichaishvili",
+      "displayName": "Ilia Gogichaishvili",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "jan-rick",
+      "displayName": "Jan Rick",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "jerome-ernsberger",
+      "displayName": "Jérôme Ernsberger",
+      "roles": [
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/jerome-ernsberger.jpg"
+    },
+    {
+      "slug": "jonas-wunsch",
+      "displayName": "Jonas Wunsch",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "jorg-boreatti",
+      "displayName": "Jörg Boreatti",
+      "roles": [
+        "Spieler:in",
+        "Trainer",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/joerg-boreatti.jpg"
+    },
+    {
+      "slug": "julian-brendle",
+      "displayName": "Julian Brendle",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "julian-kemmer",
+      "displayName": "Julian Kemmer",
+      "roles": [
+        "Spieler:in",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/julian-kemmer.jpg"
+    },
+    {
+      "slug": "justin-kuhlmann",
+      "displayName": "Justin Kühlmann",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "kevin-riedle",
+      "displayName": "Kevin Riedle",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "konrad-mauz",
+      "displayName": "Konrad Mauz",
+      "roles": [
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/konrad-mauz.jpg"
+    },
+    {
+      "slug": "kostiantyn-murashko",
+      "displayName": "Kostiantyn Murashko",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "laila-goldhagen",
+      "displayName": "Laila Goldhagen",
+      "roles": [
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/laila-goldhagen.jpeg"
+    },
+    {
+      "slug": "linus-koller",
+      "displayName": "Linus Köller",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "luca-gastaudo",
+      "displayName": "Luca Gastaudo",
+      "roles": [
+        "Trainer",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/luca-gastaudo.jpg"
+    },
+    {
+      "slug": "luca-vincenti",
+      "displayName": "Luca Vincenti",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "manuel-bucheler",
+      "displayName": "Manuel Bücheler",
+      "roles": [
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/manuel-buecheler.jpg"
+    },
+    {
+      "slug": "manuel-schellhammer",
+      "displayName": "Manuel Schellhammer",
+      "roles": [
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/manuel-schellhammer.jpg"
+    },
+    {
+      "slug": "marc-walzer",
+      "displayName": "Marc Walzer",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "marcelino-ruth",
+      "displayName": "Marcelino Rüth",
+      "roles": [
+        "Trainer"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "marco-eisner",
+      "displayName": "Marco Eisner",
+      "roles": [
+        "Co-Trainer",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/marco-eisner.jpg"
+    },
+    {
+      "slug": "marco-tassone",
+      "displayName": "Marco Tassone",
+      "roles": [
+        "Trainer"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "marco-wacker",
+      "displayName": "Marco Wacker",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "marcus-peglau",
+      "displayName": "Marcus Peglau",
+      "roles": [
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/marcus-peglau.jpg"
+    },
+    {
+      "slug": "markus-mader",
+      "displayName": "Markus Mäder",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "markus-sawicki",
+      "displayName": "Markus Sawicki",
+      "roles": [
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/markus-sawicki.jpg"
+    },
+    {
+      "slug": "marlia-burlander",
+      "displayName": "Marlia Burlander",
+      "roles": [
+        "Trainerin",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/marlia-burlander.jpg"
+    },
+    {
+      "slug": "mathias-becht",
+      "displayName": "Mathias Becht",
+      "roles": [
+        "Spieler:in",
+        "Trainer",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/mathias-becht.jpg"
+    },
+    {
+      "slug": "max-menzel",
+      "displayName": "Max Menzel",
+      "roles": [
+        "Co-Trainer",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/max-menzel.jpg"
+    },
+    {
+      "slug": "maximilian-geismann",
+      "displayName": "Maximilian Geismann",
+      "roles": [
+        "Trainer",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/maximilian-geismann.jpg"
+    },
+    {
+      "slug": "michael-jentsch",
+      "displayName": "Michael Jentsch",
+      "roles": [
+        "Trainer",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/migo-jentsch.jpg"
+    },
+    {
+      "slug": "michael-meiss",
+      "displayName": "Michael Meiss",
+      "roles": [
+        "Trainer"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "michael-sick",
+      "displayName": "Michael Sick",
+      "roles": [
+        "Trainer"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "michael-unmuth",
+      "displayName": "Michael Unmuth",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "michaela-auer",
+      "displayName": "Michaela Auer",
+      "roles": [
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/michaela-auer.jpg"
+    },
+    {
+      "slug": "mila-ernsberger",
+      "displayName": "Mila Ernsberger",
+      "roles": [
+        "Trainerin",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/mila-ernsberger.jpg"
+    },
+    {
+      "slug": "mohamad-mahmoudi",
+      "displayName": "Mohamad Mahmoudi",
+      "roles": [
+        "Trainer"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "mohamad-salim-hartel",
+      "displayName": "Mohamad Salim Hartel",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "mohammad-mahmoudi",
+      "displayName": "Mohammad Mahmoudi",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "momodou-sidibeh",
+      "displayName": "Momodou Sidibeh",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "myriam-lipp",
+      "displayName": "Myriam Lipp",
+      "roles": [
+        "Chef-Trainerin",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/myriam-lipp.jpg"
+    },
+    {
+      "slug": "nico-wrzeszcz",
+      "displayName": "Nico Wrzeszcz",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "nicole-erbes",
+      "displayName": "Nicole Erbes",
+      "roles": [
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/nicole-erbes.jpg"
+    },
+    {
+      "slug": "niklas-fuchs",
+      "displayName": "Niklas Fuchs",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "niku-pourheidari",
+      "displayName": "Niku Pourheidari",
+      "roles": [
+        "Trainer",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/niku-pourheidari.jpg"
+    },
+    {
+      "slug": "noemi-sophie-friedrich",
+      "displayName": "Noemi Sophie Friedrich",
+      "roles": [
+        "Trainerin",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/noemi-sophie-friedrich.jpg"
+    },
+    {
+      "slug": "ole-schmal",
+      "displayName": "Ole Schmal",
+      "roles": [
+        "Co-Trainer"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "pascal-brandenburg",
+      "displayName": "Pascal Brandenburg",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "pascel-dieterle",
+      "displayName": "Pascel Dieterle",
+      "roles": [
+        "Trainer",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/pascal-dieterle.jpg"
+    },
+    {
+      "slug": "patrick-brunner",
+      "displayName": "Patrick Brunner",
+      "roles": [
+        "Co-Trainer"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "philipp-freitag",
+      "displayName": "Philipp Freitag",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "raphael-buckel",
+      "displayName": "Raphael Buckel",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "rashid-hassani",
+      "displayName": "Rashid Hassani",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "remo-schellhammer",
+      "displayName": "Remo Schellhammer",
+      "roles": [
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/remo-schellhammer.jpg"
+    },
+    {
+      "slug": "samuel-auer",
+      "displayName": "Samuel Auer",
+      "roles": [
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/samuel-auer.jpg"
+    },
+    {
+      "slug": "sandra-fuchs",
+      "displayName": "Sandra Fuchs",
+      "roles": [
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/sandra-fuchs.jpg"
+    },
+    {
+      "slug": "sascha-jegler",
+      "displayName": "Sascha Jegler",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "sebastian-bauerle",
+      "displayName": "Sebastian Bäuerle",
+      "roles": [
+        "Cheftrainer"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "sigrid-burkhardt",
+      "displayName": "Sigrid Burkhardt",
+      "roles": [
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/sigrid-burkhardt.jpg"
+    },
+    {
+      "slug": "simeon-heckler",
+      "displayName": "Simeon Heckler",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "simon-buhler",
+      "displayName": "Simon Bühler",
+      "roles": [
+        "Co-Trainer",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/simon-buehler.jpg"
+    },
+    {
+      "slug": "sina-rauch",
+      "displayName": "Sina Rauch",
+      "roles": [
+        "Trainerin",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/sina-rauch.jpg"
+    },
+    {
+      "slug": "sonja-thomen",
+      "displayName": "Sonja Thomen",
+      "roles": [
+        "Co-Trainerin"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "stefan-gastaudo",
+      "displayName": "Stefan Gastaudo",
+      "roles": [
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/stefan-gastaudo.jpg"
+    },
+    {
+      "slug": "stefan-sulger",
+      "displayName": "Stefan Sulger",
+      "roles": [
+        "Trainer"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "stephan-hellmann",
+      "displayName": "Stephan Hellmann",
+      "roles": [
+        "Trainer",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/stephan-hellmann.jpg"
+    },
+    {
+      "slug": "sven-goldhagen",
+      "displayName": "Sven Goldhagen",
+      "roles": [
+        "Cheftrainer",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/sven-goldhagen.jpg"
+    },
+    {
+      "slug": "thomas-parthenschlager",
+      "displayName": "Thomas Parthenschlager",
+      "roles": [
+        "Co-Trainer"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "tim-schillinger",
+      "displayName": "Tim Schillinger",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "torben-altenburg",
+      "displayName": "Torben Altenburg",
+      "roles": [
+        "Co-Trainer",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/torben-altenburg.jpg"
+    },
+    {
+      "slug": "torben-schmidt",
+      "displayName": "Torben Schmidt",
+      "roles": [
+        "Ansprechperson Alte Herren"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "torsten-parzich",
+      "displayName": "Torsten Parzich",
+      "roles": [
+        "Trainer",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/torsten-parzich.jpg"
+    },
+    {
+      "slug": "volodymyr-terekhov",
+      "displayName": "Volodymyr Terekhov",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    },
+    {
+      "slug": "wiebke-baronner-dieterle",
+      "displayName": "Wiebke Baronner-Dieterle",
+      "roles": [
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/wiebke-baronner-dieterle.jpg"
+    },
+    {
+      "slug": "yannick-forg",
+      "displayName": "Yannick Förg",
+      "roles": [
+        "Spieler:in"
+      ],
+      "photoUrl": null
+    }
+  ],
+  "memberships": [
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "torsten-parzich",
+      "role": "Trainer"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "torben-altenburg",
+      "role": "Co-Trainer"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "eberhard-klinkenberg",
+      "role": "Betreuer"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "raphael-buckel",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "marco-wacker",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "ilia-gogichaishvili",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "dominik-saur",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "luca-vincenti",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "julian-brendle",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "alexander-gerber",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "volodymyr-terekhov",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "fabio-vincenti",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "domenik-wannemacher",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "abdul-al-darwish",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "tim-schillinger",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "marc-walzer",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "justin-kuhlmann",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "kevin-riedle",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "simeon-heckler",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "aulon-krasniqi",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "niklas-fuchs",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "baqer-al-daraji",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "david-mohr",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "felix-schule",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "jorg-boreatti",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "kostiantyn-murashko",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "linus-koller",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "markus-mader",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "mohamad-salim-hartel",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "momodou-sidibeh",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-1",
+      "personSlug": "pascal-brandenburg",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-2",
+      "personSlug": "alexander-kaiser",
+      "role": "Trainer"
+    },
+    {
+      "teamSlug": "herren-2",
+      "personSlug": "mathias-becht",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-2",
+      "personSlug": "abdul-al-darwish",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-2",
+      "personSlug": "yannick-forg",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-2",
+      "personSlug": "nico-wrzeszcz",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-2",
+      "personSlug": "julian-kemmer",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-2",
+      "personSlug": "aaron-kucharz",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-2",
+      "personSlug": "christoph-nowack",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-2",
+      "personSlug": "michael-unmuth",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-2",
+      "personSlug": "sascha-jegler",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-2",
+      "personSlug": "jonas-wunsch",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-2",
+      "personSlug": "geronimo-frick",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-2",
+      "personSlug": "mohammad-mahmoudi",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-2",
+      "personSlug": "christoph-luthje",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-2",
+      "personSlug": "philipp-freitag",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-2",
+      "personSlug": "bjorn-adler",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-2",
+      "personSlug": "rashid-hassani",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-2",
+      "personSlug": "andre-giesler",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-2",
+      "personSlug": "hamid-hassanzadah",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "herren-2",
+      "personSlug": "jan-rick",
+      "role": "Spieler:in"
+    },
+    {
+      "teamSlug": "frauen-1",
+      "personSlug": "mathias-becht",
+      "role": "Trainer"
+    },
+    {
+      "teamSlug": "frauen-1",
+      "personSlug": "max-menzel",
+      "role": "Co-Trainer"
+    },
+    {
+      "teamSlug": "frauen-2",
+      "personSlug": "myriam-lipp",
+      "role": "Chef-Trainerin"
+    },
+    {
+      "teamSlug": "frauen-2",
+      "personSlug": "emel-bayram",
+      "role": "Co-Trainerin"
+    }
+  ]
+}

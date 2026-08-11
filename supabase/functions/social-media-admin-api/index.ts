@@ -6,6 +6,7 @@ const corsHeaders = {
   'access-control-allow-methods': 'GET, POST, OPTIONS',
 };
 const bucket = 'social-story-previews';
+const homeVenues = new Set(['Hauptplatz', 'Nebenplatz', 'Kunstrasenplatz 1', 'Kunstrasenplatz 2']);
 
 function json(data: unknown, status = 200): Response {
   return Response.json(data, { status, headers: corsHeaders });
@@ -45,20 +46,39 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
   }
 
   if (request.method === 'GET') {
-    const [{ data: games, error: gamesError }, { data: birthdays, error: birthdaysError }] = await Promise.all([
+    const [
+      { data: games, error: gamesError },
+      { data: birthdays, error: birthdaysError },
+      { data: teams, error: teamsError },
+      { data: people, error: peopleError },
+    ] = await Promise.all([
       context.supabaseAdmin
         .from('social_games')
         .select('*, jobs:social_story_jobs(*)')
         .order('kickoff_at', { ascending: true }),
       context.supabaseAdmin
         .from('social_birthdays')
-        .select('*, jobs:social_birthday_jobs(*)')
+        .select('*, person:social_people(id, display_name, source_photo_url, cutout_path, birth_date), jobs:social_birthday_jobs(*)')
         .order('birth_date', { ascending: true }),
+      context.supabaseAdmin
+        .from('social_teams')
+        .select('id, slug, name, competition, website_path, fussball_de_url, sort_order')
+        .eq('active', true)
+        .order('sort_order', { ascending: true }),
+      context.supabaseAdmin
+        .from('social_people')
+        .select('id, slug, display_name, roles, source_photo_url, cutout_path, birth_date')
+        .eq('active', true)
+        .order('display_name', { ascending: true }),
     ]);
-    if (gamesError || birthdaysError) return json({ error: gamesError?.message ?? birthdaysError?.message }, 500);
+    const readError = gamesError ?? birthdaysError ?? teamsError ?? peopleError;
+    if (readError) return json({ error: readError.message }, 500);
     return json({
       user: { userId, email },
       testMode: true,
+      venues: [...homeVenues],
+      teams: teams ?? [],
+      people: people ?? [],
       games: await freshPreviewUrls(context.supabaseAdmin, games ?? []),
       birthdays: await freshPreviewUrls(context.supabaseAdmin, birthdays ?? []),
     });
@@ -73,14 +93,30 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     if (action === 'save_game') {
       const kickoff = new Date(required(body.kickoffAt, 'Anstoß'));
       if (Number.isNaN(kickoff.getTime())) throw new Error('Anstoß ist ungültig.');
+      const teamId = required(body.teamId, 'BSV-Mannschaft');
+      const { data: team, error: teamError } = await context.supabaseAdmin
+        .from('social_teams')
+        .select('id, name, competition')
+        .eq('id', teamId)
+        .eq('active', true)
+        .maybeSingle();
+      if (teamError) throw teamError;
+      if (!team) throw new Error('Die ausgewählte BSV-Mannschaft ist nicht aktiv.');
+      const opponent = required(body.opponent, 'Gegner');
+      const isHome = body.matchType === 'home';
+      if (!isHome && body.matchType !== 'away') throw new Error('Bitte Heim- oder Auswärtsspiel auswählen.');
+      const venue = isHome ? required(body.venue, 'Sportplatz') : null;
+      if (venue && !homeVenues.has(venue)) throw new Error('Der ausgewählte Sportplatz ist ungültig.');
       const payload: Record<string, unknown> = {
         source: body.source === 'fussball.de' ? 'fussball.de' : 'manual',
         source_match_id: String(body.sourceMatchId ?? '').trim() || null,
         source_url: String(body.sourceUrl ?? '').trim() || null,
-        home_team: required(body.homeTeam, 'Heimteam'),
-        away_team: required(body.awayTeam, 'Auswärtsteam'),
-        competition: String(body.competition ?? '').trim() || null,
-        venue: String(body.venue ?? '').trim() || null,
+        team_id: team.id,
+        is_home: isHome,
+        home_team: isHome ? team.name : opponent,
+        away_team: isHome ? opponent : team.name,
+        competition: team.competition,
+        venue,
         kickoff_at: kickoff.toISOString(),
         enabled: body.enabled !== false,
       };
@@ -137,16 +173,42 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     }
 
     if (action === 'save_birthday') {
+      const personId = required(body.personId, 'Person');
+      const birthDate = required(body.birthDate, 'Geburtsdatum');
+      const { data: person, error: personError } = await context.supabaseAdmin
+        .from('social_people')
+        .select('id, display_name, source_photo_url, cutout_path')
+        .eq('id', personId)
+        .eq('active', true)
+        .maybeSingle();
+      if (personError) throw personError;
+      if (!person) throw new Error('Die ausgewählte Person ist nicht aktiv.');
       const payload: Record<string, unknown> = {
-        person_name: required(body.personName, 'Name'),
-        birth_date: required(body.birthDate, 'Geburtsdatum'),
+        person_id: person.id,
+        person_name: person.display_name,
+        birth_date: birthDate,
         message: String(body.message ?? '').trim() || 'Wir wünschen dir einen großartigen Geburtstag!',
         publish_time: String(body.publishTime ?? '').trim() || '09:00',
-        photo_path: String(body.photoPath ?? '').trim() || null,
+        photo_path: person.cutout_path || person.source_photo_url || null,
         enabled: body.enabled !== false,
       };
-      if (body.id) payload.id = body.id;
-      const { data, error } = await context.supabaseAdmin.from('social_birthdays').upsert(payload).select().single();
+      const { error: dateError } = await context.supabaseAdmin
+        .from('social_people')
+        .update({ birth_date: birthDate })
+        .eq('id', person.id);
+      if (dateError) throw dateError;
+      const { data: existing, error: existingError } = await context.supabaseAdmin
+        .from('social_birthdays')
+        .select('id')
+        .eq('person_id', person.id)
+        .maybeSingle();
+      if (existingError) throw existingError;
+      if (existing?.id) payload.id = existing.id;
+      const { data, error } = await context.supabaseAdmin
+        .from('social_birthdays')
+        .upsert(payload)
+        .select()
+        .single();
       if (error) throw error;
       return json({ ok: true, birthday: data });
     }

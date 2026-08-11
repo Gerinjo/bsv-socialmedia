@@ -94,6 +94,28 @@ async function blobDataUri(blob: Blob, path: string): Promise<string> {
   return `data:${contentType(path, blob.type || 'application/octet-stream')};base64,${btoa(binary)}`;
 }
 
+async function personPhoto(admin: any, reference: string): Promise<string> {
+  if (reference.startsWith('https://')) {
+    const url = new URL(reference);
+    const allowed = url.protocol === 'https:'
+      && url.hostname === 'gerinjo.github.io'
+      && url.pathname.startsWith('/bsv-website/images/')
+      && !url.username
+      && !url.password;
+    if (!allowed) throw new Error('Die externe Spielerfoto-URL ist nicht freigegeben.');
+    const response = await fetch(url, { redirect: 'error' });
+    if (!response.ok) throw new Error(`Spielerfoto antwortet mit HTTP ${response.status}.`);
+    const blob = await response.blob();
+    if (!blob.type.startsWith('image/')) throw new Error('Die Spielerfoto-URL liefert kein Bild.');
+    if (blob.size > 10 * 1024 * 1024) throw new Error('Das Spielerfoto ist größer als 10 MB.');
+    return blobDataUri(blob, url.pathname);
+  }
+
+  const { data, error } = await admin.storage.from(bucket).download(reference);
+  if (error) throw new Error(`Spielerfoto konnte nicht geladen werden: ${error.message}`);
+  return blobDataUri(data, reference);
+}
+
 let cachedImageAssets: Promise<{ logo: string; sparkasseLogo: string; actionPlayer: string }> | undefined;
 function imageAssets(admin: any) {
   cachedImageAssets ??= (async () => {
@@ -126,9 +148,7 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
       let playerPhotoDataUri: string | undefined;
       const photoPath = String(body.birthday.photo_path ?? '').trim();
       if (photoPath) {
-        const { data, error } = await context.supabaseAdmin.storage.from(bucket).download(photoPath);
-        if (error) throw new Error(`Spielerfoto konnte nicht geladen werden: ${error.message}`);
-        playerPhotoDataUri = await blobDataUri(data, photoPath);
+        playerPhotoDataUri = await personPhoto(context.supabaseAdmin, photoPath);
       }
       svg = renderStorySvg({ type: body.type, match: birthdayInput(body.birthday), imageAssets: images, playerPhotoDataUri });
     } else {
