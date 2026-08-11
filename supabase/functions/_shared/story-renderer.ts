@@ -119,6 +119,7 @@ export function renderStorySvg({
   lineup = { players: [] },
   imageAssets,
   playerPhotoDataUri,
+  homeCrestDataUri,
   awayCrestDataUri,
 }: {
   type: StoryType;
@@ -126,19 +127,28 @@ export function renderStorySvg({
   lineup?: Lineup;
   imageAssets: { logo: string; sparkasseLogo: string; actionPlayer: string };
   playerPhotoDataUri?: string;
+  homeCrestDataUri?: string;
   awayCrestDataUri?: string;
 }): string {
   if (!STORY_TYPES.includes(type)) throw new Error(`Unbekannter Story-Typ: ${type}`);
 
   const resultLabel = text(match.resultLabel, outcome(match));
   const resultMessage = truncate(match.resultMessage, 52);
+  const homeCrestKey = teamCrestKey(match.homeTeam);
   const awayCrestKey = teamCrestKey(match.awayTeam);
+  const embeddedHomeCrestDataUri = homeCrestKey === 'bsv'
+    ? imageAssets.logo
+    : homeCrestKey === 'tsv-aach-linz'
+      ? `data:${STORY_ASSETS.tsvAachLinzCrest.mime};base64,${STORY_ASSETS.tsvAachLinzCrest.base64}`
+      : TRANSPARENT_PIXEL_DATA_URI;
   const embeddedAwayCrestDataUri = awayCrestKey === 'bsv'
     ? imageAssets.logo
     : awayCrestKey === 'tsv-aach-linz'
       ? `data:${STORY_ASSETS.tsvAachLinzCrest.mime};base64,${STORY_ASSETS.tsvAachLinzCrest.base64}`
       : TRANSPARENT_PIXEL_DATA_URI;
+  const resolvedHomeCrestDataUri = homeCrestDataUri || embeddedHomeCrestDataUri;
   const resolvedAwayCrestDataUri = awayCrestDataUri || embeddedAwayCrestDataUri;
+  const hasHomeCrest = Boolean(homeCrestDataUri || homeCrestKey);
   const hasAwayCrest = Boolean(awayCrestDataUri || awayCrestKey);
   const values = {
     LOGO_DATA_URI: imageAssets.logo,
@@ -146,13 +156,16 @@ export function renderStorySvg({
     ACTION_PLAYER_DATA_URI: imageAssets.actionPlayer,
     HANDWRITTEN_FONT_DATA_URI: `data:${STORY_ASSETS.captureFont.mime};base64,${STORY_ASSETS.captureFont.base64}`,
     PLAYER_PHOTO_DATA_URI: playerPhotoDataUri || imageAssets.actionPlayer,
+    HOME_CREST_DATA_URI: resolvedHomeCrestDataUri,
+    HOME_CREST_OPACITY: hasHomeCrest ? 1 : 0,
     AWAY_CREST_DATA_URI: resolvedAwayCrestDataUri,
     AWAY_CREST_OPACITY: hasAwayCrest ? 1 : 0,
-    AWAY_TEAM_Y: hasAwayCrest ? 383 : 344,
-    DETAIL_DIVIDER_Y: hasAwayCrest ? 414 : 395,
+    DUEL_MARK_OPACITY: hasHomeCrest && hasAwayCrest ? 1 : 0.3,
     KICKER: type === 'announcement' ? 'MATCHDAY' : type === 'lineup' ? 'MATCHDAY · STARTELF' : 'ABPFIFF · ERGEBNIS',
     HOME_TEAM: truncate(displayTeamName(match.homeTeam), 32),
+    HOME_TEAM_SIZE: fittedSize(displayTeamName(match.homeTeam), 44, 36, 24),
     AWAY_TEAM: truncate(displayTeamName(match.awayTeam), 32),
+    AWAY_TEAM_SIZE: fittedSize(displayTeamName(match.awayTeam), 44, 36, 24),
     COMPETITION: truncate(match.competition, 36),
     DATE: text(match.date),
     TIME: text(match.time),

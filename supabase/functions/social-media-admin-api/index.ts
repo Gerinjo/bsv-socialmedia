@@ -193,14 +193,27 @@ async function freshClubUrls(admin: any, rows: any[]): Promise<any[]> {
 }
 
 async function rerenderUpcomingClubGames(admin: any, clubId: string) {
-  const { data: games, error: gamesError } = await admin
-    .from('social_games')
-    .select('id')
-    .eq('away_club_id', clubId)
-    .eq('enabled', true)
-    .gte('kickoff_at', new Date().toISOString());
-  if (gamesError) throw gamesError;
-  const gameIds = (games ?? []).map((game: any) => game.id);
+  const now = new Date().toISOString();
+  const [homeGames, awayGames] = await Promise.all([
+    admin
+      .from('social_games')
+      .select('id')
+      .eq('home_club_id', clubId)
+      .eq('enabled', true)
+      .gte('kickoff_at', now),
+    admin
+      .from('social_games')
+      .select('id')
+      .eq('away_club_id', clubId)
+      .eq('enabled', true)
+      .gte('kickoff_at', now),
+  ]);
+  if (homeGames.error) throw homeGames.error;
+  if (awayGames.error) throw awayGames.error;
+  const gameIds = [...new Set([
+    ...(homeGames.data ?? []).map((game: any) => game.id),
+    ...(awayGames.data ?? []).map((game: any) => game.id),
+  ])];
   if (!gameIds.length) return null;
   const { error } = await admin
     .from('social_story_jobs')

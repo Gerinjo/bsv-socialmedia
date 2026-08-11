@@ -21,6 +21,10 @@ type GameJob = {
     result_label: string | null;
     result_message: string | null;
     lineup: { players?: unknown[]; formation?: string; approvedAt?: string } | null;
+    home_club: {
+      crest_status: 'missing' | 'needs_review' | 'approved' | 'rejected';
+      crest_transparent_path: string | null;
+    } | null;
     away_club: {
       crest_status: 'missing' | 'needs_review' | 'approved' | 'rejected';
       crest_transparent_path: string | null;
@@ -89,6 +93,9 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
           id, source_match_id, home_team, away_team, competition, venue,
           kickoff_at, home_score, away_score, result_label, result_message,
           lineup, enabled,
+          home_club:social_clubs!social_games_home_club_id_fkey(
+            crest_status, crest_transparent_path
+          ),
           away_club:social_clubs!social_games_away_club_id_fkey(
             crest_status, crest_transparent_path
           )

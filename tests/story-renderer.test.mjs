@@ -38,15 +38,18 @@ test('Gastwappen werden für bekannte Vereinsnamen zugeordnet', () => {
   assert.equal(teamCrestKey('Unbekannter Gegner'), undefined);
 });
 
-test('bekanntes Gastwappen wird in die Spielankündigung eingebettet', async () => {
+test('Heim- und Gastwappen bilden in der Spielankündigung ein diagonales Duell', async () => {
   const svg = await renderStorySvg({
     rootDir,
     type: 'announcement',
     match: { ...match, awayTeam: 'TSV Aach-Linz 2' },
   });
   assert.match(svg, /tsv-aach-linz|data:image\/png;base64,/);
-  assert.match(svg, /opacity="1"/);
-  assert.match(svg, /y="383"/);
+  assert.match(svg, /font-size="44" class="team">BSV Nordstern/);
+  assert.match(svg, /x="320" y="156" width="150" height="150"/);
+  assert.match(svg, /x="550" y="218" width="135" height="135"/);
+  assert.match(svg, /M519 174 461 371/);
+  assert.doesNotMatch(svg, />GEGEN</);
 });
 
 test('Story-SVG verwendet den abgekürzten SG-Mannschaftsnamen', async () => {

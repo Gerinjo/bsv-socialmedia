@@ -51,6 +51,7 @@ function gameInput(game: Record<string, unknown>) {
     minute: '2-digit',
   }).format(kickoff);
   const lineup = (game.lineup ?? {}) as { formation?: string; players?: unknown[] };
+  const homeClub = (game.home_club ?? {}) as { crest_status?: string; crest_transparent_path?: string };
   const awayClub = (game.away_club ?? {}) as { crest_status?: string; crest_transparent_path?: string };
 
   return {
@@ -67,6 +68,7 @@ function gameInput(game: Record<string, unknown>) {
       awayScore: game.away_score,
       resultLabel: game.result_label,
       resultMessage: game.result_message,
+      homeCrestPath: homeClub.crest_status === 'approved' ? homeClub.crest_transparent_path : null,
       awayCrestPath: awayClub.crest_status === 'approved' ? awayClub.crest_transparent_path : null,
     },
     lineup,
@@ -165,15 +167,18 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
     } else {
       if (!body.game) return json({ error: 'game_missing' }, 400);
       const input = gameInput(body.game);
+      const homeCrestPath = String(input.match.homeCrestPath ?? '').trim();
       const awayCrestPath = String(input.match.awayCrestPath ?? '').trim();
-      const awayCrestDataUri = awayCrestPath
-        ? await clubCrest(context.supabaseAdmin, awayCrestPath)
-        : undefined;
+      const [homeCrestDataUri, awayCrestDataUri] = await Promise.all([
+        homeCrestPath ? clubCrest(context.supabaseAdmin, homeCrestPath) : undefined,
+        awayCrestPath ? clubCrest(context.supabaseAdmin, awayCrestPath) : undefined,
+      ]);
       svg = renderStorySvg({
         type: body.type,
         match: input.match,
         lineup: input.lineup,
         imageAssets: images,
+        homeCrestDataUri,
         awayCrestDataUri,
       });
     }

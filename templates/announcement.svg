@@ -64,26 +64,25 @@
     <image href="{{ACTION_PLAYER_DATA_URI}}" x="520" y="-70" width="390" height="693" opacity=".09" clip-path="url(#matchCardClip)"/>
     <text x="468" y="72" text-anchor="middle" fill="#164f32" font-size="28" class="handwritten">{{COMPETITION}}</text>
 
-    <text x="468" y="177" text-anchor="middle" fill="#10251a" font-size="48" class="team">{{HOME_TEAM}}</text>
-    <g transform="translate(398 213)">
-      <rect width="140" height="58" rx="29" fill="#092f20"/>
-      <text x="70" y="39" text-anchor="middle" fill="#ffffff" font-size="18" class="caps">GEGEN</text>
-    </g>
-    <image href="{{AWAY_CREST_DATA_URI}}" x="430" y="281" width="76" height="76" preserveAspectRatio="xMidYMid meet" opacity="{{AWAY_CREST_OPACITY}}"/>
-    <text x="468" y="{{AWAY_TEAM_Y}}" text-anchor="middle" fill="#10251a" font-size="48" class="team">{{AWAY_TEAM}}</text>
+    <text x="58" y="142" fill="#10251a" font-size="{{HOME_TEAM_SIZE}}" class="team">{{HOME_TEAM}}</text>
+    <image href="{{HOME_CREST_DATA_URI}}" x="320" y="156" width="150" height="150" preserveAspectRatio="xMidYMid meet" opacity="{{HOME_CREST_OPACITY}}"/>
+    <path d="M519 174 461 371" fill="none" stroke="#164f32" stroke-width="18" stroke-linecap="round" opacity="{{DUEL_MARK_OPACITY}}"/>
+    <path d="M527 178 469 375" fill="none" stroke="#91c82f" stroke-width="6" stroke-linecap="round" opacity="{{DUEL_MARK_OPACITY}}"/>
+    <image href="{{AWAY_CREST_DATA_URI}}" x="550" y="218" width="135" height="135" preserveAspectRatio="xMidYMid meet" opacity="{{AWAY_CREST_OPACITY}}"/>
+    <text x="878" y="398" text-anchor="end" fill="#10251a" font-size="{{AWAY_TEAM_SIZE}}" class="team">{{AWAY_TEAM}}</text>
 
-    <line x1="58" y1="{{DETAIL_DIVIDER_Y}}" x2="878" y2="{{DETAIL_DIVIDER_Y}}" stroke="#cbd8ce" stroke-width="3" stroke-linecap="round"/>
-    <g transform="translate(58 432)">
+    <line x1="58" y1="426" x2="878" y2="426" stroke="#cbd8ce" stroke-width="3" stroke-linecap="round"/>
+    <g transform="translate(58 444)">
       <rect width="410" height="104" rx="34" fill="#ffffff"/>
       <text x="28" y="42" fill="#6c7b71" font-size="16" class="caps">DATUM</text>
       <text x="28" y="78" fill="#164f32" font-size="29" class="team">{{DATE}}</text>
     </g>
-    <g transform="translate(488 432)">
+    <g transform="translate(488 444)">
       <rect width="390" height="104" rx="34" fill="#ffffff"/>
       <text x="362" y="42" text-anchor="end" fill="#6c7b71" font-size="16" class="caps">ANPFIFF</text>
       <text x="362" y="78" text-anchor="end" fill="#164f32" font-size="29" class="team">{{TIME}}</text>
     </g>
-    <text x="468" y="576" text-anchor="middle" fill="#6c7b71" font-size="22" class="sans" font-weight="800">{{VENUE}}</text>
+    <text x="468" y="590" text-anchor="middle" fill="#6c7b71" font-size="22" class="sans" font-weight="800">{{VENUE}}</text>
   </g>
 
   <image href="{{SPARKASSE_LOGO_DATA_URI}}" x="150" y="1328" width="780" height="320" preserveAspectRatio="xMidYMid meet"/>
