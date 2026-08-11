@@ -1,4 +1,5 @@
 import { withSupabase } from 'npm:@supabase/server@1.4.1';
+import { runtimeConfig } from '../_shared/config.ts';
 
 const corsHeaders = {
   'access-control-allow-origin': '*',
@@ -16,6 +17,40 @@ function required(value: unknown, label: string): string {
   const normalized = String(value ?? '').trim();
   if (!normalized) throw new Error(`${label} fehlt.`);
   return normalized;
+}
+
+async function runWorker(): Promise<Record<string, unknown>> {
+  if (!runtimeConfig.supabaseUrl || !runtimeConfig.workerApiKey) {
+    throw new Error('Die automatische Vorschau ist nicht konfiguriert.');
+  }
+  const response = await fetch(`${runtimeConfig.supabaseUrl}/functions/v1/social-media-worker`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      apikey: runtimeConfig.workerApiKey,
+    },
+    body: JSON.stringify({ trigger: 'admin-save', requested_at: new Date().toISOString() }),
+  });
+  const payload = await response.json() as Record<string, unknown>;
+  if (!response.ok) throw new Error(String(payload.error ?? `Vorschau-Worker antwortet mit HTTP ${response.status}.`));
+  return payload;
+}
+
+async function renderGameJobNow(admin: any, gameId: string, storyType: 'announcement' | 'lineup' | 'result') {
+  const { error } = await admin
+    .from('social_story_jobs')
+    .update({
+      status: 'pending',
+      due_at: new Date().toISOString(),
+      attempts: 0,
+      claimed_at: null,
+      last_error: null,
+    })
+    .eq('game_id', gameId)
+    .eq('story_type', storyType)
+    .in('status', ['pending', 'preview_ready', 'failed', 'needs_input', 'skipped']);
+  if (error) throw error;
+  return runWorker();
 }
 
 async function freshPreviewUrls(admin: any, rows: any[]): Promise<any[]> {
@@ -123,7 +158,8 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       if (body.id) payload.id = body.id;
       const { data, error } = await context.supabaseAdmin.from('social_games').upsert(payload).select().single();
       if (error) throw error;
-      return json({ ok: true, game: data });
+      const automation = await renderGameJobNow(context.supabaseAdmin, data.id, 'announcement');
+      return json({ ok: true, game: data, automation });
     }
 
     if (action === 'save_lineup') {
@@ -142,12 +178,8 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .eq('id', required(body.gameId, 'Spiel-ID'));
       if (error) throw error;
       if (body.approved) {
-        await context.supabaseAdmin
-          .from('social_story_jobs')
-          .update({ status: 'pending', due_at: new Date().toISOString(), last_error: null })
-          .eq('game_id', body.gameId)
-          .eq('story_type', 'lineup')
-          .in('status', ['needs_input', 'failed']);
+        const automation = await renderGameJobNow(context.supabaseAdmin, body.gameId, 'lineup');
+        return json({ ok: true, automation });
       }
       return json({ ok: true });
     }
@@ -158,6 +190,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       if (!Number.isInteger(homeScore) || homeScore < 0 || !Number.isInteger(awayScore) || awayScore < 0) {
         throw new Error('Das Ergebnis muss aus zwei nicht-negativen ganzen Zahlen bestehen.');
       }
+      const gameId = required(body.gameId, 'Spiel-ID');
       const { error } = await context.supabaseAdmin
         .from('social_games')
         .update({
@@ -167,9 +200,10 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
           result_message: String(body.resultMessage ?? '').trim() || null,
           status: 'finished',
         })
-        .eq('id', required(body.gameId, 'Spiel-ID'));
+        .eq('id', gameId);
       if (error) throw error;
-      return json({ ok: true });
+      const automation = await renderGameJobNow(context.supabaseAdmin, gameId, 'result');
+      return json({ ok: true, automation });
     }
 
     if (action === 'save_birthday') {
@@ -210,7 +244,31 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .select()
         .single();
       if (error) throw error;
-      return json({ ok: true, birthday: data });
+      const { data: nextJob, error: nextJobError } = await context.supabaseAdmin
+        .from('social_birthday_jobs')
+        .select('id')
+        .eq('birthday_id', data.id)
+        .in('status', ['pending', 'preview_ready', 'failed', 'needs_input', 'skipped'])
+        .order('due_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (nextJobError) throw nextJobError;
+      let automation: Record<string, unknown> | null = null;
+      if (nextJob) {
+        const { error: queueError } = await context.supabaseAdmin
+          .from('social_birthday_jobs')
+          .update({
+            status: 'pending',
+            due_at: new Date().toISOString(),
+            attempts: 0,
+            claimed_at: null,
+            last_error: null,
+          })
+          .eq('id', nextJob.id);
+        if (queueError) throw queueError;
+        automation = await runWorker();
+      }
+      return json({ ok: true, birthday: data, automation });
     }
 
     if (action === 'retry_job') {
@@ -220,7 +278,8 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .update({ status: 'pending', due_at: new Date().toISOString(), attempts: 0, last_error: null })
         .eq('id', required(body.jobId, 'Job-ID'));
       if (error) throw error;
-      return json({ ok: true });
+      const automation = await runWorker();
+      return json({ ok: true, automation });
     }
 
     return json({ error: 'unknown_action' }, 400);

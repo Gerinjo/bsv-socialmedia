@@ -100,7 +100,7 @@
       const response = await fetch(apiUrl,{method,headers:{authorization:'Bearer '+session.access_token,apikey:'sb_publishable_a3DnmtbBycRR4mWV4Jmz-w_RJobGli9','content-type':'application/json'},body:body?JSON.stringify(body):undefined});
       const payload = await response.json(); if(!response.ok){const error=new Error(payload.error||'Fehler');error.payload=payload;throw error} return payload;
     }
-    function jobHtml(job,kind){return '<span class="job"><span class="tag '+esc(job.status)+'">'+esc(job.story_type||'Geburtstag')+' · '+esc(job.status)+'</span>'+(job.media_url?'<a href="'+esc(job.media_url)+'" target="_blank">Vorschau</a>':'')+'<button class="ghost retry" data-kind="'+kind+'" data-id="'+esc(job.id)+'">Neu</button></span>'}
+    function jobHtml(job,kind){const labels={pending:'wird automatisch erstellt',rendering:'wird gerade erstellt',preview_ready:'Vorschau fertig',published:'veröffentlicht',failed:'Fehler',needs_input:'Angaben fehlen',skipped:'übersprungen'};const retry=job.status==='failed'?'<button class="ghost retry" data-kind="'+kind+'" data-id="'+esc(job.id)+'">Erneut versuchen</button>':'';return '<span class="job"><span class="tag '+esc(job.status)+'">'+esc(job.story_type||'Geburtstag')+' · '+esc(labels[job.status]||job.status)+'</span>'+(job.media_url?'<a href="'+esc(job.media_url)+'" target="_blank">Vorschau öffnen</a>':'')+retry+'</span>'}
     function gameHtml(game){
       const players=((game.lineup&&game.lineup.players)||[]).map(p=>String(p.number||'')+', '+String(p.name||'')).join('\n');
       const meta=[new Date(game.kickoff_at).toLocaleString('de-DE'),game.competition,game.venue].filter(Boolean).join(' · ');
