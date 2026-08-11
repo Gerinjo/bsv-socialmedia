@@ -46,9 +46,9 @@ test('Heim- und Gastwappen bilden in der Spielankündigung ein diagonales Duell'
   });
   assert.match(svg, /tsv-aach-linz|data:image\/png;base64,/);
   assert.match(svg, /font-size="44" class="team">BSV Nordstern/);
-  assert.match(svg, /x="320" y="156" width="150" height="150"/);
-  assert.match(svg, /x="550" y="218" width="135" height="135"/);
-  assert.match(svg, /M519 174 461 371/);
+  assert.match(svg, /x="318" y="156" width="140" height="140"/);
+  assert.match(svg, /x="490" y="218" width="140" height="140"/);
+  assert.match(svg, /x1="468" y1="175" x2="468" y2="375" transform="rotate\(15 468 275\)" stroke="#111111" stroke-width="6"/);
   assert.doesNotMatch(svg, />GEGEN</);
 });
 

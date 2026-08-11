@@ -65,10 +65,9 @@
     <text x="468" y="72" text-anchor="middle" fill="#164f32" font-size="28" class="handwritten">{{COMPETITION}}</text>
 
     <text x="58" y="142" fill="#10251a" font-size="{{HOME_TEAM_SIZE}}" class="team">{{HOME_TEAM}}</text>
-    <image href="{{HOME_CREST_DATA_URI}}" x="320" y="156" width="150" height="150" preserveAspectRatio="xMidYMid meet" opacity="{{HOME_CREST_OPACITY}}"/>
-    <path d="M519 174 461 371" fill="none" stroke="#164f32" stroke-width="18" stroke-linecap="round" opacity="{{DUEL_MARK_OPACITY}}"/>
-    <path d="M527 178 469 375" fill="none" stroke="#91c82f" stroke-width="6" stroke-linecap="round" opacity="{{DUEL_MARK_OPACITY}}"/>
-    <image href="{{AWAY_CREST_DATA_URI}}" x="550" y="218" width="135" height="135" preserveAspectRatio="xMidYMid meet" opacity="{{AWAY_CREST_OPACITY}}"/>
+    <image href="{{HOME_CREST_DATA_URI}}" x="318" y="156" width="140" height="140" preserveAspectRatio="xMidYMid meet" opacity="{{HOME_CREST_OPACITY}}"/>
+    <line x1="468" y1="175" x2="468" y2="375" transform="rotate(15 468 275)" stroke="#111111" stroke-width="6" stroke-linecap="round" opacity="{{DUEL_MARK_OPACITY}}"/>
+    <image href="{{AWAY_CREST_DATA_URI}}" x="490" y="218" width="140" height="140" preserveAspectRatio="xMidYMid meet" opacity="{{AWAY_CREST_OPACITY}}"/>
     <text x="878" y="398" text-anchor="end" fill="#10251a" font-size="{{AWAY_TEAM_SIZE}}" class="team">{{AWAY_TEAM}}</text>
 
     <line x1="58" y1="426" x2="878" y2="426" stroke="#cbd8ce" stroke-width="3" stroke-linecap="round"/>
