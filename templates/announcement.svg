@@ -62,8 +62,7 @@
     <rect x="16" y="22" width="936" height="596" rx="54" fill="#071f16" opacity=".32"/>
     <rect width="936" height="596" rx="54" fill="#f4f1e8"/>
     <image href="{{ACTION_PLAYER_DATA_URI}}" x="520" y="-70" width="390" height="693" opacity=".09" clip-path="url(#matchCardClip)"/>
-    <rect x="36" y="36" width="256" height="46" rx="23" fill="#dce9df"/>
-    <text x="164" y="67" text-anchor="middle" fill="#164f32" font-size="17" class="caps">{{COMPETITION}}</text>
+    <text x="468" y="72" text-anchor="middle" fill="#164f32" font-size="28" class="handwritten">{{COMPETITION}}</text>
 
     <text x="468" y="177" text-anchor="middle" fill="#10251a" font-size="48" class="team">{{HOME_TEAM}}</text>
     <g transform="translate(398 213)">
@@ -89,5 +88,5 @@
   <image href="{{SPARKASSE_LOGO_DATA_URI}}" x="150" y="1328" width="780" height="320" preserveAspectRatio="xMidYMid meet"/>
 
   <text x="72" y="1780" fill="#ffffff" font-size="34" class="handwritten" letter-spacing="1px">#aufgehtsgrün</text>
-  <text x="1008" y="1780" text-anchor="end" fill="#ffffff" font-size="20" class="sans" font-weight="900">bsvnordstern.de</text>
+  <text x="1008" y="1780" text-anchor="end" fill="#ffffff" font-size="26" class="handwritten">bsvnordstern.de</text>
 </svg>
