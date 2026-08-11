@@ -69,9 +69,10 @@
       <rect width="140" height="58" rx="29" fill="#092f20"/>
       <text x="70" y="39" text-anchor="middle" fill="#ffffff" font-size="18" class="caps">GEGEN</text>
     </g>
-    <text x="468" y="344" text-anchor="middle" fill="#10251a" font-size="48" class="team">{{AWAY_TEAM}}</text>
+    <image href="{{AWAY_CREST_DATA_URI}}" x="430" y="281" width="76" height="76" preserveAspectRatio="xMidYMid meet" opacity="{{AWAY_CREST_OPACITY}}"/>
+    <text x="468" y="{{AWAY_TEAM_Y}}" text-anchor="middle" fill="#10251a" font-size="48" class="team">{{AWAY_TEAM}}</text>
 
-    <line x1="58" y1="395" x2="878" y2="395" stroke="#cbd8ce" stroke-width="3" stroke-linecap="round"/>
+    <line x1="58" y1="{{DETAIL_DIVIDER_Y}}" x2="878" y2="{{DETAIL_DIVIDER_Y}}" stroke="#cbd8ce" stroke-width="3" stroke-linecap="round"/>
     <g transform="translate(58 432)">
       <rect width="410" height="104" rx="34" fill="#ffffff"/>
       <text x="28" y="42" fill="#6c7b71" font-size="16" class="caps">DATUM</text>

@@ -17,6 +17,7 @@ const binaryFiles = {
   notoSansRegular: ['brand/fonts/NotoSans-Regular.ttf', 'font/ttf'],
   notoSansBlack: ['brand/fonts/NotoSans-Black.ttf', 'font/ttf'],
   notoSerifItalic: ['brand/fonts/NotoSerif-Italic.ttf', 'font/ttf'],
+  tsvAachLinzCrest: ['brand/logos/opponents/tsv-aach-linz.png', 'image/png'],
 };
 
 const templates = Object.fromEntries(await Promise.all(

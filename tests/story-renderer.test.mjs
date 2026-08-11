@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { displayTeamName, fillTemplate, renderStorySvg, xmlEscape } from '../src/story-renderer.mjs';
+import { displayTeamName, fillTemplate, renderStorySvg, teamCrestKey, xmlEscape } from '../src/story-renderer.mjs';
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const match = {
@@ -29,6 +29,24 @@ test('lange SG-Mannschaftsnamen werden nur im Bild abgekürzt', () => {
   const fullName = 'SG Nordstern Radolfzell/Öhningen-Gaienhofen/Bankholzen-Moos';
   assert.equal(displayTeamName(fullName), 'SG Nordstern Radolfzell / Höri');
   assert.equal(displayTeamName(`${fullName} 2`), 'SG Nordstern Radolfzell / Höri 2');
+});
+
+test('Gastwappen werden für bekannte Vereinsnamen zugeordnet', () => {
+  assert.equal(teamCrestKey('TSV Aach-Linz 2'), 'tsv-aach-linz');
+  assert.equal(teamCrestKey('TSV Aach Linz II'), 'tsv-aach-linz');
+  assert.equal(teamCrestKey('SG Nordstern Radolfzell/Öhningen-Gaienhofen/Bankholzen-Moos'), 'bsv');
+  assert.equal(teamCrestKey('Unbekannter Gegner'), undefined);
+});
+
+test('bekanntes Gastwappen wird in die Spielankündigung eingebettet', async () => {
+  const svg = await renderStorySvg({
+    rootDir,
+    type: 'announcement',
+    match: { ...match, awayTeam: 'TSV Aach-Linz 2' },
+  });
+  assert.match(svg, /tsv-aach-linz|data:image\/png;base64,/);
+  assert.match(svg, /opacity="1"/);
+  assert.match(svg, /y="383"/);
 });
 
 test('Story-SVG verwendet den abgekürzten SG-Mannschaftsnamen', async () => {

@@ -11,6 +11,8 @@ const TEAM_DISPLAY_NAMES = new Map([
   ],
 ]);
 
+const TRANSPARENT_PIXEL_DATA_URI = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+
 const MIME_TYPES = new Map([
   ['.gif', 'image/gif'],
   ['.jpg', 'image/jpeg'],
@@ -67,6 +69,17 @@ export function displayTeamName(value) {
   return normalized;
 }
 
+export function teamCrestKey(value) {
+  const normalized = String(value ?? '')
+    .trim()
+    .toLocaleLowerCase('de-DE')
+    .replaceAll(/[^a-z0-9äöüß]+/g, ' ')
+    .replaceAll(/\s+/g, ' ');
+  if (normalized.includes('nordstern radolfzell')) return 'bsv';
+  if (normalized === 'tsv aach linz' || normalized.startsWith('tsv aach linz ')) return 'tsv-aach-linz';
+  return undefined;
+}
+
 function lineupRows(players = []) {
   const normalized = players.slice(0, 11);
   if (!normalized.length) {
@@ -109,13 +122,15 @@ export async function renderStorySvg({ rootDir, type, match, lineup = { players:
   const templatePath = resolve(rootDir, 'templates', `${type}.svg`);
   const logoPath = resolve(rootDir, 'brand/logos/bsv-nordstern.png');
   const sparkasseLogoPath = resolve(rootDir, 'brand/logos/sparkasse-hegau-bodensee-white.png');
+  const tsvAachLinzCrestPath = resolve(rootDir, 'brand/logos/opponents/tsv-aach-linz.png');
   const actionPlayerPath = resolve(rootDir, 'brand/graphics/footballer-action-v2.png');
   const handwrittenFontPath = resolve(rootDir, 'brand/fonts/Capture it.ttf');
   const playerPhotoPath = photoPath ?? actionPlayerPath;
-  const [template, logoDataUri, sparkasseLogoDataUri, actionPlayerDataUri, handwrittenFontDataUri, playerPhotoDataUri] = await Promise.all([
+  const [template, logoDataUri, sparkasseLogoDataUri, tsvAachLinzCrestDataUri, actionPlayerDataUri, handwrittenFontDataUri, playerPhotoDataUri] = await Promise.all([
     readFile(templatePath, 'utf8'),
     fileDataUri(logoPath),
     fileDataUri(sparkasseLogoPath),
+    fileDataUri(tsvAachLinzCrestPath),
     fileDataUri(actionPlayerPath),
     fileDataUri(handwrittenFontPath),
     fileDataUri(playerPhotoPath),
@@ -123,12 +138,23 @@ export async function renderStorySvg({ rootDir, type, match, lineup = { players:
 
   const resultLabel = text(match.resultLabel, outcome(match));
   const resultMessage = truncate(match.resultMessage, 52);
+  const awayCrestKey = teamCrestKey(match.awayTeam);
+  const awayCrestDataUri = awayCrestKey === 'bsv'
+    ? logoDataUri
+    : awayCrestKey === 'tsv-aach-linz'
+      ? tsvAachLinzCrestDataUri
+      : TRANSPARENT_PIXEL_DATA_URI;
+  const hasAwayCrest = Boolean(awayCrestKey);
   const values = {
     LOGO_DATA_URI: logoDataUri,
     SPARKASSE_LOGO_DATA_URI: sparkasseLogoDataUri,
     ACTION_PLAYER_DATA_URI: actionPlayerDataUri,
     HANDWRITTEN_FONT_DATA_URI: handwrittenFontDataUri,
     PLAYER_PHOTO_DATA_URI: playerPhotoDataUri,
+    AWAY_CREST_DATA_URI: awayCrestDataUri,
+    AWAY_CREST_OPACITY: hasAwayCrest ? 1 : 0,
+    AWAY_TEAM_Y: hasAwayCrest ? 383 : 344,
+    DETAIL_DIVIDER_Y: hasAwayCrest ? 414 : 395,
     KICKER: type === 'announcement' ? 'MATCHDAY' : type === 'lineup' ? 'MATCHDAY · STARTELF' : 'ABPFIFF · ERGEBNIS',
     HOME_TEAM: truncate(displayTeamName(match.homeTeam), 32),
     AWAY_TEAM: truncate(displayTeamName(match.awayTeam), 32),

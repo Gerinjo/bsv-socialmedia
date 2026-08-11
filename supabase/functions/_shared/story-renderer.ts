@@ -10,6 +10,8 @@ const TEAM_DISPLAY_NAMES = new Map([
   ],
 ]);
 
+const TRANSPARENT_PIXEL_DATA_URI = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+
 type StoryInput = Record<string, unknown>;
 type Lineup = { players?: Array<{ number?: string | number; name?: string }> };
 
@@ -62,6 +64,17 @@ function displayTeamName(value: unknown): string {
     }
   }
   return normalized;
+}
+
+function teamCrestKey(value: unknown): 'bsv' | 'tsv-aach-linz' | undefined {
+  const normalized = String(value ?? '')
+    .trim()
+    .toLocaleLowerCase('de-DE')
+    .replaceAll(/[^a-z0-9äöüß]+/g, ' ')
+    .replaceAll(/\s+/g, ' ');
+  if (normalized.includes('nordstern radolfzell')) return 'bsv';
+  if (normalized === 'tsv aach linz' || normalized.startsWith('tsv aach linz ')) return 'tsv-aach-linz';
+  return undefined;
 }
 
 function lineupRows(players: Lineup['players'] = []): string {
@@ -117,12 +130,23 @@ export function renderStorySvg({
 
   const resultLabel = text(match.resultLabel, outcome(match));
   const resultMessage = truncate(match.resultMessage, 52);
+  const awayCrestKey = teamCrestKey(match.awayTeam);
+  const awayCrestDataUri = awayCrestKey === 'bsv'
+    ? imageAssets.logo
+    : awayCrestKey === 'tsv-aach-linz'
+      ? `data:${STORY_ASSETS.tsvAachLinzCrest.mime};base64,${STORY_ASSETS.tsvAachLinzCrest.base64}`
+      : TRANSPARENT_PIXEL_DATA_URI;
+  const hasAwayCrest = Boolean(awayCrestKey);
   const values = {
     LOGO_DATA_URI: imageAssets.logo,
     SPARKASSE_LOGO_DATA_URI: imageAssets.sparkasseLogo,
     ACTION_PLAYER_DATA_URI: imageAssets.actionPlayer,
     HANDWRITTEN_FONT_DATA_URI: `data:${STORY_ASSETS.captureFont.mime};base64,${STORY_ASSETS.captureFont.base64}`,
     PLAYER_PHOTO_DATA_URI: playerPhotoDataUri || imageAssets.actionPlayer,
+    AWAY_CREST_DATA_URI: awayCrestDataUri,
+    AWAY_CREST_OPACITY: hasAwayCrest ? 1 : 0,
+    AWAY_TEAM_Y: hasAwayCrest ? 383 : 344,
+    DETAIL_DIVIDER_Y: hasAwayCrest ? 414 : 395,
     KICKER: type === 'announcement' ? 'MATCHDAY' : type === 'lineup' ? 'MATCHDAY · STARTELF' : 'ABPFIFF · ERGEBNIS',
     HOME_TEAM: truncate(displayTeamName(match.homeTeam), 32),
     AWAY_TEAM: truncate(displayTeamName(match.awayTeam), 32),
