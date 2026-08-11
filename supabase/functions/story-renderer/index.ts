@@ -76,9 +76,11 @@ function gameInput(game: Record<string, unknown>) {
 }
 
 function birthdayInput(birthday: Record<string, unknown>) {
+  const person = (birthday.person ?? {}) as { roles?: unknown };
   return {
     birthdayName: birthday.person_name,
     birthdayMessage: birthday.message,
+    birthdayRoles: person.roles,
   };
 }
 

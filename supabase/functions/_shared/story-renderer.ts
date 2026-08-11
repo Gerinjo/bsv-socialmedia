@@ -55,6 +55,14 @@ function truncate(value: unknown, maximum: number): string {
   return normalized.length > maximum ? `${normalized.slice(0, maximum - 1).trimEnd()}…` : normalized;
 }
 
+function birthdayRoleText(value: unknown): string {
+  const roles = Array.isArray(value) ? value : [value];
+  return [...new Set(roles
+    .map((role) => String(role ?? '').trim())
+    .filter((role) => role && role.toLocaleLowerCase('de-DE') !== 'vereinsmitglied'))]
+    .join(' · ');
+}
+
 function displayTeamName(value: unknown): string {
   const normalized = text(value);
   for (const [fullName, displayName] of TEAM_DISPLAY_NAMES) {
@@ -150,6 +158,7 @@ export function renderStorySvg({
   const resolvedAwayCrestDataUri = awayCrestDataUri || embeddedAwayCrestDataUri;
   const hasHomeCrest = Boolean(homeCrestDataUri || homeCrestKey);
   const hasAwayCrest = Boolean(awayCrestDataUri || awayCrestKey);
+  const birthdayRole = birthdayRoleText(match.birthdayRoles ?? match.birthdayRole);
   const values = {
     LOGO_DATA_URI: imageAssets.logo,
     SPARKASSE_LOGO_DATA_URI: imageAssets.sparkasseLogo,
@@ -181,6 +190,8 @@ export function renderStorySvg({
     RESULT_MESSAGE_SIZE: fittedSize(resultMessage, 40, 32, 38),
     BIRTHDAY_NAME: truncate(match.birthdayName, 28),
     BIRTHDAY_NAME_SIZE: fittedSize(match.birthdayName, 27, 21, 18),
+    BIRTHDAY_ROLE: birthdayRole.length > 34 ? `${birthdayRole.slice(0, 33).trimEnd()}…` : birthdayRole,
+    BIRTHDAY_ROLE_SIZE: birthdayRole.length > 18 ? 32 : 40,
     BIRTHDAY_MESSAGE: truncate(match.birthdayMessage, 54),
   };
 

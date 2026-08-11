@@ -262,7 +262,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .order('kickoff_at', { ascending: true }),
       context.supabaseAdmin
         .from('social_birthdays')
-        .select('*, person:social_people(id, display_name, source_photo_url, cutout_path, birth_date), jobs:social_birthday_jobs(*)')
+        .select('*, person:social_people(id, display_name, roles, source_photo_url, cutout_path, birth_date), jobs:social_birthday_jobs(*)')
         .order('birth_date', { ascending: true }),
       context.supabaseAdmin
         .from('social_teams')

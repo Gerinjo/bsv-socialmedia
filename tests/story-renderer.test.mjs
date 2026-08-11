@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { displayTeamName, fillTemplate, renderStorySvg, teamCrestKey, xmlEscape } from '../src/story-renderer.mjs';
+import { birthdayRoleText, displayTeamName, fillTemplate, renderStorySvg, teamCrestKey, xmlEscape } from '../src/story-renderer.mjs';
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const match = {
@@ -97,11 +97,22 @@ test('birthday rendert Namen, Glückwunsch und Spielerbild', async () => {
     type: 'birthday',
     match: {
       birthdayName: 'Max & Freunde',
+      birthdayRoles: ['Spieler:in', 'Vereinsmitglied'],
       birthdayMessage: 'Alles Gute vom ganzen Verein!',
     },
   });
   assert.match(svg, /Max &amp; Freunde/);
   assert.match(svg, /Alles Gute vom ganzen Verein!/);
+  assert.match(svg, /class="handwritten">Spieler:in<\/text>/);
+  assert.doesNotMatch(svg, /Vereinsmitglied/);
   assert.match(svg, /data:image\/png;base64,/);
   assert.doesNotMatch(svg, /\{\{[A-Z0-9_]+\}\}/);
+});
+
+test('Geburtstagsrollen lassen Vereinsmitglied weg und behalten Fachrollen', () => {
+  assert.equal(
+    birthdayRoleText(['Vereinsmitglied', 'Trainer', 'Co-Trainer', 'Trainer']),
+    'Trainer · Co-Trainer',
+  );
+  assert.equal(birthdayRoleText(['Vereinsmitglied']), '');
 });

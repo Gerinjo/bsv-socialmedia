@@ -44,6 +44,9 @@ type BirthdayJob = {
     message: string;
     photo_path: string | null;
     enabled: boolean;
+    person: {
+      roles: string[] | null;
+    } | null;
   };
 };
 
@@ -187,7 +190,10 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       .from('social_birthday_jobs')
       .select(`
         id, attempts, status,
-        birthday:social_birthdays!inner(id, person_name, birth_date, message, photo_path, enabled)
+        birthday:social_birthdays!inner(
+          id, person_name, birth_date, message, photo_path, enabled,
+          person:social_people(roles)
+        )
       `)
       .eq('status', 'pending')
       .lte('due_at', now)

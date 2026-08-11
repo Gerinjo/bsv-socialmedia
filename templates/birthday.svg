@@ -33,7 +33,8 @@
   <circle cx="982" cy="116" r="38" fill="#f4d638"/>
   <circle cx="982" cy="116" r="17" fill="#092f20"/>
 
-  <text x="540" y="278" text-anchor="middle" fill="#a8cbb4" font-size="{{BIRTHDAY_NAME_SIZE}}" class="caps">{{BIRTHDAY_NAME}}</text>
+  <text x="540" y="238" text-anchor="middle" fill="#a8cbb4" font-size="{{BIRTHDAY_NAME_SIZE}}" class="caps">{{BIRTHDAY_NAME}}</text>
+  <text x="540" y="296" text-anchor="middle" fill="#ffffff" font-size="{{BIRTHDAY_ROLE_SIZE}}" class="handwritten">{{BIRTHDAY_ROLE}}</text>
   <text x="540" y="430" text-anchor="middle" fill="#ffffff" font-size="150" class="headline">HAPPY</text>
   <text x="540" y="574" text-anchor="middle" fill="#91c82f" font-size="126" class="headline">BIRTHDAY</text>
 
