@@ -2,3 +2,9 @@ project_id = "bsv-socialmedia"
 
 [functions.social-media-worker]
 verify_jwt = false
+
+[functions.story-renderer]
+verify_jwt = false
+
+[functions.social-media-admin-api]
+verify_jwt = true

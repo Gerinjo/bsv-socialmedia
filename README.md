@@ -1,14 +1,15 @@
 # BSV Social Media
 
-Eigenständiges Projekt für die Gestaltung und spätere Automatisierung von Instagram-Stories des BSV Nordstern Radolfzell.
+Eigenständiges Projekt für die Gestaltung und Automatisierung von Instagram-Stories des BSV Nordstern Radolfzell.
 
 Der aktuelle Stand liefert:
 
 - ein aus der Website abgeleitetes Corporate Design,
 - editierbare Story-Vorlagen in 1080 × 1920 Pixel, einschließlich eines Geburtstagsmotivs,
-- einen lokalen Renderer für Spielankündigung, Aufstellung und Ergebnis,
+- einen lokalen und einen online betriebenen Renderer für Spielankündigung, Aufstellung, Ergebnis und Geburtstag,
 - Beispieldaten für die fussball.de-Spiel-ID `0316BRN2AC000000VS5489BTVU7GTVLE`,
-- eine vorbereitete Supabase-Struktur für Spiele und Story-Jobs,
+- eine aktive Supabase-Struktur mit Datenbank, privatem Storage, Edge Functions und Fünf-Minuten-Cron,
+- eine [private Admin-Oberfläche](https://bsv-story-automatik.jerome-ernsberger.chatgpt.site) für Spiele, Aufstellungen, Ergebnisse und Geburtstage,
 - einen zentralen, standardmäßig aktiven Testmodus.
 
 ## Vorschau
@@ -43,7 +44,17 @@ npm run render -- --type result --input examples/match.json
 npm run render -- --type birthday --input examples/birthday.json --photo bilder/spieler.png
 ```
 
-Für das Geburtstagsmotiv eignet sich ein freigestelltes PNG. Ohne `--photo` wird automatisch die neutrale Spieler-Silhouette verwendet.
+Für das Geburtstagsmotiv eignet sich ein freigestelltes PNG. Ohne `--photo` wird automatisch der freigestellte Action-Fußballer des Gestaltungssystems verwendet.
+
+## Online-Automatik
+
+Die private Admin-Oberfläche läuft unter:
+
+<https://bsv-story-automatik.jerome-ernsberger.chatgpt.site>
+
+Sie ist auf den Site-Eigentümer beschränkt. Supabase Cron startet den Worker alle fünf Minuten. Neue Spiele erzeugen automatisch Jobs für Ankündigung, Aufstellung und Ergebnis; Geburtstage erzeugen jährlich einen eigenen Job. Fällige Jobs werden aktuell als PNG gerendert und in einem privaten Storage-Bucket abgelegt. Über zeitlich begrenzte Links können die Vorschauen in der Admin-Oberfläche kontrolliert werden.
+
+Vor dem ersten Login muss die URL einmal in Supabase unter **Authentication → URL Configuration** als Site URL und Redirect URL eingetragen werden. Nach dem ersten Login wird die konkrete Supabase-Benutzer-ID einmalig in `social_admins` freigeschaltet.
 
 ## Sicherheitsstandard
 
@@ -68,10 +79,10 @@ tests/                  automatisierte Tests
 
 ## Nächste Betriebs-Schritte
 
-1. Eigenes privates Supabase-Projekt für Social Media anlegen.
-2. Data API für das Schema `public` aktivieren, Migration anwenden und den privaten Storage-Bucket für Entwürfe prüfen.
-3. Instagram Professional Account mit der Meta Graph API verbinden.
-4. Einen geeigneten JPEG-Renderdienst anbinden.
+1. Admin-URL in Supabase Auth erlauben, einmal anmelden und den Benutzer freischalten.
+2. Spiele, Aufstellungen, Ergebnisse und Geburtstage im Testbetrieb pflegen und Vorschauen prüfen.
+3. Optional einen verlässlichen fussball.de-Importadapter ergänzen; aktuell werden Spieldaten bewusst manuell bestätigt.
+4. Instagram Professional Account mit der Meta Graph API verbinden und den PNG/JPEG-Publishingpfad testen.
 5. Erst nach erfolgreichen Freigabetests `INSTAGRAM_TEST_MODE=false` setzen.
 
 Die Details stehen in [docs/automation-architecture.md](docs/automation-architecture.md).

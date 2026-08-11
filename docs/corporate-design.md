@@ -94,7 +94,7 @@ Enthält Endstand, Mannschaften und einen kurzen, sachlichen Ergebnissatz. Sieg,
 
 ### Geburtstag
 
-Das Geburtstagsmotiv stellt die Person mit einer freigestellten Aufnahme zentral in den Vordergrund. Name und Glückwunsch bleiben innerhalb der Sicherheitszone. Es wird manuell erstellt und veröffentlicht; Geburtstag, Namensschreibweise, Bildrecht und Einwilligung müssen vorher bestätigt sein. Ohne freigegebenes Foto dient die neutrale Silhouette ausschließlich als Entwurfsplatzhalter.
+Das Geburtstagsmotiv stellt die Person mit einer freigestellten Aufnahme zentral in den Vordergrund. Name und Glückwunsch bleiben innerhalb der Sicherheitszone. Es wird manuell geprüft; Geburtstag, Namensschreibweise, Bildrecht und Einwilligung müssen vorher bestätigt sein. Ohne freigegebenes Foto wird für den Entwurf der freigestellte Action-Fußballer des Gestaltungssystems verwendet.
 
 ## 8. Bildsprache
 

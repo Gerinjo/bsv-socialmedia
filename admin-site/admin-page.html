@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BSV Story-Automatik</title>
+  <style>
+    :root{color-scheme:dark;--bg:#071f16;--panel:#0d3525;--soft:#164f32;--mint:#a8cbb4;--lime:#91c82f;--yellow:#f4d638;--paper:#f4f1e8;--ink:#10251a}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 90% 0,#164f32,var(--bg) 46%);font:16px/1.45 Inter,Arial,sans-serif;color:#fff;min-height:100vh}
+    header,main{width:min(1180px,calc(100% - 32px));margin:auto}header{padding:38px 0 22px;display:flex;align-items:center;gap:18px}header img{width:70px;height:70px}h1{margin:0;font-size:clamp(28px,5vw,54px)}header p{margin:3px 0;color:var(--mint)}
+    .panel{background:rgba(13,53,37,.92);border:1px solid rgba(168,203,180,.2);border-radius:24px;padding:22px;margin:0 0 22px;box-shadow:0 18px 60px rgba(0,0,0,.22)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}.wide{grid-column:1/-1}h2,h3{margin:0 0 14px}label{display:grid;gap:6px;color:var(--mint);font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+    input,textarea,select{width:100%;border:0;border-radius:13px;padding:12px 14px;background:var(--paper);color:var(--ink);font:inherit}textarea{min-height:100px;resize:vertical}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.fields .wide{grid-column:1/-1}
+    button{border:0;border-radius:999px;padding:11px 18px;background:var(--lime);color:var(--ink);font-weight:900;cursor:pointer}button.secondary{background:var(--mint)}button.ghost{background:rgba(255,255,255,.1);color:#fff}button:disabled{opacity:.55;cursor:wait}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.status{padding:12px 16px;border-radius:14px;background:rgba(255,255,255,.08);margin-bottom:20px}.error{background:#7c2525}.ok{background:var(--soft)}
+    .card{border-radius:18px;background:rgba(255,255,255,.07);padding:18px;margin-top:12px}.meta{color:var(--mint);font-size:14px}.jobs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.job{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.2);border-radius:12px;padding:8px 10px}.job a{color:var(--yellow)}.tag{font-size:12px;text-transform:uppercase;font-weight:900;letter-spacing:.06em}.preview_ready{color:var(--lime)}.failed{color:#ff9f9f}.needs_input{color:var(--yellow)}
+    .hidden{display:none!important}.login{max-width:520px;margin:5vh auto}.small{font-size:13px;color:var(--mint)}@media(max-width:620px){.fields{grid-template-columns:1fr}.fields .wide{grid-column:auto}}
+  </style>
+</head>
+<body>
+  <header><img src="__BSV_LOGO_DATA_URL__" alt="BSV"><div><h1>Story-Automatik</h1><p>BSV Nordstern Radolfzell · sicherer Testbetrieb</p></div></header>
+  <main>
+    <section id="login" class="panel login">
+      <h2>Anmelden</h2><p>Du erhältst einen sicheren Anmeldelink per E-Mail.</p>
+      <form id="loginForm" class="toolbar"><input id="email" type="email" placeholder="name@beispiel.de" required><button>Anmeldelink senden</button></form>
+      <p class="small">Beim ersten Login muss dein Konto einmalig als Administrator freigeschaltet werden.</p>
+    </section>
+    <section id="app" class="hidden">
+      <div class="toolbar" style="justify-content:space-between;margin-bottom:16px"><strong id="identity"></strong><div class="toolbar"><button id="reload" class="secondary">Aktualisieren</button><button id="logout" class="ghost">Abmelden</button></div></div>
+      <div id="status" class="status">Lade Daten …</div>
+      <div class="grid">
+        <section class="panel">
+          <h2>Neues Spiel</h2>
+          <form id="gameForm" class="fields">
+            <label>Heimteam<input name="homeTeam" value="BSV Nordstern Radolfzell" required></label>
+            <label>Auswärtsteam<input name="awayTeam" required></label>
+            <label>Wettbewerb<input name="competition"></label><label>Spielort<input name="venue" value="Nordstern-Sportplatz"></label>
+            <label>Anstoß<input name="kickoffAt" type="datetime-local" required></label><label>fussball.de Spiel-ID<input name="sourceMatchId"></label>
+            <label class="wide">fussball.de URL<input name="sourceUrl" type="url"></label>
+            <div class="wide"><button>Spiel speichern</button></div>
+          </form>
+        </section>
+        <section class="panel">
+          <h2>Geburtstag</h2>
+          <form id="birthdayForm" class="fields">
+            <label>Name<input name="personName" required></label><label>Geburtsdatum<input name="birthDate" type="date" required></label>
+            <label>Uhrzeit<input name="publishTime" type="time" value="09:00" required></label><label>Foto-Pfad (optional)<input name="photoPath"></label>
+            <label class="wide">Glückwunsch<textarea name="message">Wir wünschen dir einen großartigen Geburtstag!</textarea></label>
+            <div class="wide"><button>Geburtstag speichern</button></div>
+          </form>
+        </section>
+      </div>
+      <section class="panel"><h2>Spiele</h2><div id="games"></div></section>
+      <section class="panel"><h2>Geburtstage</h2><div id="birthdays"></div></section>
+    </section>
+  </main>
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
+    const supabase = createClient('https://maejihwjzxkmthjavgnx.supabase.co', 'sb_publishable_a3DnmtbBycRR4mWV4Jmz-w_RJobGli9');
+    const apiUrl = 'https://maejihwjzxkmthjavgnx.supabase.co/functions/v1/social-media-admin-api';
+    const login = document.querySelector('#login'); const app = document.querySelector('#app'); const status = document.querySelector('#status');
+    const esc = value => String(value ?? '').replace(/[&<>\"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[char]));
+    const formObject = form => Object.fromEntries(new FormData(form).entries());
+    function show(message, error=false){status.textContent=message;status.className='status '+(error?'error':'ok')}
+    async function api(method='GET', body){
+      const { data:{ session } } = await supabase.auth.getSession(); if(!session) throw new Error('Nicht angemeldet.');
+      const response = await fetch(apiUrl,{method,headers:{authorization:'Bearer '+session.access_token,apikey:'sb_publishable_a3DnmtbBycRR4mWV4Jmz-w_RJobGli9','content-type':'application/json'},body:body?JSON.stringify(body):undefined});
+      const payload = await response.json(); if(!response.ok){const error=new Error(payload.error||'Fehler');error.payload=payload;throw error} return payload;
+    }
+    function jobHtml(job,kind){return '<span class="job"><span class="tag '+esc(job.status)+'">'+esc(job.story_type||'Geburtstag')+' · '+esc(job.status)+'</span>'+(job.media_url?'<a href="'+esc(job.media_url)+'" target="_blank">Vorschau</a>':'')+'<button class="ghost retry" data-kind="'+kind+'" data-id="'+esc(job.id)+'">Neu</button></span>'}
+    function gameHtml(game){
+      const players=((game.lineup&&game.lineup.players)||[]).map(p=>String(p.number||'')+', '+String(p.name||'')).join('\n');
+      return '<article class="card"><h3>'+esc(game.home_team)+' – '+esc(game.away_team)+'</h3><div class="meta">'+esc(new Date(game.kickoff_at).toLocaleString('de-DE'))+' · '+esc(game.competition||'')+' · '+esc(game.venue||'')+'</div><div class="jobs">'+(game.jobs||[]).map(j=>jobHtml(j,'game')).join('')+'</div><div class="fields"><form class="lineupForm fields wide" data-id="'+esc(game.id)+'"><label>Formation<input name="formation" value="'+esc((game.lineup&&game.lineup.formation)||'4-4-2')+'"></label><label>Freigabe<select name="approved"><option value="false">Entwurf</option><option value="true" '+(game.lineup&&game.lineup.approvedAt?'selected':'')+'>Freigegeben</option></select></label><label class="wide">Aufstellung: Nummer, Name<textarea name="players">'+esc(players)+'</textarea></label><div><button class="secondary">Aufstellung speichern</button></div></form><form class="resultForm fields wide" data-id="'+esc(game.id)+'"><label>Heim<input name="homeScore" type="number" min="0" value="'+esc(game.home_score??'')+'" required></label><label>Gast<input name="awayScore" type="number" min="0" value="'+esc(game.away_score??'')+'" required></label><label>Überschrift<input name="resultLabel" value="'+esc(game.result_label||'')+'"></label><label>Ergebnisspruch<input name="resultMessage" value="'+esc(game.result_message||'')+'"></label><div><button class="secondary">Ergebnis speichern</button></div></form></div></article>';
+    }
+    function birthdayHtml(item){return '<article class="card"><h3>'+esc(item.person_name)+'</h3><div class="meta">'+esc(new Date(item.birth_date+'T12:00:00').toLocaleDateString('de-DE'))+' · '+esc(item.publish_time)+'</div><p>'+esc(item.message)+'</p><div class="jobs">'+(item.jobs||[]).map(j=>jobHtml(j,'birthday')).join('')+'</div></article>'}
+    async function load(){try{show('Daten werden geladen …');const data=await api();document.querySelector('#identity').textContent=data.user.email+' · Testmodus';document.querySelector('#games').innerHTML=data.games.length?data.games.map(gameHtml).join(''):'Noch keine Spiele.';document.querySelector('#birthdays').innerHTML=data.birthdays.length?data.birthdays.map(birthdayHtml).join(''):'Noch keine Geburtstage.';wireForms();show('Aktuell · es wird nichts bei Instagram veröffentlicht.')}catch(error){if(error.payload&&error.payload.error==='not_authorized'){show('Konto noch nicht freigeschaltet. Benutzer-ID: '+error.payload.userId,true)}else show(error.message,true)}}
+    function parsePlayers(value){return value.split('\n').map(line=>line.trim()).filter(Boolean).map(line=>{const parts=line.split(',');return {number:(parts.shift()||'').trim(),name:parts.join(',').trim()}}).filter(p=>p.number&&p.name)}
+    function wireForms(){
+      document.querySelectorAll('.retry').forEach(button=>button.onclick=async()=>{await api('POST',{action:'retry_job',kind:button.dataset.kind,jobId:button.dataset.id});await load()});
+      document.querySelectorAll('.lineupForm').forEach(form=>form.onsubmit=async event=>{event.preventDefault();const data=formObject(form);await api('POST',{action:'save_lineup',gameId:form.dataset.id,formation:data.formation,approved:data.approved==='true',players:parsePlayers(data.players)});await load()});
+      document.querySelectorAll('.resultForm').forEach(form=>form.onsubmit=async event=>{event.preventDefault();const data=formObject(form);await api('POST',{action:'save_result',gameId:form.dataset.id,...data});await load()});
+    }
+    document.querySelector('#loginForm').onsubmit=async event=>{event.preventDefault();const email=document.querySelector('#email').value;const {error}=await supabase.auth.signInWithOtp({email,options:{emailRedirectTo:location.href.split('#')[0]}});document.querySelector('#loginForm').insertAdjacentHTML('afterend','<p>'+(error?esc(error.message):'Anmeldelink wurde verschickt.')+'</p>')};
+    document.querySelector('#gameForm').onsubmit=async event=>{event.preventDefault();const data=formObject(event.target);await api('POST',{action:'save_game',source:data.sourceUrl?'fussball.de':'manual',...data});event.target.reset();await load()};
+    document.querySelector('#birthdayForm').onsubmit=async event=>{event.preventDefault();const data=formObject(event.target);await api('POST',{action:'save_birthday',...data});event.target.reset();await load()};
+    document.querySelector('#reload').onclick=load;document.querySelector('#logout').onclick=async()=>{await supabase.auth.signOut();location.reload()};
+    const {data:{session}}=await supabase.auth.getSession();if(session){login.classList.add('hidden');app.classList.remove('hidden');load()}else{login.classList.remove('hidden');app.classList.add('hidden')}
+  </script>
+</body></html>

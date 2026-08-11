@@ -29,7 +29,7 @@ tracked game / admin input
           └─ Produktiv → JPEG rendern → Instagram Graph API → Status speichern
 ```
 
-Ein separates Supabase-Projekt wird empfohlen. Dadurch bleiben Datenbankmigrationen, Storage, Secrets und Cron-Jobs unabhängig von der Website.
+Das separate Supabase-Projekt `maejihwjzxkmthjavgnx` ist eingerichtet. Dadurch bleiben Datenbankmigrationen, Storage, Secrets und Cron-Jobs unabhängig von der Vereinswebsite.
 
 ## Datenquelle fussball.de
 
@@ -76,7 +76,9 @@ Die vorbereitete Migration aktiviert RLS auf allen Tabellen. `anon` und `authent
 
 Bei neuen Supabase-Projekten kann die Data API zunächst deaktiviert sein. Da der Worker über den Supabase-Client auf `public.social_games` und `public.social_story_jobs` zugreift, muss im Dashboard die Data API für das Schema `public` aktiviert werden. RLS, entzogene Rollenrechte und der Secret Key schützen die Tabellen weiterhin; Browser-Clients erhalten keinen Zugriff.
 
-Der Cron-Job wird nach dem Deployment im Supabase Dashboard unter **Integrations → Cron** angelegt und ruft den Worker alle fünf Minuten per HTTP auf. Das Secret wird nicht in eine Migration geschrieben.
+Der aktive Cron-Job `bsv-social-worker` ruft den Worker alle fünf Minuten per HTTP auf. Ein eigenes zufälliges Cron-Geheimnis liegt verschlüsselt in Supabase Vault und zusätzlich als Edge Secret vor. Die Migration enthält nur den Namen des Vault-Eintrags, nie den Geheimniswert. Direkte Aufrufe ohne dieses Geheimnis werden abgewiesen.
+
+Die Admin-Oberfläche läuft owner-only unter <https://bsv-story-automatik.jerome-ernsberger.chatgpt.site>. Sie verwendet ausschließlich den öffentlichen Publishable Key im Browser. Schreib- und Lesezugriffe laufen über die JWT-geschützte Edge Function `social-media-admin-api`, die zusätzlich die Mitgliedschaft in `social_admins` prüft.
 
 Aktuelle Referenzen:
 
@@ -98,6 +100,7 @@ Secrets:
 - `INSTAGRAM_TEST_MODE`
 - `STORY_RENDER_ENDPOINT`
 - `STORY_RENDER_SECRET`
+- `SOCIAL_WORKER_CRON_SECRET`
 
 ## Betrieb und Freigabe
 
@@ -110,13 +113,13 @@ Secrets:
 
 ## Ausbauphasen
 
-### Phase 1 · Jetzt
+### Phase 1 · Abgeschlossen
 
 Corporate Design, SVG-Vorlagen, lokaler JPEG-Renderer, Datenmodell und sicherer Worker-Rahmen.
 
-### Phase 2 · Daten und Vorschau
+### Phase 2 · Abgeschlossen im Testbetrieb
 
-Eigenes Supabase-Projekt, Admin-Eingabe, fussball.de-Adapter, Storage und Freigabeoberfläche.
+Eigenes Supabase-Projekt, Admin-Eingabe, Online-Renderer, privater Storage, Cron und Freigabeoberfläche. Der fussball.de-Adapter bleibt optional; Daten werden derzeit manuell bestätigt.
 
 ### Phase 3 · Meta-Testkonto
 
