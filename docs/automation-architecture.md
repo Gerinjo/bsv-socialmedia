@@ -128,3 +128,20 @@ Instagram-App verbinden, Vorschau-URLs prüfen, begrenzte Testveröffentlichunge
 ### Phase 4 · Produktiv
 
 Einzelne Mannschaften freischalten, Fehleralarme ergänzen und erst danach weitere Teams übernehmen.
+## Vereinswappen-Verzeichnis
+
+Beim Speichern eines Spiels werden Heim- und Gastverein über normalisierte Aliase dem
+Wappen-Verzeichnis `social_clubs` zugeordnet. Unbekannte Gegner werden automatisch mit
+dem Status `missing` angelegt. Schreibweisen wie `TSV Aach-Linz 2`, `TSV Aach Linz II`
+und `TSV Aach-Linz` können dadurch dasselbe Vereinswappen verwenden.
+
+Originale und freigestellte PNGs liegen getrennt im privaten Storage-Bucket unter
+`club-crests/<verein>/`. Die Browserroutine entfernt ausschließlich Hintergrundpixel,
+die mit dem äußeren Bildrand verbunden sind. Gleichfarbige Flächen innerhalb eines
+geschlossenen Wappens bleiben erhalten. Bereits vorhandene Alphakanäle werden nicht neu
+berechnet.
+
+Jede neue Freistellung erhält zunächst `needs_review`. Erst nach der Kontrolle auf dem
+Schachbrett-Hintergrund und der manuellen Freigabe verwendet der Story-Renderer die
+Datei. Quellenlink, Erkennungswerte und Freigabeinformationen bleiben am Vereinsdatensatz
+gespeichert.

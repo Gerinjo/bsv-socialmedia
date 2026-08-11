@@ -1,5 +1,6 @@
 import { withSupabase } from 'npm:@supabase/server@1.4.1';
 import { runtimeConfig } from '../_shared/config.ts';
+import { CLUB_CREST_SEEDS } from '../_shared/club-crest-seeds.ts';
 
 const corsHeaders = {
   'access-control-allow-origin': '*',
@@ -8,6 +9,12 @@ const corsHeaders = {
 };
 const bucket = 'social-story-previews';
 const homeVenues = new Set(['Hauptplatz', 'Nebenplatz', 'Kunstrasenplatz 1', 'Kunstrasenplatz 2']);
+const crestStatuses = new Set(['missing', 'needs_review', 'approved', 'rejected']);
+const originalMimeTypes = new Map([
+  ['image/jpeg', 'jpg'],
+  ['image/png', 'png'],
+  ['image/webp', 'webp'],
+]);
 
 function json(data: unknown, status = 200): Response {
   return Response.json(data, { status, headers: corsHeaders });
@@ -17,6 +24,112 @@ function required(value: unknown, label: string): string {
   const normalized = String(value ?? '').trim();
   if (!normalized) throw new Error(`${label} fehlt.`);
   return normalized;
+}
+
+function normalizeClubName(value: unknown): string {
+  return required(value, 'Vereinsname')
+    .normalize('NFD')
+    .replaceAll(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('de-DE')
+    .replaceAll('ß', 'ss')
+    .replaceAll(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replaceAll(/\s+/g, ' ')
+    .replace(/\s+(?:ii|iii|iv|[2-9])$/i, '');
+}
+
+function canonicalClubName(value: unknown): string {
+  return required(value, 'Vereinsname').replace(/\s+(?:II|III|IV|[2-9])$/i, '').trim();
+}
+
+function clubSlug(normalizedName: string): string {
+  return normalizedName.replaceAll(' ', '-').replaceAll(/[^a-z0-9-]/g, '').slice(0, 72) || `verein-${crypto.randomUUID().slice(0, 8)}`;
+}
+
+function decodeBase64(value: string): Uint8Array {
+  const binary = atob(value);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+  return bytes;
+}
+
+function parseDataUrl(value: unknown, allowedMimeTypes: Set<string>, maximumBytes: number) {
+  const input = required(value, 'Bilddatei');
+  const match = /^data:([^;,]+);base64,([A-Za-z0-9+/=]+)$/.exec(input);
+  if (!match || !allowedMimeTypes.has(match[1])) throw new Error('Das Bildformat wird nicht unterstützt.');
+  const bytes = decodeBase64(match[2]);
+  if (!bytes.length || bytes.length > maximumBytes) throw new Error('Die Bilddatei ist leer oder zu groß.');
+  return { mime: match[1], bytes };
+}
+
+function validHttpUrl(value: unknown): string | null {
+  const input = String(value ?? '').trim();
+  if (!input) return null;
+  const url = new URL(input);
+  if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw new Error('Der Quellenlink ist ungültig.');
+  return url.toString();
+}
+
+function pngHasAlpha(bytes: Uint8Array): boolean {
+  const signature = [137, 80, 78, 71, 13, 10, 26, 10];
+  return bytes.length > 26
+    && signature.every((value, index) => bytes[index] === value)
+    && (bytes[25] === 4 || bytes[25] === 6);
+}
+
+async function ensureClub(admin: any, teamName: unknown) {
+  const alias = required(teamName, 'Vereinsname');
+  const normalizedAlias = normalizeClubName(alias);
+  const { data: knownAlias, error: aliasError } = await admin
+    .from('social_club_aliases')
+    .select('club_id')
+    .eq('normalized_alias', normalizedAlias)
+    .maybeSingle();
+  if (aliasError) throw aliasError;
+  if (knownAlias?.club_id) {
+    const { data: club, error } = await admin.from('social_clubs').select('*').eq('id', knownAlias.club_id).single();
+    if (error) throw error;
+    return club;
+  }
+
+  const canonicalName = canonicalClubName(alias);
+  const { data: club, error: clubError } = await admin
+    .from('social_clubs')
+    .upsert({
+      slug: clubSlug(normalizedAlias),
+      name: canonicalName,
+      normalized_name: normalizedAlias,
+      crest_status: 'missing',
+    }, { onConflict: 'normalized_name' })
+    .select('*')
+    .single();
+  if (clubError) throw clubError;
+  const { error: newAliasError } = await admin.from('social_club_aliases').upsert({
+    club_id: club.id,
+    alias,
+    normalized_alias: normalizedAlias,
+  }, { onConflict: 'normalized_alias' });
+  if (newAliasError) throw newAliasError;
+  return club;
+}
+
+let seedAssetsPromise: Promise<void> | undefined;
+function ensureSeedClubAssets(admin: any): Promise<void> {
+  seedAssetsPromise ??= (async () => {
+    const bytes = decodeBase64(CLUB_CREST_SEEDS.tsvAachLinz);
+    for (const path of [
+      'club-crests/tsv-aach-linz/original.png',
+      'club-crests/tsv-aach-linz/transparent.png',
+    ]) {
+      const { error } = await admin.storage.from(bucket).upload(path, bytes, {
+        contentType: 'image/png',
+        cacheControl: '604800',
+        upsert: true,
+      });
+      if (error) throw new Error(`Startwappen konnte nicht gespeichert werden: ${error.message}`);
+    }
+  })();
+  return seedAssetsPromise;
 }
 
 async function runWorker(): Promise<Record<string, unknown>> {
@@ -64,6 +177,47 @@ async function freshPreviewUrls(admin: any, rows: any[]): Promise<any[]> {
   }));
 }
 
+async function signedAssetUrl(admin: any, path: string | null): Promise<string | null> {
+  if (!path) return null;
+  const { data, error } = await admin.storage.from(bucket).createSignedUrl(path, 60 * 60 * 24 * 7);
+  if (error) return null;
+  return data?.signedUrl ?? null;
+}
+
+async function freshClubUrls(admin: any, rows: any[]): Promise<any[]> {
+  return await Promise.all(rows.map(async (club) => ({
+    ...club,
+    crest_original_url: await signedAssetUrl(admin, club.crest_original_path),
+    crest_transparent_url: await signedAssetUrl(admin, club.crest_transparent_path),
+  })));
+}
+
+async function rerenderUpcomingClubGames(admin: any, clubId: string) {
+  const { data: games, error: gamesError } = await admin
+    .from('social_games')
+    .select('id')
+    .eq('away_club_id', clubId)
+    .eq('enabled', true)
+    .gte('kickoff_at', new Date().toISOString());
+  if (gamesError) throw gamesError;
+  const gameIds = (games ?? []).map((game: any) => game.id);
+  if (!gameIds.length) return null;
+  const { error } = await admin
+    .from('social_story_jobs')
+    .update({
+      status: 'pending',
+      due_at: new Date().toISOString(),
+      attempts: 0,
+      claimed_at: null,
+      last_error: null,
+    })
+    .in('game_id', gameIds)
+    .eq('story_type', 'announcement')
+    .in('status', ['pending', 'preview_ready', 'failed', 'needs_input', 'skipped']);
+  if (error) throw error;
+  return runWorker();
+}
+
 const securedHandler = withSupabase({ auth: 'user' }, async (request, context) => {
   const claims = context.userClaims as Record<string, unknown> | undefined;
   const userId = String(claims?.sub ?? claims?.id ?? '');
@@ -81,11 +235,13 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
   }
 
   if (request.method === 'GET') {
+    await ensureSeedClubAssets(context.supabaseAdmin);
     const [
       { data: games, error: gamesError },
       { data: birthdays, error: birthdaysError },
       { data: teams, error: teamsError },
       { data: people, error: peopleError },
+      { data: clubs, error: clubsError },
     ] = await Promise.all([
       context.supabaseAdmin
         .from('social_games')
@@ -105,8 +261,12 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .select('id, slug, display_name, roles, source_photo_url, cutout_path, birth_date')
         .eq('active', true)
         .order('display_name', { ascending: true }),
+      context.supabaseAdmin
+        .from('social_clubs')
+        .select('*, aliases:social_club_aliases(alias, normalized_alias)')
+        .order('name', { ascending: true }),
     ]);
-    const readError = gamesError ?? birthdaysError ?? teamsError ?? peopleError;
+    const readError = gamesError ?? birthdaysError ?? teamsError ?? peopleError ?? clubsError;
     if (readError) return json({ error: readError.message }, 500);
     return json({
       user: { userId, email },
@@ -114,6 +274,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       venues: [...homeVenues],
       teams: teams ?? [],
       people: people ?? [],
+      clubs: await freshClubUrls(context.supabaseAdmin, clubs ?? []),
       games: await freshPreviewUrls(context.supabaseAdmin, games ?? []),
       birthdays: await freshPreviewUrls(context.supabaseAdmin, birthdays ?? []),
     });
@@ -142,6 +303,10 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       if (!isHome && body.matchType !== 'away') throw new Error('Bitte Heim- oder Auswärtsspiel auswählen.');
       const venue = isHome ? required(body.venue, 'Sportplatz') : null;
       if (venue && !homeVenues.has(venue)) throw new Error('Der ausgewählte Sportplatz ist ungültig.');
+      const [bsvClub, opponentClub] = await Promise.all([
+        ensureClub(context.supabaseAdmin, team.name),
+        ensureClub(context.supabaseAdmin, opponent),
+      ]);
       const payload: Record<string, unknown> = {
         source: body.source === 'fussball.de' ? 'fussball.de' : 'manual',
         source_match_id: String(body.sourceMatchId ?? '').trim() || null,
@@ -150,6 +315,8 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         is_home: isHome,
         home_team: isHome ? team.name : opponent,
         away_team: isHome ? opponent : team.name,
+        home_club_id: isHome ? bsvClub.id : opponentClub.id,
+        away_club_id: isHome ? opponentClub.id : bsvClub.id,
         competition: team.competition,
         venue,
         kickoff_at: kickoff.toISOString(),
@@ -286,6 +453,106 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         automation = await runWorker();
       }
       return json({ ok: true, birthday: data, automation });
+    }
+
+    if (action === 'save_club_crest') {
+      const clubId = required(body.clubId, 'Verein');
+      const { data: club, error: clubError } = await context.supabaseAdmin
+        .from('social_clubs')
+        .select('id, slug')
+        .eq('id', clubId)
+        .maybeSingle();
+      if (clubError) throw clubError;
+      if (!club) throw new Error('Der Verein wurde nicht gefunden.');
+
+      const original = parseDataUrl(body.originalDataUrl, new Set(originalMimeTypes.keys()), 5 * 1024 * 1024);
+      const transparent = parseDataUrl(body.transparentDataUrl, new Set(['image/png']), 5 * 1024 * 1024);
+      if (!pngHasAlpha(transparent.bytes)) throw new Error('Die freigestellte Datei muss ein PNG mit Alphakanal sein.');
+      const originalExtension = originalMimeTypes.get(original.mime)!;
+      const originalPath = `club-crests/${club.slug}/original.${originalExtension}`;
+      const transparentPath = `club-crests/${club.slug}/transparent.png`;
+      const sourceUrl = validHttpUrl(body.sourceUrl);
+      const processing = body.processing && typeof body.processing === 'object' ? body.processing : {};
+      const confidenceValue = Number(processing.confidence);
+      const confidence = Number.isFinite(confidenceValue)
+        ? Math.max(0, Math.min(1, confidenceValue))
+        : null;
+      const metadata = {
+        method: String(processing.method ?? 'edge-connected-background').slice(0, 80),
+        reviewRecommended: Boolean(processing.reviewRecommended),
+        borderDominance: Number(processing.borderDominance) || 0,
+        transparentBorderRatio: Number(processing.transparentBorderRatio) || 0,
+        removedRatio: Number(processing.removedRatio) || 0,
+        backgroundColor: processing.backgroundColor ?? null,
+        threshold: Number(processing.threshold) || null,
+        width: Number(processing.width) || null,
+        height: Number(processing.height) || null,
+        reviewed: false,
+      };
+
+      const [{ error: originalError }, { error: transparentError }] = await Promise.all([
+        context.supabaseAdmin.storage.from(bucket).upload(originalPath, original.bytes, {
+          contentType: original.mime,
+          cacheControl: '604800',
+          upsert: true,
+        }),
+        context.supabaseAdmin.storage.from(bucket).upload(transparentPath, transparent.bytes, {
+          contentType: 'image/png',
+          cacheControl: '604800',
+          upsert: true,
+        }),
+      ]);
+      if (originalError) throw new Error(`Original konnte nicht gespeichert werden: ${originalError.message}`);
+      if (transparentError) throw new Error(`Freistellung konnte nicht gespeichert werden: ${transparentError.message}`);
+
+      const { data, error } = await context.supabaseAdmin
+        .from('social_clubs')
+        .update({
+          crest_source_url: sourceUrl,
+          crest_original_path: originalPath,
+          crest_transparent_path: transparentPath,
+          crest_status: 'needs_review',
+          transparency_confidence: confidence,
+          transparency_metadata: metadata,
+          last_checked_at: new Date().toISOString(),
+        })
+        .eq('id', clubId)
+        .select()
+        .single();
+      if (error) throw error;
+      return json({ ok: true, club: data });
+    }
+
+    if (action === 'approve_club_crest' || action === 'reject_club_crest') {
+      const clubId = required(body.clubId, 'Verein');
+      const { data: club, error: clubError } = await context.supabaseAdmin
+        .from('social_clubs')
+        .select('id, crest_transparent_path, transparency_metadata')
+        .eq('id', clubId)
+        .maybeSingle();
+      if (clubError) throw clubError;
+      if (!club) throw new Error('Der Verein wurde nicht gefunden.');
+      const nextStatus = action === 'approve_club_crest' ? 'approved' : 'rejected';
+      if (!crestStatuses.has(nextStatus)) throw new Error('Ungültiger Prüfstatus.');
+      if (nextStatus === 'approved' && !club.crest_transparent_path) throw new Error('Es gibt noch keine Freistellung zum Freigeben.');
+      const { error } = await context.supabaseAdmin
+        .from('social_clubs')
+        .update({
+          crest_status: nextStatus,
+          last_checked_at: new Date().toISOString(),
+          transparency_metadata: {
+            ...(club.transparency_metadata ?? {}),
+            reviewed: true,
+            reviewedAt: new Date().toISOString(),
+            reviewedBy: userId,
+          },
+        })
+        .eq('id', clubId);
+      if (error) throw error;
+      const automation = nextStatus === 'approved'
+        ? await rerenderUpcomingClubGames(context.supabaseAdmin, clubId)
+        : null;
+      return json({ ok: true, status: nextStatus, automation });
     }
 
     if (action === 'retry_job') {

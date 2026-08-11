@@ -21,6 +21,10 @@ type GameJob = {
     result_label: string | null;
     result_message: string | null;
     lineup: { players?: unknown[]; formation?: string; approvedAt?: string } | null;
+    away_club: {
+      crest_status: 'missing' | 'needs_review' | 'approved' | 'rejected';
+      crest_transparent_path: string | null;
+    } | null;
     enabled: boolean;
   };
 };
@@ -84,7 +88,10 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
         game:social_games!inner(
           id, source_match_id, home_team, away_team, competition, venue,
           kickoff_at, home_score, away_score, result_label, result_message,
-          lineup, enabled
+          lineup, enabled,
+          away_club:social_clubs!social_games_away_club_id_fkey(
+            crest_status, crest_transparent_path
+          )
         )
       `)
       .eq('status', 'pending')

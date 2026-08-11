@@ -51,6 +51,7 @@ function gameInput(game: Record<string, unknown>) {
     minute: '2-digit',
   }).format(kickoff);
   const lineup = (game.lineup ?? {}) as { formation?: string; players?: unknown[] };
+  const awayClub = (game.away_club ?? {}) as { crest_status?: string; crest_transparent_path?: string };
 
   return {
     match: {
@@ -66,6 +67,7 @@ function gameInput(game: Record<string, unknown>) {
       awayScore: game.away_score,
       resultLabel: game.result_label,
       resultMessage: game.result_message,
+      awayCrestPath: awayClub.crest_status === 'approved' ? awayClub.crest_transparent_path : null,
     },
     lineup,
   };
@@ -116,6 +118,15 @@ async function personPhoto(admin: any, reference: string): Promise<string> {
   return blobDataUri(data, reference);
 }
 
+async function clubCrest(admin: any, reference: string): Promise<string | undefined> {
+  if (!reference.startsWith('club-crests/') && reference !== 'assets/bsv-nordstern.png') {
+    throw new Error('Der Speicherpfad des Vereinswappens ist ungültig.');
+  }
+  const { data, error } = await admin.storage.from(bucket).download(reference);
+  if (error) return undefined;
+  return blobDataUri(data, reference);
+}
+
 let cachedImageAssets: Promise<{ logo: string; sparkasseLogo: string; actionPlayer: string }> | undefined;
 function imageAssets(admin: any) {
   cachedImageAssets ??= (async () => {
@@ -154,7 +165,17 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
     } else {
       if (!body.game) return json({ error: 'game_missing' }, 400);
       const input = gameInput(body.game);
-      svg = renderStorySvg({ type: body.type, match: input.match, lineup: input.lineup, imageAssets: images });
+      const awayCrestPath = String(input.match.awayCrestPath ?? '').trim();
+      const awayCrestDataUri = awayCrestPath
+        ? await clubCrest(context.supabaseAdmin, awayCrestPath)
+        : undefined;
+      svg = renderStorySvg({
+        type: body.type,
+        match: input.match,
+        lineup: input.lineup,
+        imageAssets: images,
+        awayCrestDataUri,
+      });
     }
 
     const renderer = new Resvg(svg, {

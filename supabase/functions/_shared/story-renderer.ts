@@ -119,31 +119,34 @@ export function renderStorySvg({
   lineup = { players: [] },
   imageAssets,
   playerPhotoDataUri,
+  awayCrestDataUri,
 }: {
   type: StoryType;
   match: StoryInput;
   lineup?: Lineup;
   imageAssets: { logo: string; sparkasseLogo: string; actionPlayer: string };
   playerPhotoDataUri?: string;
+  awayCrestDataUri?: string;
 }): string {
   if (!STORY_TYPES.includes(type)) throw new Error(`Unbekannter Story-Typ: ${type}`);
 
   const resultLabel = text(match.resultLabel, outcome(match));
   const resultMessage = truncate(match.resultMessage, 52);
   const awayCrestKey = teamCrestKey(match.awayTeam);
-  const awayCrestDataUri = awayCrestKey === 'bsv'
+  const embeddedAwayCrestDataUri = awayCrestKey === 'bsv'
     ? imageAssets.logo
     : awayCrestKey === 'tsv-aach-linz'
       ? `data:${STORY_ASSETS.tsvAachLinzCrest.mime};base64,${STORY_ASSETS.tsvAachLinzCrest.base64}`
       : TRANSPARENT_PIXEL_DATA_URI;
-  const hasAwayCrest = Boolean(awayCrestKey);
+  const resolvedAwayCrestDataUri = awayCrestDataUri || embeddedAwayCrestDataUri;
+  const hasAwayCrest = Boolean(awayCrestDataUri || awayCrestKey);
   const values = {
     LOGO_DATA_URI: imageAssets.logo,
     SPARKASSE_LOGO_DATA_URI: imageAssets.sparkasseLogo,
     ACTION_PLAYER_DATA_URI: imageAssets.actionPlayer,
     HANDWRITTEN_FONT_DATA_URI: `data:${STORY_ASSETS.captureFont.mime};base64,${STORY_ASSETS.captureFont.base64}`,
     PLAYER_PHOTO_DATA_URI: playerPhotoDataUri || imageAssets.actionPlayer,
-    AWAY_CREST_DATA_URI: awayCrestDataUri,
+    AWAY_CREST_DATA_URI: resolvedAwayCrestDataUri,
     AWAY_CREST_OPACITY: hasAwayCrest ? 1 : 0,
     AWAY_TEAM_Y: hasAwayCrest ? 383 : 344,
     DETAIL_DIVIDER_Y: hasAwayCrest ? 414 : 395,

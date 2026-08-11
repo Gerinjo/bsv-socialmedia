@@ -1,10 +1,10 @@
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 
 const logo = await readFile('assets/bsv-nordstern.png');
-const html = (await readFile('admin-page.html', 'utf8')).replace(
-  '__BSV_LOGO_DATA_URL__',
-  `data:image/png;base64,${logo.toString('base64')}`,
-);
+const crestCutout = await readFile('crest-cutout.js', 'utf8');
+const html = (await readFile('admin-page.html', 'utf8'))
+  .replace('__BSV_LOGO_DATA_URL__', `data:image/png;base64,${logo.toString('base64')}`)
+  .replace('__CREST_CUTOUT_SCRIPT__', crestCutout);
 const worker = `const html = ${JSON.stringify(html)};
 
 export default {
