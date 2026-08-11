@@ -4,6 +4,13 @@ import { extname, resolve } from 'node:path';
 
 export const STORY_TYPES = ['announcement', 'lineup', 'result', 'birthday'];
 
+const TEAM_DISPLAY_NAMES = new Map([
+  [
+    'SG Nordstern Radolfzell/Öhningen-Gaienhofen/Bankholzen-Moos',
+    'SG Nordstern Radolfzell / Höri',
+  ],
+]);
+
 const MIME_TYPES = new Map([
   ['.gif', 'image/gif'],
   ['.jpg', 'image/jpeg'],
@@ -47,6 +54,17 @@ function text(value, fallback = 'NOCH OFFEN') {
 function truncate(value, maximum) {
   const normalized = text(value);
   return normalized.length > maximum ? `${normalized.slice(0, maximum - 1).trimEnd()}…` : normalized;
+}
+
+export function displayTeamName(value) {
+  const normalized = text(value);
+  for (const [fullName, displayName] of TEAM_DISPLAY_NAMES) {
+    if (normalized === fullName) return displayName;
+    if (normalized.startsWith(`${fullName} `)) {
+      return `${displayName}${normalized.slice(fullName.length)}`;
+    }
+  }
+  return normalized;
 }
 
 function lineupRows(players = []) {
@@ -112,8 +130,8 @@ export async function renderStorySvg({ rootDir, type, match, lineup = { players:
     HANDWRITTEN_FONT_DATA_URI: handwrittenFontDataUri,
     PLAYER_PHOTO_DATA_URI: playerPhotoDataUri,
     KICKER: type === 'announcement' ? 'MATCHDAY' : type === 'lineup' ? 'MATCHDAY · STARTELF' : 'ABPFIFF · ERGEBNIS',
-    HOME_TEAM: truncate(match.homeTeam, 32),
-    AWAY_TEAM: truncate(match.awayTeam, 32),
+    HOME_TEAM: truncate(displayTeamName(match.homeTeam), 32),
+    AWAY_TEAM: truncate(displayTeamName(match.awayTeam), 32),
     COMPETITION: truncate(match.competition, 36),
     DATE: text(match.date),
     TIME: text(match.time),

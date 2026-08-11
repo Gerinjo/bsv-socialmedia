@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { fillTemplate, renderStorySvg, xmlEscape } from '../src/story-renderer.mjs';
+import { displayTeamName, fillTemplate, renderStorySvg, xmlEscape } from '../src/story-renderer.mjs';
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const match = {
@@ -23,6 +23,23 @@ test('XML-Inhalte werden sicher escaped', () => {
 
 test('fehlende Template-Werte führen zu einem Fehler', () => {
   assert.throws(() => fillTemplate('{{MISSING}}', {}), /Fehlender Template-Wert/);
+});
+
+test('lange SG-Mannschaftsnamen werden nur im Bild abgekürzt', () => {
+  const fullName = 'SG Nordstern Radolfzell/Öhningen-Gaienhofen/Bankholzen-Moos';
+  assert.equal(displayTeamName(fullName), 'SG Nordstern Radolfzell / Höri');
+  assert.equal(displayTeamName(`${fullName} 2`), 'SG Nordstern Radolfzell / Höri 2');
+});
+
+test('Story-SVG verwendet den abgekürzten SG-Mannschaftsnamen', async () => {
+  const fullName = 'SG Nordstern Radolfzell/Öhningen-Gaienhofen/Bankholzen-Moos';
+  const svg = await renderStorySvg({
+    rootDir,
+    type: 'announcement',
+    match: { ...match, homeTeam: fullName },
+  });
+  assert.match(svg, /SG Nordstern Radolfzell \/ Höri/);
+  assert.doesNotMatch(svg, /Öhningen-Gaienhofen/);
 });
 
 for (const type of ['announcement', 'lineup', 'result']) {

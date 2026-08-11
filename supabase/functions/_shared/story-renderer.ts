@@ -3,6 +3,13 @@ import { STORY_ASSETS, STORY_TEMPLATES } from './story-assets.generated.ts';
 export const STORY_TYPES = ['announcement', 'lineup', 'result', 'birthday'] as const;
 export type StoryType = typeof STORY_TYPES[number];
 
+const TEAM_DISPLAY_NAMES = new Map([
+  [
+    'SG Nordstern Radolfzell/Öhningen-Gaienhofen/Bankholzen-Moos',
+    'SG Nordstern Radolfzell / Höri',
+  ],
+]);
+
 type StoryInput = Record<string, unknown>;
 type Lineup = { players?: Array<{ number?: string | number; name?: string }> };
 
@@ -44,6 +51,17 @@ function text(value: unknown, fallback = 'NOCH OFFEN'): string {
 function truncate(value: unknown, maximum: number): string {
   const normalized = text(value);
   return normalized.length > maximum ? `${normalized.slice(0, maximum - 1).trimEnd()}…` : normalized;
+}
+
+function displayTeamName(value: unknown): string {
+  const normalized = text(value);
+  for (const [fullName, displayName] of TEAM_DISPLAY_NAMES) {
+    if (normalized === fullName) return displayName;
+    if (normalized.startsWith(`${fullName} `)) {
+      return `${displayName}${normalized.slice(fullName.length)}`;
+    }
+  }
+  return normalized;
 }
 
 function lineupRows(players: Lineup['players'] = []): string {
@@ -106,8 +124,8 @@ export function renderStorySvg({
     HANDWRITTEN_FONT_DATA_URI: `data:${STORY_ASSETS.captureFont.mime};base64,${STORY_ASSETS.captureFont.base64}`,
     PLAYER_PHOTO_DATA_URI: playerPhotoDataUri || imageAssets.actionPlayer,
     KICKER: type === 'announcement' ? 'MATCHDAY' : type === 'lineup' ? 'MATCHDAY · STARTELF' : 'ABPFIFF · ERGEBNIS',
-    HOME_TEAM: truncate(match.homeTeam, 32),
-    AWAY_TEAM: truncate(match.awayTeam, 32),
+    HOME_TEAM: truncate(displayTeamName(match.homeTeam), 32),
+    AWAY_TEAM: truncate(displayTeamName(match.awayTeam), 32),
     COMPETITION: truncate(match.competition, 36),
     DATE: text(match.date),
     TIME: text(match.time),
