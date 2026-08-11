@@ -121,6 +121,14 @@ function fittedSize(value: unknown, regularSize: number, compactSize: number, th
   return text(value).length > threshold ? compactSize : regularSize;
 }
 
+function resultLabelSize(value: unknown): number {
+  const length = text(value).length;
+  if (length <= 10) return 126;
+  if (length <= 18) return 84;
+  if (length <= 26) return 60;
+  return 48;
+}
+
 export function renderStorySvg({
   type,
   match,
@@ -184,8 +192,8 @@ export function renderStorySvg({
     PLAYER_ROWS: lineupRows(lineup.players),
     HOME_SCORE: Number.isFinite(Number(match.homeScore)) ? Number(match.homeScore) : '–',
     AWAY_SCORE: Number.isFinite(Number(match.awayScore)) ? Number(match.awayScore) : '–',
-    RESULT_LABEL: resultLabel,
-    RESULT_LABEL_SIZE: fittedSize(resultLabel, 126, 98, 10),
+    RESULT_LABEL: truncate(resultLabel, 32),
+    RESULT_LABEL_SIZE: resultLabelSize(resultLabel),
     RESULT_MESSAGE: resultMessage,
     RESULT_MESSAGE_SIZE: fittedSize(resultMessage, 40, 32, 38),
     BIRTHDAY_NAME: truncate(match.birthdayName, 28),

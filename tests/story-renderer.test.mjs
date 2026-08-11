@@ -91,6 +91,32 @@ test('Startelf verwendet Matchday-Titel, freien Footer und Fußball in der Gegne
   assert.doesNotMatch(svg, /<rect width="260" height="48"/);
 });
 
+test('Ergebnis übernimmt Capture-It-Titel, freien Endstand und das Wappen-Duell', async () => {
+  const svg = await renderStorySvg({
+    rootDir,
+    type: 'result',
+    match: { ...match, awayTeam: 'TSV Aach-Linz 2' },
+  });
+  assert.match(svg, /font-size="88" class="handwritten">ABPFIFF · ERGEBNIS<\/text>/);
+  assert.match(svg, /text-anchor="middle"[^>]*class="handwritten">HEIMSIEG<\/text>/);
+  assert.match(svg, /font-size="48" class="handwritten">Testspiel<\/text>/);
+  assert.match(svg, /font-size="44" class="handwritten">ENDSTAND<\/text>/);
+  assert.doesNotMatch(svg, /width="236" height="50"/);
+  assert.match(svg, /x="280" y="356" width="140" height="140"/);
+  assert.match(svg, /x="530" y="386" width="140" height="140"/);
+  assert.doesNotMatch(svg, />GEGEN</);
+  assert.match(svg, /<text x="72" y="1800"[^>]*>#aufgehtsgrün<\/text>/);
+});
+
+test('Lange Ergebnis-Untertitel bleiben mittig innerhalb der Seite', async () => {
+  const svg = await renderStorySvg({
+    rootDir,
+    type: 'result',
+    match: { ...match, resultLabel: 'Sieg gegen Verbandsligist' },
+  });
+  assert.match(svg, /text-anchor="middle"[^>]*font-size="60"[^>]*>Sieg gegen Verbandsligist<\/text>/);
+});
+
 test('birthday rendert Namen, Glückwunsch und Spielerbild', async () => {
   const svg = await renderStorySvg({
     rootDir,
