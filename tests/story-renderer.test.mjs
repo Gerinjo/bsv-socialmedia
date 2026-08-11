@@ -48,7 +48,7 @@ test('Heim- und Gastwappen bilden in der Spielankündigung ein diagonales Duell'
   assert.match(svg, /font-size="44" class="team">BSV Nordstern/);
   assert.match(svg, /x="280" y="175" width="140" height="140"/);
   assert.match(svg, /x="530" y="205" width="140" height="140"/);
-  assert.match(svg, /x1="468" y1="209" x2="468" y2="341" transform="rotate\(15 468 275\)" stroke="#111111" stroke-width="6"/);
+  assert.match(svg, /x1="468" y1="194" x2="468" y2="326" transform="rotate\(15 468 260\)" stroke="#111111" stroke-width="6"/);
   assert.doesNotMatch(svg, />GEGEN</);
 });
 

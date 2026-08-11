@@ -66,7 +66,7 @@
 
     <text x="58" y="142" fill="#10251a" font-size="{{HOME_TEAM_SIZE}}" class="team">{{HOME_TEAM}}</text>
     <image href="{{HOME_CREST_DATA_URI}}" x="280" y="175" width="140" height="140" preserveAspectRatio="xMidYMid meet" opacity="{{HOME_CREST_OPACITY}}"/>
-    <line x1="468" y1="209" x2="468" y2="341" transform="rotate(15 468 275)" stroke="#111111" stroke-width="6" stroke-linecap="round" opacity="{{DUEL_MARK_OPACITY}}"/>
+    <line x1="468" y1="194" x2="468" y2="326" transform="rotate(15 468 260)" stroke="#111111" stroke-width="6" stroke-linecap="round" opacity="{{DUEL_MARK_OPACITY}}"/>
     <image href="{{AWAY_CREST_DATA_URI}}" x="530" y="205" width="140" height="140" preserveAspectRatio="xMidYMid meet" opacity="{{AWAY_CREST_OPACITY}}"/>
     <text x="878" y="398" text-anchor="end" fill="#10251a" font-size="{{AWAY_TEAM_SIZE}}" class="team">{{AWAY_TEAM}}</text>
 
