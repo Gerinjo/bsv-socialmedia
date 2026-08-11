@@ -158,6 +158,23 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       if (body.id) payload.id = body.id;
       const { data, error } = await context.supabaseAdmin.from('social_games').upsert(payload).select().single();
       if (error) throw error;
+      if (kickoff.getTime() <= Date.now()) {
+        const { error: skippedError } = await context.supabaseAdmin
+          .from('social_story_jobs')
+          .update({ status: 'skipped', last_error: 'Das Spiel liegt bereits in der Vergangenheit.' })
+          .eq('game_id', data.id)
+          .in('story_type', ['announcement', 'lineup'])
+          .in('status', ['pending', 'failed', 'needs_input']);
+        if (skippedError) throw skippedError;
+        const { error: resultJobError } = await context.supabaseAdmin
+          .from('social_story_jobs')
+          .update({ status: 'needs_input', last_error: 'Bitte zuerst das Ergebnis eintragen.' })
+          .eq('game_id', data.id)
+          .eq('story_type', 'result')
+          .in('status', ['pending', 'failed', 'skipped']);
+        if (resultJobError) throw resultJobError;
+        return json({ ok: true, game: data, archived: true, automation: null });
+      }
       const automation = await renderGameJobNow(context.supabaseAdmin, data.id, 'announcement');
       return json({ ok: true, game: data, automation });
     }

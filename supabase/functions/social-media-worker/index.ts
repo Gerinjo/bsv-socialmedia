@@ -106,6 +106,25 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       if (!claimed) continue;
       summary.claimed += 1;
 
+      const kickoffHasPassed = new Date(candidate.game.kickoff_at).getTime() <= Date.now();
+      if (kickoffHasPassed && candidate.story_type !== 'result') {
+        await context.supabaseAdmin
+          .from('social_story_jobs')
+          .update({ status: 'skipped', last_error: 'Das Spiel hat bereits begonnen.' })
+          .eq('id', candidate.id);
+        continue;
+      }
+
+      if (candidate.story_type === 'result'
+        && (candidate.game.home_score === null || candidate.game.away_score === null)) {
+        await context.supabaseAdmin
+          .from('social_story_jobs')
+          .update({ status: 'needs_input', last_error: 'Bitte zuerst das Ergebnis eintragen.' })
+          .eq('id', candidate.id);
+        summary.needsInput += 1;
+        continue;
+      }
+
       if (candidate.story_type === 'lineup' && !candidate.game.lineup?.approvedAt) {
         await context.supabaseAdmin
           .from('social_story_jobs')
