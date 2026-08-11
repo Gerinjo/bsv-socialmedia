@@ -77,6 +77,20 @@ for (const type of ['announcement', 'lineup', 'result']) {
   });
 }
 
+test('Startelf verwendet Matchday-Titel, freien Footer und Fußball in der Gegnerkarte', async () => {
+  const svg = await renderStorySvg({
+    rootDir,
+    type: 'lineup',
+    match,
+    lineup: { players: [{ number: 1, name: 'M. Test' }] },
+  });
+  assert.match(svg, /font-size="132" class="handwritten">MATCHDAY<\/text>/);
+  assert.match(svg, /<text x="72" y="1780"[^>]*>#aufgehtsgrün<\/text>/);
+  assert.match(svg, /<text x="1008" y="1780"[^>]*>bsvnordstern\.de<\/text>/);
+  assert.match(svg, /<g transform="translate\(842 95\)">[\s\S]*M0-21 20-7/);
+  assert.doesNotMatch(svg, /<rect width="260" height="48"/);
+});
+
 test('birthday rendert Namen, Glückwunsch und Spielerbild', async () => {
   const svg = await renderStorySvg({
     rootDir,

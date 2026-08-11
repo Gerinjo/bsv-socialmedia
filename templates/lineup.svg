@@ -33,9 +33,14 @@
   <circle cx="982" cy="116" r="38" fill="#f4d638"/>
   <text x="982" y="124" text-anchor="middle" fill="#092f20" font-size="21" class="team">11</text>
 
-  <g transform="translate(72 242)">
-    <rect width="390" height="54" rx="27" fill="#a8cbb4"/>
-    <text x="195" y="36" text-anchor="middle" fill="#092f20" font-size="18" class="caps">{{KICKER}}</text>
+  <g transform="translate(62 186) rotate(-4 350 64)">
+    <text x="7" y="115" fill="#91c82f" font-size="132" class="handwritten" opacity=".72">MATCHDAY</text>
+    <text x="0" y="106" fill="#f4f1e8" font-size="132" class="handwritten">MATCHDAY</text>
+  </g>
+  <g fill="none" stroke-linecap="round">
+    <path d="M842 218v34M825 235h34" stroke="#f4d638" stroke-width="6"/>
+    <path d="M902 284v21M892 294h20" stroke="#a8cbb4" stroke-width="5"/>
+    <path d="m873 185 9 9m0-9-9 9" stroke="#91c82f" stroke-width="5"/>
   </g>
 
   <text x="72" y="445" fill="#ffffff" font-size="122" class="team">UNSERE</text>
@@ -59,15 +64,24 @@
 
   <g transform="translate(72 1496)">
     <rect width="936" height="190" rx="54" fill="#f4f1e8"/>
-    <circle cx="842" cy="95" r="58" fill="#dce9df"/>
-    <circle cx="842" cy="95" r="23" fill="#91c82f"/>
+    <g transform="translate(842 95)">
+      <circle r="58" fill="#ffffff" stroke="#164f32" stroke-width="4"/>
+      <g transform="scale(.82)" fill="#164f32" stroke="#6c7b71" stroke-width="3" stroke-linejoin="round">
+        <path d="M0-21 20-7 12 17-12 17-20-7z"/>
+        <path d="M-18-67 18-67 24-49 0-37-24-49z"/>
+        <path d="M50-42 68-21 68 8 48 7 36-19z"/>
+        <path d="M68 25 50 52 27 68 20 47 36 30z"/>
+        <path d="M-68 25-50 52-27 68-20 47-36 30z"/>
+        <path d="M-50-42-68-21-68 8-48 7-36-19z"/>
+      </g>
+      <g transform="scale(.82)" fill="none" stroke="#6c7b71" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M0-21V-37M20-7 36-19M12 17 36 30M-12 17-36 30M-20-7-36-19"/>
+      </g>
+    </g>
     <text x="42" y="66" fill="#164f32" font-size="18" class="caps">HEUTE · {{TIME}}</text>
     <text x="42" y="130" fill="#10251a" font-size="39" class="team">VS. {{AWAY_TEAM}}</text>
   </g>
 
-  <g transform="translate(72 1740)">
-    <rect width="260" height="48" rx="24" fill="#ffffff" opacity=".1"/>
-    <text x="130" y="32" text-anchor="middle" fill="#a8cbb4" font-size="16" class="caps">{{COMPETITION}}</text>
-  </g>
-  <text x="1008" y="1774" text-anchor="end" fill="#ffffff" font-size="36" class="handwritten">#aufgehtsgrün</text>
+  <text x="72" y="1780" fill="#ffffff" font-size="34" class="handwritten" letter-spacing="1px">#aufgehtsgrün</text>
+  <text x="1008" y="1780" text-anchor="end" fill="#ffffff" font-size="26" class="handwritten">bsvnordstern.de</text>
 </svg>
