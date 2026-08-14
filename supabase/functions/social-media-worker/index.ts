@@ -1,6 +1,6 @@
 import { withSupabase } from 'npm:@supabase/server@1.4.1';
 import { runtimeConfig } from '../_shared/config.ts';
-import { publishInstagramImage } from '../../../src/instagram-publisher.mjs';
+import { publishInstagramCarousel, publishInstagramImage } from '../../../src/instagram-publisher.mjs';
 
 type JobStatus = 'pending' | 'rendering' | 'preview_ready' | 'published' | 'failed' | 'skipped' | 'needs_input';
 
@@ -21,7 +21,9 @@ type GameJob = {
     away_score: number | null;
     result_label: string | null;
     result_message: string | null;
+    report_scorers: string | null;
     action_image_path: string | null;
+    report_image_paths: string[] | null;
     status: 'scheduled' | 'live' | 'finished' | 'postponed' | 'cancelled' | 'aborted';
     lineup: { players?: unknown[]; formation?: string; approvedAt?: string } | null;
     home_club: {
@@ -53,13 +55,20 @@ type BirthdayJob = {
   };
 };
 
-type RenderPayload = { mediaUrl?: string; storagePath?: string; error?: string };
+type RenderPayload = {
+  mediaUrl?: string;
+  storagePath?: string;
+  mediaUrls?: string[];
+  storagePaths?: string[];
+  error?: string;
+};
 
 const gameJobSelect = `
   id, attempts, status, story_type,
   game:social_games!inner(
     id, source_match_id, home_team, away_team, competition, venue,
-    kickoff_at, home_score, away_score, result_label, result_message, action_image_path, status,
+    kickoff_at, home_score, away_score, result_label, result_message, report_scorers,
+    action_image_path, report_image_paths, status,
     lineup, enabled,
     home_club:social_clubs!social_games_home_club_id_fkey(
       crest_status, crest_transparent_path
@@ -86,6 +95,11 @@ async function render(body: Record<string, unknown>): Promise<RenderPayload> {
   const payload = await response.json() as RenderPayload;
   if (!response.ok) throw new Error(payload.error || `Renderdienst antwortet mit HTTP ${response.status}.`);
   if (!payload.mediaUrl || !payload.storagePath) throw new Error('Renderdienst liefert keine vollständige Vorschau.');
+  payload.mediaUrls = Array.isArray(payload.mediaUrls) && payload.mediaUrls.length ? payload.mediaUrls : [payload.mediaUrl];
+  payload.storagePaths = Array.isArray(payload.storagePaths) && payload.storagePaths.length ? payload.storagePaths : [payload.storagePath];
+  if (payload.mediaUrls.length !== payload.storagePaths.length || payload.mediaUrls.length > 10) {
+    throw new Error('Renderdienst liefert eine ungültige Seitenliste.');
+  }
   return payload;
 }
 
@@ -147,6 +161,8 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
             .update({
               media_url: preview.mediaUrl,
               storage_path: preview.storagePath,
+              media_urls: preview.mediaUrls,
+              storage_paths: preview.storagePaths,
               last_error: null,
             })
             .eq('id', candidate.id);
@@ -241,19 +257,29 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
               '#aufgehtsgrün',
             ].filter(Boolean).join('\n\n').slice(0, 2200)
             : `${candidate.game.home_team} vs ${candidate.game.away_team} · ${candidate.game.competition || 'BSV Nordstern'} • ${new Date(candidate.game.kickoff_at).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}`;
-          const result = await publishInstagramImage({
-            accountId: runtimeConfig.instagramAccountId,
-            accessToken: runtimeConfig.instagramAccessToken,
-            imageUrl: preview.mediaUrl,
-            caption,
-            testMode: runtimeConfig.testMode,
-          });
+          const result = candidate.story_type === 'report' && (preview.mediaUrls?.length ?? 0) > 1
+            ? await publishInstagramCarousel({
+              accountId: runtimeConfig.instagramAccountId,
+              accessToken: runtimeConfig.instagramAccessToken,
+              imageUrls: preview.mediaUrls,
+              caption,
+              testMode: runtimeConfig.testMode,
+            })
+            : await publishInstagramImage({
+              accountId: runtimeConfig.instagramAccountId,
+              accessToken: runtimeConfig.instagramAccessToken,
+              imageUrl: preview.mediaUrl,
+              caption,
+              testMode: runtimeConfig.testMode,
+            });
           await context.supabaseAdmin
             .from('social_story_jobs')
             .update({
               status: 'published',
               media_url: preview.mediaUrl,
               storage_path: preview.storagePath,
+              media_urls: preview.mediaUrls,
+              storage_paths: preview.storagePaths,
               external_post_id: result.id,
               published_at: new Date().toISOString(),
               last_error: null,
@@ -269,6 +295,8 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
             status: 'preview_ready',
             media_url: preview.mediaUrl,
             storage_path: preview.storagePath,
+            media_urls: preview.mediaUrls,
+            storage_paths: preview.storagePaths,
             last_error: null,
           })
           .eq('id', candidate.id);

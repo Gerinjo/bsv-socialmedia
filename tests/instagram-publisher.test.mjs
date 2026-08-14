@@ -1,13 +1,38 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { isInstagramPublishingEnabled, buildInstagramMediaRequest, buildInstagramPublishRequest } from '../src/instagram-publisher.mjs';
+import {
+  isInstagramPublishingEnabled,
+  buildInstagramCarouselRequest,
+  buildInstagramMediaRequest,
+  buildInstagramPublishRequest,
+} from '../src/instagram-publisher.mjs';
 
 test('publishing requires valid credentials and disabled test mode', () => {
   assert.equal(isInstagramPublishingEnabled({ testMode: true, accountId: 'abc', accessToken: 'def' }), false);
   assert.equal(isInstagramPublishingEnabled({ testMode: false, accountId: 'abc', accessToken: 'def' }), true);
   assert.equal(isInstagramPublishingEnabled({ testMode: false, accountId: '', accessToken: 'def' }), false);
   assert.equal(isInstagramPublishingEnabled({ testMode: false, accountId: 'abc', accessToken: '' }), false);
+});
+
+test('instagram carousel requests preserve page order', () => {
+  const child = buildInstagramMediaRequest({
+    accountId: '1234567890',
+    accessToken: 'secret-token',
+    imageUrl: 'https://example.com/page-1.png',
+    isCarouselItem: true,
+  });
+  assert.match(child.body, /is_carousel_item=true/);
+
+  const carousel = buildInstagramCarouselRequest({
+    accountId: '1234567890',
+    accessToken: 'secret-token',
+    creationIds: ['page-1', 'page-2', 'page-3'],
+    caption: 'Spielbericht',
+  });
+  assert.match(carousel.body, /media_type=CAROUSEL/);
+  assert.match(carousel.body, /children=page-1%2Cpage-2%2Cpage-3/);
+  assert.match(carousel.body, /caption=Spielbericht/);
 });
 
 test('instagram requests use the expected Meta Graph endpoints', () => {
