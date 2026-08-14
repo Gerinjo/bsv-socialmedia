@@ -53,10 +53,10 @@
     <text x="0" y="46" fill="#164f32" font-size="30" class="handwritten">ENDSTAND</text>
     <line x1="0" y1="64" x2="984" y2="64" stroke="#a8cbb4" stroke-width="3" opacity=".6"/>
 
-    <text x="0" y="125" fill="#10251a" font-size="{{HOME_TEAM_SIZE}}" class="team">{{HOME_TEAM}}</text>
+    <text x="0" y="125" fill="#10251a" font-size="{{REPORT_HOME_TEAM_SIZE}}" class="team">{{HOME_TEAM}}</text>
     <text x="984" y="125" text-anchor="end" fill="#164f32" font-size="74" class="handwritten">{{HOME_SCORE}}</text>
 
-    <text x="0" y="194" fill="#10251a" font-size="{{AWAY_TEAM_SIZE}}" class="team">{{AWAY_TEAM}}</text>
+    <text x="0" y="194" fill="#10251a" font-size="{{REPORT_AWAY_TEAM_SIZE}}" class="team">{{AWAY_TEAM}}</text>
     <text x="984" y="194" text-anchor="end" fill="#164f32" font-size="74" class="handwritten">{{AWAY_SCORE}}</text>
   </g>
 

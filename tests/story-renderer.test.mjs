@@ -104,6 +104,16 @@ test('Spielbericht ist ein quadratischer Feed-Post mit Wellenfoto, Partie und Er
   assert.doesNotMatch(svg, /Dieser Text gehört ausschließlich/);
 });
 
+test('BSV wird im Spielbericht größer als der Gegner gesetzt', async () => {
+  const svg = await renderStorySvg({
+    rootDir,
+    type: 'report',
+    match: { ...match, homeTeam: 'BSV Nordstern Radolfzell', awayTeam: 'VfR Test' },
+  });
+  assert.match(svg, /font-size="52" class="team">BSV Nordstern Radolfzell<\/text>/);
+  assert.match(svg, /font-size="44" class="team">VfR Test<\/text>/);
+});
+
 test('Startelf verwendet Matchday-Titel, freien Footer und Fußball in der Gegnerkarte', async () => {
   const svg = await renderStorySvg({
     rootDir,
