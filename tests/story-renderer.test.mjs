@@ -138,6 +138,7 @@ test('Ergebnis übernimmt Capture-It-Titel, freien Endstand und das Wappen-Duell
   assert.match(svg, /text-anchor="middle"[^>]*class="handwritten">HEIMSIEG<\/text>/);
   assert.match(svg, /font-size="48" class="handwritten">Testspiel<\/text>/);
   assert.match(svg, /font-size="44" class="handwritten">ENDSTAND<\/text>/);
+  assert.match(svg, /<g transform="translate\(148 76\)">/);
   assert.doesNotMatch(svg, /width="236" height="50"/);
   assert.doesNotMatch(svg, /width="640" height="200" rx="100"/);
   assert.match(svg, /x="280" y="356" width="140" height="140"/);
