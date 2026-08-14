@@ -197,14 +197,31 @@ async function renderGameJobNow(admin: any, gameId: string, storyType: 'announce
 async function freshPreviewUrls(admin: any, rows: any[]): Promise<any[]> {
   return await Promise.all(rows.map(async (row) => {
     const jobs = await Promise.all((row.jobs ?? []).map(async (job: any) => {
-      if (!job.storage_path) return job;
-      const { data } = await admin.storage.from(bucket).createSignedUrl(job.storage_path, 60 * 60 * 24 * 7);
-      return { ...job, media_url: data?.signedUrl ?? job.media_url };
+      const storagePaths = Array.isArray(job.storage_paths) && job.storage_paths.length
+        ? job.storage_paths.map((path: unknown) => String(path ?? '').trim()).filter(Boolean).slice(0, 10)
+        : job.storage_path ? [job.storage_path] : [];
+      if (!storagePaths.length) return { ...job, media_urls: [] };
+      const mediaUrls = await Promise.all(storagePaths.map(async (path: string) => {
+        const { data } = await admin.storage.from(bucket).createSignedUrl(path, 60 * 60 * 24 * 7);
+        return data?.signedUrl ?? null;
+      }));
+      const validMediaUrls = mediaUrls.filter(Boolean);
+      return { ...job, media_url: validMediaUrls[0] ?? job.media_url, media_urls: validMediaUrls };
     }));
-    const actionImageUrl = row.action_image_path
-      ? await signedAssetUrl(admin, row.action_image_path)
-      : null;
-    return { ...row, jobs, action_image_url: actionImageUrl };
+    const reportImagePaths = Array.isArray(row.report_image_paths) && row.report_image_paths.length
+      ? row.report_image_paths.map((path: unknown) => String(path ?? '').trim()).filter(Boolean).slice(0, 10)
+      : row.action_image_path ? [row.action_image_path] : [];
+    const reportImages = await Promise.all(reportImagePaths.map(async (path: string, index: number) => ({
+      path,
+      position: index + 1,
+      url: await signedAssetUrl(admin, path),
+    })));
+    return {
+      ...row,
+      jobs,
+      action_image_url: reportImages[0]?.url ?? null,
+      report_images: reportImages.filter((image) => image.url),
+    };
   }));
 }
 
@@ -496,11 +513,19 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       const gameId = required(body.gameId, 'Spiel-ID');
       const actionImageDataUrl = String(body.actionImageDataUrl ?? '').trim();
       const actionImage = actionImageDataUrl ? parseDataUrl(actionImageDataUrl, new Set(['image/jpeg', 'image/png', 'image/webp']), 8 * 1024 * 1024) : null;
+      const { data: existingGame, error: existingGameError } = await context.supabaseAdmin
+        .from('social_games')
+        .select('id, action_image_path, report_image_paths')
+        .eq('id', gameId)
+        .maybeSingle();
+      if (existingGameError) throw existingGameError;
+      if (!existingGame) throw new Error('Das Spiel wurde nicht gefunden.');
       const resultUpdate: Record<string, unknown> = {
         home_score: homeScore,
         away_score: awayScore,
         result_label: String(body.resultLabel ?? '').trim() || null,
         result_message: String(body.resultMessage ?? '').trim() || null,
+        report_scorers: String(body.reportScorers ?? '').trim() || null,
         status: 'finished',
       };
       if (actionImage) {
@@ -512,6 +537,29 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         });
         if (uploadError) throw uploadError;
         resultUpdate.action_image_path = actionImagePath;
+        resultUpdate.report_image_paths = [actionImagePath];
+      }
+      if (Array.isArray(body.reportImages)) {
+        if (body.reportImages.length > 10) throw new Error('Ein Spielbericht kann höchstens zehn Bilder enthalten.');
+        const ordered = body.reportImages.map((item: any, index: number) => ({
+          path: required(item?.path, `Bild ${index + 1}`),
+          position: Number(item?.position),
+        })).sort((left: any, right: any) => left.position - right.position);
+        const validPositions = ordered.every((item: any, index: number) => Number.isInteger(item.position) && item.position === index + 1);
+        if (!validPositions) throw new Error('Die Bildpositionen müssen fortlaufend bei 1 beginnen.');
+        const prefix = `generated/action-images/${gameId}/`;
+        if (ordered.some((item: any) => !item.path.startsWith(prefix))) throw new Error('Ein Bildpfad gehört nicht zu diesem Spiel.');
+        const nextPaths = ordered.map((item: any) => item.path);
+        const previousPaths = Array.isArray(existingGame.report_image_paths) && existingGame.report_image_paths.length
+          ? existingGame.report_image_paths.map((path: unknown) => String(path ?? '').trim()).filter(Boolean)
+          : existingGame.action_image_path ? [existingGame.action_image_path] : [];
+        const removedPaths = previousPaths.filter((path: string) => path.startsWith(prefix) && !nextPaths.includes(path));
+        if (removedPaths.length) {
+          const { error: removeError } = await context.supabaseAdmin.storage.from(bucket).remove(removedPaths);
+          if (removeError) throw new Error(`Entfernte Bilder konnten nicht gelöscht werden: ${removeError.message}`);
+        }
+        resultUpdate.report_image_paths = nextPaths;
+        resultUpdate.action_image_path = nextPaths[0] ?? null;
       }
       const { error } = await context.supabaseAdmin
         .from('social_games')
@@ -520,6 +568,28 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       if (error) throw error;
       const automation = await renderGameJobNow(context.supabaseAdmin, gameId, 'result');
       return json({ ok: true, saved: true, automation });
+    }
+
+    if (action === 'upload_report_image') {
+      const gameId = required(body.gameId, 'Spiel-ID');
+      const image = parseDataUrl(body.imageDataUrl, new Set(['image/jpeg', 'image/png', 'image/webp']), 8 * 1024 * 1024);
+      const { data: game, error: gameError } = await context.supabaseAdmin
+        .from('social_games')
+        .select('id')
+        .eq('id', gameId)
+        .maybeSingle();
+      if (gameError) throw gameError;
+      if (!game) throw new Error('Das Spiel wurde nicht gefunden.');
+      const extension = originalMimeTypes.get(image.mime) ?? 'jpg';
+      const path = `generated/action-images/${gameId}/${crypto.randomUUID()}.${extension}`;
+      const { error: uploadError } = await context.supabaseAdmin.storage.from(bucket).upload(path, image.bytes, {
+        contentType: image.mime,
+        cacheControl: '604800',
+        upsert: false,
+      });
+      if (uploadError) throw uploadError;
+      const url = await signedAssetUrl(context.supabaseAdmin, path);
+      return json({ ok: true, image: { path, url } });
     }
 
     if (action === 'approve_result') {
