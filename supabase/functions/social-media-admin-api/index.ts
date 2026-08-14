@@ -150,7 +150,7 @@ async function runWorker(): Promise<Record<string, unknown>> {
   return payload;
 }
 
-async function renderGameJobNow(admin: any, gameId: string, storyType: 'announcement' | 'lineup' | 'result') {
+async function renderGameJobNow(admin: any, gameId: string, storyType: 'announcement' | 'lineup' | 'result' | 'report') {
   const { data: existing, error: selectError } = await admin
     .from('social_story_jobs')
     .select('id')
@@ -473,7 +473,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .from('social_story_jobs')
         .update({ status: 'skipped', last_error: `Das Spiel wurde ${statusLabel}.` })
         .eq('game_id', gameId)
-        .in('story_type', ['lineup', 'result'])
+        .in('story_type', ['lineup', 'result', 'report'])
         .in('status', ['pending', 'preview_ready', 'failed', 'needs_input', 'skipped']);
       if (jobsError) throw jobsError;
       const automation = await renderGameJobNow(context.supabaseAdmin, gameId, 'announcement');
@@ -517,7 +517,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
 
     if (action === 'approve_result') {
       const gameId = required(body.gameId, 'Spiel-ID');
-      const automation = await renderGameJobNow(context.supabaseAdmin, gameId, 'result');
+      const automation = await renderGameJobNow(context.supabaseAdmin, gameId, 'report');
       return json({ ok: true, automation });
     }
 

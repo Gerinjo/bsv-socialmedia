@@ -54,6 +54,21 @@ type BirthdayJob = {
 
 type RenderPayload = { mediaUrl?: string; storagePath?: string; error?: string };
 
+const gameJobSelect = `
+  id, attempts, status, story_type,
+  game:social_games!inner(
+    id, source_match_id, home_team, away_team, competition, venue,
+    kickoff_at, home_score, away_score, result_label, result_message, status,
+    lineup, enabled,
+    home_club:social_clubs!social_games_home_club_id_fkey(
+      crest_status, crest_transparent_path
+    ),
+    away_club:social_clubs!social_games_away_club_id_fkey(
+      crest_status, crest_transparent_path
+    )
+  )
+`;
+
 async function render(body: Record<string, unknown>): Promise<RenderPayload> {
   if (!runtimeConfig.renderEndpoint || !runtimeConfig.renderApiKey) {
     throw new Error('Render-Endpunkt oder interner API-Key fehlt.');
@@ -80,6 +95,15 @@ function retryAt(attempt: number): string {
 const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) => {
     if (request.method !== 'POST') return Response.json({ error: 'method_not_allowed' }, { status: 405 });
 
+    const body = await request.json().catch(() => ({})) as Record<string, unknown>;
+    const previewOnly = body.previewOnly === true;
+    const previewJobIds = Array.isArray(body.previewJobIds)
+      ? [...new Set(body.previewJobIds
+        .map((value) => String(value))
+        .filter((value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)))]
+        .slice(0, 40)
+      : [];
+
     const now = new Date().toISOString();
     const summary = {
       claimed: 0,
@@ -87,25 +111,54 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       needsInput: 0,
       retrying: 0,
       failed: 0,
+      previewGenerated: 0,
+      previewFailed: 0,
       testMode: runtimeConfig.testMode,
     };
 
+    if (previewOnly) {
+      if (!previewJobIds.length) {
+        return Response.json({ ...summary, error: 'preview_job_ids_missing' }, { status: 400 });
+      }
+      const { data: previewData, error: previewError } = await context.supabaseAdmin
+        .from('social_story_jobs')
+        .select(gameJobSelect)
+        .in('id', previewJobIds)
+        .eq('story_type', 'announcement');
+      if (previewError) return Response.json({ error: previewError.message }, { status: 500 });
+
+      for (const candidate of (previewData ?? []) as unknown as GameJob[]) {
+        if (!candidate.game.enabled) continue;
+        try {
+          const preview = await render({
+            type: candidate.story_type,
+            jobId: candidate.id,
+            game: candidate.game,
+          });
+          await context.supabaseAdmin
+            .from('social_story_jobs')
+            .update({
+              media_url: preview.mediaUrl,
+              storage_path: preview.storagePath,
+              last_error: null,
+            })
+            .eq('id', candidate.id);
+          summary.previewGenerated += 1;
+        } catch (workerError) {
+          const message = workerError instanceof Error ? workerError.message : 'Unbekannter Vorschaufehler';
+          await context.supabaseAdmin
+            .from('social_story_jobs')
+            .update({ last_error: message })
+            .eq('id', candidate.id);
+          summary.previewFailed += 1;
+        }
+      }
+      return Response.json(summary, { status: summary.previewFailed ? 207 : 200 });
+    }
+
     const { data: gameData, error: gameError } = await context.supabaseAdmin
       .from('social_story_jobs')
-      .select(`
-        id, attempts, status, story_type,
-        game:social_games!inner(
-          id, source_match_id, home_team, away_team, competition, venue,
-          kickoff_at, home_score, away_score, result_label, result_message, status,
-          lineup, enabled,
-          home_club:social_clubs!social_games_home_club_id_fkey(
-            crest_status, crest_transparent_path
-          ),
-          away_club:social_clubs!social_games_away_club_id_fkey(
-            crest_status, crest_transparent_path
-          )
-        )
-      `)
+      .select(gameJobSelect)
       .eq('status', 'pending')
       .lte('due_at', now)
       .order('due_at', { ascending: true })

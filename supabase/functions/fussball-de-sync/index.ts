@@ -131,9 +131,44 @@ async function readWidget(team: Team) {
   return parseNextMatches(pageProps, (character: string) => font.charToGlyph(character)?.name);
 }
 
+function gameChanged(existing: Record<string, unknown>, payload: Record<string, unknown>): boolean {
+  const fields = [
+    'team_id', 'is_home', 'home_team', 'away_team', 'home_club_id', 'away_club_id',
+    'competition', 'venue', 'status', 'enabled',
+  ];
+  if (fields.some((field) => existing[field] !== payload[field])) return true;
+  return new Date(String(existing.kickoff_at)).getTime() !== new Date(String(payload.kickoff_at)).getTime();
+}
+
+async function generateAnnouncementPreviews(jobIds: string[]) {
+  if (!jobIds.length) return { requested: 0, generated: 0, failed: 0 };
+  const response = await fetch(`${runtimeConfig.supabaseUrl}/functions/v1/social-media-worker`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      apikey: runtimeConfig.workerApiKey,
+    },
+    body: JSON.stringify({
+      trigger: 'fussball-de-sync',
+      previewOnly: true,
+      previewJobIds: jobIds,
+    }),
+  });
+  const payload = await response.json() as Record<string, unknown>;
+  if (!response.ok) {
+    throw new Error(String(payload.error || `Vorschau-Worker antwortet mit HTTP ${response.status}.`));
+  }
+  return {
+    requested: jobIds.length,
+    generated: Number(payload.previewGenerated || 0),
+    failed: Number(payload.previewFailed || 0),
+  };
+}
+
 async function syncTeam(admin: any, team: Team) {
   const matches = await readWidget(team);
   const summary = { team: team.slug, found: matches.length, inserted: 0, updated: 0, skipped: 0 };
+  const previewJobIds: string[] = [];
 
   for (const match of matches) {
     const isHome = match.homeTeam.teamPermanentId === team.fussball_de_team_id;
@@ -152,7 +187,10 @@ async function syncTeam(admin: any, team: Team) {
     ]);
     const { data: existing, error: existingError } = await admin
       .from('social_games')
-      .select('id, status, venue')
+      .select(`
+        id, status, venue, team_id, is_home, home_team, away_team,
+        home_club_id, away_club_id, competition, kickoff_at, enabled
+      `)
       .eq('source', 'fussball.de')
       .eq('source_match_id', match.sourceMatchId)
       .maybeSingle();
@@ -176,17 +214,32 @@ async function syncTeam(admin: any, team: Team) {
       enabled: true,
     };
 
+    const changed = !existing || gameChanged(existing, payload);
+    let gameId: string;
+
     if (existing) {
       const { error } = await admin.from('social_games').update(payload).eq('id', existing.id);
       if (error) throw error;
+      gameId = existing.id;
       summary.updated += 1;
     } else {
-      const { error } = await admin.from('social_games').insert(payload);
+      const { data: inserted, error } = await admin.from('social_games').insert(payload).select('id').single();
       if (error) throw error;
+      gameId = inserted.id;
       summary.inserted += 1;
     }
+
+
+    const { data: announcementJob, error: announcementError } = await admin
+      .from('social_story_jobs')
+      .select('id, media_url')
+      .eq('game_id', gameId)
+      .eq('story_type', 'announcement')
+      .maybeSingle();
+    if (announcementError) throw announcementError;
+    if (announcementJob && (changed || !announcementJob.media_url)) previewJobIds.push(announcementJob.id);
   }
-  return summary;
+  return { summary, previewJobIds };
 }
 
 const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) => {
@@ -202,11 +255,13 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
   if (teamsError) return Response.json({ error: teamsError.message }, { status: 500 });
 
   const results = [];
+  const previewJobIds: string[] = [];
   let failed = 0;
   for (const team of (teams ?? []) as Team[]) {
     try {
       const result = await syncTeam(context.supabaseAdmin, team);
-      results.push({ ...result, ok: true });
+      results.push({ ...result.summary, ok: true });
+      previewJobIds.push(...result.previewJobIds);
       await context.supabaseAdmin.from('social_teams').update({
         last_synced_at: new Date().toISOString(),
         last_sync_error: null,
@@ -222,7 +277,21 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
     }
   }
 
-  return Response.json({ ok: failed === 0, syncedAt: new Date().toISOString(), teams: results }, { status: failed ? 207 : 200 });
+  let previews = { requested: 0, generated: 0, failed: 0 };
+  try {
+    previews = await generateAnnouncementPreviews([...new Set(previewJobIds)]);
+  } catch (error) {
+    failed += 1;
+    previews = { requested: previewJobIds.length, generated: 0, failed: previewJobIds.length };
+    results.push({ team: 'Vorschauen', ok: false, error: error instanceof Error ? error.message : 'Vorschauen konnten nicht erstellt werden.' });
+  }
+
+  return Response.json({
+    ok: failed === 0,
+    syncedAt: new Date().toISOString(),
+    teams: results,
+    previews,
+  }, { status: failed ? 207 : 200 });
 });
 
 function secretsMatch(candidate: string, expected: string): boolean {

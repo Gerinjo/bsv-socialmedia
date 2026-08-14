@@ -17,15 +17,20 @@ function defaultSecretKey(): string {
     || '';
 }
 
+function configuredValue(name: string): string {
+  const value = Deno.env.get(name)?.trim() ?? '';
+  return value === name ? '' : value;
+}
+
 const supabaseUrl = Deno.env.get('SUPABASE_URL')?.trim() ?? '';
 const internalSecretKey = defaultSecretKey();
 
 export const runtimeConfig = Object.freeze({
   testMode: enabledOnlyByExplicitFalse(Deno.env.get('INSTAGRAM_TEST_MODE')),
   supabaseUrl,
-  renderEndpoint: Deno.env.get('STORY_RENDER_ENDPOINT')?.trim()
+  renderEndpoint: configuredValue('STORY_RENDER_ENDPOINT')
     || `${supabaseUrl}/functions/v1/story-renderer`,
-  renderApiKey: Deno.env.get('STORY_RENDER_SECRET')?.trim() || internalSecretKey,
+  renderApiKey: configuredValue('STORY_RENDER_SECRET') || internalSecretKey,
   workerApiKey: internalSecretKey,
   workerCronSecret: Deno.env.get('SOCIAL_WORKER_CRON_SECRET')?.trim() ?? '',
   instagramAccountId: Deno.env.get('INSTAGRAM_ACCOUNT_ID')?.trim() ?? '',
