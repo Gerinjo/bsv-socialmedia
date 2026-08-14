@@ -171,7 +171,7 @@ async function renderGameJobNow(admin: any, gameId: string, storyType: 'announce
         last_error: null,
       })
       .eq('id', jobId)
-      .in('status', ['pending', 'preview_ready', 'failed', 'needs_input', 'skipped']);
+      .in('status', ['pending', 'preview_ready', 'published', 'failed', 'needs_input', 'skipped']);
     if (error) throw error;
   } else {
     const { data: inserted, error } = await admin
@@ -567,6 +567,22 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         const { error: removeError } = await context.supabaseAdmin.storage.from(bucket).remove(removedReportImagePaths);
         if (removeError) console.warn(`Entfernte Spielbericht-Bilder konnten nicht bereinigt werden: ${removeError.message}`);
       }
+      const { error: reportJobError } = await context.supabaseAdmin
+        .from('social_story_jobs')
+        .update({
+          status: 'needs_input',
+          attempts: 0,
+          claimed_at: null,
+          last_error: 'Spielbericht wurde geändert. Bitte erneut freigeben.',
+          media_url: null,
+          storage_path: null,
+          media_urls: [],
+          storage_paths: [],
+        })
+        .eq('game_id', gameId)
+        .eq('story_type', 'report')
+        .in('status', ['pending', 'rendering', 'preview_ready', 'published', 'failed', 'needs_input', 'skipped']);
+      if (reportJobError) throw reportJobError;
       const automation = await renderGameJobNow(context.supabaseAdmin, gameId, 'result');
       return json({ ok: true, saved: true, automation });
     }

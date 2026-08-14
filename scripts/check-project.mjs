@@ -31,11 +31,18 @@ for (const type of STORY_TYPES) {
 
 const adminPage = await readFile(resolve(rootDir, 'admin-site/admin-page.html'), 'utf8');
 const adminApi = await readFile(resolve(rootDir, 'supabase/functions/social-media-admin-api/index.ts'), 'utf8');
-for (const marker of ['workspaceSearch', 'memberSearch', 'crestSearch', 'discardCrest']) {
+for (const marker of ['workspaceSearch', 'memberSearch', 'crestSearch', 'discardCrest', 'remove-report-image', 'markReportNeedsApproval']) {
   if (!adminPage.includes(marker)) throw new Error(`Admin-Oberfläche enthält ${marker} nicht.`);
+}
+const reportSaveHandler = adminPage.match(/document\.querySelectorAll\('\.reportSave'\)[\s\S]*?document\.querySelectorAll\('\.reportApprove'\)/)?.[0] ?? '';
+if (!reportSaveHandler || reportSaveHandler.includes("action:'approve_result'")) {
+  throw new Error('Spielbericht speichern darf keine automatische Freigabe auslösen.');
 }
 if (!adminApi.includes("action === 'discard_club_crest'")) {
   throw new Error('Admin-API enthält das Verwerfen von Wappen-Uploads nicht.');
+}
+if (!adminApi.includes("last_error: 'Spielbericht wurde geändert. Bitte erneut freigeben.'")) {
+  throw new Error('Admin-API macht eine alte Spielbericht-Freigabe nach Änderungen nicht ungültig.');
 }
 
 console.log(`Projektstruktur geprüft: ${required.length} Pflichtdateien vorhanden.`);
