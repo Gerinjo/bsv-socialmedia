@@ -234,7 +234,13 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
         });
 
         if (!runtimeConfig.testMode) {
-          const caption = `${candidate.game.home_team} vs ${candidate.game.away_team} · ${candidate.game.competition || 'BSV Nordstern'} • ${new Date(candidate.game.kickoff_at).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}`;
+          const caption = candidate.story_type === 'report'
+            ? [
+              candidate.game.result_message,
+              `${candidate.game.home_team} ${candidate.game.home_score}:${candidate.game.away_score} ${candidate.game.away_team}`,
+              '#aufgehtsgrün',
+            ].filter(Boolean).join('\n\n').slice(0, 2200)
+            : `${candidate.game.home_team} vs ${candidate.game.away_team} · ${candidate.game.competition || 'BSV Nordstern'} • ${new Date(candidate.game.kickoff_at).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}`;
           const result = await publishInstagramImage({
             accountId: runtimeConfig.instagramAccountId,
             accessToken: runtimeConfig.instagramAccessToken,

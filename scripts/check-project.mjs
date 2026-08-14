@@ -20,8 +20,9 @@ for (const file of required) await access(resolve(rootDir, file));
 
 for (const type of STORY_TYPES) {
   const source = await readFile(resolve(rootDir, 'templates', `${type}.svg`), 'utf8');
-  if (!source.includes('width="1080"') || !source.includes('height="1920"')) {
-    throw new Error(`${type}.svg hat nicht das Format 1080 × 1920.`);
+  const expectedHeight = type === 'report' ? '1080' : '1920';
+  if (!source.includes('width="1080"') || !source.includes(`height="${expectedHeight}"`)) {
+    throw new Error(`${type}.svg hat nicht das Format 1080 × ${expectedHeight}.`);
   }
   if (!source.includes('{{LOGO_DATA_URI}}')) {
     throw new Error(`${type}.svg enthält keinen Logo-Platzhalter.`);

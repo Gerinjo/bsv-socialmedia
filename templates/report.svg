@@ -1,83 +1,65 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
   <defs>
-    <linearGradient id="top" x1="0" y1="0" x2="1" y2="1">
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#071f16"/>
       <stop offset="1" stop-color="#164f32"/>
+    </linearGradient>
+    <linearGradient id="photoShade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#071f16" stop-opacity=".08"/>
+      <stop offset=".72" stop-color="#071f16" stop-opacity=".04"/>
+      <stop offset="1" stop-color="#071f16" stop-opacity=".52"/>
     </linearGradient>
     <radialGradient id="glow">
       <stop offset="0" stop-color="#a8cbb4" stop-opacity=".32"/>
       <stop offset="1" stop-color="#a8cbb4" stop-opacity="0"/>
     </radialGradient>
-    <clipPath id="resultBallClip"><circle cx="0" cy="0" r="62"/></clipPath>
+    <pattern id="dots" width="38" height="38" patternUnits="userSpaceOnUse">
+      <circle cx="4" cy="4" r="2" fill="#ffffff" opacity=".045"/>
+    </pattern>
+    <clipPath id="photoWave">
+      <path d="M0 238C216 177 397 260 621 207c204-48 329-39 459 9v535c-235 76-421-18-640 47C250 855 111 848 0 806Z"/>
+    </clipPath>
     <style>
       @font-face{font-family:'Capture it';src:url('{{HANDWRITTEN_FONT_DATA_URI}}') format('truetype');font-weight:400;font-style:normal}
-      .sans{font-family:Inter,Arial,sans-serif}.serif{font-family:Georgia,'Times New Roman',serif}
-      .handwritten{font-family:'Capture it',Impact,Inter,sans-serif;font-weight:400;letter-spacing:1px}
-      .caps{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:5px}
-      .team{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:-2px}
+      .sans{font-family:Inter,Arial,sans-serif}.handwritten{font-family:'Capture it',Impact,Inter,sans-serif;font-weight:400;letter-spacing:1px}
+      .caps{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:5px}.team{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:-1px}
     </style>
   </defs>
 
-  <rect width="1080" height="1920" fill="#f4f1e8"/>
-  <rect width="1080" height="1260" fill="url(#top)"/>
-  <circle cx="962" cy="358" r="430" fill="url(#glow)"/>
-  <circle cx="982" cy="380" r="255" fill="none" stroke="#a8cbb4" stroke-width="3" opacity=".18"/>
-  <circle cx="982" cy="380" r="135" fill="none" stroke="#ffffff" stroke-width="3" opacity=".09"/>
-  <image href="{{ACTION_PLAYER_DATA_URI}}" x="560" y="240" width="460" height="820" preserveAspectRatio="xMidYMid meet" opacity=".16"/>
-  <path d="M0 1165c265 118 520 75 720-10 145-62 258-55 360-8v280H0z" fill="#f4f1e8"/>
-  <path d="M0 1165c265 118 520 75 720-10 145-62 258-55 360-8" fill="none" stroke="#a8cbb4" stroke-width="5" opacity=".58"/>
+  <rect width="1080" height="1080" fill="#f4f1e8"/>
+  <rect width="1080" height="830" fill="url(#background)"/>
+  <rect width="1080" height="830" fill="url(#dots)"/>
+  <circle cx="1015" cy="250" r="390" fill="url(#glow)"/>
+  <circle cx="1015" cy="250" r="235" fill="none" stroke="#a8cbb4" stroke-width="3" opacity=".16"/>
 
-  <image href="{{LOGO_DATA_URI}}" x="72" y="64" width="104" height="104"/>
-  <text x="208" y="106" fill="#a8cbb4" font-size="22" class="caps">BSV NORDSTERN</text>
-  <text x="208" y="141" fill="#ffffff" font-size="24" class="sans" font-weight="800">Radolfzell · Fußball</text>
-  <circle cx="982" cy="116" r="38" fill="#f4d638"/>
-  <circle cx="982" cy="116" r="17" fill="#092f20"/>
+  <image href="{{LOGO_DATA_URI}}" x="48" y="40" width="82" height="82"/>
+  <text x="156" y="72" fill="#a8cbb4" font-size="18" class="caps">BSV NORDSTERN</text>
+  <text x="156" y="104" fill="#ffffff" font-size="22" class="sans" font-weight="800">Radolfzell · Fußball</text>
+  <text x="1032" y="78" text-anchor="end" fill="#a8cbb4" font-size="24" class="handwritten">{{COMPETITION}}</text>
 
-  <g transform="translate(62 190) rotate(-4 470 54)">
-    <text x="7" y="84" fill="#91c82f" font-size="88" class="handwritten" opacity=".72">{{KICKER}}</text>
-    <text x="0" y="77" fill="#f4f1e8" font-size="88" class="handwritten">{{KICKER}}</text>
+  <g transform="translate(48 124) rotate(-3 350 44)">
+    <text x="6" y="71" fill="#91c82f" font-size="76" class="handwritten" opacity=".72">{{KICKER}}</text>
+    <text x="0" y="65" fill="#f4f1e8" font-size="76" class="handwritten">{{KICKER}}</text>
   </g>
 
-  <text x="540" y="455" text-anchor="middle" fill="#ffffff" font-size="{{RESULT_LABEL_SIZE}}" class="handwritten">{{RESULT_LABEL}}</text>
-  <text x="540" y="548" text-anchor="middle" fill="#a8cbb4" font-size="48" class="handwritten">{{COMPETITION}}</text>
+  <rect x="0" y="190" width="1080" height="650" fill="#0b2b1e" clip-path="url(#photoWave)"/>
+  <image href="{{ACTION_PLAYER_DATA_URI}}" x="0" y="172" width="1080" height="700" preserveAspectRatio="xMidYMid slice" clip-path="url(#photoWave)"/>
+  <rect x="0" y="172" width="1080" height="700" fill="url(#photoShade)" clip-path="url(#photoWave)"/>
+  <path d="M0 238C216 177 397 260 621 207c204-48 329-39 459 9" fill="none" stroke="#a8cbb4" stroke-width="5" opacity=".78"/>
+  <path d="M0 806c111 42 250 49 440-8 219-65 405 29 640-47" fill="none" stroke="#ffffff" stroke-width="5" opacity=".74"/>
+  <path d="M0 823c141 37 278 26 446-26 217-67 411 34 634-31" fill="none" stroke="#91c82f" stroke-width="3" opacity=".82"/>
 
-  <g transform="translate(72 664)">
-    <rect x="14" y="20" width="936" height="640" rx="62" fill="#071f16" opacity=".28"/>
-    <rect width="936" height="640" rx="62" fill="#ffffff"/>
-    <text x="468" y="72" text-anchor="middle" fill="#164f32" font-size="44" class="handwritten">ENDSTAND</text>
+  <g transform="translate(48 810)">
+    <text x="0" y="46" fill="#164f32" font-size="30" class="handwritten">ENDSTAND</text>
+    <line x1="0" y1="64" x2="984" y2="64" stroke="#a8cbb4" stroke-width="3" opacity=".6"/>
 
-    <g transform="translate(148 96)">
-      <text x="320" y="153" text-anchor="middle" fill="#092f20" font-size="188" class="team">{{HOME_SCORE}} : {{AWAY_SCORE}}</text>
-    </g>
+    <text x="0" y="125" fill="#10251a" font-size="{{HOME_TEAM_SIZE}}" class="team">{{HOME_TEAM}}</text>
+    <text x="984" y="125" text-anchor="end" fill="#164f32" font-size="74" class="handwritten">{{HOME_SCORE}}</text>
 
-    <text x="58" y="348" fill="#10251a" font-size="{{HOME_TEAM_SIZE}}" class="team">{{HOME_TEAM}}</text>
-    <image href="{{HOME_CREST_DATA_URI}}" x="280" y="356" width="140" height="140" preserveAspectRatio="xMidYMid meet" opacity="{{HOME_CREST_OPACITY}}"/>
-    <line x1="468" y1="356" x2="468" y2="488" transform="rotate(15 468 422)" stroke="#111111" stroke-width="6" stroke-linecap="round" opacity="{{DUEL_MARK_OPACITY}}"/>
-    <image href="{{AWAY_CREST_DATA_URI}}" x="530" y="386" width="140" height="140" preserveAspectRatio="xMidYMid meet" opacity="{{AWAY_CREST_OPACITY}}"/>
-    <text x="878" y="574" text-anchor="end" fill="#10251a" font-size="{{AWAY_TEAM_SIZE}}" class="team">{{AWAY_TEAM}}</text>
-    <text x="468" y="620" text-anchor="middle" fill="#164f32" font-size="22" class="sans" font-weight="900">{{DATE}}</text>
+    <text x="0" y="194" fill="#10251a" font-size="{{AWAY_TEAM_SIZE}}" class="team">{{AWAY_TEAM}}</text>
+    <text x="984" y="194" text-anchor="end" fill="#164f32" font-size="74" class="handwritten">{{AWAY_SCORE}}</text>
   </g>
 
-  <g transform="translate(72 1372)">
-    <rect width="936" height="218" rx="58" fill="#ffffff"/>
-    <g transform="translate(836 109)">
-      <circle r="64" fill="#f4f1e8" stroke="#164f32" stroke-width="4"/>
-      <g clip-path="url(#resultBallClip)" fill="#164f32" stroke="#6c7b71" stroke-width="3" stroke-linejoin="round">
-        <path d="M0-21 20-7 12 17-12 17-20-7z"/>
-        <path d="M-18-67 18-67 24-49 0-37-24-49z"/>
-        <path d="M50-42 68-21 68 8 48 7 36-19z"/>
-        <path d="M68 25 50 52 27 68 20 47 36 30z"/>
-        <path d="M-68 25-50 52-27 68-20 47-36 30z"/>
-        <path d="M-50-42-68-21-68 8-48 7-36-19z"/>
-      </g>
-      <g fill="none" stroke="#6c7b71" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M0-21V-37M20-7 36-19M12 17 36 30M-12 17-36 30M-20-7-36-19"/>
-      </g>
-    </g>
-    <text x="42" y="88" fill="#164f32" font-size="{{RESULT_MESSAGE_SIZE}}" class="handwritten">{{RESULT_MESSAGE}}</text>
-    <text x="42" y="150" fill="#6c7b71" font-size="18" class="caps">DANKE, NORDSTERN-FAMILIE!</text>
-  </g>
-
-  <text x="72" y="1800" fill="#164f32" font-size="34" class="handwritten">#aufgehtsgrün</text>
-  <text x="1008" y="1800" text-anchor="end" fill="#092f20" font-size="26" class="handwritten">bsvnordstern.de</text>
+  <text x="48" y="1050" fill="#164f32" font-size="27" class="handwritten">#aufgehtsgrün</text>
+  <text x="1032" y="1050" text-anchor="end" fill="#092f20" font-size="23" class="handwritten">bsvnordstern.de</text>
 </svg>

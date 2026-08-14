@@ -179,7 +179,7 @@ export function renderStorySvg({
     : type === 'lineup'
       ? 'MATCHDAY · STARTELF'
       : type === 'report'
-        ? 'ABPFIFF · BERICHT'
+        ? 'SPIELBERICHT'
         : 'ABPFIFF · ERGEBNIS';
   const resolvedActionPhotoDataUri = actionPhotoDataUri || match.actionPhotoDataUri;
   const values = {

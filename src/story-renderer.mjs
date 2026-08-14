@@ -189,7 +189,7 @@ export async function renderStorySvg({ rootDir, type, match, lineup = { players:
     GAME_STATUS_LABEL: gameStatusLabel,
     GAME_STATUS_OPACITY: gameStatusLabel ? 1 : 0,
     GAME_STATUS_SIZE: gameStatusLabel === 'ABGEBROCHEN' ? 130 : 160,
-    KICKER: type === 'announcement' ? 'MATCHDAY' : type === 'lineup' ? 'MATCHDAY · STARTELF' : 'ABPFIFF · ERGEBNIS',
+    KICKER: type === 'announcement' ? 'MATCHDAY' : type === 'lineup' ? 'MATCHDAY · STARTELF' : type === 'report' ? 'SPIELBERICHT' : 'ABPFIFF · ERGEBNIS',
     HOME_TEAM: truncate(displayTeamName(match.homeTeam), 32),
     HOME_TEAM_SIZE: fittedSize(displayTeamName(match.homeTeam), 44, 36, 24),
     AWAY_TEAM: truncate(displayTeamName(match.awayTeam), 32),

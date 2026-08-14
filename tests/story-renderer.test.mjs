@@ -82,11 +82,27 @@ for (const type of ['announcement', 'lineup', 'result', 'report']) {
       match,
       lineup: { players: [{ number: 1, name: 'M. Test' }] },
     });
-    assert.match(svg, /viewBox="0 0 1080 1920"/);
+    assert.match(svg, new RegExp(`viewBox="0 0 1080 ${type === 'report' ? '1080' : '1920'}"`));
     assert.doesNotMatch(svg, /\{\{[A-Z0-9_]+\}\}/);
     assert.match(svg, /BSV Nordstern &amp; Freunde/);
   });
 }
+
+test('Spielbericht ist ein quadratischer Feed-Post mit Wellenfoto, Partie und Ergebnis', async () => {
+  const customImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAF';
+  const svg = await renderStorySvg({
+    rootDir,
+    type: 'report',
+    match: { ...match, resultMessage: 'Dieser Text gehört ausschließlich in die Caption.', actionPhotoDataUri: customImage },
+  });
+  assert.match(svg, /width="1080" height="1080" viewBox="0 0 1080 1080"/);
+  assert.match(svg, /clipPath id="photoWave"/);
+  assert.match(svg, /preserveAspectRatio="xMidYMid slice" clip-path="url\(#photoWave\)"/);
+  assert.match(svg, /class="handwritten">SPIELBERICHT<\/text>/);
+  assert.match(svg, />3<\/text>/);
+  assert.match(svg, />1<\/text>/);
+  assert.doesNotMatch(svg, /Dieser Text gehört ausschließlich/);
+});
 
 test('Startelf verwendet Matchday-Titel, freien Footer und Fußball in der Gegnerkarte', async () => {
   const svg = await renderStorySvg({
@@ -147,11 +163,11 @@ test('birthday rendert Namen, Glückwunsch und Spielerbild', async () => {
   assert.doesNotMatch(svg, /\{\{[A-Z0-9_]+\}\}/);
 });
 
-test('eine eigene Action-Foto-URL wird im Story-Image verwendet', async () => {
+test('eine eigene Action-Foto-URL wird im Spielbericht verwendet', async () => {
   const customImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAF';
   const svg = await renderStorySvg({
     rootDir,
-    type: 'result',
+    type: 'report',
     match: { ...match, actionPhotoDataUri: customImage },
   });
   assert.match(svg, new RegExp(customImage.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
