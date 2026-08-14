@@ -103,6 +103,37 @@ async function render(body: Record<string, unknown>): Promise<RenderPayload> {
   return payload;
 }
 
+async function renderGamePreview(candidate: GameJob): Promise<RenderPayload> {
+  if (candidate.story_type !== 'report') {
+    return render({
+      type: candidate.story_type,
+      jobId: candidate.id,
+      game: candidate.game,
+    });
+  }
+
+  const storedPaths = Array.isArray(candidate.game.report_image_paths)
+    ? candidate.game.report_image_paths.filter((path) => String(path ?? '').trim()).slice(0, 10)
+    : [];
+  const pageCount = Math.max(storedPaths.length || (candidate.game.action_image_path ? 1 : 0), 1);
+  const pages: RenderPayload[] = [];
+  for (let reportPageIndex = 0; reportPageIndex < pageCount; reportPageIndex += 1) {
+    pages.push(await render({
+      type: candidate.story_type,
+      jobId: candidate.id,
+      game: candidate.game,
+      reportPageIndex,
+      reportPageCount: pageCount,
+    }));
+  }
+  return {
+    mediaUrl: pages[0].mediaUrl,
+    storagePath: pages[0].storagePath,
+    mediaUrls: pages.map((page) => page.mediaUrl as string),
+    storagePaths: pages.map((page) => page.storagePath as string),
+  };
+}
+
 function retryAt(attempt: number): string {
   return new Date(Date.now() + Math.min(attempt, 3) * 5 * 60 * 1000).toISOString();
 }
@@ -243,11 +274,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       }
 
       try {
-        const preview = await render({
-          type: candidate.story_type,
-          jobId: candidate.id,
-          game: candidate.game,
-        });
+        const preview = await renderGamePreview(candidate);
 
         if (!runtimeConfig.testMode) {
           const caption = candidate.story_type === 'report'
@@ -309,6 +336,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
           .update({
             status: retry ? 'pending' : 'failed',
             due_at: retry ? retryAt(attempt) : undefined,
+            claimed_at: null,
             last_error: message,
           })
           .eq('id', candidate.id);

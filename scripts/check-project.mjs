@@ -31,7 +31,9 @@ for (const type of STORY_TYPES) {
 
 const adminPage = await readFile(resolve(rootDir, 'admin-site/admin-page.html'), 'utf8');
 const adminApi = await readFile(resolve(rootDir, 'supabase/functions/social-media-admin-api/index.ts'), 'utf8');
-for (const marker of ['workspaceSearch', 'memberSearch', 'crestSearch', 'discardCrest', 'remove-report-image', 'markReportNeedsApproval']) {
+const edgeRenderer = await readFile(resolve(rootDir, 'supabase/functions/story-renderer/index.ts'), 'utf8');
+const socialWorker = await readFile(resolve(rootDir, 'supabase/functions/social-media-worker/index.ts'), 'utf8');
+for (const marker of ['workspaceSearch', 'memberSearch', 'crestSearch', 'discardCrest', 'remove-report-image', 'markReportNeedsApproval', 'reportApprovalView', 'report-action-bar']) {
   if (!adminPage.includes(marker)) throw new Error(`Admin-Oberfläche enthält ${marker} nicht.`);
 }
 const reportSaveHandler = adminPage.match(/document\.querySelectorAll\('\.reportSave'\)[\s\S]*?document\.querySelectorAll\('\.reportApprove'\)/)?.[0] ?? '';
@@ -43,6 +45,12 @@ if (!adminApi.includes("action === 'discard_club_crest'")) {
 }
 if (!adminApi.includes("last_error: 'Spielbericht wurde geändert. Bitte erneut freigeben.'")) {
   throw new Error('Admin-API macht eine alte Spielbericht-Freigabe nach Änderungen nicht ungültig.');
+}
+if (!edgeRenderer.includes('for (let index = 0; index < pageCount; index += 1)') || edgeRenderer.includes('Promise.all(svgs.map')) {
+  throw new Error('Spielbericht-Seiten werden nicht ressourcenschonend nacheinander gerendert.');
+}
+if (!socialWorker.includes('reportPageIndex') || !socialWorker.includes('renderGamePreview(candidate)')) {
+  throw new Error('Spielbericht-Seiten erhalten keine getrennten Renderer-Aufrufe.');
 }
 
 console.log(`Projektstruktur geprüft: ${required.length} Pflichtdateien vorhanden.`);

@@ -24,6 +24,8 @@ type RequestBody = {
   jobId?: string;
   game?: Record<string, unknown>;
   birthday?: Record<string, unknown>;
+  reportPageIndex?: number;
+  reportPageCount?: number;
 };
 
 function json(data: unknown, status = 200): Response {
@@ -169,7 +171,10 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
     if (!body.type || !STORY_TYPES.includes(body.type)) return json({ error: 'invalid_story_type' }, 400);
     const images = await imageAssets(context.supabaseAdmin);
 
-    let svgs: string[];
+    let pageCount = 1;
+    let outputPageNumber = 1;
+    let outputPageCount = 1;
+    let svgForPage: (index: number) => Promise<string>;
     if (body.type === 'birthday') {
       if (!body.birthday) return json({ error: 'birthday_missing' }, 400);
       let playerPhotoDataUri: string | undefined;
@@ -177,7 +182,12 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
       if (photoPath) {
         playerPhotoDataUri = await personPhoto(context.supabaseAdmin, photoPath);
       }
-      svgs = [renderStorySvg({ type: body.type, match: birthdayInput(body.birthday), imageAssets: images, playerPhotoDataUri })];
+      svgForPage = async () => renderStorySvg({
+        type: body.type as StoryType,
+        match: birthdayInput(body.birthday as Record<string, unknown>),
+        imageAssets: images,
+        playerPhotoDataUri,
+      });
     } else {
       if (!body.game) return json({ error: 'game_missing' }, 400);
       const input = gameInput(body.game);
@@ -193,37 +203,58 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
       ]);
       if (body.type === 'report') {
         const paths = reportImagePaths.length ? reportImagePaths : actionImagePath ? [actionImagePath] : [];
-        const photos = paths.length
-          ? await Promise.all(paths.map((path) => actionPhoto(context.supabaseAdmin, path)))
-          : [undefined];
-        svgs = photos.map((actionPhotoDataUri, index) => renderStorySvg({
-          type: body.type,
-          match: input.match,
-          lineup: input.lineup,
-          imageAssets: images,
-          homeCrestDataUri,
-          awayCrestDataUri,
-          actionPhotoDataUri,
-          reportPage: index + 1,
-          reportPageCount: photos.length,
-          reportPageKind: index === 0 ? 'result' : index === 1 ? 'scorers' : 'photo',
-        }));
+        const availablePageCount = Math.max(paths.length, 1);
+        const requestedPageIndex = Number.isInteger(body.reportPageIndex)
+          ? Number(body.reportPageIndex)
+          : null;
+        if (requestedPageIndex !== null && (requestedPageIndex < 0 || requestedPageIndex >= availablePageCount)) {
+          return json({ error: 'invalid_report_page' }, 400);
+        }
+        pageCount = requestedPageIndex === null ? availablePageCount : 1;
+        outputPageNumber = requestedPageIndex === null ? 1 : requestedPageIndex + 1;
+        outputPageCount = requestedPageIndex === null
+          ? availablePageCount
+          : Math.max(Number(body.reportPageCount) || availablePageCount, availablePageCount);
+        svgForPage = async (index) => {
+          const sourceIndex = requestedPageIndex ?? index;
+          const actionPhotoDataUri = paths[sourceIndex]
+            ? await actionPhoto(context.supabaseAdmin, paths[sourceIndex])
+            : undefined;
+          return renderStorySvg({
+            type: body.type as StoryType,
+            match: input.match,
+            lineup: input.lineup,
+            imageAssets: images,
+            homeCrestDataUri,
+            awayCrestDataUri,
+            actionPhotoDataUri,
+            reportPage: sourceIndex + 1,
+            reportPageCount: outputPageCount,
+            reportPageKind: sourceIndex === 0 ? 'result' : sourceIndex === 1 ? 'scorers' : 'photo',
+          });
+        };
       } else {
-        const actionPhotoDataUri = actionImagePath ? await actionPhoto(context.supabaseAdmin, actionImagePath) : undefined;
-        svgs = [renderStorySvg({
-          type: body.type,
-          match: input.match,
-          lineup: input.lineup,
-          imageAssets: images,
-          homeCrestDataUri,
-          awayCrestDataUri,
-          actionPhotoDataUri,
-        })];
+        svgForPage = async () => {
+          const actionPhotoDataUri = actionImagePath
+            ? await actionPhoto(context.supabaseAdmin, actionImagePath)
+            : undefined;
+          return renderStorySvg({
+            type: body.type as StoryType,
+            match: input.match,
+            lineup: input.lineup,
+            imageAssets: images,
+            homeCrestDataUri,
+            awayCrestDataUri,
+            actionPhotoDataUri,
+          });
+        };
       }
     }
 
     const stamp = Date.now();
-    const renderedPages = await Promise.all(svgs.map(async (svg, index) => {
+    const renderedPages: Array<{ mediaUrl: string; storagePath: string }> = [];
+    for (let index = 0; index < pageCount; index += 1) {
+      const svg = await svgForPage(index);
       const renderer = new Resvg(svg, {
         fitTo: { mode: 'width', value: 1080 },
         font: {
@@ -241,7 +272,8 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
       const png = rendered.asPng();
       rendered.free();
       renderer.free();
-      const suffix = svgs.length > 1 ? `-${index + 1}` : '';
+      const pageNumber = pageCount > 1 ? index + 1 : outputPageNumber;
+      const suffix = Math.max(pageCount, outputPageCount) > 1 ? `-${pageNumber}` : '';
       const storagePath = `generated/${body.type}/${safeSegment(body.jobId)}/${stamp}${suffix}.png`;
       const { error: uploadError } = await context.supabaseAdmin.storage
         .from(bucket)
@@ -257,8 +289,8 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
       if (signedError || !signed?.signedUrl) {
         throw new Error(`Vorschau-URL ${index + 1} konnte nicht erstellt werden: ${signedError?.message ?? 'unbekannt'}`);
       }
-      return { mediaUrl: signed.signedUrl, storagePath };
-    }));
+      renderedPages.push({ mediaUrl: signed.signedUrl, storagePath });
+    }
 
     const mediaUrls = renderedPages.map((page) => page.mediaUrl);
     const storagePaths = renderedPages.map((page) => page.storagePath);
