@@ -167,9 +167,9 @@ test('Startelf verwendet Matchday-Titel, freien Footer und Fußball in der Gegne
   assert.match(svg, /<g transform="translate\(842 95\)">[\s\S]*M0-21 20-7/);
   assert.doesNotMatch(svg, /<rect width="260" height="48"/);
   assert.doesNotMatch(svg, /<rect width="410" height="96"/);
-  assert.match(svg, /<circle cx="42" cy="42" r="36" fill="#f4d638"/);
-  assert.match(svg, /<text x="42" y="54" text-anchor="middle" class="number">1<\/text>/);
-  assert.match(svg, /<text x="96" y="54" class="player">M\. Test<\/text>/);
+  assert.doesNotMatch(svg, /<circle cx="42" cy="42"/);
+  assert.match(svg, /<text x="0" y="58" class="number">01<\/text>/);
+  assert.match(svg, /<text x="76" y="58" class="player">M\. Test<\/text>/);
 });
 
 test('Ergebnis übernimmt Capture-It-Titel, freien Endstand und das Wappen-Duell', async () => {

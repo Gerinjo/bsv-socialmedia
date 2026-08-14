@@ -96,13 +96,13 @@ function lineupRows(players: Lineup['players'] = []): string {
     const row = column === 0 ? index : index - 6;
     const x = column === 0 ? 95 : 575;
     const y = 735 + row * 126;
+    const rawNumber = String(player.number ?? '').trim();
+    const number = /^\d+$/.test(rawNumber) ? rawNumber.padStart(2, '0') : rawNumber || '–';
     return [
       `<g transform="translate(${x} ${y})">`,
-      '<circle cx="42" cy="42" r="36" fill="#f4d638"/>',
-      '<circle cx="42" cy="42" r="31" fill="none" stroke="#91c82f" stroke-width="3" opacity=".72"/>',
-      `<text x="42" y="54" text-anchor="middle" class="number">${xmlEscape(player.number ?? '–')}</text>`,
-      `<text x="96" y="54" class="player">${xmlEscape(truncate(player.name, 22))}</text>`,
-      '<path d="M96 72H402" stroke="#a8cbb4" stroke-width="2" opacity=".22"/>',
+      `<text x="0" y="58" class="number">${xmlEscape(number)}</text>`,
+      `<text x="76" y="58" class="player">${xmlEscape(truncate(player.name, 22))}</text>`,
+      '<path d="M76 77H402" stroke="#a8cbb4" stroke-width="2" opacity=".22"/>',
       '</g>',
     ].join('');
   }).join('');

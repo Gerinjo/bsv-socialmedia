@@ -14,8 +14,8 @@
       .handwritten{font-family:'Capture it',Impact,Inter,sans-serif;font-weight:400;letter-spacing:1px}
       .caps{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:5px}
       .team{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:-2px}
-      .number{font-family:'Capture it',Impact,Inter,sans-serif;font-size:34px;font-weight:400;letter-spacing:1px;fill:#092f20}
-      .player{font-family:'Capture it',Impact,Inter,sans-serif;font-size:31px;font-weight:400;letter-spacing:1px;fill:#ffffff}
+      .number{font-family:'Capture it',Impact,Inter,sans-serif;font-size:42px;font-weight:400;letter-spacing:2px;fill:#f4d638}
+      .player{font-family:'Capture it',Impact,Inter,sans-serif;font-size:37px;font-weight:400;letter-spacing:1px;fill:#ffffff}
       .empty{font-family:'Capture it',Impact,Inter,sans-serif;font-size:42px;font-weight:400;letter-spacing:4px;fill:#a8cbb4}
     </style>
   </defs>
