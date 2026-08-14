@@ -84,6 +84,8 @@ const teams = activeTeamPaths.map((path, index) => {
     competition,
     websitePath: path,
     fussballDeUrl: profile.fussballDeUrl ?? null,
+    fussballDeTeamId: profile.fussballDeUrl?.match(/\/team-id\/([^/?#]+)/)?.[1] ?? null,
+    fussballDeWidgetId: profile.fussballDeWidgetId ?? null,
     sortOrder: index + 1,
   };
 });

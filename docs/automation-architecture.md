@@ -35,6 +35,8 @@ Das separate Supabase-Projekt `maejihwjzxkmthjavgnx` ist eingerichtet. Dadurch b
 
 Der Zugriff liegt hinter einem eigenen Adapter. Das ist wichtig, weil die öffentlich sichtbare Website keine zugesagte allgemeine Spiel-API darstellt und HTML-Strukturen geändert werden können.
 
+Die Edge Function `fussball-de-sync` liest stündlich die Team-Matches-Widgets aus, die auf den vier aktiven Mannschaftsseiten der BSV-Webseite eingebettet sind. Die Widget- und Team-IDs liegen an `social_teams`; Spiele werden anhand der stabilen FUSSBALL.DE-Spiel-ID eingefügt oder aktualisiert. Ein wiederholter Abruf erzeugt deshalb keine Duplikate. Bereits manuell auf `finished`, `cancelled` oder `aborted` gesetzte Spiele werden durch einen späteren Abruf nicht wieder auf `scheduled` zurückgesetzt.
+
 Regeln:
 
 - Original-URL und externe Spiel-ID speichern.
@@ -76,7 +78,7 @@ Die vorbereitete Migration aktiviert RLS auf allen Tabellen. `anon` und `authent
 
 Bei neuen Supabase-Projekten kann die Data API zunächst deaktiviert sein. Da der Worker über den Supabase-Client auf `public.social_games` und `public.social_story_jobs` zugreift, muss im Dashboard die Data API für das Schema `public` aktiviert werden. RLS, entzogene Rollenrechte und der Secret Key schützen die Tabellen weiterhin; Browser-Clients erhalten keinen Zugriff.
 
-Der aktive Cron-Job `bsv-social-worker` ruft den Worker alle fünf Minuten per HTTP auf. Ein eigenes zufälliges Cron-Geheimnis liegt verschlüsselt in Supabase Vault und zusätzlich als Edge Secret vor. Die Migration enthält nur den Namen des Vault-Eintrags, nie den Geheimniswert. Direkte Aufrufe ohne dieses Geheimnis werden abgewiesen.
+Der aktive Cron-Job `bsv-social-worker` ruft den Worker alle fünf Minuten per HTTP auf. `bsv-fussball-de-match-sync` startet den Spielabgleich stündlich zur Minute 23. Ein eigenes zufälliges Cron-Geheimnis liegt verschlüsselt in Supabase Vault und zusätzlich als Edge Secret vor. Die Migration enthält nur den Namen des Vault-Eintrags, nie den Geheimniswert. Direkte Aufrufe ohne dieses Geheimnis werden abgewiesen.
 
 Die Admin-Oberfläche läuft owner-only unter <https://bsv-story-automatik.jerome-ernsberger.chatgpt.site>. Sie verwendet ausschließlich den öffentlichen Publishable Key im Browser. Schreib- und Lesezugriffe laufen über die JWT-geschützte Edge Function `social-media-admin-api`, die zusätzlich die Mitgliedschaft in `social_admins` prüft.
 
@@ -105,6 +107,7 @@ Secrets:
 ## Betrieb und Freigabe
 
 - Cron alle fünf Minuten.
+- Spielplan-Abgleich stündlich zur Minute 23.
 - Höchstens ein Worker übernimmt einen Job durch bedingtes Status-Update.
 - Maximal drei automatische Wiederholungen mit wachsendem Abstand.
 - Jede Veröffentlichung speichert Provider-ID und Zeitpunkt.
@@ -119,7 +122,7 @@ Corporate Design, SVG-Vorlagen, lokaler JPEG-Renderer, Datenmodell und sicherer 
 
 ### Phase 2 · Abgeschlossen im Testbetrieb
 
-Eigenes Supabase-Projekt, Admin-Eingabe, Online-Renderer, privater Storage, Cron und Freigabeoberfläche. Der fussball.de-Adapter bleibt optional; Daten werden derzeit manuell bestätigt.
+Eigenes Supabase-Projekt, Admin-Eingabe, Online-Renderer, privater Storage, Cron, Freigabeoberfläche und automatischer FUSSBALL.DE-Spielplan-Abgleich für alle aktiven Mannschaften.
 
 ### Phase 3 · Meta-Testkonto
 

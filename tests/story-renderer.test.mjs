@@ -74,7 +74,7 @@ test('Story-SVG verwendet den abgekürzten SG-Mannschaftsnamen', async () => {
   assert.doesNotMatch(svg, /Öhningen-Gaienhofen/);
 });
 
-for (const type of ['announcement', 'lineup', 'result']) {
+for (const type of ['announcement', 'lineup', 'result', 'report']) {
   test(`${type} rendert ein vollständiges Story-SVG`, async () => {
     const svg = await renderStorySvg({
       rootDir,
@@ -145,6 +145,16 @@ test('birthday rendert Namen, Glückwunsch und Spielerbild', async () => {
   assert.doesNotMatch(svg, /Vereinsmitglied/);
   assert.match(svg, /data:image\/png;base64,/);
   assert.doesNotMatch(svg, /\{\{[A-Z0-9_]+\}\}/);
+});
+
+test('eine eigene Action-Foto-URL wird im Story-Image verwendet', async () => {
+  const customImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAF';
+  const svg = await renderStorySvg({
+    rootDir,
+    type: 'result',
+    match: { ...match, actionPhotoDataUri: customImage },
+  });
+  assert.match(svg, new RegExp(customImage.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 });
 
 test('Geburtstagsrollen lassen Vereinsmitglied weg und behalten Fachrollen', () => {

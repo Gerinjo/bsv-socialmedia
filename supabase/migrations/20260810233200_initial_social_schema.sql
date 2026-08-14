@@ -29,7 +29,7 @@ create unique index social_games_source_match_unique_idx
 create table public.social_story_jobs (
   id uuid primary key default gen_random_uuid(),
   game_id uuid not null references public.social_games(id) on delete cascade,
-  story_type text not null check (story_type in ('announcement', 'lineup', 'result')),
+  story_type text not null check (story_type in ('announcement', 'lineup', 'result', 'report')),
   due_at timestamptz not null,
   status text not null default 'pending' check (
     status in ('pending', 'rendering', 'preview_ready', 'published', 'failed', 'skipped', 'needs_input')
@@ -92,7 +92,8 @@ begin
   values
     (new.id, 'announcement', new.kickoff_at - interval '24 hours'),
     (new.id, 'lineup', new.kickoff_at - interval '30 minutes'),
-    (new.id, 'result', new.kickoff_at + interval '120 minutes')
+    (new.id, 'result', new.kickoff_at + interval '120 minutes'),
+    (new.id, 'report', new.kickoff_at + interval '150 minutes')
   on conflict (game_id, story_type) do update
     set due_at = excluded.due_at,
         updated_at = now()

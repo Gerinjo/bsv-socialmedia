@@ -151,19 +151,42 @@ async function runWorker(): Promise<Record<string, unknown>> {
 }
 
 async function renderGameJobNow(admin: any, gameId: string, storyType: 'announcement' | 'lineup' | 'result') {
-  const { error } = await admin
+  const { data: existing, error: selectError } = await admin
     .from('social_story_jobs')
-    .update({
-      status: 'pending',
-      due_at: new Date().toISOString(),
-      attempts: 0,
-      claimed_at: null,
-      last_error: null,
-    })
+    .select('id')
     .eq('game_id', gameId)
     .eq('story_type', storyType)
-    .in('status', ['pending', 'preview_ready', 'failed', 'needs_input', 'skipped']);
-  if (error) throw error;
+    .maybeSingle();
+  if (selectError) throw selectError;
+
+  if (existing?.id) {
+    const { error } = await admin
+      .from('social_story_jobs')
+      .update({
+        status: 'pending',
+        due_at: new Date().toISOString(),
+        attempts: 0,
+        claimed_at: null,
+        last_error: null,
+      })
+      .eq('id', existing.id)
+      .in('status', ['pending', 'preview_ready', 'failed', 'needs_input', 'skipped']);
+    if (error) throw error;
+  } else {
+    const { error } = await admin
+      .from('social_story_jobs')
+      .insert({
+        game_id: gameId,
+        story_type: storyType,
+        status: 'pending',
+        due_at: new Date().toISOString(),
+        attempts: 0,
+        claimed_at: null,
+        last_error: null,
+      });
+    if (error) throw error;
+  }
+
   return runWorker();
 }
 
@@ -240,12 +263,17 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
 
   const { data: membership, error: membershipError } = await context.supabaseAdmin
     .from('social_admins')
-    .select('user_id, email')
+    .select('user_id, email, role, is_active')
     .eq('user_id', userId)
     .maybeSingle();
   if (membershipError) return json({ error: membershipError.message }, 500);
-  if (!membership) {
-    return json({ error: 'not_authorized', userId, email }, 403);
+  if (!membership || !membership.is_active) {
+    return json({ error: 'not_authorized', userId, email, reason: 'account_inactive' }, 403);
+  }
+  const normalizedRole = String(membership.role ?? '').trim().toLowerCase().replace(/\s+/g, '-');
+  const allowedRoles = new Set(['admin', 'sm-team']);
+  if (!allowedRoles.has(normalizedRole)) {
+    return json({ error: 'not_authorized', userId, email, reason: 'role_missing', role: membership.role }, 403);
   }
 
   if (request.method === 'GET') {
@@ -256,6 +284,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       { data: teams, error: teamsError },
       { data: people, error: peopleError },
       { data: clubs, error: clubsError },
+      { data: members, error: membersError },
     ] = await Promise.all([
       context.supabaseAdmin
         .from('social_games')
@@ -267,7 +296,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .order('birth_date', { ascending: true }),
       context.supabaseAdmin
         .from('social_teams')
-        .select('id, slug, name, competition, website_path, fussball_de_url, sort_order')
+        .select('id, slug, name, competition, website_path, fussball_de_url, fussball_de_widget_id, sync_enabled, last_synced_at, last_sync_error, sort_order')
         .eq('active', true)
         .order('sort_order', { ascending: true }),
       context.supabaseAdmin
@@ -279,11 +308,16 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .from('social_clubs')
         .select('*, aliases:social_club_aliases(alias, normalized_alias)')
         .order('name', { ascending: true }),
+      context.supabaseAdmin
+        .from('social_admins')
+        .select('user_id, email, role, is_active, created_at')
+        .order('email', { ascending: true }),
     ]);
-    const readError = gamesError ?? birthdaysError ?? teamsError ?? peopleError ?? clubsError;
+    const readError = gamesError ?? birthdaysError ?? teamsError ?? peopleError ?? clubsError ?? membersError;
     if (readError) return json({ error: readError.message }, 500);
     return json({
-      user: { userId, email },
+      user: { userId, email, role: String(membership.role ?? '').trim() || 'sm-team' },
+      members: members ?? [],
       testMode: true,
       venues: [...homeVenues],
       teams: teams ?? [],
@@ -299,6 +333,38 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
   try {
     const body = await request.json() as Record<string, any>;
     const action = required(body.action, 'Aktion');
+
+    if (action === 'create_team_member') {
+      if (String(membership.role ?? '').trim().toLowerCase() !== 'admin') {
+        return json({ error: 'admin_only' }, 403);
+      }
+      const email = String(body.email ?? '').trim().toLowerCase();
+      const password = String(body.password ?? '');
+      const role = String(body.role ?? 'sm-team').trim();
+      const isActive = body.is_active !== false;
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Bitte eine gültige E-Mail-Adresse eingeben.');
+      if (password.length < 10) throw new Error('Das Passwort muss mindestens 10 Zeichen lang sein.');
+      if (!['admin', 'sm-team'].includes(role)) throw new Error('Die Rolle ist ungültig.');
+      const { data: createdUser, error: createUserError } = await context.supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { role },
+      });
+      if (createUserError) throw new Error(createUserError.message || 'Der Benutzer konnte nicht angelegt werden.');
+      const { data: member, error: insertError } = await context.supabaseAdmin
+        .from('social_admins')
+        .upsert({
+          user_id: createdUser.user.id,
+          email,
+          role,
+          is_active: isActive,
+        }, { onConflict: 'user_id' })
+        .select('*')
+        .single();
+      if (insertError) throw insertError;
+      return json({ ok: true, member });
+    }
 
     if (action === 'save_game') {
       const kickoff = new Date(required(body.kickoffAt, 'Anstoß'));
@@ -421,17 +487,36 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         throw new Error('Das Ergebnis muss aus zwei nicht-negativen ganzen Zahlen bestehen.');
       }
       const gameId = required(body.gameId, 'Spiel-ID');
+      const actionImageDataUrl = String(body.actionImageDataUrl ?? '').trim();
+      const actionImage = actionImageDataUrl ? parseDataUrl(actionImageDataUrl, new Set(['image/jpeg', 'image/png', 'image/webp']), 8 * 1024 * 1024) : null;
+      const resultUpdate: Record<string, unknown> = {
+        home_score: homeScore,
+        away_score: awayScore,
+        result_label: String(body.resultLabel ?? '').trim() || null,
+        result_message: String(body.resultMessage ?? '').trim() || null,
+        status: 'finished',
+      };
+      if (actionImage) {
+        const extension = originalMimeTypes.get(actionImage.mime) ?? 'png';
+        const actionImagePath = `generated/action-images/${gameId}/${Date.now()}.${extension}`;
+        const { error: uploadError } = await context.supabaseAdmin.storage.from(bucket).upload(actionImagePath, actionImage.bytes, {
+          contentType: actionImage.mime,
+          upsert: true,
+        });
+        if (uploadError) throw uploadError;
+        resultUpdate.action_image_path = actionImagePath;
+      }
       const { error } = await context.supabaseAdmin
         .from('social_games')
-        .update({
-          home_score: homeScore,
-          away_score: awayScore,
-          result_label: String(body.resultLabel ?? '').trim() || null,
-          result_message: String(body.resultMessage ?? '').trim() || null,
-          status: 'finished',
-        })
+        .update(resultUpdate)
         .eq('id', gameId);
       if (error) throw error;
+      const automation = await renderGameJobNow(context.supabaseAdmin, gameId, 'result');
+      return json({ ok: true, saved: true, automation });
+    }
+
+    if (action === 'approve_result') {
+      const gameId = required(body.gameId, 'Spiel-ID');
       const automation = await renderGameJobNow(context.supabaseAdmin, gameId, 'result');
       return json({ ok: true, automation });
     }

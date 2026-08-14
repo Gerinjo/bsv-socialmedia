@@ -52,9 +52,18 @@ Die private Admin-Oberfläche läuft unter:
 
 <https://bsv-story-automatik.jerome-ernsberger.chatgpt.site>
 
-Sie ist auf den Site-Eigentümer beschränkt. Supabase Cron startet den Worker alle fünf Minuten. Neue Spiele erzeugen automatisch Jobs für Ankündigung, Aufstellung und Ergebnis; Geburtstage erzeugen jährlich einen eigenen Job. Fällige Jobs werden aktuell als PNG gerendert und in einem privaten Storage-Bucket abgelegt. Über zeitlich begrenzte Links können die Vorschauen in der Admin-Oberfläche kontrolliert werden.
+Sie ist auf den Site-Eigentümer beschränkt. Supabase Cron gleicht die kommenden Spiele der vier aktiven BSV-Mannschaften stündlich mit den auf der BSV-Webseite eingebetteten FUSSBALL.DE-Widgets ab und startet den Vorschau-Worker alle fünf Minuten. Neue Spiele erzeugen automatisch Jobs für Ankündigung, Aufstellung und Ergebnis; Geburtstage erzeugen jährlich einen eigenen Job. Fällige Jobs werden aktuell als PNG gerendert und in einem privaten Storage-Bucket abgelegt. Über zeitlich begrenzte Links können die Vorschauen in der Admin-Oberfläche kontrolliert werden.
 
 Vor dem ersten Login muss die URL einmal in Supabase unter **Authentication → URL Configuration** als Site URL und Redirect URL eingetragen werden. Nach dem ersten Login wird die konkrete Supabase-Benutzer-ID einmalig in `social_admins` freigeschaltet.
+
+## Benutzerverwaltung für das Social-Media-Team
+
+- Jeder Teamzugang bekommt in Supabase Auth einen eigenen Benutzer mit E-Mail und Passwort.
+- Eine öffentliche Selbstregistrierung bleibt deaktiviert; neue Konten werden ausschließlich durch den Administrator angelegt.
+- In der Tabelle `public.social_admins` wird der Benutzer anschließend mit `role` (`admin` oder `sm-team`) und `is_active = true` freigeschaltet.
+- Der Administrator ist der Nutzer mit `role = 'admin'`; aktuell ist das Jérôme.
+- Nach erfolgreichem Login wird der Benutzer direkt in den bestehenden Social Media Builder weitergeleitet.
+- Ein Logout erfolgt über die bereits vorhandene Abmeldefunktion in der Admin-Oberfläche.
 
 ## Sicherheitsstandard
 
@@ -80,8 +89,8 @@ tests/                  automatisierte Tests
 ## Nächste Betriebs-Schritte
 
 1. Admin-URL in Supabase Auth erlauben, einmal anmelden und den Benutzer freischalten.
-2. Spiele, Aufstellungen, Ergebnisse und Geburtstage im Testbetrieb pflegen und Vorschauen prüfen.
-3. Optional einen verlässlichen fussball.de-Importadapter ergänzen; aktuell werden Spieldaten bewusst manuell bestätigt.
+2. Automatisch importierte Spiele sowie Aufstellungen, Ergebnisse und Geburtstage im Testbetrieb prüfen.
+3. Änderungen an den FUSSBALL.DE-Widgets und fehlgeschlagene Team-Abgleiche regelmäßig kontrollieren.
 4. Instagram Professional Account mit der Meta Graph API verbinden und den PNG/JPEG-Publishingpfad testen.
 5. Erst nach erfolgreichen Freigabetests `INSTAGRAM_TEST_MODE=false` setzen.
 

@@ -1,6 +1,6 @@
 import { STORY_ASSETS, STORY_TEMPLATES } from './story-assets.generated.ts';
 
-export const STORY_TYPES = ['announcement', 'lineup', 'result', 'birthday'] as const;
+export const STORY_TYPES = ['announcement', 'lineup', 'result', 'report', 'birthday'] as const;
 export type StoryType = typeof STORY_TYPES[number];
 
 const TEAM_DISPLAY_NAMES = new Map([
@@ -135,6 +135,7 @@ export function renderStorySvg({
   lineup = { players: [] },
   imageAssets,
   playerPhotoDataUri,
+  actionPhotoDataUri,
   homeCrestDataUri,
   awayCrestDataUri,
 }: {
@@ -143,6 +144,7 @@ export function renderStorySvg({
   lineup?: Lineup;
   imageAssets: { logo: string; sparkasseLogo: string; actionPlayer: string };
   playerPhotoDataUri?: string;
+  actionPhotoDataUri?: string;
   homeCrestDataUri?: string;
   awayCrestDataUri?: string;
 }): string {
@@ -172,12 +174,20 @@ export function renderStorySvg({
     : match.gameStatus === 'aborted'
       ? 'ABGEBROCHEN'
       : '';
+  const kicker = type === 'announcement'
+    ? 'MATCHDAY'
+    : type === 'lineup'
+      ? 'MATCHDAY · STARTELF'
+      : type === 'report'
+        ? 'ABPFIFF · BERICHT'
+        : 'ABPFIFF · ERGEBNIS';
+  const resolvedActionPhotoDataUri = actionPhotoDataUri || match.actionPhotoDataUri;
   const values = {
     LOGO_DATA_URI: imageAssets.logo,
     SPARKASSE_LOGO_DATA_URI: imageAssets.sparkasseLogo,
-    ACTION_PLAYER_DATA_URI: imageAssets.actionPlayer,
+    ACTION_PLAYER_DATA_URI: resolvedActionPhotoDataUri || imageAssets.actionPlayer,
     HANDWRITTEN_FONT_DATA_URI: `data:${STORY_ASSETS.captureFont.mime};base64,${STORY_ASSETS.captureFont.base64}`,
-    PLAYER_PHOTO_DATA_URI: playerPhotoDataUri || imageAssets.actionPlayer,
+    PLAYER_PHOTO_DATA_URI: resolvedActionPhotoDataUri || playerPhotoDataUri || imageAssets.actionPlayer,
     HOME_CREST_DATA_URI: resolvedHomeCrestDataUri,
     HOME_CREST_OPACITY: hasHomeCrest ? 1 : 0,
     AWAY_CREST_DATA_URI: resolvedAwayCrestDataUri,
@@ -186,7 +196,7 @@ export function renderStorySvg({
     GAME_STATUS_LABEL: gameStatusLabel,
     GAME_STATUS_OPACITY: gameStatusLabel ? 1 : 0,
     GAME_STATUS_SIZE: gameStatusLabel === 'ABGEBROCHEN' ? 130 : 160,
-    KICKER: type === 'announcement' ? 'MATCHDAY' : type === 'lineup' ? 'MATCHDAY · STARTELF' : 'ABPFIFF · ERGEBNIS',
+    KICKER: kicker,
     HOME_TEAM: truncate(displayTeamName(match.homeTeam), 32),
     HOME_TEAM_SIZE: fittedSize(displayTeamName(match.homeTeam), 44, 36, 24),
     AWAY_TEAM: truncate(displayTeamName(match.awayTeam), 32),

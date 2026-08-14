@@ -69,6 +69,7 @@ function gameInput(game: Record<string, unknown>) {
       resultLabel: game.result_label,
       resultMessage: game.result_message,
       gameStatus: game.status,
+      actionImagePath: game.action_image_path ?? null,
       homeCrestPath: homeClub.crest_status === 'approved' ? homeClub.crest_transparent_path : null,
       awayCrestPath: awayClub.crest_status === 'approved' ? awayClub.crest_transparent_path : null,
     },
@@ -123,6 +124,12 @@ async function personPhoto(admin: any, reference: string): Promise<string> {
   return blobDataUri(data, reference);
 }
 
+async function actionPhoto(admin: any, reference: string): Promise<string> {
+  const { data, error } = await admin.storage.from(bucket).download(reference);
+  if (error) throw new Error(`Action-Bild konnte nicht geladen werden: ${error.message}`);
+  return blobDataUri(data, reference);
+}
+
 async function clubCrest(admin: any, reference: string): Promise<string | undefined> {
   if (!reference.startsWith('club-crests/') && reference !== 'assets/bsv-nordstern.png') {
     throw new Error('Der Speicherpfad des Vereinswappens ist ungültig.');
@@ -172,9 +179,11 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
       const input = gameInput(body.game);
       const homeCrestPath = String(input.match.homeCrestPath ?? '').trim();
       const awayCrestPath = String(input.match.awayCrestPath ?? '').trim();
-      const [homeCrestDataUri, awayCrestDataUri] = await Promise.all([
+      const actionImagePath = String(input.match.actionImagePath ?? '').trim();
+      const [homeCrestDataUri, awayCrestDataUri, actionPhotoDataUri] = await Promise.all([
         homeCrestPath ? clubCrest(context.supabaseAdmin, homeCrestPath) : undefined,
         awayCrestPath ? clubCrest(context.supabaseAdmin, awayCrestPath) : undefined,
+        actionImagePath ? actionPhoto(context.supabaseAdmin, actionImagePath) : undefined,
       ]);
       svg = renderStorySvg({
         type: body.type,
@@ -183,6 +192,7 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
         imageAssets: images,
         homeCrestDataUri,
         awayCrestDataUri,
+        actionPhotoDataUri,
       });
     }
 

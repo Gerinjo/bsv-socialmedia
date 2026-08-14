@@ -1,5 +1,6 @@
 import { withSupabase } from 'npm:@supabase/server@1.4.1';
 import { runtimeConfig } from '../_shared/config.ts';
+import { publishInstagramImage } from '../../../src/instagram-publisher.mjs';
 
 type JobStatus = 'pending' | 'rendering' | 'preview_ready' | 'published' | 'failed' | 'skipped' | 'needs_input';
 
@@ -7,7 +8,7 @@ type GameJob = {
   id: string;
   attempts: number;
   status: JobStatus;
-  story_type: 'announcement' | 'lineup' | 'result';
+  story_type: 'announcement' | 'lineup' | 'result' | 'report';
   game: {
     id: string;
     source_match_id: string | null;
@@ -136,7 +137,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
           .eq('id', candidate.id);
         continue;
       }
-      if (kickoffHasPassed && candidate.story_type !== 'result' && !stoppedGame) {
+      if (kickoffHasPassed && candidate.story_type !== 'result' && candidate.story_type !== 'report' && !stoppedGame) {
         await context.supabaseAdmin
           .from('social_story_jobs')
           .update({ status: 'skipped', last_error: 'Das Spiel hat bereits begonnen.' })
@@ -144,7 +145,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
         continue;
       }
 
-      if (candidate.story_type === 'result'
+      if ((candidate.story_type === 'result' || candidate.story_type === 'report')
         && (candidate.game.home_score === null || candidate.game.away_score === null)) {
         await context.supabaseAdmin
           .from('social_story_jobs')
@@ -169,9 +170,31 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
           jobId: candidate.id,
           game: candidate.game,
         });
+
         if (!runtimeConfig.testMode) {
-          throw new Error('Produktiv-Publisher ist absichtlich noch nicht aktiviert.');
+          const caption = `${candidate.game.home_team} vs ${candidate.game.away_team} · ${candidate.game.competition || 'BSV Nordstern'} • ${new Date(candidate.game.kickoff_at).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}`;
+          const result = await publishInstagramImage({
+            accountId: runtimeConfig.instagramAccountId,
+            accessToken: runtimeConfig.instagramAccessToken,
+            imageUrl: preview.mediaUrl,
+            caption,
+            testMode: runtimeConfig.testMode,
+          });
+          await context.supabaseAdmin
+            .from('social_story_jobs')
+            .update({
+              status: 'published',
+              media_url: preview.mediaUrl,
+              storage_path: preview.storagePath,
+              external_post_id: result.id,
+              published_at: new Date().toISOString(),
+              last_error: null,
+            })
+            .eq('id', candidate.id);
+          summary.previewReady += 1;
+          continue;
         }
+
         await context.supabaseAdmin
           .from('social_story_jobs')
           .update({
@@ -233,7 +256,27 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
           birthday: candidate.birthday,
         });
         if (!runtimeConfig.testMode) {
-          throw new Error('Produktiv-Publisher ist absichtlich noch nicht aktiviert.');
+          const caption = `${candidate.birthday.person_name} · Geburtstag • ${candidate.birthday.message}`.slice(0, 2200);
+          const result = await publishInstagramImage({
+            accountId: runtimeConfig.instagramAccountId,
+            accessToken: runtimeConfig.instagramAccessToken,
+            imageUrl: preview.mediaUrl,
+            caption,
+            testMode: runtimeConfig.testMode,
+          });
+          await context.supabaseAdmin
+            .from('social_birthday_jobs')
+            .update({
+              status: 'published',
+              media_url: preview.mediaUrl,
+              storage_path: preview.storagePath,
+              external_post_id: result.id,
+              published_at: new Date().toISOString(),
+              last_error: null,
+            })
+            .eq('id', candidate.id);
+          summary.previewReady += 1;
+          continue;
         }
         await context.supabaseAdmin
           .from('social_birthday_jobs')

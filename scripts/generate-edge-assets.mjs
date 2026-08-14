@@ -9,6 +9,7 @@ const textFiles = {
   announcement: 'templates/announcement.svg',
   lineup: 'templates/lineup.svg',
   result: 'templates/result.svg',
+  report: 'templates/report.svg',
   birthday: 'templates/birthday.svg',
 };
 

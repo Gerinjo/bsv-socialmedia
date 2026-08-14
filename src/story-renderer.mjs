@@ -2,7 +2,7 @@ import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import { extname, resolve } from 'node:path';
 
-export const STORY_TYPES = ['announcement', 'lineup', 'result', 'birthday'];
+export const STORY_TYPES = ['announcement', 'lineup', 'result', 'report', 'birthday'];
 
 const TEAM_DISPLAY_NAMES = new Map([
   [
@@ -132,9 +132,10 @@ function resultLabelSize(value) {
   return 48;
 }
 
-export async function renderStorySvg({ rootDir, type, match, lineup = { players: [] }, photoPath }) {
+export async function renderStorySvg({ rootDir, type, match, lineup = { players: [] }, photoPath, actionPhotoDataUri }) {
   if (!STORY_TYPES.includes(type)) throw new Error(`Unbekannter Story-Typ: ${type}`);
 
+  const resolvedActionPhotoDataUri = actionPhotoDataUri || match.actionPhotoDataUri;
   const templatePath = resolve(rootDir, 'templates', `${type}.svg`);
   const logoPath = resolve(rootDir, 'brand/logos/bsv-nordstern.png');
   const sparkasseLogoPath = resolve(rootDir, 'brand/logos/sparkasse-hegau-bodensee-white.png');
@@ -149,7 +150,7 @@ export async function renderStorySvg({ rootDir, type, match, lineup = { players:
     fileDataUri(tsvAachLinzCrestPath),
     fileDataUri(actionPlayerPath),
     fileDataUri(handwrittenFontPath),
-    fileDataUri(playerPhotoPath),
+    resolvedActionPhotoDataUri ? Promise.resolve(resolvedActionPhotoDataUri) : fileDataUri(playerPhotoPath),
   ]);
 
   const resultLabel = text(match.resultLabel, outcome(match));
@@ -177,9 +178,9 @@ export async function renderStorySvg({ rootDir, type, match, lineup = { players:
   const values = {
     LOGO_DATA_URI: logoDataUri,
     SPARKASSE_LOGO_DATA_URI: sparkasseLogoDataUri,
-    ACTION_PLAYER_DATA_URI: actionPlayerDataUri,
+    ACTION_PLAYER_DATA_URI: resolvedActionPhotoDataUri || actionPlayerDataUri,
     HANDWRITTEN_FONT_DATA_URI: handwrittenFontDataUri,
-    PLAYER_PHOTO_DATA_URI: playerPhotoDataUri,
+    PLAYER_PHOTO_DATA_URI: resolvedActionPhotoDataUri || playerPhotoDataUri,
     HOME_CREST_DATA_URI: homeCrestDataUri,
     HOME_CREST_OPACITY: hasHomeCrest ? 1 : 0,
     AWAY_CREST_DATA_URI: awayCrestDataUri,

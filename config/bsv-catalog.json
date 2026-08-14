@@ -1,7 +1,7 @@
 {
   "source": "bsv-website",
   "sourceUrl": "https://gerinjo.github.io/bsv-website",
-  "generatedAt": "2026-08-11T08:02:11.068Z",
+  "generatedAt": "2026-08-14T18:38:30.431Z",
   "venues": [
     "Hauptplatz",
     "Nebenplatz",
@@ -15,6 +15,8 @@
       "competition": "Kreisliga B Staffel 1",
       "websitePath": "fussball/herren/bezirksliga",
       "fussballDeUrl": "https://www.fussball.de/mannschaft/bsv-nordstern-radolfzell-bsv-nordstern-radolfzell-suedbaden/-/saison/2627/team-id/011MICLVK0000000VTVG0001VTR8C1K7",
+      "fussballDeTeamId": "011MICLVK0000000VTVG0001VTR8C1K7",
+      "fussballDeWidgetId": "af96d999-a7ba-432a-87c5-439ab401516d",
       "sortOrder": 1
     },
     {
@@ -23,6 +25,8 @@
       "competition": "Kreisliga C Staffel 1",
       "websitePath": "fussball/herren/kreisliga-2",
       "fussballDeUrl": "https://www.fussball.de/mannschaft/sg-markelfingen-bsv-n-radolfz-2-sv-markelfingen-suedbaden/-/saison/2627/team-id/011MIBT808000000VTVG0001VTR8C1K7",
+      "fussballDeTeamId": "011MIBT808000000VTVG0001VTR8C1K7",
+      "fussballDeWidgetId": "48130047-3237-4579-8f2e-a581bbb98097",
       "sortOrder": 2
     },
     {
@@ -31,6 +35,8 @@
       "competition": "Frauen Bezirksliga Bodensee",
       "websitePath": "fussball/frauen/bezirksliga",
       "fussballDeUrl": "https://www.fussball.de/mannschaft/sg-no-radolfz-oehning-gai-bankh-moos-bsv-nordstern-radolfzell-suedbaden/-/saison/2627/team-id/01A2FGUHDO000000VV0AG80NVSEJ47CH",
+      "fussballDeTeamId": "01A2FGUHDO000000VV0AG80NVSEJ47CH",
+      "fussballDeWidgetId": "a7855cb2-0226-49a3-98ca-b106b3786afb",
       "sortOrder": 3
     },
     {
@@ -39,6 +45,8 @@
       "competition": "Frauen Kreisliga A",
       "websitePath": "fussball/frauen/kreisliga",
       "fussballDeUrl": "https://www.fussball.de/mannschaft/sg-no-radolfz-oehning-gai-bankh-moos-2-bsv-nordstern-radolfzell-suedbaden/-/saison/2627/team-id/03163NI9R0000000VS5489BSVSCPI5U4",
+      "fussballDeTeamId": "03163NI9R0000000VS5489BSVSCPI5U4",
+      "fussballDeWidgetId": "48107d01-3242-45df-8f09-55a20a959688",
       "sortOrder": 4
     }
   ],

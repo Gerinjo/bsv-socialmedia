@@ -15,6 +15,7 @@
     "check": "node scripts/check-project.mjs && npm test"
   },
   "dependencies": {
-    "@resvg/resvg-wasm": "2.6.2"
+    "@resvg/resvg-wasm": "2.6.2",
+    "opentype.js": "1.3.4"
   }
 }

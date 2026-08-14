@@ -1,0 +1,25 @@
+✔ XML-Inhalte werden sicher escaped (1.507106ms)
+✔ fehlende Template-Werte führen zu einem Fehler (0.654136ms)
+✔ lange SG-Mannschaftsnamen werden nur im Bild abgekürzt (0.261074ms)
+✔ Gastwappen werden für bekannte Vereinsnamen zugeordnet (0.361273ms)
+✔ Heim- und Gastwappen bilden in der Spielankündigung ein diagonales Duell (21.521861ms)
+✔ Abgesagte und abgebrochene Spiele erhalten einen roten Querhinweis (23.303971ms)
+✔ Story-SVG verwendet den abgekürzten SG-Mannschaftsnamen (10.680222ms)
+✔ announcement rendert ein vollständiges Story-SVG (12.695226ms)
+✔ lineup rendert ein vollständiges Story-SVG (12.898341ms)
+✔ result rendert ein vollständiges Story-SVG (15.435785ms)
+✔ report rendert ein vollständiges Story-SVG (17.965814ms)
+✔ Startelf verwendet Matchday-Titel, freien Footer und Fußball in der Gegnerkarte (6.157879ms)
+✔ Ergebnis übernimmt Capture-It-Titel, freien Endstand und das Wappen-Duell (14.085129ms)
+✔ Lange Ergebnis-Untertitel bleiben mittig innerhalb der Seite (7.061055ms)
+✔ birthday rendert Namen, Glückwunsch und Spielerbild (12.087799ms)
+✔ eine eigene Action-Foto-URL wird im Story-Image verwendet (12.74626ms)
+✔ Geburtstagsrollen lassen Vereinsmitglied weg und behalten Fachrollen (0.283255ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 249.299571

@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.social-media-admin-api]
 verify_jwt = true
+
+[functions.fussball-de-sync]
+verify_jwt = false
