@@ -661,6 +661,45 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       return json({ ok: true, club: data });
     }
 
+    if (action === 'discard_club_crest') {
+      const clubId = required(body.clubId, 'Verein');
+      const { data: club, error: clubError } = await context.supabaseAdmin
+        .from('social_clubs')
+        .select('id, crest_original_path, crest_transparent_path')
+        .eq('id', clubId)
+        .maybeSingle();
+      if (clubError) throw clubError;
+      if (!club) throw new Error('Der Verein wurde nicht gefunden.');
+
+      const paths = [...new Set([
+        club.crest_original_path,
+        club.crest_transparent_path,
+      ].filter((path): path is string => Boolean(path)))];
+      if (paths.length) {
+        const { error: removeError } = await context.supabaseAdmin.storage.from(bucket).remove(paths);
+        if (removeError) throw new Error(`Wappen-Dateien konnten nicht gelöscht werden: ${removeError.message}`);
+      }
+
+      const { error: resetError } = await context.supabaseAdmin
+        .from('social_clubs')
+        .update({
+          crest_original_path: null,
+          crest_transparent_path: null,
+          crest_status: 'missing',
+          transparency_confidence: null,
+          transparency_metadata: {
+            discarded: true,
+            discardedAt: new Date().toISOString(),
+            discardedBy: userId,
+          },
+          last_checked_at: new Date().toISOString(),
+        })
+        .eq('id', clubId);
+      if (resetError) throw resetError;
+      const automation = await rerenderUpcomingClubGames(context.supabaseAdmin, clubId);
+      return json({ ok: true, status: 'missing', removed: paths.length, automation });
+    }
+
     if (action === 'approve_club_crest' || action === 'reject_club_crest') {
       const clubId = required(body.clubId, 'Verein');
       const { data: club, error: clubError } = await context.supabaseAdmin

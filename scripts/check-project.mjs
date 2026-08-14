@@ -29,4 +29,13 @@ for (const type of STORY_TYPES) {
   }
 }
 
+const adminPage = await readFile(resolve(rootDir, 'admin-site/admin-page.html'), 'utf8');
+const adminApi = await readFile(resolve(rootDir, 'supabase/functions/social-media-admin-api/index.ts'), 'utf8');
+for (const marker of ['workspaceSearch', 'memberSearch', 'crestSearch', 'discardCrest']) {
+  if (!adminPage.includes(marker)) throw new Error(`Admin-Oberfläche enthält ${marker} nicht.`);
+}
+if (!adminApi.includes("action === 'discard_club_crest'")) {
+  throw new Error('Admin-API enthält das Verwerfen von Wappen-Uploads nicht.');
+}
+
 console.log(`Projektstruktur geprüft: ${required.length} Pflichtdateien vorhanden.`);
