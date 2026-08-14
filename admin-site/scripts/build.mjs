@@ -10,9 +10,11 @@ const previewDir = resolve(repoDir, '.preview');
 
 const logo = await readFile(resolve(adminDir, 'assets/bsv-nordstern.png'));
 const crestCutout = await readFile(resolve(adminDir, 'crest-cutout.js'), 'utf8');
+const richTextEditor = await readFile(resolve(adminDir, 'rich-text-editor.mjs'), 'utf8');
 const html = (await readFile(resolve(adminDir, 'admin-page.html'), 'utf8'))
   .replaceAll('__BSV_LOGO_DATA_URL__', `data:image/png;base64,${logo.toString('base64')}`)
-  .replaceAll('__CREST_CUTOUT_SCRIPT__', crestCutout);
+  .replaceAll('__CREST_CUTOUT_SCRIPT__', crestCutout)
+  .replaceAll('__RICH_TEXT_EDITOR_SCRIPT__', richTextEditor);
 const worker = `const html = ${JSON.stringify(html)};
 
 export default {

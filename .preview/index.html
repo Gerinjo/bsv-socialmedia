@@ -11,6 +11,7 @@
     .panel{background:rgba(13,53,37,.92);border:1px solid rgba(168,203,180,.2);border-radius:24px;padding:22px;margin:0 0 22px;box-shadow:0 18px 60px rgba(0,0,0,.22)}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}.wide{grid-column:1/-1}h2,h3{margin:0 0 14px}label{display:grid;gap:6px;color:var(--mint);font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
     input,textarea,select{width:100%;border:0;border-radius:13px;padding:12px 14px;background:var(--paper);color:var(--ink);font:inherit}textarea{min-height:100px;resize:vertical}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.fields .wide{grid-column:1/-1}
+    .rich-text-editor{overflow:hidden;border:1px solid rgba(168,203,180,.3);border-radius:15px;background:rgba(0,0,0,.18)}.rich-text-toolbar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:8px;background:rgba(0,0,0,.2)}.rich-text-toolbar button{min-width:38px;min-height:36px;border-radius:9px;padding:7px 11px;background:rgba(255,255,255,.1);color:#fff;font-size:14px}.rich-text-toolbar button[data-editor-action="bold"]{font-weight:950}.rich-text-toolbar button[data-editor-action="italic"]{font-style:italic}.rich-text-toolbar button:hover{background:rgba(145,200,47,.28)}.rich-text-toolbar .rich-emoji-picker{width:auto;min-width:108px;padding:8px 10px;border-radius:9px}.rich-text-editor textarea{display:block;min-height:180px;max-width:100%;resize:vertical;border-radius:0;background:var(--paper);line-height:1.6}.rich-editor-hint{padding:7px 11px;color:var(--mint);font-size:11px;font-weight:600;letter-spacing:0;text-transform:none}
     button{border:0;border-radius:999px;padding:11px 18px;background:var(--lime);color:var(--ink);font-weight:900;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:9px}button.secondary{background:var(--mint)}button.ghost{background:rgba(255,255,255,.1);color:#fff}button.danger{background:#bd2f2f;color:#fff}button.warning{background:#d67b21;color:#fff}button:disabled{opacity:.62;cursor:wait}.spinner{width:17px;height:17px;border:3px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;flex:0 0 auto}@keyframes spin{to{transform:rotate(360deg)}}
     .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.action-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}.action-bar > *{flex:1 1 180px}.report-action-bar{grid-column:1/-1;display:grid;grid-template-columns:minmax(210px,1fr) minmax(190px,1fr) minmax(190px,1fr);gap:10px;align-items:stretch;margin:4px 0 8px}.approval-state{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 14px;border:1px solid rgba(145,200,47,.55);border-radius:999px;background:rgba(145,200,47,.14);color:#dff4b7;font-size:13px;font-weight:800;text-align:center}.approval-state.needs-approval{border-color:rgba(244,214,56,.6);background:rgba(244,214,56,.12);color:#fff0a0}.approval-state.processing{border-color:rgba(168,203,180,.55);background:rgba(168,203,180,.12);color:#e2f1e7}.approval-state.failed-approval{border-color:rgba(255,128,128,.6);background:rgba(189,47,47,.22);color:#ffd1d1}.report-image-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}.report-image-card{position:relative;display:grid;gap:9px;padding:10px;border-radius:16px;background:rgba(0,0,0,.2);border:1px solid rgba(168,203,180,.16)}.report-image-card img{display:block;width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px}.report-image-card label{font-size:11px}.report-image-card select{padding:9px 11px}.report-image-card .remove-report-image{position:absolute;z-index:2;top:16px;right:16px;width:38px;height:38px;padding:0;border:2px solid rgba(255,255,255,.9);border-radius:50%;background:#c62828;color:#fff;font-size:27px;font-weight:500;line-height:1;box-shadow:0 5px 16px rgba(0,0,0,.35);opacity:0;transform:scale(.82);pointer-events:none;transition:opacity .16s ease,transform .16s ease,background .16s ease}.report-image-card:hover .remove-report-image,.report-image-card:focus-within .remove-report-image,.remove-report-image:focus-visible{opacity:1;transform:scale(1);pointer-events:auto}.remove-report-image:hover{background:#e53935}.report-page-hint{min-height:34px;color:var(--mint);font-size:12px}.job-pages{display:flex;gap:8px;flex-wrap:wrap}.status{padding:12px 16px;border-radius:14px;background:rgba(255,255,255,.08);margin-bottom:20px}.error{background:#7c2525}.ok{background:var(--soft)}
     button.primary-action{background:var(--yellow);color:var(--ink);box-shadow:0 12px 24px rgba(244,214,56,.22)}button.primary-action:hover{filter:brightness(1.04)}
@@ -81,7 +82,7 @@
             <label>Sponsor<select id="feedSponsor" name="sponsor"><option value="Sparkasse Hegau-Bodensee">Sparkasse Hegau-Bodensee</option><option value="BSV Nordstern">BSV Nordstern</option></select></label>
             <label class="wide">Bild hochladen<input id="feedImageInput" name="image" type="file" accept="image/*"></label>
             <label class="wide">Überschrift<input id="feedHeadline" name="headline" type="text" value="BSV Nordstern Radolfzell 2:1 TSV Musterstadt" required></label>
-            <label class="wide">Spielbericht<textarea id="feedReport" name="report" rows="8" required>Nach einem intensiven Match setzte sich der BSV Nordstern verdient mit 2:1 durch. Die Gäste starteten druckvoll, doch nach einer schwachen Phase im Mittelfeld fanden die Nordsterner besser ins Spiel und wurden durch schnelle Kombinationen immer gefährlicher. In der zweiten Halbzeit war der BSV deutlich am Drücker. Die Entscheidung fiel nach einer präzisen Flanke und einem starken Abschluss. Damit bleibt die Mannschaft auf dem richtigen Weg und zeigt erneut ihre Qualität.</textarea></label>
+            <label class="wide">Spielbericht<textarea class="rich-report-field" id="feedReport" name="report" rows="8" required>Nach einem intensiven Match setzte sich der BSV Nordstern verdient mit 2:1 durch. Die Gäste starteten druckvoll, doch nach einer schwachen Phase im Mittelfeld fanden die Nordsterner besser ins Spiel und wurden durch schnelle Kombinationen immer gefährlicher. In der zweiten Halbzeit war der BSV deutlich am Drücker. Die Entscheidung fiel nach einer präzisen Flanke und einem starken Abschluss. Damit bleibt die Mannschaft auf dem richtigen Weg und zeigt erneut ihre Qualität.</textarea></label>
             <div class="wide"><button type="submit" class="secondary">Vorschau aktualisieren</button></div>
           </form>
         </section>
@@ -334,6 +335,158 @@
 </script>
   <script type="module">
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+const boldAlphabet = [
+  ...Array.from({ length: 26 }, (_, index) => String.fromCodePoint(0x1d400 + index)),
+  ...Array.from({ length: 26 }, (_, index) => String.fromCodePoint(0x1d41a + index)),
+].join('');
+const italicAlphabet = [
+  ...Array.from({ length: 26 }, (_, index) => String.fromCodePoint(0x1d434 + index)),
+  ...Array.from({ length: 26 }, (_, index) => String.fromCodePoint(index === 7 ? 0x210e : 0x1d44e + index)),
+].join('');
+const digits = '0123456789';
+const boldDigits = Array.from({ length: 10 }, (_, index) => String.fromCodePoint(0x1d7ce + index)).join('');
+
+function characterMap(source, target) {
+  const values = Array.from(target);
+  return new Map(Array.from(source).map((character, index) => [character, values[index]]));
+}
+
+const styleMaps = {
+  bold: new Map([...characterMap(alphabet, boldAlphabet), ...characterMap(digits, boldDigits)]),
+  italic: characterMap(alphabet, italicAlphabet),
+};
+
+export const reportEmojis = ['⚽', '💚', '🤍', '💛', '🔥', '💪', '🙌', '👏', '🎉', '🏆', '✅', '📸', '📣', '⭐'];
+
+export function stylizeReportText(value, style) {
+  const map = styleMaps[style];
+  if (!map) return String(value ?? '');
+  return Array.from(String(value ?? '')).map(character => {
+    const [base, ...marks] = Array.from(character.normalize('NFD'));
+    return `${map.get(base) ?? base}${marks.join('')}`;
+  }).join('');
+}
+
+export function bulletReportText(value) {
+  return String(value ?? '').split('\n').map(line => {
+    if (!line.trim()) return line;
+    return `• ${line.replace(/^\s*[•-]\s*/, '')}`;
+  }).join('\n');
+}
+
+function selectedWord(textarea) {
+  let start = textarea.selectionStart;
+  let end = textarea.selectionEnd;
+  if (start !== end) return { start, end };
+  while (start > 0 && !/\s/.test(textarea.value[start - 1])) start -= 1;
+  while (end < textarea.value.length && !/\s/.test(textarea.value[end])) end += 1;
+  return { start, end };
+}
+
+function selectedLines(textarea) {
+  const start = textarea.value.lastIndexOf('\n', Math.max(0, textarea.selectionStart - 1)) + 1;
+  const nextBreak = textarea.value.indexOf('\n', textarea.selectionEnd);
+  return { start, end: nextBreak < 0 ? textarea.value.length : nextBreak };
+}
+
+function replaceSelection(textarea, replacement, start = textarea.selectionStart, end = textarea.selectionEnd, mode = 'select') {
+  textarea.focus();
+  textarea.setRangeText(replacement, start, end, mode);
+  textarea.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+function toolbarButton(text, title, action) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = text;
+  button.title = title;
+  button.setAttribute('aria-label', title);
+  button.dataset.editorAction = action;
+  return button;
+}
+
+function applyFormat(textarea, style) {
+  const range = selectedWord(textarea);
+  if (range.start === range.end) return;
+  replaceSelection(textarea, stylizeReportText(textarea.value.slice(range.start, range.end), style), range.start, range.end);
+}
+
+function applyBullets(textarea) {
+  const range = selectedLines(textarea);
+  replaceSelection(textarea, bulletReportText(textarea.value.slice(range.start, range.end)), range.start, range.end);
+}
+
+function changeEditorHeight(textarea, delta) {
+  const height = Math.max(180, Math.min(720, textarea.offsetHeight + delta));
+  textarea.style.height = `${height}px`;
+  localStorage.setItem('bsv-report-editor-height', String(height));
+}
+
+export function wireRichTextEditors(root = document) {
+  root.querySelectorAll('textarea.rich-report-field:not([data-rich-editor])').forEach(textarea => {
+    textarea.dataset.richEditor = 'true';
+    const editor = document.createElement('div');
+    editor.className = 'rich-text-editor';
+    const toolbar = document.createElement('div');
+    toolbar.className = 'rich-text-toolbar';
+    toolbar.setAttribute('role', 'toolbar');
+    toolbar.setAttribute('aria-label', 'Spielbericht formatieren');
+    toolbar.append(
+      toolbarButton('B', 'Auswahl fett formatieren', 'bold'),
+      toolbarButton('I', 'Auswahl kursiv formatieren', 'italic'),
+      toolbarButton('• Liste', 'Auswahl als Aufzählung formatieren', 'bullets'),
+    );
+    const emoji = document.createElement('select');
+    emoji.className = 'rich-emoji-picker';
+    emoji.setAttribute('aria-label', 'Emoji einfügen');
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = 'Emoji 😊';
+    emoji.append(placeholder, ...reportEmojis.map(value => {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = value;
+      return option;
+    }));
+    toolbar.append(
+      emoji,
+      toolbarButton('−', 'Editor niedriger machen', 'smaller'),
+      toolbarButton('+', 'Editor höher machen', 'larger'),
+    );
+    const hint = document.createElement('div');
+    hint.className = 'rich-editor-hint';
+    hint.textContent = 'Text markieren und formatieren · Höhe mit −/+ oder am unteren Rand ändern';
+    textarea.parentNode.insertBefore(editor, textarea);
+    editor.append(toolbar, textarea, hint);
+
+    const storedHeight = Number(localStorage.getItem('bsv-report-editor-height'));
+    if (Number.isFinite(storedHeight) && storedHeight >= 180 && storedHeight <= 720) textarea.style.height = `${storedHeight}px`;
+    toolbar.addEventListener('click', event => {
+      const action = event.target.closest('button')?.dataset.editorAction;
+      if (action === 'bold' || action === 'italic') applyFormat(textarea, action);
+      if (action === 'bullets') applyBullets(textarea);
+      if (action === 'smaller') changeEditorHeight(textarea, -80);
+      if (action === 'larger') changeEditorHeight(textarea, 80);
+    });
+    emoji.addEventListener('change', () => {
+      if (emoji.value) replaceSelection(textarea, emoji.value, textarea.selectionStart, textarea.selectionEnd, 'end');
+      emoji.value = '';
+    });
+    textarea.addEventListener('keydown', event => {
+      if (!(event.ctrlKey || event.metaKey)) return;
+      const style = event.key.toLocaleLowerCase('de-DE') === 'b' ? 'bold' : event.key.toLocaleLowerCase('de-DE') === 'i' ? 'italic' : '';
+      if (!style) return;
+      event.preventDefault();
+      applyFormat(textarea, style);
+    });
+    textarea.addEventListener('pointerup', () => {
+      if (textarea.offsetHeight >= 180) localStorage.setItem('bsv-report-editor-height', String(Math.min(720, textarea.offsetHeight)));
+    });
+  });
+}
+
+    wireRichTextEditors(document);
     const supabase = createClient('https://maejihwjzxkmthjavgnx.supabase.co', 'sb_publishable_a3DnmtbBycRR4mWV4Jmz-w_RJobGli9');
     const apiUrl = 'https://maejihwjzxkmthjavgnx.supabase.co/functions/v1/social-media-admin-api';
     const login = document.querySelector('#login'); const app = document.querySelector('#app'); const status = document.querySelector('#status'); const authMessage = document.querySelector('#authMessage');
@@ -378,7 +531,7 @@
       const lineup=isPast||terminal?'':'<form class="lineupForm fields wide" data-id="'+esc(game.id)+'"><label>Formation<input name="formation" value="'+esc((game.lineup&&game.lineup.formation)||'4-4-2')+'"></label><label>Freigabe<select name="approved"><option value="false">Entwurf</option><option value="true" '+(game.lineup&&game.lineup.approvedAt?'selected':'')+'>Freigegeben</option></select></label><label class="wide">Aufstellung: Nummer, Name<textarea name="players">'+esc(players)+'</textarea></label><div><button class="secondary">Aufstellung speichern</button></div></form>';
       const reportJob=(game.jobs||[]).find(job=>job.story_type==='report');
       const reportView=reportApprovalView(reportJob);
-      const result=terminal?'':'<form class="resultForm fields wide" data-id="'+esc(game.id)+'"><label>Heim<input name="homeScore" type="number" min="0" value="'+esc(game.home_score??'')+'" required></label><label>Gast<input name="awayScore" type="number" min="0" value="'+esc(game.away_score??'')+'" required></label><label>Überschrift<input name="resultLabel" value="'+esc(game.result_label||'')+'"></label><button class="secondary" type="submit" style="margin-top:12px;grid-column:1 / -1;justify-self:start">Ergebnis speichern</button><label class="wide">Spielbericht<textarea name="resultMessage" rows="4">'+esc(game.result_message||'')+'</textarea></label><label class="wide">Torschützen<textarea name="reportScorers" rows="4" placeholder="(19., 46.) M. Oosbrugger\n(72.) N. Beispiel">'+esc(game.report_scorers||'')+'</textarea></label><div class="report-action-bar"><span class="approval-state reportApprovalState '+esc(reportView.className)+'">'+esc(reportView.label)+'</span><button class="secondary reportSave" type="button" data-id="'+esc(game.id)+'">Spielbericht speichern</button><button class="primary-action reportApprove" type="button" data-id="'+esc(game.id)+'" '+(reportView.disabled?'disabled':'')+'>'+esc(reportView.button)+'</button></div><label class="wide">Spielbericht-Bilder (maximal 10)<input class="reportImageInput" type="file" accept="image/jpeg,image/png,image/webp" multiple></label><div class="report-image-grid wide">'+reportImageCards(game)+'</div></form>';
+      const result=terminal?'':'<form class="resultForm fields wide" data-id="'+esc(game.id)+'"><label>Heim<input name="homeScore" type="number" min="0" value="'+esc(game.home_score??'')+'" required></label><label>Gast<input name="awayScore" type="number" min="0" value="'+esc(game.away_score??'')+'" required></label><label>Überschrift<input name="resultLabel" value="'+esc(game.result_label||'')+'"></label><button class="secondary" type="submit" style="margin-top:12px;grid-column:1 / -1;justify-self:start">Ergebnis speichern</button><label class="wide">Spielbericht<textarea class="rich-report-field" name="resultMessage" rows="7">'+esc(game.result_message||'')+'</textarea></label><label class="wide">Torschützen<textarea name="reportScorers" rows="4" placeholder="(19., 46.) M. Oosbrugger\n(72.) N. Beispiel">'+esc(game.report_scorers||'')+'</textarea></label><div class="report-action-bar"><span class="approval-state reportApprovalState '+esc(reportView.className)+'">'+esc(reportView.label)+'</span><button class="secondary reportSave" type="button" data-id="'+esc(game.id)+'">Spielbericht speichern</button><button class="primary-action reportApprove" type="button" data-id="'+esc(game.id)+'" '+(reportView.disabled?'disabled':'')+'>'+esc(reportView.button)+'</button></div><label class="wide">Spielbericht-Bilder (maximal 10)<input class="reportImageInput" type="file" accept="image/jpeg,image/png,image/webp" multiple></label><div class="report-image-grid wide">'+reportImageCards(game)+'</div></form>';
       const orderedJobs=(game.jobs||[]).slice().sort((left,right)=>{const leftIndex=storyTypeOrder.indexOf(String(left.story_type));const rightIndex=storyTypeOrder.indexOf(String(right.story_type));const leftValue=leftIndex>=0?leftIndex:storyTypeOrder.length;const rightValue=rightIndex>=0?rightIndex:storyTypeOrder.length;return leftValue-rightValue;});
       return '<article class="card">'+(isPast?'<span class="past-badge">Vergangenes Spiel</span>':'')+state+'<h3>'+esc(game.home_team)+' – '+esc(game.away_team)+'</h3><div class="meta">'+esc(meta)+'</div>'+actions+'<div class="jobs">'+orderedJobs.map(j=>jobHtml(j,'game')).join('')+'</div><div class="fields">'+lineup+result+'</div></article>';
     }
@@ -427,6 +580,7 @@
     async function persistReportImages(form){const images=(reportImageState.get(form.dataset.id)||[]).slice().sort((left,right)=>left.position-right.position);for(let index=0;index<images.length;index++){const image=images[index];if(image.path)continue;show('Bild '+(index+1)+' von '+images.length+' wird hochgeladen …');const payload=await api('POST',{action:'upload_report_image',gameId:form.dataset.id,imageDataUrl:image.dataUrl});image.path=payload.image.path;image.url=payload.image.url;delete image.dataUrl}return images.map((image,index)=>({path:image.path,position:index+1}))}
     async function saveReportForm(form){const data=formObject(form);const reportImages=await persistReportImages(form);return api('POST',{action:'save_result',gameId:form.dataset.id,homeScore:Number(data.homeScore),awayScore:Number(data.awayScore),resultLabel:String(data.resultLabel??'').trim(),resultMessage:String(data.resultMessage??'').trim(),reportScorers:String(data.reportScorers??'').trim(),reportImages})}
     function wireForms(){
+      wireRichTextEditors(document);
       document.querySelectorAll('.resultForm').forEach(form=>{wireReportImageCards(form);form.querySelectorAll('[name="homeScore"],[name="awayScore"],[name="resultLabel"],[name="resultMessage"],[name="reportScorers"]').forEach(field=>field.oninput=()=>markReportNeedsApproval(form));const input=form.querySelector('.reportImageInput');input.onchange=async()=>{const images=reportImageState.get(form.dataset.id)||[];const available=Math.max(0,10-images.length);const files=Array.from(input.files||[]).slice(0,available);if(!files.length){if(available===0)show('Es sind bereits zehn Bilder hinterlegt.',true);input.value='';return}try{show(files.length+' Bild'+(files.length===1?' wird':'er werden')+' vorbereitet …');for(const file of files){const dataUrl=await prepareActionImage(file);images.push({id:crypto.randomUUID(),dataUrl,url:dataUrl,position:images.length+1})}normalizeReportImagePositions(images);renderReportImageGrid(form);markReportNeedsApproval(form);show('Bilder vorbereitet. Der Spielbericht muss anschließend erneut freigegeben werden.')}catch(error){show(error.message||'Die Bilder konnten nicht vorbereitet werden.',true)}finally{input.value=''}}});
       document.querySelectorAll('.retry').forEach(button=>button.onclick=async()=>{await api('POST',{action:'retry_job',kind:button.dataset.kind,jobId:button.dataset.id});await load()});
       document.querySelectorAll('.lineupForm').forEach(form=>form.onsubmit=async event=>{event.preventDefault();const button=event.submitter||form.querySelector('button');await runBusy(button,{busyText:'Speichert …',pendingText:'Aufstellung wird gespeichert und neu geladen …',successText:'Aufstellung gespeichert. Die Ansicht ist aktuell.',errorText:'Aufstellung konnte nicht gespeichert werden: '},async()=>{const data=formObject(form);await api('POST',{action:'save_lineup',gameId:form.dataset.id,formation:data.formation,approved:data.approved==='true',players:parsePlayers(data.players)});await load()})});
