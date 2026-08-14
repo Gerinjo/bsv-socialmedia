@@ -201,7 +201,10 @@ async function freshPreviewUrls(admin: any, rows: any[]): Promise<any[]> {
       const { data } = await admin.storage.from(bucket).createSignedUrl(job.storage_path, 60 * 60 * 24 * 7);
       return { ...job, media_url: data?.signedUrl ?? job.media_url };
     }));
-    return { ...row, jobs };
+    const actionImageUrl = row.action_image_path
+      ? await signedAssetUrl(admin, row.action_image_path)
+      : null;
+    return { ...row, jobs, action_image_url: actionImageUrl };
   }));
 }
 
