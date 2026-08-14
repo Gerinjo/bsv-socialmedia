@@ -132,11 +132,38 @@ function resultLabelSize(value) {
   return 48;
 }
 
-export async function renderStorySvg({ rootDir, type, match, lineup = { players: [] }, photoPath, actionPhotoDataUri }) {
+export function scorerRows(value) {
+  const lines = String(value ?? '')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 4);
+  const rows = lines.length ? lines : ['Noch keine Torschützen eingetragen.'];
+  return rows.map((line, index) => (
+    `<text x="0" y="${36 + index * 42}" fill="#10251a" font-size="34" class="scorer">${xmlEscape(truncate(line, 47))}</text>`
+  )).join('');
+}
+
+export async function renderStorySvg({
+  rootDir,
+  type,
+  match,
+  lineup = { players: [] },
+  photoPath,
+  actionPhotoDataUri,
+  reportPage = 1,
+  reportPageCount = 1,
+  reportPageKind = 'result',
+}) {
   if (!STORY_TYPES.includes(type)) throw new Error(`Unbekannter Story-Typ: ${type}`);
 
   const resolvedActionPhotoDataUri = actionPhotoDataUri || match.actionPhotoDataUri;
-  const templatePath = resolve(rootDir, 'templates', `${type}.svg`);
+  const templateName = type === 'report' && reportPageKind === 'scorers'
+    ? 'report-scorers'
+    : type === 'report' && reportPageKind === 'photo'
+      ? 'report-photo'
+      : type;
+  const templatePath = resolve(rootDir, 'templates', `${templateName}.svg`);
   const logoPath = resolve(rootDir, 'brand/logos/bsv-nordstern.png');
   const sparkasseLogoPath = resolve(rootDir, 'brand/logos/sparkasse-hegau-bodensee-white.png');
   const tsvAachLinzCrestPath = resolve(rootDir, 'brand/logos/opponents/tsv-aach-linz.png');
@@ -209,6 +236,9 @@ export async function renderStorySvg({ rootDir, type, match, lineup = { players:
     RESULT_LABEL_SIZE: resultLabelSize(resultLabel),
     RESULT_MESSAGE: resultMessage,
     RESULT_MESSAGE_SIZE: fittedSize(resultMessage, 40, 32, 38),
+    REPORT_PAGE: reportPage,
+    REPORT_PAGE_COUNT: reportPageCount,
+    SCORER_ROWS: scorerRows(match.reportScorers),
     BIRTHDAY_NAME: truncate(match.birthdayName, 28),
     BIRTHDAY_NAME_SIZE: fittedSize(match.birthdayName, 27, 21, 18),
     BIRTHDAY_ROLE: birthdayRole.length > 34 ? `${birthdayRole.slice(0, 33).trimEnd()}…` : birthdayRole,
@@ -216,7 +246,7 @@ export async function renderStorySvg({ rootDir, type, match, lineup = { players:
     BIRTHDAY_MESSAGE: truncate(match.birthdayMessage, 54),
   };
 
-  return fillTemplate(template, values, new Set(['PLAYER_ROWS']));
+  return fillTemplate(template, values, new Set(['PLAYER_ROWS', 'SCORER_ROWS']));
 }
 
 export async function writeStoryFiles({ rootDir, type, match, lineup, photoPath, outputDir, basename = type }) {

@@ -129,6 +129,18 @@ function resultLabelSize(value: unknown): number {
   return 48;
 }
 
+export function scorerRows(value: unknown): string {
+  const lines = String(value ?? '')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 4);
+  const rows = lines.length ? lines : ['Noch keine Torschützen eingetragen.'];
+  return rows.map((line, index) => (
+    `<text x="0" y="${36 + index * 42}" fill="#10251a" font-size="34" class="scorer">${xmlEscape(truncate(line, 47))}</text>`
+  )).join('');
+}
+
 export function renderStorySvg({
   type,
   match,
@@ -138,6 +150,9 @@ export function renderStorySvg({
   actionPhotoDataUri,
   homeCrestDataUri,
   awayCrestDataUri,
+  reportPage = 1,
+  reportPageCount = 1,
+  reportPageKind = 'result',
 }: {
   type: StoryType;
   match: StoryInput;
@@ -147,6 +162,9 @@ export function renderStorySvg({
   actionPhotoDataUri?: string;
   homeCrestDataUri?: string;
   awayCrestDataUri?: string;
+  reportPage?: number;
+  reportPageCount?: number;
+  reportPageKind?: 'result' | 'scorers' | 'photo';
 }): string {
   if (!STORY_TYPES.includes(type)) throw new Error(`Unbekannter Story-Typ: ${type}`);
 
@@ -216,6 +234,9 @@ export function renderStorySvg({
     RESULT_LABEL_SIZE: resultLabelSize(resultLabel),
     RESULT_MESSAGE: resultMessage,
     RESULT_MESSAGE_SIZE: fittedSize(resultMessage, 40, 32, 38),
+    REPORT_PAGE: reportPage,
+    REPORT_PAGE_COUNT: reportPageCount,
+    SCORER_ROWS: scorerRows(match.reportScorers),
     BIRTHDAY_NAME: truncate(match.birthdayName, 28),
     BIRTHDAY_NAME_SIZE: fittedSize(match.birthdayName, 27, 21, 18),
     BIRTHDAY_ROLE: birthdayRole.length > 34 ? `${birthdayRole.slice(0, 33).trimEnd()}…` : birthdayRole,
@@ -223,5 +244,10 @@ export function renderStorySvg({
     BIRTHDAY_MESSAGE: truncate(match.birthdayMessage, 54),
   };
 
-  return fillTemplate(STORY_TEMPLATES[type], values, new Set(['PLAYER_ROWS']));
+  const template = type === 'report' && reportPageKind === 'scorers'
+    ? STORY_TEMPLATES.reportScorers
+    : type === 'report' && reportPageKind === 'photo'
+      ? STORY_TEMPLATES.reportPhoto
+      : STORY_TEMPLATES[type];
+  return fillTemplate(template, values, new Set(['PLAYER_ROWS', 'SCORER_ROWS']));
 }

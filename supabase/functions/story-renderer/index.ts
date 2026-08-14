@@ -68,8 +68,12 @@ function gameInput(game: Record<string, unknown>) {
       awayScore: game.away_score,
       resultLabel: game.result_label,
       resultMessage: game.result_message,
+      reportScorers: game.report_scorers,
       gameStatus: game.status,
       actionImagePath: game.action_image_path ?? null,
+      reportImagePaths: Array.isArray(game.report_image_paths)
+        ? game.report_image_paths.map((path) => String(path ?? '').trim()).filter(Boolean).slice(0, 10)
+        : [],
       homeCrestPath: homeClub.crest_status === 'approved' ? homeClub.crest_transparent_path : null,
       awayCrestPath: awayClub.crest_status === 'approved' ? awayClub.crest_transparent_path : null,
     },
@@ -165,7 +169,7 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
     if (!body.type || !STORY_TYPES.includes(body.type)) return json({ error: 'invalid_story_type' }, 400);
     const images = await imageAssets(context.supabaseAdmin);
 
-    let svg: string;
+    let svgs: string[];
     if (body.type === 'birthday') {
       if (!body.birthday) return json({ error: 'birthday_missing' }, 400);
       let playerPhotoDataUri: string | undefined;
@@ -173,65 +177,100 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
       if (photoPath) {
         playerPhotoDataUri = await personPhoto(context.supabaseAdmin, photoPath);
       }
-      svg = renderStorySvg({ type: body.type, match: birthdayInput(body.birthday), imageAssets: images, playerPhotoDataUri });
+      svgs = [renderStorySvg({ type: body.type, match: birthdayInput(body.birthday), imageAssets: images, playerPhotoDataUri })];
     } else {
       if (!body.game) return json({ error: 'game_missing' }, 400);
       const input = gameInput(body.game);
       const homeCrestPath = String(input.match.homeCrestPath ?? '').trim();
       const awayCrestPath = String(input.match.awayCrestPath ?? '').trim();
       const actionImagePath = String(input.match.actionImagePath ?? '').trim();
-      const [homeCrestDataUri, awayCrestDataUri, actionPhotoDataUri] = await Promise.all([
+      const reportImagePaths = Array.isArray(input.match.reportImagePaths)
+        ? input.match.reportImagePaths
+        : [];
+      const [homeCrestDataUri, awayCrestDataUri] = await Promise.all([
         homeCrestPath ? clubCrest(context.supabaseAdmin, homeCrestPath) : undefined,
         awayCrestPath ? clubCrest(context.supabaseAdmin, awayCrestPath) : undefined,
-        actionImagePath ? actionPhoto(context.supabaseAdmin, actionImagePath) : undefined,
       ]);
-      svg = renderStorySvg({
-        type: body.type,
-        match: input.match,
-        lineup: input.lineup,
-        imageAssets: images,
-        homeCrestDataUri,
-        awayCrestDataUri,
-        actionPhotoDataUri,
-      });
+      if (body.type === 'report') {
+        const paths = reportImagePaths.length ? reportImagePaths : actionImagePath ? [actionImagePath] : [];
+        const photos = paths.length
+          ? await Promise.all(paths.map((path) => actionPhoto(context.supabaseAdmin, path)))
+          : [undefined];
+        svgs = photos.map((actionPhotoDataUri, index) => renderStorySvg({
+          type: body.type,
+          match: input.match,
+          lineup: input.lineup,
+          imageAssets: images,
+          homeCrestDataUri,
+          awayCrestDataUri,
+          actionPhotoDataUri,
+          reportPage: index + 1,
+          reportPageCount: photos.length,
+          reportPageKind: index === 0 ? 'result' : index === 1 ? 'scorers' : 'photo',
+        }));
+      } else {
+        const actionPhotoDataUri = actionImagePath ? await actionPhoto(context.supabaseAdmin, actionImagePath) : undefined;
+        svgs = [renderStorySvg({
+          type: body.type,
+          match: input.match,
+          lineup: input.lineup,
+          imageAssets: images,
+          homeCrestDataUri,
+          awayCrestDataUri,
+          actionPhotoDataUri,
+        })];
+      }
     }
 
-    const renderer = new Resvg(svg, {
-      fitTo: { mode: 'width', value: 1080 },
-      font: {
-        fontBuffers: edgeFontBuffers,
-        loadSystemFonts: false,
-        defaultFontFamily: 'Noto Sans',
-        sansSerifFamily: 'Noto Sans',
-        serifFamily: 'Noto Serif',
-      },
-      imageRendering: 0,
-      textRendering: 0,
-      shapeRendering: 2,
+    const stamp = Date.now();
+    const renderedPages = await Promise.all(svgs.map(async (svg, index) => {
+      const renderer = new Resvg(svg, {
+        fitTo: { mode: 'width', value: 1080 },
+        font: {
+          fontBuffers: edgeFontBuffers,
+          loadSystemFonts: false,
+          defaultFontFamily: 'Noto Sans',
+          sansSerifFamily: 'Noto Sans',
+          serifFamily: 'Noto Serif',
+        },
+        imageRendering: 0,
+        textRendering: 0,
+        shapeRendering: 2,
+      });
+      const rendered = renderer.render();
+      const png = rendered.asPng();
+      rendered.free();
+      renderer.free();
+      const suffix = svgs.length > 1 ? `-${index + 1}` : '';
+      const storagePath = `generated/${body.type}/${safeSegment(body.jobId)}/${stamp}${suffix}.png`;
+      const { error: uploadError } = await context.supabaseAdmin.storage
+        .from(bucket)
+        .upload(storagePath, png, {
+          contentType: 'image/png',
+          cacheControl: '3600',
+          upsert: true,
+        });
+      if (uploadError) throw new Error(`Vorschau ${index + 1} konnte nicht gespeichert werden: ${uploadError.message}`);
+      const { data: signed, error: signedError } = await context.supabaseAdmin.storage
+        .from(bucket)
+        .createSignedUrl(storagePath, 60 * 60 * 24 * 7);
+      if (signedError || !signed?.signedUrl) {
+        throw new Error(`Vorschau-URL ${index + 1} konnte nicht erstellt werden: ${signedError?.message ?? 'unbekannt'}`);
+      }
+      return { mediaUrl: signed.signedUrl, storagePath };
+    }));
+
+    const mediaUrls = renderedPages.map((page) => page.mediaUrl);
+    const storagePaths = renderedPages.map((page) => page.storagePath);
+    return json({
+      mediaUrl: mediaUrls[0],
+      storagePath: storagePaths[0],
+      mediaUrls,
+      storagePaths,
+      format: 'png',
+      width: 1080,
+      height: body.type === 'report' ? 1080 : 1920,
     });
-    const rendered = renderer.render();
-    const png = rendered.asPng();
-    rendered.free();
-    renderer.free();
-
-    const storagePath = `generated/${body.type}/${safeSegment(body.jobId)}/${Date.now()}.png`;
-    const { error: uploadError } = await context.supabaseAdmin.storage
-      .from(bucket)
-      .upload(storagePath, png, {
-        contentType: 'image/png',
-        cacheControl: '3600',
-        upsert: true,
-      });
-    if (uploadError) throw new Error(`Vorschau konnte nicht gespeichert werden: ${uploadError.message}`);
-
-    const { data: signed, error: signedError } = await context.supabaseAdmin.storage
-      .from(bucket)
-      .createSignedUrl(storagePath, 60 * 60 * 24 * 7);
-    if (signedError || !signed?.signedUrl) {
-      throw new Error(`Vorschau-URL konnte nicht erstellt werden: ${signedError?.message ?? 'unbekannt'}`);
-    }
-
-    return json({ mediaUrl: signed.signedUrl, storagePath, format: 'png', width: 1080, height: 1920 });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unbekannter Renderfehler';
     return json({ error: message }, 500);

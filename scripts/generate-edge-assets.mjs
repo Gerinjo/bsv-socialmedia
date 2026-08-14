@@ -10,6 +10,8 @@ const textFiles = {
   lineup: 'templates/lineup.svg',
   result: 'templates/result.svg',
   report: 'templates/report.svg',
+  reportScorers: 'templates/report-scorers.svg',
+  reportPhoto: 'templates/report-photo.svg',
   birthday: 'templates/birthday.svg',
 };
 
