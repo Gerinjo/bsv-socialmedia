@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { birthdayRoleText, displayTeamName, fillTemplate, renderStorySvg, teamCrestKey, xmlEscape } from '../src/story-renderer.mjs';
+import { birthdayRoleText, displayTeamName, fillTemplate, renderStorySvg, scorerRows, teamCrestKey, xmlEscape } from '../src/story-renderer.mjs';
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const match = {
@@ -102,6 +102,46 @@ test('Spielbericht ist ein quadratischer Feed-Post mit Wellenfoto, Partie und Er
   assert.match(svg, />3<\/text>/);
   assert.match(svg, />1<\/text>/);
   assert.doesNotMatch(svg, /Dieser Text gehört ausschließlich/);
+  assert.match(svg, />SEITE 1 \/ 1<\/text>/);
+});
+
+test('zweite Spielbericht-Seite zeigt Torschützen auf dem zweiten Wellenfoto', async () => {
+  const customImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAF';
+  const svg = await renderStorySvg({
+    rootDir,
+    type: 'report',
+    match: { ...match, reportScorers: '(19., 46.) M. Oosbrugger\n(72.) N. Beispiel' },
+    actionPhotoDataUri: customImage,
+    reportPage: 2,
+    reportPageCount: 4,
+    reportPageKind: 'scorers',
+  });
+  assert.match(svg, /class="handwritten">TORSCHÜTZEN<\/text>/);
+  assert.match(svg, /\(19\., 46\.\) M\. Oosbrugger/);
+  assert.match(svg, /\(72\.\) N\. Beispiel/);
+  assert.match(svg, />SEITE 2 \/ 4<\/text>/);
+  assert.match(svg, new RegExp(customImage.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+});
+
+test('weitere Spielbericht-Seiten bleiben reine Wellen-Fotoseiten', async () => {
+  const svg = await renderStorySvg({
+    rootDir,
+    type: 'report',
+    match,
+    reportPage: 3,
+    reportPageCount: 3,
+    reportPageKind: 'photo',
+  });
+  assert.match(svg, /clipPath id="photoWave"/);
+  assert.match(svg, />SEITE 3 \/ 3<\/text>/);
+  assert.doesNotMatch(svg, />ENDSTAND<\/text>/);
+  assert.doesNotMatch(svg, />TORSCHÜTZEN<\/text>/);
+});
+
+test('Torschützenzeilen werden escaped und auf vier Einträge begrenzt', () => {
+  const rows = scorerRows('1. A & B\n2. C\n3. D\n4. E\n5. F');
+  assert.match(rows, /A &amp; B/);
+  assert.doesNotMatch(rows, /5\. F/);
 });
 
 test('BSV wird im Spielbericht größer als der Gegner gesetzt', async () => {

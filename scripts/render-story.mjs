@@ -26,7 +26,10 @@ const lineup = type === 'lineup' ? await json(lineupPath) : { players: [] };
 const photoOption = option('photo');
 const photoPath = photoOption ? resolve(rootDir, photoOption) : undefined;
 const outputDir = resolve(rootDir, option('output', 'output'));
-const files = await writeStoryFiles({ rootDir, type, match, lineup, photoPath, outputDir });
+const reportPage = Number(option('report-page', '1'));
+const reportPageCount = Number(option('report-page-count', '1'));
+const reportPageKind = option('report-page-kind', 'result');
+const files = await writeStoryFiles({ rootDir, type, match, lineup, photoPath, outputDir, reportPage, reportPageCount, reportPageKind });
 
 console.log(`SVG: ${files.svgPath}`);
 console.log(`JPG: ${files.jpgPath}`);

@@ -249,8 +249,19 @@ export async function renderStorySvg({
   return fillTemplate(template, values, new Set(['PLAYER_ROWS', 'SCORER_ROWS']));
 }
 
-export async function writeStoryFiles({ rootDir, type, match, lineup, photoPath, outputDir, basename = type }) {
-  const svg = await renderStorySvg({ rootDir, type, match, lineup, photoPath });
+export async function writeStoryFiles({
+  rootDir,
+  type,
+  match,
+  lineup,
+  photoPath,
+  outputDir,
+  basename = type,
+  reportPage,
+  reportPageCount,
+  reportPageKind,
+}) {
+  const svg = await renderStorySvg({ rootDir, type, match, lineup, photoPath, reportPage, reportPageCount, reportPageKind });
   await mkdir(outputDir, { recursive: true });
 
   const svgPath = resolve(outputDir, `${basename}.svg`);

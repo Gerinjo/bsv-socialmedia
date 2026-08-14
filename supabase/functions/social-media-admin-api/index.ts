@@ -513,6 +513,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       const gameId = required(body.gameId, 'Spiel-ID');
       const actionImageDataUrl = String(body.actionImageDataUrl ?? '').trim();
       const actionImage = actionImageDataUrl ? parseDataUrl(actionImageDataUrl, new Set(['image/jpeg', 'image/png', 'image/webp']), 8 * 1024 * 1024) : null;
+      let removedReportImagePaths: string[] = [];
       const { data: existingGame, error: existingGameError } = await context.supabaseAdmin
         .from('social_games')
         .select('id, action_image_path, report_image_paths')
@@ -525,9 +526,9 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         away_score: awayScore,
         result_label: String(body.resultLabel ?? '').trim() || null,
         result_message: String(body.resultMessage ?? '').trim() || null,
-        report_scorers: String(body.reportScorers ?? '').trim() || null,
         status: 'finished',
       };
+      if ('reportScorers' in body) resultUpdate.report_scorers = String(body.reportScorers ?? '').trim() || null;
       if (actionImage) {
         const extension = originalMimeTypes.get(actionImage.mime) ?? 'png';
         const actionImagePath = `generated/action-images/${gameId}/${Date.now()}.${extension}`;
@@ -553,11 +554,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         const previousPaths = Array.isArray(existingGame.report_image_paths) && existingGame.report_image_paths.length
           ? existingGame.report_image_paths.map((path: unknown) => String(path ?? '').trim()).filter(Boolean)
           : existingGame.action_image_path ? [existingGame.action_image_path] : [];
-        const removedPaths = previousPaths.filter((path: string) => path.startsWith(prefix) && !nextPaths.includes(path));
-        if (removedPaths.length) {
-          const { error: removeError } = await context.supabaseAdmin.storage.from(bucket).remove(removedPaths);
-          if (removeError) throw new Error(`Entfernte Bilder konnten nicht gelöscht werden: ${removeError.message}`);
-        }
+        removedReportImagePaths = previousPaths.filter((path: string) => path.startsWith(prefix) && !nextPaths.includes(path));
         resultUpdate.report_image_paths = nextPaths;
         resultUpdate.action_image_path = nextPaths[0] ?? null;
       }
@@ -566,6 +563,10 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .update(resultUpdate)
         .eq('id', gameId);
       if (error) throw error;
+      if (removedReportImagePaths.length) {
+        const { error: removeError } = await context.supabaseAdmin.storage.from(bucket).remove(removedReportImagePaths);
+        if (removeError) console.warn(`Entfernte Spielbericht-Bilder konnten nicht bereinigt werden: ${removeError.message}`);
+      }
       const automation = await renderGameJobNow(context.supabaseAdmin, gameId, 'result');
       return json({ ok: true, saved: true, automation });
     }
