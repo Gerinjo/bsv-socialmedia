@@ -21,6 +21,7 @@ type GameJob = {
     away_score: number | null;
     result_label: string | null;
     result_message: string | null;
+    action_image_path: string | null;
     status: 'scheduled' | 'live' | 'finished' | 'postponed' | 'cancelled' | 'aborted';
     lineup: { players?: unknown[]; formation?: string; approvedAt?: string } | null;
     home_club: {
@@ -58,7 +59,7 @@ const gameJobSelect = `
   id, attempts, status, story_type,
   game:social_games!inner(
     id, source_match_id, home_team, away_team, competition, venue,
-    kickoff_at, home_score, away_score, result_label, result_message, status,
+    kickoff_at, home_score, away_score, result_label, result_message, action_image_path, status,
     lineup, enabled,
     home_club:social_clubs!social_games_home_club_id_fkey(
       crest_status, crest_transparent_path
@@ -97,6 +98,12 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
 
     const body = await request.json().catch(() => ({})) as Record<string, unknown>;
     const previewOnly = body.previewOnly === true;
+    const targetJobIds = Array.isArray(body.targetJobIds)
+      ? [...new Set(body.targetJobIds
+        .map((value) => String(value))
+        .filter((value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)))]
+        .slice(0, 10)
+      : [];
     const previewJobIds = Array.isArray(body.previewJobIds)
       ? [...new Set(body.previewJobIds
         .map((value) => String(value))
@@ -156,11 +163,13 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       return Response.json(summary, { status: summary.previewFailed ? 207 : 200 });
     }
 
-    const { data: gameData, error: gameError } = await context.supabaseAdmin
+    let gameQuery = context.supabaseAdmin
       .from('social_story_jobs')
       .select(gameJobSelect)
       .eq('status', 'pending')
-      .lte('due_at', now)
+      .lte('due_at', now);
+    if (targetJobIds.length) gameQuery = gameQuery.in('id', targetJobIds);
+    const { data: gameData, error: gameError } = await gameQuery
       .order('due_at', { ascending: true })
       .limit(10);
     if (gameError) return Response.json({ error: gameError.message }, { status: 500 });

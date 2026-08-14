@@ -133,7 +133,7 @@ function ensureSeedClubAssets(admin: any): Promise<void> {
   return seedAssetsPromise;
 }
 
-async function runWorker(): Promise<Record<string, unknown>> {
+async function runWorker(targetJobIds: string[] = []): Promise<Record<string, unknown>> {
   if (!runtimeConfig.supabaseUrl || !runtimeConfig.workerApiKey) {
     throw new Error('Die automatische Vorschau ist nicht konfiguriert.');
   }
@@ -143,7 +143,7 @@ async function runWorker(): Promise<Record<string, unknown>> {
       'content-type': 'application/json',
       apikey: runtimeConfig.workerApiKey,
     },
-    body: JSON.stringify({ trigger: 'admin-save', requested_at: new Date().toISOString() }),
+    body: JSON.stringify({ trigger: 'admin-save', requested_at: new Date().toISOString(), targetJobIds }),
   });
   const payload = await response.json() as Record<string, unknown>;
   if (!response.ok) throw new Error(String(payload.error ?? `Vorschau-Worker antwortet mit HTTP ${response.status}.`));
@@ -159,7 +159,8 @@ async function renderGameJobNow(admin: any, gameId: string, storyType: 'announce
     .maybeSingle();
   if (selectError) throw selectError;
 
-  if (existing?.id) {
+  let jobId = existing?.id as string | undefined;
+  if (jobId) {
     const { error } = await admin
       .from('social_story_jobs')
       .update({
@@ -169,11 +170,11 @@ async function renderGameJobNow(admin: any, gameId: string, storyType: 'announce
         claimed_at: null,
         last_error: null,
       })
-      .eq('id', existing.id)
+      .eq('id', jobId)
       .in('status', ['pending', 'preview_ready', 'failed', 'needs_input', 'skipped']);
     if (error) throw error;
   } else {
-    const { error } = await admin
+    const { data: inserted, error } = await admin
       .from('social_story_jobs')
       .insert({
         game_id: gameId,
@@ -183,11 +184,14 @@ async function renderGameJobNow(admin: any, gameId: string, storyType: 'announce
         attempts: 0,
         claimed_at: null,
         last_error: null,
-      });
+      })
+      .select('id')
+      .single();
     if (error) throw error;
+    jobId = inserted.id;
   }
 
-  return runWorker();
+  return runWorker(jobId ? [jobId] : []);
 }
 
 async function freshPreviewUrls(admin: any, rows: any[]): Promise<any[]> {
