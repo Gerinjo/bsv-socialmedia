@@ -98,11 +98,11 @@ function lineupRows(players: Lineup['players'] = []): string {
     const y = 735 + row * 126;
     return [
       `<g transform="translate(${x} ${y})">`,
-      '<rect width="410" height="96" rx="32" fill="#ffffff"/>',
-      '<circle cx="49" cy="48" r="35" fill="#dce9df"/>',
-      '<circle cx="49" cy="48" r="30" fill="#a8cbb4"/>',
-      `<text x="49" y="61" text-anchor="middle" class="number">${xmlEscape(player.number ?? '–')}</text>`,
-      `<text x="102" y="61" class="player">${xmlEscape(truncate(player.name, 22))}</text>`,
+      '<circle cx="42" cy="42" r="36" fill="#f4d638"/>',
+      '<circle cx="42" cy="42" r="31" fill="none" stroke="#91c82f" stroke-width="3" opacity=".72"/>',
+      `<text x="42" y="54" text-anchor="middle" class="number">${xmlEscape(player.number ?? '–')}</text>`,
+      `<text x="96" y="54" class="player">${xmlEscape(truncate(player.name, 22))}</text>`,
+      '<path d="M96 72H402" stroke="#a8cbb4" stroke-width="2" opacity=".22"/>',
       '</g>',
     ].join('');
   }).join('');
