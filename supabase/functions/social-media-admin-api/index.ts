@@ -1061,7 +1061,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       }
       const originalPath = `sponsors/${sponsor.slug}/original.${originalMimeTypes.get(original.mime)}`;
       const transparentPath = `sponsors/${sponsor.slug}/transparent.png`;
-      const whitePath = `sponsors/${sponsor.slug}/white.png`;
+      const whitePath = `sponsors/${sponsor.slug}/white-v2.png`;
       const processing = body.processing && typeof body.processing === 'object' ? body.processing : {};
       const confidenceValue = Number(processing.confidence);
       const metadata = {
@@ -1075,6 +1075,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         threshold: Number(processing.threshold) || null,
         width: Number(processing.width) || null,
         height: Number(processing.height) || null,
+        whiteVariantVersion: 2,
         reviewed: false,
       };
       const uploads = await Promise.all([
@@ -1103,6 +1104,46 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .select()
         .single();
       if (error) throw error;
+      await invalidateSponsorPreviews(context.supabaseAdmin, sponsorId);
+      return json({ ok: true, sponsor: data });
+    }
+
+    if (action === 'save_sponsor_white_logo') {
+      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
+      const sponsorId = required(body.sponsorId, 'Werbepartner');
+      const { data: sponsor, error: sponsorError } = await context.supabaseAdmin
+        .from('social_sponsors')
+        .select('id, slug, logo_white_path, processing_metadata')
+        .eq('id', sponsorId)
+        .maybeSingle();
+      if (sponsorError) throw sponsorError;
+      if (!sponsor) throw new Error('Der Werbepartner wurde nicht gefunden.');
+      const white = parseDataUrl(body.whiteDataUrl, new Set(['image/png']), 5 * 1024 * 1024);
+      if (!pngHasAlpha(white.bytes)) throw new Error('Die weiße Variante muss eine PNG-Datei mit Alphakanal sein.');
+      const whitePath = `sponsors/${sponsor.slug}/white-v2.png`;
+      const { error: uploadError } = await context.supabaseAdmin.storage.from(bucket).upload(whitePath, white.bytes, {
+        contentType: 'image/png', cacheControl: '604800', upsert: true,
+      });
+      if (uploadError) throw new Error(`Weiße Partnerlogo-Variante konnte nicht gespeichert werden: ${uploadError.message}`);
+      const { data, error } = await context.supabaseAdmin
+        .from('social_sponsors')
+        .update({
+          logo_white_path: whitePath,
+          logo_status: 'needs_review',
+          processing_metadata: {
+            ...(sponsor.processing_metadata ?? {}),
+            whiteVariantVersion: 2,
+            reviewed: false,
+          },
+        })
+        .eq('id', sponsorId)
+        .select()
+        .single();
+      if (error) throw error;
+      const previousWhitePath = String(sponsor.logo_white_path ?? '').trim();
+      if (previousWhitePath.startsWith('sponsors/') && previousWhitePath !== whitePath) {
+        await context.supabaseAdmin.storage.from(bucket).remove([previousWhitePath]);
+      }
       await invalidateSponsorPreviews(context.supabaseAdmin, sponsorId);
       return json({ ok: true, sponsor: data });
     }

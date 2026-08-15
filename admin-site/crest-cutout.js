@@ -153,5 +153,61 @@
     };
   }
 
-  root.BsvCrestCutout = Object.freeze({ removeEdgeConnectedBackground });
+  function createWhiteLogoVariant(image, options = {}) {
+    const { width, height } = image;
+    if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1) {
+      throw new Error('Ungültige Bildgröße.');
+    }
+    const source = image.data;
+    if (!source || source.length !== width * height * 4) throw new Error('Ungültige Bilddaten.');
+
+    const data = new Uint8ClampedArray(source);
+    let background = options.backgroundColor;
+    let hasBackground = background
+      && Number.isFinite(Number(background.red))
+      && Number.isFinite(Number(background.green))
+      && Number.isFinite(Number(background.blue));
+    if (!hasBackground) {
+      let opaque = 0;
+      let nearWhite = 0;
+      let colored = 0;
+      for (let index = 0; index < data.length; index += 4) {
+        if (data[index + 3] < 16) continue;
+        opaque += 1;
+        const whiteDistance = colorDistance(data, index, { red: 255, green: 255, blue: 255 });
+        if (whiteDistance <= 18) nearWhite += 1;
+        else if (whiteDistance >= 45) colored += 1;
+      }
+      const whiteRatio = opaque ? nearWhite / opaque : 0;
+      const coloredRatio = opaque ? colored / opaque : 0;
+      if (whiteRatio > 0 && whiteRatio < 0.45 && coloredRatio >= 0.25) {
+        background = { red: 255, green: 255, blue: 255 };
+        hasBackground = true;
+      }
+    }
+    const threshold = Number.isFinite(Number(options.threshold)) ? Math.max(1, Number(options.threshold)) : 44;
+    const transparentDistance = Math.max(6, threshold * 0.2);
+    const opaqueDistance = Math.max(transparentDistance + 1, threshold * 1.35);
+
+    for (let index = 0; index < data.length; index += 4) {
+      const originalAlpha = data[index + 3];
+      if (!originalAlpha) continue;
+
+      if (hasBackground) {
+        const distance = colorDistance(data, index, background);
+        const coverage = Math.max(0, Math.min(1,
+          (distance - transparentDistance) / (opaqueDistance - transparentDistance),
+        ));
+        data[index + 3] = Math.round(originalAlpha * coverage);
+      }
+
+      data[index] = 255;
+      data[index + 1] = 255;
+      data[index + 2] = 255;
+    }
+
+    return { width, height, data };
+  }
+
+  root.BsvCrestCutout = Object.freeze({ removeEdgeConnectedBackground, createWhiteLogoVariant });
 })(globalThis);
