@@ -1,6 +1,6 @@
 import { STORY_ASSETS, STORY_TEMPLATES } from './story-assets.generated.ts';
 
-export const STORY_TYPES = ['announcement', 'lineup', 'result', 'report', 'birthday'] as const;
+export const STORY_TYPES = ['announcement', 'lineup', 'result', 'report', 'post', 'birthday'] as const;
 export type StoryType = typeof STORY_TYPES[number];
 
 const TEAM_DISPLAY_NAMES = new Map([
@@ -234,6 +234,9 @@ export function renderStorySvg({
     RESULT_LABEL_SIZE: resultLabelSize(resultLabel),
     RESULT_MESSAGE: resultMessage,
     RESULT_MESSAGE_SIZE: fittedSize(resultMessage, 40, 32, 38),
+    POST_TITLE: truncate(match.postTitle, 48),
+    POST_TITLE_SIZE: fittedSize(match.postTitle, 74, 54, 30),
+    POST_AUDIENCE: truncate(match.postAudience, 36),
     REPORT_PAGE: reportPage,
     REPORT_PAGE_COUNT: reportPageCount,
     SCORER_ROWS: scorerRows(match.reportScorers),
@@ -244,7 +247,9 @@ export function renderStorySvg({
     BIRTHDAY_MESSAGE: truncate(match.birthdayMessage, 54),
   };
 
-  const template = type === 'report' && reportPageKind === 'scorers'
+  const template = type === 'post' && reportPage > 1
+    ? STORY_TEMPLATES.postPhoto
+    : type === 'report' && reportPageKind === 'scorers'
     ? STORY_TEMPLATES.reportScorers
     : type === 'report' && reportPageKind === 'photo'
       ? STORY_TEMPLATES.reportPhoto

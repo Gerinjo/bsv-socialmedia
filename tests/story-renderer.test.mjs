@@ -138,6 +138,36 @@ test('weitere Spielbericht-Seiten bleiben reine Wellen-Fotoseiten', async () => 
   assert.doesNotMatch(svg, />TORSCHÜTZEN<\/text>/);
 });
 
+test('unabhängiger Beitrag zeigt Zielgruppe, Titel und erstes Wellenfoto', async () => {
+  const customImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAF';
+  const svg = await renderStorySvg({
+    rootDir,
+    type: 'post',
+    match: { postTitle: 'Saisonabschluss 2026', postAudience: 'U17 · B-Juniorinnen' },
+    actionPhotoDataUri: customImage,
+    reportPage: 1,
+    reportPageCount: 3,
+  });
+  assert.match(svg, /width="1080" height="1080"/);
+  assert.match(svg, /Saisonabschluss 2026/);
+  assert.match(svg, /U17 · B-Juniorinnen/);
+  assert.match(svg, />SEITE 1 \/ 3</);
+  assert.match(svg, /clipPath id="photoWave"/);
+});
+
+test('weitere Beitragsbilder werden als reine Wellen-Fotoseite gerendert', async () => {
+  const svg = await renderStorySvg({
+    rootDir,
+    type: 'post',
+    match: { postTitle: 'Saisonabschluss 2026', postAudience: 'Jugendabteilung' },
+    reportPage: 2,
+    reportPageCount: 3,
+  });
+  assert.match(svg, />SEITE 2 \/ 3</);
+  assert.match(svg, /Jugendabteilung/);
+  assert.doesNotMatch(svg, /Saisonabschluss 2026/);
+});
+
 test('Torschützenzeilen werden escaped und auf vier Einträge begrenzt', () => {
   const rows = scorerRows('1. A & B\n2. C\n3. D\n4. E\n5. F');
   assert.match(rows, /A &amp; B/);

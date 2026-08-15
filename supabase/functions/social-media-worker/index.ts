@@ -55,6 +55,23 @@ type BirthdayJob = {
   };
 };
 
+type PostJob = {
+  id: string;
+  attempts: number;
+  status: JobStatus;
+  post: {
+    id: string;
+    title: string;
+    body: string;
+    image_paths: string[];
+    enabled: boolean;
+    audience: {
+      label: string;
+      audience_group: string;
+    } | null;
+  };
+};
+
 type RenderPayload = {
   mediaUrl?: string;
   storagePath?: string;
@@ -76,6 +93,14 @@ const gameJobSelect = `
     away_club:social_clubs!social_games_away_club_id_fkey(
       crest_status, crest_transparent_path
     )
+  )
+`;
+
+const postJobSelect = `
+  id, attempts, status,
+  post:social_posts!inner(
+    id, title, body, image_paths, enabled,
+    audience:social_post_audiences(label, audience_group)
   )
 `;
 
@@ -134,6 +159,29 @@ async function renderGamePreview(candidate: GameJob): Promise<RenderPayload> {
   };
 }
 
+async function renderPostPreview(candidate: PostJob): Promise<RenderPayload> {
+  const paths = Array.isArray(candidate.post.image_paths)
+    ? candidate.post.image_paths.filter((path) => String(path ?? '').trim()).slice(0, 10)
+    : [];
+  if (!paths.length) throw new Error('Bitte mindestens ein Beitragsbild hochladen.');
+  const pages: RenderPayload[] = [];
+  for (let postPageIndex = 0; postPageIndex < paths.length; postPageIndex += 1) {
+    pages.push(await render({
+      type: 'post',
+      jobId: candidate.id,
+      post: candidate.post,
+      postPageIndex,
+      postPageCount: paths.length,
+    }));
+  }
+  return {
+    mediaUrl: pages[0].mediaUrl,
+    storagePath: pages[0].storagePath,
+    mediaUrls: pages.map((page) => page.mediaUrl as string),
+    storagePaths: pages.map((page) => page.storagePath as string),
+  };
+}
+
 function retryAt(attempt: number): string {
   return new Date(Date.now() + Math.min(attempt, 3) * 5 * 60 * 1000).toISOString();
 }
@@ -145,6 +193,12 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
     const previewOnly = body.previewOnly === true;
     const targetJobIds = Array.isArray(body.targetJobIds)
       ? [...new Set(body.targetJobIds
+        .map((value) => String(value))
+        .filter((value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)))]
+        .slice(0, 10)
+      : [];
+    const targetPostJobIds = Array.isArray(body.targetPostJobIds)
+      ? [...new Set(body.targetPostJobIds
         .map((value) => String(value))
         .filter((value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)))]
         .slice(0, 10)
@@ -210,18 +264,20 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       return Response.json(summary, { status: summary.previewFailed ? 207 : 200 });
     }
 
-    let gameQuery = context.supabaseAdmin
-      .from('social_story_jobs')
-      .select(gameJobSelect)
-      .eq('status', 'pending')
-      .lte('due_at', now);
-    if (targetJobIds.length) gameQuery = gameQuery.in('id', targetJobIds);
-    const { data: gameData, error: gameError } = await gameQuery
-      .order('due_at', { ascending: true })
-      .limit(10);
-    if (gameError) return Response.json({ error: gameError.message }, { status: 500 });
+    let gameData: unknown[] = [];
+    if (!targetPostJobIds.length || targetJobIds.length) {
+      let gameQuery = context.supabaseAdmin
+        .from('social_story_jobs')
+        .select(gameJobSelect)
+        .eq('status', 'pending')
+        .lte('due_at', now);
+      if (targetJobIds.length) gameQuery = gameQuery.in('id', targetJobIds);
+      const gameResult = await gameQuery.order('due_at', { ascending: true }).limit(10);
+      if (gameResult.error) return Response.json({ error: gameResult.error.message }, { status: 500 });
+      gameData = gameResult.data ?? [];
+    }
 
-    for (const candidate of (gameData ?? []) as unknown as GameJob[]) {
+    for (const candidate of gameData as unknown as GameJob[]) {
       if (!candidate.game.enabled) continue;
       const attempt = candidate.attempts + 1;
       const { data: claimed } = await context.supabaseAdmin
@@ -333,6 +389,107 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
         const retry = attempt < 3;
         await context.supabaseAdmin
           .from('social_story_jobs')
+          .update({
+            status: retry ? 'pending' : 'failed',
+            due_at: retry ? retryAt(attempt) : undefined,
+            claimed_at: null,
+            last_error: message,
+          })
+          .eq('id', candidate.id);
+        if (retry) summary.retrying += 1;
+        else summary.failed += 1;
+      }
+    }
+
+    let postData: unknown[] = [];
+    if (!targetJobIds.length || targetPostJobIds.length) {
+      let postQuery = context.supabaseAdmin
+        .from('social_post_jobs')
+        .select(postJobSelect)
+        .eq('status', 'pending')
+        .lte('due_at', now);
+      if (targetPostJobIds.length) postQuery = postQuery.in('id', targetPostJobIds);
+      const postResult = await postQuery.order('due_at', { ascending: true }).limit(10);
+      if (postResult.error) return Response.json({ error: postResult.error.message }, { status: 500 });
+      postData = postResult.data ?? [];
+    }
+
+    for (const candidate of postData as unknown as PostJob[]) {
+      if (!candidate.post.enabled) continue;
+      const attempt = candidate.attempts + 1;
+      const { data: claimed } = await context.supabaseAdmin
+        .from('social_post_jobs')
+        .update({ status: 'rendering', claimed_at: now, attempts: attempt })
+        .eq('id', candidate.id)
+        .eq('status', 'pending')
+        .select('id')
+        .maybeSingle();
+      if (!claimed) continue;
+      summary.claimed += 1;
+
+      if (!candidate.post.title.trim() || !candidate.post.body.trim() || !candidate.post.image_paths?.length) {
+        await context.supabaseAdmin
+          .from('social_post_jobs')
+          .update({ status: 'needs_input', last_error: 'Titel, Beitragstext und mindestens ein Bild sind erforderlich.' })
+          .eq('id', candidate.id);
+        summary.needsInput += 1;
+        continue;
+      }
+
+      try {
+        const preview = await renderPostPreview(candidate);
+        if (!runtimeConfig.testMode) {
+          const caption = [candidate.post.title, candidate.post.body, '#aufgehtsgrün']
+            .filter(Boolean)
+            .join('\n\n')
+            .slice(0, 2200);
+          const result = (preview.mediaUrls?.length ?? 0) > 1
+            ? await publishInstagramCarousel({
+              accountId: runtimeConfig.instagramAccountId,
+              accessToken: runtimeConfig.instagramAccessToken,
+              imageUrls: preview.mediaUrls,
+              caption,
+              testMode: runtimeConfig.testMode,
+            })
+            : await publishInstagramImage({
+              accountId: runtimeConfig.instagramAccountId,
+              accessToken: runtimeConfig.instagramAccessToken,
+              imageUrl: preview.mediaUrl,
+              caption,
+              testMode: runtimeConfig.testMode,
+            });
+          await context.supabaseAdmin
+            .from('social_post_jobs')
+            .update({
+              status: 'published',
+              media_url: preview.mediaUrl,
+              storage_path: preview.storagePath,
+              media_urls: preview.mediaUrls,
+              storage_paths: preview.storagePaths,
+              external_post_id: result.id,
+              published_at: new Date().toISOString(),
+              last_error: null,
+            })
+            .eq('id', candidate.id);
+        } else {
+          await context.supabaseAdmin
+            .from('social_post_jobs')
+            .update({
+              status: 'preview_ready',
+              media_url: preview.mediaUrl,
+              storage_path: preview.storagePath,
+              media_urls: preview.mediaUrls,
+              storage_paths: preview.storagePaths,
+              last_error: null,
+            })
+            .eq('id', candidate.id);
+        }
+        summary.previewReady += 1;
+      } catch (workerError) {
+        const message = workerError instanceof Error ? workerError.message : 'Unbekannter Workerfehler';
+        const retry = attempt < 3;
+        await context.supabaseAdmin
+          .from('social_post_jobs')
           .update({
             status: retry ? 'pending' : 'failed',
             due_at: retry ? retryAt(attempt) : undefined,

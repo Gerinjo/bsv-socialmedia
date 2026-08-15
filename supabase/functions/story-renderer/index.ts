@@ -24,8 +24,11 @@ type RequestBody = {
   jobId?: string;
   game?: Record<string, unknown>;
   birthday?: Record<string, unknown>;
+  post?: Record<string, unknown>;
   reportPageIndex?: number;
   reportPageCount?: number;
+  postPageIndex?: number;
+  postPageCount?: number;
 };
 
 function json(data: unknown, status = 200): Response {
@@ -188,6 +191,40 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
         imageAssets: images,
         playerPhotoDataUri,
       });
+    } else if (body.type === 'post') {
+      if (!body.post) return json({ error: 'post_missing' }, 400);
+      const post = body.post;
+      const title = String(post.title ?? '').trim();
+      const audience = post.audience as Record<string, unknown> | undefined;
+      const audienceLabel = String(audience?.label ?? '').trim();
+      const paths = Array.isArray(post.image_paths)
+        ? post.image_paths.map((path) => String(path ?? '').trim()).filter(Boolean).slice(0, 10)
+        : [];
+      if (!title || !audienceLabel || !paths.length) return json({ error: 'post_incomplete' }, 400);
+      if (paths.some((path) => !path.startsWith(`generated/post-images/${safeSegment(post.id)}/`))) {
+        return json({ error: 'invalid_post_image_path' }, 400);
+      }
+      const requestedPageIndex = Number.isInteger(body.postPageIndex) ? Number(body.postPageIndex) : null;
+      if (requestedPageIndex !== null && (requestedPageIndex < 0 || requestedPageIndex >= paths.length)) {
+        return json({ error: 'invalid_post_page' }, 400);
+      }
+      pageCount = requestedPageIndex === null ? paths.length : 1;
+      outputPageNumber = requestedPageIndex === null ? 1 : requestedPageIndex + 1;
+      outputPageCount = requestedPageIndex === null
+        ? paths.length
+        : Math.max(Number(body.postPageCount) || paths.length, paths.length);
+      svgForPage = async (index) => {
+        const sourceIndex = requestedPageIndex ?? index;
+        const actionPhotoDataUri = await actionPhoto(context.supabaseAdmin, paths[sourceIndex]);
+        return renderStorySvg({
+          type: body.type as StoryType,
+          match: { postTitle: title, postAudience: audienceLabel },
+          imageAssets: images,
+          actionPhotoDataUri,
+          reportPage: sourceIndex + 1,
+          reportPageCount: outputPageCount,
+        });
+      };
     } else {
       if (!body.game) return json({ error: 'game_missing' }, 400);
       const input = gameInput(body.game);

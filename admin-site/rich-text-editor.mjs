@@ -19,6 +19,10 @@ const styleMaps = {
   bold: new Map([...characterMap(alphabet, boldAlphabet), ...characterMap(digits, boldDigits)]),
   italic: characterMap(alphabet, italicAlphabet),
 };
+const reverseStyleMaps = Object.fromEntries(Object.entries(styleMaps).map(([style, map]) => [
+  style,
+  new Map([...map].map(([plain, styled]) => [styled, plain])),
+]));
 
 export const reportEmojis = ['⚽', '💚', '🤍', '💛', '🔥', '💪', '🙌', '👏', '🎉', '🏆', '✅', '📸', '📣', '⭐'];
 
@@ -28,6 +32,27 @@ export function stylizeReportText(value, style) {
   return Array.from(String(value ?? '')).map(character => {
     const [base, ...marks] = Array.from(character.normalize('NFD'));
     return `${map.get(base) ?? base}${marks.join('')}`;
+  }).join('');
+}
+
+export function toggleReportStyle(value, style) {
+  const input = String(value ?? '');
+  const map = styleMaps[style];
+  const reverseMap = reverseStyleMaps[style];
+  if (!map || !reverseMap) return input;
+  const characters = Array.from(input);
+  const styleable = characters.filter(character => {
+    const [base] = Array.from(character.normalize('NFD'));
+    return map.has(base) || reverseMap.has(base);
+  });
+  const removeStyle = styleable.length > 0 && styleable.every(character => {
+    const [base] = Array.from(character.normalize('NFD'));
+    return reverseMap.has(base);
+  });
+  return characters.map(character => {
+    const [base, ...marks] = Array.from(character.normalize('NFD'));
+    const replacement = removeStyle ? (reverseMap.get(base) ?? base) : (map.get(reverseMap.get(base) ?? base) ?? base);
+    return `${replacement}${marks.join('')}`;
   }).join('');
 }
 
@@ -72,7 +97,7 @@ function toolbarButton(text, title, action) {
 function applyFormat(textarea, style) {
   const range = selectedWord(textarea);
   if (range.start === range.end) return;
-  replaceSelection(textarea, stylizeReportText(textarea.value.slice(range.start, range.end), style), range.start, range.end);
+  replaceSelection(textarea, toggleReportStyle(textarea.value.slice(range.start, range.end), style), range.start, range.end);
 }
 
 function applyBullets(textarea) {
@@ -96,8 +121,8 @@ export function wireRichTextEditors(root = document) {
     toolbar.setAttribute('role', 'toolbar');
     toolbar.setAttribute('aria-label', 'Spielbericht formatieren');
     toolbar.append(
-      toolbarButton('B', 'Auswahl fett formatieren', 'bold'),
-      toolbarButton('I', 'Auswahl kursiv formatieren', 'italic'),
+      toolbarButton('B', 'Fett ein- oder ausschalten', 'bold'),
+      toolbarButton('I', 'Kursiv ein- oder ausschalten', 'italic'),
       toolbarButton('• Liste', 'Auswahl als Aufzählung formatieren', 'bullets'),
     );
     const emoji = document.createElement('select');
@@ -119,7 +144,7 @@ export function wireRichTextEditors(root = document) {
     );
     const hint = document.createElement('div');
     hint.className = 'rich-editor-hint';
-    hint.textContent = 'Text markieren und formatieren · Höhe mit −/+ oder am unteren Rand ändern';
+    hint.textContent = 'Text markieren und Formatierung ein-/ausschalten · Höhe mit −/+ oder am unteren Rand ändern';
     textarea.parentNode.insertBefore(editor, textarea);
     editor.append(toolbar, textarea, hint);
 

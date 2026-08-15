@@ -133,7 +133,7 @@ function ensureSeedClubAssets(admin: any): Promise<void> {
   return seedAssetsPromise;
 }
 
-async function runWorker(targetJobIds: string[] = []): Promise<Record<string, unknown>> {
+async function runWorker(targetJobIds: string[] = [], targetPostJobIds: string[] = []): Promise<Record<string, unknown>> {
   if (!runtimeConfig.supabaseUrl || !runtimeConfig.workerApiKey) {
     throw new Error('Die automatische Vorschau ist nicht konfiguriert.');
   }
@@ -143,7 +143,7 @@ async function runWorker(targetJobIds: string[] = []): Promise<Record<string, un
       'content-type': 'application/json',
       apikey: runtimeConfig.workerApiKey,
     },
-    body: JSON.stringify({ trigger: 'admin-save', requested_at: new Date().toISOString(), targetJobIds }),
+    body: JSON.stringify({ trigger: 'admin-save', requested_at: new Date().toISOString(), targetJobIds, targetPostJobIds }),
   });
   const payload = await response.json() as Record<string, unknown>;
   if (!response.ok) throw new Error(String(payload.error ?? `Vorschau-Worker antwortet mit HTTP ${response.status}.`));
@@ -221,6 +221,33 @@ async function freshPreviewUrls(admin: any, rows: any[]): Promise<any[]> {
       jobs,
       action_image_url: reportImages[0]?.url ?? null,
       report_images: reportImages.filter((image) => image.url),
+    };
+  }));
+}
+
+async function freshPostUrls(admin: any, rows: any[]): Promise<any[]> {
+  return await Promise.all(rows.map(async (row) => {
+    const imagePaths = Array.isArray(row.image_paths)
+      ? row.image_paths.map((path: unknown) => String(path ?? '').trim()).filter(Boolean).slice(0, 10)
+      : [];
+    const images = await Promise.all(imagePaths.map(async (path: string, index: number) => ({
+      path,
+      position: index + 1,
+      url: await signedAssetUrl(admin, path),
+    })));
+    const job = Array.isArray(row.job) ? row.job[0] : row.job;
+    const storagePaths = Array.isArray(job?.storage_paths) && job.storage_paths.length
+      ? job.storage_paths.map((path: unknown) => String(path ?? '').trim()).filter(Boolean).slice(0, 10)
+      : job?.storage_path ? [job.storage_path] : [];
+    const mediaUrls = await Promise.all(storagePaths.map((path: string) => signedAssetUrl(admin, path)));
+    return {
+      ...row,
+      images: images.filter((image) => image.url),
+      job: job ? {
+        ...job,
+        media_url: mediaUrls.find(Boolean) ?? job.media_url,
+        media_urls: mediaUrls.filter(Boolean),
+      } : null,
     };
   }));
 }
@@ -309,6 +336,8 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       { data: people, error: peopleError },
       { data: clubs, error: clubsError },
       { data: members, error: membersError },
+      { data: postAudiences, error: postAudiencesError },
+      { data: posts, error: postsError },
     ] = await Promise.all([
       context.supabaseAdmin
         .from('social_games')
@@ -336,8 +365,18 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .from('social_admins')
         .select('user_id, email, role, is_active, created_at')
         .order('email', { ascending: true }),
+      context.supabaseAdmin
+        .from('social_post_audiences')
+        .select('id, slug, audience_group, label, sort_order')
+        .eq('active', true)
+        .order('sort_order', { ascending: true }),
+      context.supabaseAdmin
+        .from('social_posts')
+        .select('*, audience:social_post_audiences(id, slug, audience_group, label), job:social_post_jobs(*)')
+        .eq('enabled', true)
+        .order('updated_at', { ascending: false }),
     ]);
-    const readError = gamesError ?? birthdaysError ?? teamsError ?? peopleError ?? clubsError ?? membersError;
+    const readError = gamesError ?? birthdaysError ?? teamsError ?? peopleError ?? clubsError ?? membersError ?? postAudiencesError ?? postsError;
     if (readError) return json({ error: readError.message }, 500);
     return json({
       user: { userId, email, role: String(membership.role ?? '').trim() || 'sm-team' },
@@ -346,6 +385,8 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       venues: [...homeVenues],
       teams: teams ?? [],
       people: people ?? [],
+      postAudiences: postAudiences ?? [],
+      posts: await freshPostUrls(context.supabaseAdmin, posts ?? []),
       clubs: await freshClubUrls(context.supabaseAdmin, clubs ?? []),
       games: await freshPreviewUrls(context.supabaseAdmin, games ?? []),
       birthdays: await freshPreviewUrls(context.supabaseAdmin, birthdays ?? []),
@@ -615,6 +656,156 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       return json({ ok: true, automation });
     }
 
+    if (action === 'save_post') {
+      const postId = String(body.postId ?? '').trim() || crypto.randomUUID();
+      const audienceId = required(body.audienceId, 'Zielgruppe');
+      const title = required(body.title, 'Titel');
+      const postBody = String(body.body ?? '').trim();
+      if (title.length > 120) throw new Error('Der Titel darf höchstens 120 Zeichen lang sein.');
+      if (postBody.length > 2200) throw new Error('Der Beitragstext darf höchstens 2.200 Zeichen lang sein.');
+      const { data: audience, error: audienceError } = await context.supabaseAdmin
+        .from('social_post_audiences')
+        .select('id')
+        .eq('id', audienceId)
+        .eq('active', true)
+        .maybeSingle();
+      if (audienceError) throw audienceError;
+      if (!audience) throw new Error('Die ausgewählte Zielgruppe ist nicht aktiv.');
+      const { data: existing, error: existingError } = await context.supabaseAdmin
+        .from('social_posts')
+        .select('id, image_paths')
+        .eq('id', postId)
+        .maybeSingle();
+      if (existingError) throw existingError;
+      let imagePaths = Array.isArray(existing?.image_paths) ? existing.image_paths : [];
+      let removedPaths: string[] = [];
+      if (Array.isArray(body.images)) {
+        if (body.images.length > 10) throw new Error('Ein Beitrag kann höchstens zehn Bilder enthalten.');
+        const ordered = body.images.map((item: any, index: number) => ({
+          path: required(item?.path, `Bild ${index + 1}`),
+          position: Number(item?.position),
+        })).sort((left: any, right: any) => left.position - right.position);
+        if (!ordered.every((item: any, index: number) => Number.isInteger(item.position) && item.position === index + 1)) {
+          throw new Error('Die Bildpositionen müssen fortlaufend bei 1 beginnen.');
+        }
+        const prefix = `generated/post-images/${postId}/`;
+        if (ordered.some((item: any) => !item.path.startsWith(prefix))) throw new Error('Ein Bildpfad gehört nicht zu diesem Beitrag.');
+        const nextPaths = ordered.map((item: any) => item.path);
+        removedPaths = imagePaths.filter((path: string) => path.startsWith(prefix) && !nextPaths.includes(path));
+        imagePaths = nextPaths;
+      }
+      const payload: Record<string, unknown> = {
+        id: postId,
+        audience_id: audienceId,
+        title,
+        body: postBody,
+        image_paths: imagePaths,
+        enabled: true,
+      };
+      if (!existing) payload.created_by = userId;
+      const { data: post, error: postError } = await context.supabaseAdmin
+        .from('social_posts')
+        .upsert(payload)
+        .select('id')
+        .single();
+      if (postError) throw postError;
+      if (removedPaths.length) {
+        const { error: removeError } = await context.supabaseAdmin.storage.from(bucket).remove(removedPaths);
+        if (removeError) console.warn(`Entfernte Beitragsbilder konnten nicht bereinigt werden: ${removeError.message}`);
+      }
+      const { error: jobError } = await context.supabaseAdmin
+        .from('social_post_jobs')
+        .upsert({
+          post_id: post.id,
+          status: 'needs_input',
+          attempts: 0,
+          claimed_at: null,
+          last_error: 'Beitrag wurde geändert. Bitte freigeben.',
+          media_url: null,
+          storage_path: null,
+          media_urls: [],
+          storage_paths: [],
+          external_post_id: null,
+          published_at: null,
+        }, { onConflict: 'post_id' });
+      if (jobError) throw jobError;
+      return json({ ok: true, postId: post.id });
+    }
+
+    if (action === 'upload_post_image') {
+      const postId = required(body.postId, 'Beitrags-ID');
+      const image = parseDataUrl(body.imageDataUrl, new Set(['image/jpeg', 'image/png', 'image/webp']), 8 * 1024 * 1024);
+      const { data: post, error: postError } = await context.supabaseAdmin
+        .from('social_posts')
+        .select('id')
+        .eq('id', postId)
+        .maybeSingle();
+      if (postError) throw postError;
+      if (!post) throw new Error('Der Beitrag wurde nicht gefunden.');
+      const extension = originalMimeTypes.get(image.mime) ?? 'jpg';
+      const path = `generated/post-images/${postId}/${crypto.randomUUID()}.${extension}`;
+      const { error: uploadError } = await context.supabaseAdmin.storage.from(bucket).upload(path, image.bytes, {
+        contentType: image.mime,
+        cacheControl: '604800',
+        upsert: false,
+      });
+      if (uploadError) throw uploadError;
+      return json({ ok: true, image: { path, url: await signedAssetUrl(context.supabaseAdmin, path) } });
+    }
+
+    if (action === 'approve_post') {
+      const postId = required(body.postId, 'Beitrags-ID');
+      const { data: post, error: postError } = await context.supabaseAdmin
+        .from('social_posts')
+        .select('id, title, body, image_paths, enabled')
+        .eq('id', postId)
+        .maybeSingle();
+      if (postError) throw postError;
+      if (!post?.enabled) throw new Error('Der Beitrag wurde nicht gefunden.');
+      if (!String(post.title ?? '').trim()) throw new Error('Der Titel fehlt.');
+      if (!String(post.body ?? '').trim()) throw new Error('Der Beitragstext fehlt.');
+      if (!Array.isArray(post.image_paths) || post.image_paths.length < 1) throw new Error('Bitte mindestens ein Bild hochladen.');
+      const { data: job, error: jobError } = await context.supabaseAdmin
+        .from('social_post_jobs')
+        .upsert({
+          post_id: postId,
+          status: 'pending',
+          due_at: new Date().toISOString(),
+          attempts: 0,
+          claimed_at: null,
+          last_error: null,
+        }, { onConflict: 'post_id' })
+        .select('id')
+        .single();
+      if (jobError) throw jobError;
+      const automation = await runWorker([], [job.id]);
+      return json({ ok: true, automation });
+    }
+
+    if (action === 'delete_post') {
+      const postId = required(body.postId, 'Beitrags-ID');
+      const { data: post, error: postError } = await context.supabaseAdmin
+        .from('social_posts')
+        .select('image_paths, job:social_post_jobs(storage_paths, storage_path)')
+        .eq('id', postId)
+        .maybeSingle();
+      if (postError) throw postError;
+      if (!post) throw new Error('Der Beitrag wurde nicht gefunden.');
+      const postJob = Array.isArray(post.job) ? post.job[0] : post.job;
+      const paths = [...new Set([
+        ...(Array.isArray(post.image_paths) ? post.image_paths : []),
+        ...(Array.isArray(postJob?.storage_paths) ? postJob.storage_paths : []),
+        postJob?.storage_path,
+      ].map((path) => String(path ?? '').trim()).filter(Boolean))];
+      if (paths.length) {
+        const { error: removeError } = await context.supabaseAdmin.storage.from(bucket).remove(paths);
+        if (removeError) throw removeError;
+      }
+      const { error: deleteError } = await context.supabaseAdmin.from('social_posts').delete().eq('id', postId);
+      if (deleteError) throw deleteError;
+      return json({ ok: true });
+    }
+
     if (action === 'save_birthday') {
       const personId = required(body.personId, 'Person');
       const birthDate = required(body.birthDate, 'Geburtsdatum');
@@ -820,13 +1011,19 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     }
 
     if (action === 'retry_job') {
-      const table = body.kind === 'birthday' ? 'social_birthday_jobs' : 'social_story_jobs';
+      const table = body.kind === 'birthday'
+        ? 'social_birthday_jobs'
+        : body.kind === 'post'
+          ? 'social_post_jobs'
+          : 'social_story_jobs';
       const { error } = await context.supabaseAdmin
         .from(table)
         .update({ status: 'pending', due_at: new Date().toISOString(), attempts: 0, last_error: null })
         .eq('id', required(body.jobId, 'Job-ID'));
       if (error) throw error;
-      const automation = await runWorker();
+      const automation = body.kind === 'post'
+        ? await runWorker([], [required(body.jobId, 'Job-ID')])
+        : await runWorker();
       return json({ ok: true, automation });
     }
 

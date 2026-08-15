@@ -2,7 +2,7 @@ import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import { extname, resolve } from 'node:path';
 
-export const STORY_TYPES = ['announcement', 'lineup', 'result', 'report', 'birthday'];
+export const STORY_TYPES = ['announcement', 'lineup', 'result', 'report', 'post', 'birthday'];
 
 const TEAM_DISPLAY_NAMES = new Map([
   [
@@ -158,7 +158,9 @@ export async function renderStorySvg({
   if (!STORY_TYPES.includes(type)) throw new Error(`Unbekannter Story-Typ: ${type}`);
 
   const resolvedActionPhotoDataUri = actionPhotoDataUri || match.actionPhotoDataUri;
-  const templateName = type === 'report' && reportPageKind === 'scorers'
+  const templateName = type === 'post' && reportPage > 1
+    ? 'post-photo'
+    : type === 'report' && reportPageKind === 'scorers'
     ? 'report-scorers'
     : type === 'report' && reportPageKind === 'photo'
       ? 'report-photo'
@@ -236,6 +238,9 @@ export async function renderStorySvg({
     RESULT_LABEL_SIZE: resultLabelSize(resultLabel),
     RESULT_MESSAGE: resultMessage,
     RESULT_MESSAGE_SIZE: fittedSize(resultMessage, 40, 32, 38),
+    POST_TITLE: truncate(match.postTitle, 48),
+    POST_TITLE_SIZE: fittedSize(match.postTitle, 74, 54, 30),
+    POST_AUDIENCE: truncate(match.postAudience, 36),
     REPORT_PAGE: reportPage,
     REPORT_PAGE_COUNT: reportPageCount,
     SCORER_ROWS: scorerRows(match.reportScorers),
