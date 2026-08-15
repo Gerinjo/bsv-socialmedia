@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.fussball-de-sync]
 verify_jwt = false
+
+[functions.website-sponsor-feed]
+verify_jwt = false
