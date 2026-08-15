@@ -1,6 +1,7 @@
 import { withSupabase } from 'npm:@supabase/server@1.4.1';
 import { runtimeConfig } from '../_shared/config.ts';
 import { CLUB_CREST_SEEDS } from '../_shared/club-crest-seeds.ts';
+import { normalizeVisionText, responseOutputText, visionTextPrompt } from '../_shared/vision-text.mjs';
 
 const corsHeaders = {
   'access-control-allow-origin': '*',
@@ -76,6 +77,42 @@ function pngHasAlpha(bytes: Uint8Array): boolean {
   return bytes.length > 26
     && signature.every((value, index) => bytes[index] === value)
     && (bytes[25] === 4 || bytes[25] === 6);
+}
+
+async function readGameTextFromImage(kind: 'lineup' | 'scorers', imageDataUrl: string, game: any): Promise<string> {
+  if (!runtimeConfig.openaiApiKey) {
+    throw new Error('Die Bildauswertung ist noch nicht konfiguriert. OPENAI_API_KEY fehlt in den Supabase-Secrets.');
+  }
+  const bsvTeam = game.is_home ? game.home_team : game.away_team;
+  const opponent = game.is_home ? game.away_team : game.home_team;
+  const response = await fetch('https://api.openai.com/v1/responses', {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${runtimeConfig.openaiApiKey}`,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: runtimeConfig.openaiVisionModel,
+      store: false,
+      max_output_tokens: 1000,
+      input: [{
+        role: 'user',
+        content: [
+          { type: 'input_text', text: visionTextPrompt(kind, { bsvTeam, opponent }) },
+          { type: 'input_image', image_url: imageDataUrl, detail: 'high' },
+        ],
+      }],
+    }),
+    signal: AbortSignal.timeout(60_000),
+  });
+  const payload = await response.json() as Record<string, any>;
+  if (!response.ok) {
+    const detail = String(payload?.error?.message ?? '').trim();
+    throw new Error(detail ? `Bildauswertung fehlgeschlagen: ${detail}` : `Bildauswertung fehlgeschlagen (HTTP ${response.status}).`);
+  }
+  const text = normalizeVisionText(kind, responseOutputText(payload));
+  if (!text) throw new Error('Auf dem Bild wurde kein passender Text erkannt. Bitte ein schärferes Bild verwenden oder den Text eingeben.');
+  return text;
 }
 
 async function ensureClub(admin: any, teamName: unknown) {
@@ -429,6 +466,23 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .single();
       if (insertError) throw insertError;
       return json({ ok: true, member });
+    }
+
+    if (action === 'extract_game_text') {
+      const gameId = required(body.gameId, 'Spiel-ID');
+      const kind = required(body.kind, 'Art der Bildauswertung');
+      if (kind !== 'lineup' && kind !== 'scorers') throw new Error('Die gewünschte Bildauswertung ist ungültig.');
+      const imageDataUrl = required(body.imageDataUrl, 'Bilddatei');
+      parseDataUrl(imageDataUrl, new Set(['image/jpeg', 'image/png', 'image/webp']), 8 * 1024 * 1024);
+      const { data: game, error: gameError } = await context.supabaseAdmin
+        .from('social_games')
+        .select('id, is_home, home_team, away_team')
+        .eq('id', gameId)
+        .maybeSingle();
+      if (gameError) throw gameError;
+      if (!game) throw new Error('Das Spiel wurde nicht gefunden.');
+      const text = await readGameTextFromImage(kind, imageDataUrl, game);
+      return json({ ok: true, kind, text });
     }
 
     if (action === 'save_game') {

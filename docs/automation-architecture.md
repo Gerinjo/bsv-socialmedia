@@ -82,6 +82,12 @@ Der aktive Cron-Job `bsv-social-worker` ruft den Worker alle fünf Minuten per H
 
 Die Admin-Oberfläche läuft owner-only unter <https://bsv-story-automatik.jerome-ernsberger.chatgpt.site>. Sie verwendet ausschließlich den öffentlichen Publishable Key im Browser. Schreib- und Lesezugriffe laufen über die JWT-geschützte Edge Function `social-media-admin-api`, die zusätzlich die Mitgliedschaft in `social_admins` prüft.
 
+### Aufstellung und Torschützen aus Bildern
+
+Aufstellung und Torschützen können weiterhin direkt als Text eingegeben oder alternativ aus einem PNG-, JPG- oder WebP-Bild gelesen werden. Das Admin-Frontend verkleinert das Bild vor dem Versand. `social-media-admin-api` prüft Anmeldung, Teamrolle, Spiel-ID, Dateityp und Dateigröße und sendet das Bild danach unmittelbar an die OpenAI Responses API. Der Upload wird weder im Storage noch in der Datenbank gespeichert. Die API-Antwort wird in das bereits bestehende Textformat normalisiert und als bearbeitbarer Entwurf in das jeweilige Eingabefeld übernommen. Erst ein anschließendes Speichern beziehungsweise Freigeben aktualisiert das Spiel und erzeugt Bilder.
+
+Der OpenAI-Schlüssel liegt ausschließlich als Edge-Function-Secret `OPENAI_API_KEY` vor. Das optionale Secret `OPENAI_VISION_MODEL` wählt das Bildmodell; ohne Angabe wird `gpt-5.4-mini` verwendet. Details zur Bildauswertung stehen in der [offiziellen OpenAI-Dokumentation](https://developers.openai.com/api/docs/guides/images-vision).
+
 Aktuelle Referenzen:
 
 - [Supabase Cron](https://supabase.com/docs/guides/cron)
@@ -103,6 +109,8 @@ Secrets:
 - `STORY_RENDER_ENDPOINT`
 - `STORY_RENDER_SECRET`
 - `SOCIAL_WORKER_CRON_SECRET`
+- `OPENAI_API_KEY`
+- `OPENAI_VISION_MODEL` (optional)
 
 ## Betrieb und Freigabe
 

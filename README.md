@@ -94,4 +94,4 @@ tests/                  automatisierte Tests
 4. Instagram Professional Account mit der Meta Graph API verbinden und den PNG/JPEG-Publishingpfad testen.
 5. Erst nach erfolgreichen Freigabetests `INSTAGRAM_TEST_MODE=false` setzen.
 
-Die Details stehen in [docs/automation-architecture.md](docs/automation-architecture.md).
+Die Details stehen in [docs/automation-architecture.md](docs/automation-architecture.md). Der kontrollierte Wechsel vom Test- in den Produktivbetrieb ist in [docs/howto-go-productive.md](docs/howto-go-productive.md) beschrieben.
