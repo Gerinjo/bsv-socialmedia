@@ -85,6 +85,16 @@ function teamCrestKey(value: unknown): 'bsv' | 'tsv-aach-linz' | undefined {
   return undefined;
 }
 
+function lineupMatchup(match: StoryInput): { bsvTeam: unknown; opponent: unknown; matchType: string } {
+  const bsvIsHome = teamCrestKey(match.homeTeam) === 'bsv';
+  const bsvIsAway = teamCrestKey(match.awayTeam) === 'bsv';
+  return {
+    bsvTeam: bsvIsAway ? match.awayTeam : match.homeTeam,
+    opponent: bsvIsAway ? match.homeTeam : match.awayTeam,
+    matchType: bsvIsAway ? 'AUSWÄRTSSPIEL' : bsvIsHome ? 'HEIMSPIEL' : 'SPIEL',
+  };
+}
+
 function lineupRows(players: Lineup['players'] = []): string {
   const normalized = players.slice(0, 11);
   if (!normalized.length) {
@@ -141,6 +151,27 @@ export function scorerRows(value: unknown): string {
   )).join('');
 }
 
+export function sponsorLogoStrip(type: StoryType, logos: string[] = []): string {
+  const items = logos.filter(Boolean).slice(0, 2);
+  if (!items.length) return '';
+  const feed = type === 'report' || type === 'post';
+  const layout = feed
+    ? { x: 48, y: 968, width: 984, height: 62, logoHeight: 42 }
+    : type === 'announcement'
+      ? { x: 120, y: 1328, width: 840, height: 250, logoHeight: 180 }
+      : type === 'result'
+        ? { x: 72, y: 1360, width: 936, height: 340, logoHeight: 250 }
+        : { x: 72, y: 1758, width: 936, height: 68, logoHeight: 48 };
+  const innerWidth = layout.width - 48;
+  const cellWidth = innerWidth / items.length;
+  const images = items.map((logo, index) => {
+    const x = layout.x + 24 + index * cellWidth;
+    const y = layout.y + (layout.height - layout.logoHeight) / 2;
+    return `<image href="${xmlEscape(logo)}" x="${x}" y="${y}" width="${cellWidth}" height="${layout.logoHeight}" preserveAspectRatio="xMidYMid meet"/>`;
+  }).join('');
+  return `<g aria-label="Werbepartner">${images}</g>`;
+}
+
 export function renderStorySvg({
   type,
   match,
@@ -150,6 +181,7 @@ export function renderStorySvg({
   actionPhotoDataUri,
   homeCrestDataUri,
   awayCrestDataUri,
+  sponsorLogoDataUris = [],
   reportPage = 1,
   reportPageCount = 1,
   reportPageKind = 'result',
@@ -157,11 +189,12 @@ export function renderStorySvg({
   type: StoryType;
   match: StoryInput;
   lineup?: Lineup;
-  imageAssets: { logo: string; sparkasseLogo: string; actionPlayer: string };
+  imageAssets: { logo: string; actionPlayer: string };
   playerPhotoDataUri?: string;
   actionPhotoDataUri?: string;
   homeCrestDataUri?: string;
   awayCrestDataUri?: string;
+  sponsorLogoDataUris?: string[];
   reportPage?: number;
   reportPageCount?: number;
   reportPageKind?: 'result' | 'scorers' | 'photo';
@@ -170,6 +203,7 @@ export function renderStorySvg({
 
   const resultLabel = text(match.resultLabel, outcome(match));
   const resultMessage = truncate(match.resultMessage, 52);
+  const lineupMatch = lineupMatchup(match);
   const homeCrestKey = teamCrestKey(match.homeTeam);
   const awayCrestKey = teamCrestKey(match.awayTeam);
   const embeddedHomeCrestDataUri = homeCrestKey === 'bsv'
@@ -202,7 +236,6 @@ export function renderStorySvg({
   const resolvedActionPhotoDataUri = actionPhotoDataUri || match.actionPhotoDataUri;
   const values = {
     LOGO_DATA_URI: imageAssets.logo,
-    SPARKASSE_LOGO_DATA_URI: imageAssets.sparkasseLogo,
     ACTION_PLAYER_DATA_URI: resolvedActionPhotoDataUri || imageAssets.actionPlayer,
     HANDWRITTEN_FONT_DATA_URI: `data:${STORY_ASSETS.captureFont.mime};base64,${STORY_ASSETS.captureFont.base64}`,
     PLAYER_PHOTO_DATA_URI: resolvedActionPhotoDataUri || playerPhotoDataUri || imageAssets.actionPlayer,
@@ -221,6 +254,10 @@ export function renderStorySvg({
     AWAY_TEAM: truncate(displayTeamName(match.awayTeam), 32),
     AWAY_TEAM_SIZE: fittedSize(displayTeamName(match.awayTeam), 44, 36, 24),
     REPORT_AWAY_TEAM_SIZE: teamCrestKey(match.awayTeam) === 'bsv' ? 52 : fittedSize(displayTeamName(match.awayTeam), 44, 36, 24),
+    LINEUP_BSV_TEAM: truncate(displayTeamName(lineupMatch.bsvTeam), 32),
+    LINEUP_OPPONENT: truncate(displayTeamName(lineupMatch.opponent), 32),
+    LINEUP_OPPONENT_SIZE: fittedSize(displayTeamName(lineupMatch.opponent), 39, 31, 24),
+    LINEUP_MATCH_TYPE: lineupMatch.matchType,
     COMPETITION: truncate(match.competition, 36),
     DATE: text(match.date),
     TIME: text(match.time),
@@ -245,6 +282,7 @@ export function renderStorySvg({
     BIRTHDAY_ROLE: birthdayRole.length > 34 ? `${birthdayRole.slice(0, 33).trimEnd()}…` : birthdayRole,
     BIRTHDAY_ROLE_SIZE: birthdayRole.length > 18 ? 32 : 40,
     BIRTHDAY_MESSAGE: truncate(match.birthdayMessage, 54),
+    SPONSOR_LOGOS: sponsorLogoStrip(type, sponsorLogoDataUris),
   };
 
   const template = type === 'post' && reportPage > 1
@@ -254,5 +292,5 @@ export function renderStorySvg({
     : type === 'report' && reportPageKind === 'photo'
       ? STORY_TEMPLATES.reportPhoto
       : STORY_TEMPLATES[type];
-  return fillTemplate(template, values, new Set(['PLAYER_ROWS', 'SCORER_ROWS']));
+  return fillTemplate(template, values, new Set(['PLAYER_ROWS', 'SCORER_ROWS', 'SPONSOR_LOGOS']));
 }

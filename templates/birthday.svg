@@ -53,6 +53,7 @@
     <text x="46" y="193" fill="#a8cbb4" font-size="25" class="sans" font-weight="800">{{BIRTHDAY_MESSAGE}}</text>
   </g>
 
-  <text x="72" y="1838" fill="#071f16" font-size="36" class="handwritten">#aufgehtsgrün</text>
-  <text x="1008" y="1838" text-anchor="end" fill="#071f16" font-size="26" class="handwritten">bsvnordstern.de</text>
+  {{SPONSOR_LOGOS}}
+  <text x="72" y="1868" fill="#071f16" font-size="36" class="handwritten">#aufgehtsgrün</text>
+  <text x="1008" y="1868" text-anchor="end" fill="#071f16" font-size="26" class="handwritten">bsvnordstern.de</text>
 </svg>

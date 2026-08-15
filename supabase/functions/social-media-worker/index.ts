@@ -1,6 +1,7 @@
 import { withSupabase } from 'npm:@supabase/server@1.4.1';
 import { runtimeConfig } from '../_shared/config.ts';
 import { publishInstagramCarousel, publishInstagramImage } from '../../../src/instagram-publisher.mjs';
+import { selectAssignedSponsors, sponsorMentionLine } from '../../../src/sponsor-assignments.mjs';
 
 type JobStatus = 'pending' | 'rendering' | 'preview_ready' | 'published' | 'failed' | 'skipped' | 'needs_input';
 
@@ -26,6 +27,7 @@ type GameJob = {
     report_image_paths: string[] | null;
     status: 'scheduled' | 'live' | 'finished' | 'postponed' | 'cancelled' | 'aborted';
     lineup: { players?: unknown[]; formation?: string; approvedAt?: string } | null;
+    team: { slug: string } | null;
     home_club: {
       crest_status: 'missing' | 'needs_review' | 'approved' | 'rejected';
       crest_transparent_path: string | null;
@@ -66,6 +68,8 @@ type PostJob = {
     image_paths: string[];
     enabled: boolean;
     audience: {
+      id: string;
+      slug: string;
       label: string;
       audience_group: string;
     } | null;
@@ -87,6 +91,7 @@ const gameJobSelect = `
     kickoff_at, home_score, away_score, result_label, result_message, report_scorers,
     action_image_path, report_image_paths, status,
     lineup, enabled,
+    team:social_teams(slug),
     home_club:social_clubs!social_games_home_club_id_fkey(
       crest_status, crest_transparent_path
     ),
@@ -100,7 +105,7 @@ const postJobSelect = `
   id, attempts, status,
   post:social_posts!inner(
     id, title, body, image_paths, enabled,
-    audience:social_post_audiences(label, audience_group)
+    audience:social_post_audiences(id, slug, label, audience_group)
   )
 `;
 
@@ -128,12 +133,30 @@ async function render(body: Record<string, unknown>): Promise<RenderPayload> {
   return payload;
 }
 
-async function renderGamePreview(candidate: GameJob): Promise<RenderPayload> {
+type SponsorConfig = { sponsors: any[]; assignments: any[]; audiences: any[] };
+
+async function sponsorConfig(admin: any): Promise<SponsorConfig> {
+  const [{ data: sponsors, error: sponsorError }, { data: assignments, error: assignmentError }, { data: audiences, error: audienceError }] = await Promise.all([
+    admin.from('social_sponsors').select('*').eq('active', true),
+    admin.from('social_sponsor_assignments').select('sponsor_id, audience_id, context, slot'),
+    admin.from('social_post_audiences').select('id, slug, audience_group').eq('active', true),
+  ]);
+  const error = sponsorError ?? assignmentError ?? audienceError;
+  if (error) throw new Error(`Werbepartner konnten nicht geladen werden: ${error.message}`);
+  return { sponsors: sponsors ?? [], assignments: assignments ?? [], audiences: audiences ?? [] };
+}
+
+function assignedSponsors(config: SponsorConfig, audience: any, context: string) {
+  return selectAssignedSponsors({ ...config, audience, context });
+}
+
+async function renderGamePreview(candidate: GameJob, sponsors: any[]): Promise<RenderPayload> {
   if (candidate.story_type !== 'report') {
     return render({
       type: candidate.story_type,
       jobId: candidate.id,
       game: candidate.game,
+      sponsors,
     });
   }
 
@@ -147,6 +170,7 @@ async function renderGamePreview(candidate: GameJob): Promise<RenderPayload> {
       type: candidate.story_type,
       jobId: candidate.id,
       game: candidate.game,
+      sponsors,
       reportPageIndex,
       reportPageCount: pageCount,
     }));
@@ -159,7 +183,7 @@ async function renderGamePreview(candidate: GameJob): Promise<RenderPayload> {
   };
 }
 
-async function renderPostPreview(candidate: PostJob): Promise<RenderPayload> {
+async function renderPostPreview(candidate: PostJob, sponsors: any[]): Promise<RenderPayload> {
   const paths = Array.isArray(candidate.post.image_paths)
     ? candidate.post.image_paths.filter((path) => String(path ?? '').trim()).slice(0, 10)
     : [];
@@ -170,6 +194,7 @@ async function renderPostPreview(candidate: PostJob): Promise<RenderPayload> {
       type: 'post',
       jobId: candidate.id,
       post: candidate.post,
+      sponsors,
       postPageIndex,
       postPageCount: paths.length,
     }));
@@ -221,6 +246,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       previewFailed: 0,
       testMode: runtimeConfig.testMode,
     };
+    const sponsorData = await sponsorConfig(context.supabaseAdmin);
 
     if (previewOnly) {
       if (!previewJobIds.length) {
@@ -236,10 +262,12 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       for (const candidate of (previewData ?? []) as unknown as GameJob[]) {
         if (!candidate.game.enabled) continue;
         try {
+          const sponsors = assignedSponsors(sponsorData, candidate.game.team, candidate.story_type);
           const preview = await render({
             type: candidate.story_type,
             jobId: candidate.id,
             game: candidate.game,
+            sponsors,
           });
           await context.supabaseAdmin
             .from('social_story_jobs')
@@ -330,16 +358,21 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       }
 
       try {
-        const preview = await renderGamePreview(candidate);
+        const sponsors = assignedSponsors(sponsorData, candidate.game.team, candidate.story_type);
+        const preview = await renderGamePreview(candidate, sponsors);
 
         if (!runtimeConfig.testMode) {
           const caption = candidate.story_type === 'report'
             ? [
               candidate.game.result_message,
               `${candidate.game.home_team} ${candidate.game.home_score}:${candidate.game.away_score} ${candidate.game.away_team}`,
+              sponsorMentionLine(sponsors),
               '#aufgehtsgrün',
             ].filter(Boolean).join('\n\n').slice(0, 2200)
-            : `${candidate.game.home_team} vs ${candidate.game.away_team} · ${candidate.game.competition || 'BSV Nordstern'} • ${new Date(candidate.game.kickoff_at).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}`;
+            : [
+              `${candidate.game.home_team} vs ${candidate.game.away_team} · ${candidate.game.competition || 'BSV Nordstern'} • ${new Date(candidate.game.kickoff_at).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}`,
+              sponsorMentionLine(sponsors),
+            ].filter(Boolean).join('\n\n');
           const result = candidate.story_type === 'report' && (preview.mediaUrls?.length ?? 0) > 1
             ? await publishInstagramCarousel({
               accountId: runtimeConfig.instagramAccountId,
@@ -437,9 +470,10 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       }
 
       try {
-        const preview = await renderPostPreview(candidate);
+        const sponsors = assignedSponsors(sponsorData, candidate.post.audience, 'post');
+        const preview = await renderPostPreview(candidate, sponsors);
         if (!runtimeConfig.testMode) {
-          const caption = [candidate.post.title, candidate.post.body, '#aufgehtsgrün']
+          const caption = [candidate.post.title, candidate.post.body, sponsorMentionLine(sponsors), '#aufgehtsgrün']
             .filter(Boolean)
             .join('\n\n')
             .slice(0, 2200);
@@ -531,13 +565,15 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       summary.claimed += 1;
 
       try {
+        const sponsors = assignedSponsors(sponsorData, { slug: 'gesamtverein', audience_group: 'club' }, 'birthday');
         const preview = await render({
           type: 'birthday',
           jobId: candidate.id,
           birthday: candidate.birthday,
+          sponsors,
         });
         if (!runtimeConfig.testMode) {
-          const caption = `${candidate.birthday.person_name} · Geburtstag • ${candidate.birthday.message}`.slice(0, 2200);
+          const caption = [`${candidate.birthday.person_name} · Geburtstag • ${candidate.birthday.message}`, sponsorMentionLine(sponsors)].filter(Boolean).join('\n\n').slice(0, 2200);
           const result = await publishInstagramImage({
             accountId: runtimeConfig.instagramAccountId,
             accessToken: runtimeConfig.instagramAccessToken,

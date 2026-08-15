@@ -88,6 +88,18 @@ export function teamCrestKey(value) {
   return undefined;
 }
 
+export function lineupMatchup(match) {
+  const bsvIsHome = teamCrestKey(match?.homeTeam) === 'bsv';
+  const bsvIsAway = teamCrestKey(match?.awayTeam) === 'bsv';
+  const bsvTeam = bsvIsAway ? match.awayTeam : match?.homeTeam;
+  const opponent = bsvIsAway ? match?.homeTeam : match?.awayTeam;
+  return {
+    bsvTeam,
+    opponent,
+    matchType: bsvIsAway ? 'AUSWÄRTSSPIEL' : bsvIsHome ? 'HEIMSPIEL' : 'SPIEL',
+  };
+}
+
 function lineupRows(players = []) {
   const normalized = players.slice(0, 11);
   if (!normalized.length) {
@@ -144,6 +156,16 @@ export function scorerRows(value) {
   )).join('');
 }
 
+export function sponsorLogoStrip(type, logos = []) {
+  const items = logos.filter(Boolean).slice(0, 2);
+  if (!items.length) return '';
+  const feed = type === 'report' || type === 'post';
+  const layout = feed ? {x:48,y:968,width:984,height:62,logoHeight:42} : type === 'announcement' ? {x:120,y:1328,width:840,height:250,logoHeight:180} : type === 'result' ? {x:72,y:1360,width:936,height:340,logoHeight:250} : {x:72,y:1758,width:936,height:68,logoHeight:48};
+  const cellWidth=(layout.width-48)/items.length;
+  const images=items.map((logo,index)=>`<image href="${xmlEscape(logo)}" x="${layout.x+24+index*cellWidth}" y="${layout.y+(layout.height-layout.logoHeight)/2}" width="${cellWidth}" height="${layout.logoHeight}" preserveAspectRatio="xMidYMid meet"/>`).join('');
+  return `<g aria-label="Werbepartner">${images}</g>`;
+}
+
 export async function renderStorySvg({
   rootDir,
   type,
@@ -151,6 +173,7 @@ export async function renderStorySvg({
   lineup = { players: [] },
   photoPath,
   actionPhotoDataUri,
+  sponsorLogoDataUris,
   reportPage = 1,
   reportPageCount = 1,
   reportPageKind = 'result',
@@ -184,6 +207,7 @@ export async function renderStorySvg({
 
   const resultLabel = text(match.resultLabel, outcome(match));
   const resultMessage = truncate(match.resultMessage, 52);
+  const lineupMatch = lineupMatchup(match);
   const homeCrestKey = teamCrestKey(match.homeTeam);
   const awayCrestKey = teamCrestKey(match.awayTeam);
   const homeCrestDataUri = homeCrestKey === 'bsv'
@@ -206,7 +230,6 @@ export async function renderStorySvg({
       : '';
   const values = {
     LOGO_DATA_URI: logoDataUri,
-    SPARKASSE_LOGO_DATA_URI: sparkasseLogoDataUri,
     ACTION_PLAYER_DATA_URI: resolvedActionPhotoDataUri || actionPlayerDataUri,
     HANDWRITTEN_FONT_DATA_URI: handwrittenFontDataUri,
     PLAYER_PHOTO_DATA_URI: resolvedActionPhotoDataUri || playerPhotoDataUri,
@@ -225,6 +248,10 @@ export async function renderStorySvg({
     AWAY_TEAM: truncate(displayTeamName(match.awayTeam), 32),
     AWAY_TEAM_SIZE: fittedSize(displayTeamName(match.awayTeam), 44, 36, 24),
     REPORT_AWAY_TEAM_SIZE: teamCrestKey(match.awayTeam) === 'bsv' ? 52 : fittedSize(displayTeamName(match.awayTeam), 44, 36, 24),
+    LINEUP_BSV_TEAM: truncate(displayTeamName(lineupMatch.bsvTeam), 32),
+    LINEUP_OPPONENT: truncate(displayTeamName(lineupMatch.opponent), 32),
+    LINEUP_OPPONENT_SIZE: fittedSize(displayTeamName(lineupMatch.opponent), 39, 31, 24),
+    LINEUP_MATCH_TYPE: lineupMatch.matchType,
     COMPETITION: truncate(match.competition, 36),
     DATE: text(match.date),
     TIME: text(match.time),
@@ -249,9 +276,10 @@ export async function renderStorySvg({
     BIRTHDAY_ROLE: birthdayRole.length > 34 ? `${birthdayRole.slice(0, 33).trimEnd()}…` : birthdayRole,
     BIRTHDAY_ROLE_SIZE: birthdayRole.length > 18 ? 32 : 40,
     BIRTHDAY_MESSAGE: truncate(match.birthdayMessage, 54),
+    SPONSOR_LOGOS: sponsorLogoStrip(type, sponsorLogoDataUris ?? (type === 'announcement' ? [sparkasseLogoDataUri] : [])),
   };
 
-  return fillTemplate(template, values, new Set(['PLAYER_ROWS', 'SCORER_ROWS']));
+  return fillTemplate(template, values, new Set(['PLAYER_ROWS', 'SCORER_ROWS', 'SPONSOR_LOGOS']));
 }
 
 export async function writeStoryFiles({

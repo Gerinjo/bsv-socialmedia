@@ -52,7 +52,7 @@
   </g>
 
   <g transform="translate(72 628)">
-    <text x="0" y="0" fill="#ffffff" font-size="25" class="sans" font-weight="900">{{HOME_TEAM}}</text>
+    <text x="0" y="0" fill="#ffffff" font-size="25" class="sans" font-weight="900">{{LINEUP_BSV_TEAM}}</text>
     <g transform="translate(664 -38)">
       <rect width="272" height="54" rx="27" fill="#91c82f"/>
       <text x="136" y="36" text-anchor="middle" fill="#092f20" font-size="18" class="caps">{{FORMATION}}</text>
@@ -79,9 +79,11 @@
       </g>
     </g>
     <text x="42" y="66" fill="#164f32" font-size="18" class="caps">HEUTE · {{TIME}}</text>
-    <text x="42" y="130" fill="#10251a" font-size="39" class="team">VS. {{AWAY_TEAM}}</text>
+    <text x="42" y="119" fill="#10251a" font-size="{{LINEUP_OPPONENT_SIZE}}" class="team">VS. {{LINEUP_OPPONENT}}</text>
+    <text x="42" y="157" fill="#164f32" font-size="15" class="caps">{{LINEUP_MATCH_TYPE}}</text>
   </g>
 
+  {{SPONSOR_LOGOS}}
   <text x="72" y="1780" fill="#ffffff" font-size="34" class="handwritten" letter-spacing="1px">#aufgehtsgrün</text>
   <text x="1008" y="1780" text-anchor="end" fill="#ffffff" font-size="26" class="handwritten">bsvnordstern.de</text>
 </svg>

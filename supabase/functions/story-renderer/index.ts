@@ -6,6 +6,7 @@ import {
   STORY_TYPES,
   type StoryType,
 } from '../_shared/story-renderer.ts';
+import { sponsorLogoReference } from '../../../src/sponsor-assignments.mjs';
 
 const wasmBytes = await Deno.readFile(
   new URL('index_bg.wasm', import.meta.resolve('npm:@resvg/resvg-wasm@2.6.2')),
@@ -25,6 +26,7 @@ type RequestBody = {
   game?: Record<string, unknown>;
   birthday?: Record<string, unknown>;
   post?: Record<string, unknown>;
+  sponsors?: Array<Record<string, unknown>>;
   reportPageIndex?: number;
   reportPageCount?: number;
   postPageIndex?: number;
@@ -148,12 +150,21 @@ async function clubCrest(admin: any, reference: string): Promise<string | undefi
   return blobDataUri(data, reference);
 }
 
-let cachedImageAssets: Promise<{ logo: string; sparkasseLogo: string; actionPlayer: string }> | undefined;
+async function sponsorLogos(admin: any, context: StoryType, sponsors: Array<Record<string, unknown>> = []): Promise<string[]> {
+  return Promise.all(sponsors.slice(0, 2).map(async (sponsor) => {
+    const reference = sponsorLogoReference(sponsor, context);
+    if (!reference.startsWith('sponsors/') && !reference.startsWith('assets/')) throw new Error('Der Speicherpfad des Partnerlogos ist ungültig.');
+    const { data, error } = await admin.storage.from(bucket).download(reference);
+    if (error) throw new Error(`Partnerlogo konnte nicht geladen werden: ${error.message}`);
+    return blobDataUri(data, reference);
+  }));
+}
+
+let cachedImageAssets: Promise<{ logo: string; actionPlayer: string }> | undefined;
 function imageAssets(admin: any) {
   cachedImageAssets ??= (async () => {
     const paths = {
       logo: 'assets/bsv-nordstern.png',
-      sparkasseLogo: 'assets/sparkasse-hegau-bodensee-white.png',
       actionPlayer: 'assets/footballer-action-v2.png',
     };
     const entries = await Promise.all(Object.entries(paths).map(async ([name, path]) => {
@@ -161,7 +172,7 @@ function imageAssets(admin: any) {
       if (error) throw new Error(`Renderer-Asset ${name} fehlt: ${error.message}`);
       return [name, await blobDataUri(data, path)];
     }));
-    return Object.fromEntries(entries) as { logo: string; sparkasseLogo: string; actionPlayer: string };
+    return Object.fromEntries(entries) as { logo: string; actionPlayer: string };
   })();
   return cachedImageAssets;
 }
@@ -173,6 +184,7 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
     const body = await request.json() as RequestBody;
     if (!body.type || !STORY_TYPES.includes(body.type)) return json({ error: 'invalid_story_type' }, 400);
     const images = await imageAssets(context.supabaseAdmin);
+    const sponsorLogoDataUris = await sponsorLogos(context.supabaseAdmin, body.type, Array.isArray(body.sponsors) ? body.sponsors : []);
 
     let pageCount = 1;
     let outputPageNumber = 1;
@@ -189,6 +201,7 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
         type: body.type as StoryType,
         match: birthdayInput(body.birthday as Record<string, unknown>),
         imageAssets: images,
+        sponsorLogoDataUris,
         playerPhotoDataUri,
       });
     } else if (body.type === 'post') {
@@ -220,6 +233,7 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
           type: body.type as StoryType,
           match: { postTitle: title, postAudience: audienceLabel },
           imageAssets: images,
+          sponsorLogoDataUris,
           actionPhotoDataUri,
           reportPage: sourceIndex + 1,
           reportPageCount: outputPageCount,
@@ -262,6 +276,7 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
             match: input.match,
             lineup: input.lineup,
             imageAssets: images,
+            sponsorLogoDataUris,
             homeCrestDataUri,
             awayCrestDataUri,
             actionPhotoDataUri,
@@ -280,6 +295,7 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
             match: input.match,
             lineup: input.lineup,
             imageAssets: images,
+            sponsorLogoDataUris,
             homeCrestDataUri,
             awayCrestDataUri,
             actionPhotoDataUri,

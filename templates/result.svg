@@ -8,7 +8,6 @@
       <stop offset="0" stop-color="#a8cbb4" stop-opacity=".32"/>
       <stop offset="1" stop-color="#a8cbb4" stop-opacity="0"/>
     </radialGradient>
-    <clipPath id="resultBallClip"><circle cx="0" cy="0" r="62"/></clipPath>
     <style>
       @font-face{font-family:'Capture it';src:url('{{HANDWRITTEN_FONT_DATA_URI}}') format('truetype');font-weight:400;font-style:normal}
       .sans{font-family:Inter,Arial,sans-serif}.serif{font-family:Georgia,'Times New Roman',serif}
@@ -58,26 +57,7 @@
     <text x="468" y="620" text-anchor="middle" fill="#164f32" font-size="22" class="sans" font-weight="900">{{DATE}}</text>
   </g>
 
-  <g transform="translate(72 1372)">
-    <rect width="936" height="218" rx="58" fill="#ffffff"/>
-    <g transform="translate(836 109)">
-      <circle r="64" fill="#f4f1e8" stroke="#164f32" stroke-width="4"/>
-      <g clip-path="url(#resultBallClip)" fill="#164f32" stroke="#6c7b71" stroke-width="3" stroke-linejoin="round">
-        <path d="M0-21 20-7 12 17-12 17-20-7z"/>
-        <path d="M-18-67 18-67 24-49 0-37-24-49z"/>
-        <path d="M50-42 68-21 68 8 48 7 36-19z"/>
-        <path d="M68 25 50 52 27 68 20 47 36 30z"/>
-        <path d="M-68 25-50 52-27 68-20 47-36 30z"/>
-        <path d="M-50-42-68-21-68 8-48 7-36-19z"/>
-      </g>
-      <g fill="none" stroke="#6c7b71" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M0-21V-37M20-7 36-19M12 17 36 30M-12 17-36 30M-20-7-36-19"/>
-      </g>
-    </g>
-    <text x="42" y="88" fill="#164f32" font-size="{{RESULT_MESSAGE_SIZE}}" class="handwritten">{{RESULT_MESSAGE}}</text>
-    <text x="42" y="150" fill="#6c7b71" font-size="18" class="caps">DANKE, NORDSTERN-FAMILIE!</text>
-  </g>
-
+  {{SPONSOR_LOGOS}}
   <text x="72" y="1800" fill="#164f32" font-size="34" class="handwritten">#aufgehtsgrün</text>
   <text x="1008" y="1800" text-anchor="end" fill="#092f20" font-size="26" class="handwritten">bsvnordstern.de</text>
 </svg>

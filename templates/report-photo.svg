@@ -38,6 +38,7 @@
   <path d="M0 957c111 42 250 49 440-8 219-65 405 29 640-47" fill="none" stroke="#ffffff" stroke-width="5" opacity=".76"/>
   <path d="M0 974c141 37 278 26 446-26 217-67 411 34 634-31" fill="none" stroke="#91c82f" stroke-width="3" opacity=".84"/>
 
+  {{SPONSOR_LOGOS}}
   <text x="48" y="1050" fill="#164f32" font-size="27" class="handwritten">#aufgehtsgrün</text>
   <text x="1032" y="1050" text-anchor="end" fill="#092f20" font-size="23" class="handwritten">bsvnordstern.de</text>
 </svg>

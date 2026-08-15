@@ -50,6 +50,8 @@ test('Heim- und Gastwappen bilden in der Spielankündigung ein diagonales Duell'
   assert.match(svg, /x="530" y="205" width="140" height="140"/);
   assert.match(svg, /x1="468" y1="194" x2="468" y2="326" transform="rotate\(15 468 260\)" stroke="#111111" stroke-width="6"/);
   assert.doesNotMatch(svg, />GEGEN</);
+  assert.doesNotMatch(svg, /DANKE, NORDSTERN-FAMILIE!/);
+  assert.doesNotMatch(svg, /resultBallClip/);
 });
 
 test('Abgesagte und abgebrochene Spiele erhalten einen roten Querhinweis', async () => {
@@ -188,7 +190,7 @@ test('Startelf verwendet Matchday-Titel, freien Footer und Fußball in der Gegne
   const svg = await renderStorySvg({
     rootDir,
     type: 'lineup',
-    match,
+    match: { ...match, homeTeam: 'BSV Nordstern Radolfzell' },
     lineup: { players: [{ number: 1, name: 'M. Test' }] },
   });
   assert.match(svg, /font-size="132" class="handwritten">MATCHDAY<\/text>/);
@@ -200,6 +202,21 @@ test('Startelf verwendet Matchday-Titel, freien Footer und Fußball in der Gegne
   assert.doesNotMatch(svg, /<circle cx="42" cy="42"/);
   assert.match(svg, /<text x="0" y="58" class="number">01<\/text>/);
   assert.match(svg, /<text x="76" y="58" class="player">M\. Test<\/text>/);
+  assert.match(svg, /VS\. &lt;VfR Test&gt;<\/text>/);
+  assert.match(svg, />HEIMSPIEL<\/text>/);
+});
+
+test('Startelf nennt auch auswärts immer den Gegner unten', async () => {
+  const svg = await renderStorySvg({
+    rootDir,
+    type: 'lineup',
+    match: { ...match, homeTeam: 'VfR Gastgeber', awayTeam: 'BSV Nordstern Radolfzell' },
+    lineup: { players: [{ number: 1, name: 'M. Test' }] },
+  });
+  assert.match(svg, /font-size="25" class="sans" font-weight="900">BSV Nordstern Radolfzell<\/text>/);
+  assert.match(svg, /VS\. VfR Gastgeber<\/text>/);
+  assert.doesNotMatch(svg, /VS\. BSV Nordstern Radolfzell/);
+  assert.match(svg, />AUSWÄRTSSPIEL<\/text>/);
 });
 
 test('Ergebnis übernimmt Capture-It-Titel, freien Endstand und das Wappen-Duell', async () => {

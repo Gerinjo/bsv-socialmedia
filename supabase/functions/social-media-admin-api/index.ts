@@ -11,6 +11,8 @@ const corsHeaders = {
 const bucket = 'social-story-previews';
 const homeVenues = new Set(['Hauptplatz', 'Nebenplatz', 'Kunstrasenplatz 1', 'Kunstrasenplatz 2']);
 const crestStatuses = new Set(['missing', 'needs_review', 'approved', 'rejected']);
+const sponsorStatuses = new Set(['missing', 'needs_review', 'approved', 'rejected']);
+const sponsorContexts = new Set(['announcement', 'lineup', 'result', 'report', 'birthday', 'post']);
 const stoppedGameStatuses = new Set(['cancelled', 'aborted']);
 const originalMimeTypes = new Map([
   ['image/jpeg', 'jpg'],
@@ -46,6 +48,24 @@ function canonicalClubName(value: unknown): string {
 
 function clubSlug(normalizedName: string): string {
   return normalizedName.replaceAll(' ', '-').replaceAll(/[^a-z0-9-]/g, '').slice(0, 72) || `verein-${crypto.randomUUID().slice(0, 8)}`;
+}
+
+function sponsorSlug(value: unknown): string {
+  return required(value, 'Partnername')
+    .normalize('NFD')
+    .replaceAll(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('de-DE')
+    .replaceAll('ß', 'ss')
+    .replaceAll(/[^a-z0-9]+/g, '-')
+    .replaceAll(/^-+|-+$/g, '')
+    .slice(0, 72) || `partner-${crypto.randomUUID().slice(0, 8)}`;
+}
+
+function instagramHandle(value: unknown): string | null {
+  const normalized = String(value ?? '').trim().replace(/^@+/, '');
+  if (!normalized) return null;
+  if (!/^[A-Za-z0-9._]{1,30}$/.test(normalized)) throw new Error('Der Instagram-Name ist ungültig.');
+  return `@${normalized}`;
 }
 
 function decodeBase64(value: string): Uint8Array {
@@ -304,6 +324,15 @@ async function freshClubUrls(admin: any, rows: any[]): Promise<any[]> {
   })));
 }
 
+async function freshSponsorUrls(admin: any, rows: any[]): Promise<any[]> {
+  return await Promise.all(rows.map(async (sponsor) => ({
+    ...sponsor,
+    logo_original_url: await signedAssetUrl(admin, sponsor.logo_original_path),
+    logo_transparent_url: await signedAssetUrl(admin, sponsor.logo_transparent_path),
+    logo_white_url: await signedAssetUrl(admin, sponsor.logo_white_path),
+  })));
+}
+
 async function rerenderUpcomingClubGames(admin: any, clubId: string) {
   const now = new Date().toISOString();
   const [homeGames, awayGames] = await Promise.all([
@@ -343,6 +372,46 @@ async function rerenderUpcomingClubGames(admin: any, clubId: string) {
   return runWorker();
 }
 
+async function invalidateSponsorPreviews(admin: any, sponsorId: string, previousContexts: string[] = []) {
+  if (!sponsorId) return null;
+  const { data: currentAssignments, error: assignmentError } = await admin
+    .from('social_sponsor_assignments')
+    .select('context')
+    .eq('sponsor_id', sponsorId);
+  if (assignmentError) throw assignmentError;
+  const contexts = [...new Set([
+    ...previousContexts,
+    ...(currentAssignments ?? []).map((assignment: any) => String(assignment.context ?? '')),
+  ].filter((context) => sponsorContexts.has(context)))];
+  if (!contexts.length) return null;
+  const now = new Date().toISOString();
+  const gameContexts = contexts.filter((context) => ['announcement', 'lineup', 'result', 'report'].includes(context));
+  let gameJobIds: string[] = [];
+  let postJobIds: string[] = [];
+  if (gameContexts.length) {
+    const { data: gameJobs, error: gameError } = await admin.from('social_story_jobs').update({ status: 'pending', due_at: now, attempts: 0, claimed_at: null, last_error: null }).in('story_type', gameContexts).in('status', ['pending', 'preview_ready', 'failed']).select('id');
+    if (gameError) throw gameError;
+    gameJobIds = (gameJobs ?? []).map((job: any) => job.id);
+  }
+  if (contexts.includes('post')) {
+    const { data: postJobs, error: postError } = await admin.from('social_post_jobs').update({ status: 'pending', due_at: now, attempts: 0, claimed_at: null, last_error: null }).in('status', ['pending', 'preview_ready', 'failed']).select('id');
+    if (postError) throw postError;
+    postJobIds = (postJobs ?? []).map((job: any) => job.id);
+  }
+  let birthdayQueued = 0;
+  if (contexts.includes('birthday')) {
+    const { data: birthdayJobs, error: birthdayError } = await admin.from('social_birthday_jobs').update({ status: 'pending', due_at: now, attempts: 0, claimed_at: null, last_error: null }).in('status', ['pending', 'preview_ready', 'failed']).select('id');
+    if (birthdayError) throw birthdayError;
+    birthdayQueued = (birthdayJobs ?? []).length;
+  }
+  const runs: Record<string, unknown>[] = [];
+  const batchCount = Math.max(Math.ceil(gameJobIds.length / 10), Math.ceil(postJobIds.length / 10), birthdayQueued ? 1 : 0);
+  for (let index = 0; index < batchCount; index += 1) {
+    runs.push(await runWorker(gameJobIds.slice(index * 10, index * 10 + 10), postJobIds.slice(index * 10, index * 10 + 10)));
+  }
+  return { contexts, gameJobs: gameJobIds.length, postJobs: postJobIds.length, birthdayJobs: birthdayQueued, runs };
+}
+
 const securedHandler = withSupabase({ auth: 'user' }, async (request, context) => {
   const claims = context.userClaims as Record<string, unknown> | undefined;
   const userId = String(claims?.sub ?? claims?.id ?? '');
@@ -375,6 +444,8 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       { data: members, error: membersError },
       { data: postAudiences, error: postAudiencesError },
       { data: posts, error: postsError },
+      { data: sponsors, error: sponsorsError },
+      { data: sponsorAssignments, error: sponsorAssignmentsError },
     ] = await Promise.all([
       context.supabaseAdmin
         .from('social_games')
@@ -412,8 +483,18 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .select('*, audience:social_post_audiences(id, slug, audience_group, label), job:social_post_jobs(*)')
         .eq('enabled', true)
         .order('updated_at', { ascending: false }),
+      context.supabaseAdmin
+        .from('social_sponsors')
+        .select('*')
+        .order('sort_order', { ascending: true })
+        .order('name', { ascending: true }),
+      context.supabaseAdmin
+        .from('social_sponsor_assignments')
+        .select('sponsor_id, audience_id, context, slot')
+        .order('slot', { ascending: true }),
     ]);
-    const readError = gamesError ?? birthdaysError ?? teamsError ?? peopleError ?? clubsError ?? membersError ?? postAudiencesError ?? postsError;
+    const readError = gamesError ?? birthdaysError ?? teamsError ?? peopleError ?? clubsError ?? membersError
+      ?? postAudiencesError ?? postsError ?? sponsorsError ?? sponsorAssignmentsError;
     if (readError) return json({ error: readError.message }, 500);
     return json({
       user: { userId, email, role: String(membership.role ?? '').trim() || 'sm-team' },
@@ -424,6 +505,8 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       people: people ?? [],
       postAudiences: postAudiences ?? [],
       posts: await freshPostUrls(context.supabaseAdmin, posts ?? []),
+      sponsors: await freshSponsorUrls(context.supabaseAdmin, sponsors ?? []),
+      sponsorAssignments: sponsorAssignments ?? [],
       clubs: await freshClubUrls(context.supabaseAdmin, clubs ?? []),
       games: await freshPreviewUrls(context.supabaseAdmin, games ?? []),
       birthdays: await freshPreviewUrls(context.supabaseAdmin, birthdays ?? []),
@@ -923,6 +1006,262 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         automation = await runWorker();
       }
       return json({ ok: true, birthday: data, automation });
+    }
+
+    if (action === 'save_sponsor') {
+      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
+      const sponsorId = String(body.sponsorId ?? '').trim();
+      const name = required(body.name, 'Partnername');
+      if (name.length > 120) throw new Error('Der Partnername darf höchstens 120 Zeichen lang sein.');
+      const sortOrder = Number(body.sortOrder ?? 100);
+      if (!Number.isInteger(sortOrder) || sortOrder < 0 || sortOrder > 32767) throw new Error('Die Sortierung ist ungültig.');
+      const payload = {
+        name,
+        website_url: validHttpUrl(body.websiteUrl),
+        instagram_handle: instagramHandle(body.instagramHandle),
+        logo_source_url: validHttpUrl(body.sourceUrl),
+        active: body.active !== false,
+        sort_order: sortOrder,
+      };
+      if (sponsorId) {
+        const { data, error } = await context.supabaseAdmin
+          .from('social_sponsors')
+          .update(payload)
+          .eq('id', sponsorId)
+          .select()
+          .single();
+        if (error) throw error;
+        await invalidateSponsorPreviews(context.supabaseAdmin, sponsorId);
+        return json({ ok: true, sponsor: data });
+      }
+      const { data, error } = await context.supabaseAdmin
+        .from('social_sponsors')
+        .insert({ ...payload, slug: sponsorSlug(name) })
+        .select()
+        .single();
+      if (error) throw error;
+      return json({ ok: true, sponsor: data });
+    }
+
+    if (action === 'save_sponsor_logo') {
+      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
+      const sponsorId = required(body.sponsorId, 'Werbepartner');
+      const { data: sponsor, error: sponsorError } = await context.supabaseAdmin
+        .from('social_sponsors')
+        .select('id, slug')
+        .eq('id', sponsorId)
+        .maybeSingle();
+      if (sponsorError) throw sponsorError;
+      if (!sponsor) throw new Error('Der Werbepartner wurde nicht gefunden.');
+      const original = parseDataUrl(body.originalDataUrl, new Set(originalMimeTypes.keys()), 5 * 1024 * 1024);
+      const transparent = parseDataUrl(body.transparentDataUrl, new Set(['image/png']), 5 * 1024 * 1024);
+      const white = parseDataUrl(body.whiteDataUrl, new Set(['image/png']), 5 * 1024 * 1024);
+      if (!pngHasAlpha(transparent.bytes) || !pngHasAlpha(white.bytes)) {
+        throw new Error('Freistellung und weiße Variante müssen PNG-Dateien mit Alphakanal sein.');
+      }
+      const originalPath = `sponsors/${sponsor.slug}/original.${originalMimeTypes.get(original.mime)}`;
+      const transparentPath = `sponsors/${sponsor.slug}/transparent.png`;
+      const whitePath = `sponsors/${sponsor.slug}/white.png`;
+      const processing = body.processing && typeof body.processing === 'object' ? body.processing : {};
+      const confidenceValue = Number(processing.confidence);
+      const metadata = {
+        method: String(processing.method ?? 'edge-connected-background').slice(0, 80),
+        confidence: Number.isFinite(confidenceValue) ? Math.max(0, Math.min(1, confidenceValue)) : null,
+        reviewRecommended: Boolean(processing.reviewRecommended),
+        borderDominance: Number(processing.borderDominance) || 0,
+        transparentBorderRatio: Number(processing.transparentBorderRatio) || 0,
+        removedRatio: Number(processing.removedRatio) || 0,
+        backgroundColor: processing.backgroundColor ?? null,
+        threshold: Number(processing.threshold) || null,
+        width: Number(processing.width) || null,
+        height: Number(processing.height) || null,
+        reviewed: false,
+      };
+      const uploads = await Promise.all([
+        context.supabaseAdmin.storage.from(bucket).upload(originalPath, original.bytes, {
+          contentType: original.mime, cacheControl: '604800', upsert: true,
+        }),
+        context.supabaseAdmin.storage.from(bucket).upload(transparentPath, transparent.bytes, {
+          contentType: 'image/png', cacheControl: '604800', upsert: true,
+        }),
+        context.supabaseAdmin.storage.from(bucket).upload(whitePath, white.bytes, {
+          contentType: 'image/png', cacheControl: '604800', upsert: true,
+        }),
+      ]);
+      const uploadError = uploads.find((result) => result.error)?.error;
+      if (uploadError) throw new Error(`Partnerlogo konnte nicht gespeichert werden: ${uploadError.message}`);
+      const { data, error } = await context.supabaseAdmin
+        .from('social_sponsors')
+        .update({
+          logo_original_path: originalPath,
+          logo_transparent_path: transparentPath,
+          logo_white_path: whitePath,
+          logo_status: 'needs_review',
+          processing_metadata: metadata,
+        })
+        .eq('id', sponsorId)
+        .select()
+        .single();
+      if (error) throw error;
+      await invalidateSponsorPreviews(context.supabaseAdmin, sponsorId);
+      return json({ ok: true, sponsor: data });
+    }
+
+    if (action === 'approve_sponsor_logo' || action === 'reject_sponsor_logo') {
+      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
+      const sponsorId = required(body.sponsorId, 'Werbepartner');
+      const { data: sponsor, error: sponsorError } = await context.supabaseAdmin
+        .from('social_sponsors')
+        .select('id, logo_transparent_path, logo_white_path, processing_metadata')
+        .eq('id', sponsorId)
+        .maybeSingle();
+      if (sponsorError) throw sponsorError;
+      if (!sponsor) throw new Error('Der Werbepartner wurde nicht gefunden.');
+      const nextStatus = action === 'approve_sponsor_logo' ? 'approved' : 'rejected';
+      if (!sponsorStatuses.has(nextStatus)) throw new Error('Ungültiger Prüfstatus.');
+      if (nextStatus === 'approved' && (!sponsor.logo_transparent_path || !sponsor.logo_white_path)) {
+        throw new Error('Freistellung oder weiße Logovariante fehlt.');
+      }
+      const { error } = await context.supabaseAdmin
+        .from('social_sponsors')
+        .update({
+          logo_status: nextStatus,
+          processing_metadata: {
+            ...(sponsor.processing_metadata ?? {}),
+            reviewed: true,
+            reviewedAt: new Date().toISOString(),
+            reviewedBy: userId,
+          },
+        })
+        .eq('id', sponsorId);
+      if (error) throw error;
+      await invalidateSponsorPreviews(context.supabaseAdmin, sponsorId);
+      return json({ ok: true, status: nextStatus });
+    }
+
+    if (action === 'discard_sponsor_logo') {
+      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
+      const sponsorId = required(body.sponsorId, 'Werbepartner');
+      const { data: sponsor, error: sponsorError } = await context.supabaseAdmin
+        .from('social_sponsors')
+        .select('id, logo_original_path, logo_transparent_path, logo_white_path')
+        .eq('id', sponsorId)
+        .maybeSingle();
+      if (sponsorError) throw sponsorError;
+      if (!sponsor) throw new Error('Der Werbepartner wurde nicht gefunden.');
+      const paths = [...new Set([
+        sponsor.logo_original_path,
+        sponsor.logo_transparent_path,
+        sponsor.logo_white_path,
+      ].map((path) => String(path ?? '').trim()).filter((path) => path.startsWith('sponsors/')))];
+      if (paths.length) {
+        const { error: removeError } = await context.supabaseAdmin.storage.from(bucket).remove(paths);
+        if (removeError) throw new Error(`Partnerlogo-Dateien konnten nicht gelöscht werden: ${removeError.message}`);
+      }
+      const { error } = await context.supabaseAdmin
+        .from('social_sponsors')
+        .update({
+          logo_original_path: null,
+          logo_transparent_path: null,
+          logo_white_path: null,
+          logo_status: 'missing',
+          processing_metadata: { discarded: true, discardedAt: new Date().toISOString(), discardedBy: userId },
+        })
+        .eq('id', sponsorId);
+      if (error) throw error;
+      await invalidateSponsorPreviews(context.supabaseAdmin, sponsorId);
+      return json({ ok: true, status: 'missing', removed: paths.length });
+    }
+
+    if (action === 'save_sponsor_assignments') {
+      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
+      const sponsorId = required(body.sponsorId, 'Werbepartner');
+      const { data: previousAssignments, error: previousAssignmentsError } = await context.supabaseAdmin
+        .from('social_sponsor_assignments')
+        .select('context')
+        .eq('sponsor_id', sponsorId);
+      if (previousAssignmentsError) throw previousAssignmentsError;
+      const previousContexts = (previousAssignments ?? []).map((assignment: any) => String(assignment.context ?? ''));
+      const assignments = Array.isArray(body.assignments) ? body.assignments : [];
+      const normalized = assignments.map((assignment: any) => ({
+        sponsor_id: sponsorId,
+        audience_id: required(assignment?.audienceId, 'Einheit'),
+        context: required(assignment?.context, 'Kontext'),
+        slot: Number(assignment?.slot),
+      }));
+      if (normalized.some((assignment: any) => !sponsorContexts.has(assignment.context) || ![1, 2].includes(assignment.slot))) {
+        throw new Error('Eine Sponsor-Zuordnung ist ungültig.');
+      }
+      const assignmentKeys = normalized.map((assignment: any) => `${assignment.audience_id}:${assignment.context}`);
+      if (new Set(assignmentKeys).size !== assignmentKeys.length) throw new Error('Eine Einheit wurde im gleichen Kontext doppelt belegt.');
+      const audienceIds = [...new Set(normalized.map((assignment: any) => assignment.audience_id))];
+      if (audienceIds.length) {
+        const { data: audiences, error: audienceError } = await context.supabaseAdmin
+          .from('social_post_audiences')
+          .select('id')
+          .in('id', audienceIds)
+          .eq('active', true);
+        if (audienceError) throw audienceError;
+        if ((audiences ?? []).length !== audienceIds.length) throw new Error('Mindestens eine Einheit ist nicht mehr aktiv.');
+        const contexts = [...new Set(normalized.map((assignment: any) => assignment.context))];
+        const { data: occupied, error: occupiedError } = await context.supabaseAdmin
+          .from('social_sponsor_assignments')
+          .select('sponsor_id, audience_id, context, slot')
+          .in('audience_id', audienceIds)
+          .in('context', contexts)
+          .neq('sponsor_id', sponsorId);
+        if (occupiedError) throw occupiedError;
+        const conflicts = normalized.filter((assignment: any) => (occupied ?? []).some((existing: any) => (
+          existing.audience_id === assignment.audience_id
+          && existing.context === assignment.context
+          && existing.slot === assignment.slot
+        )));
+        if (conflicts.length) throw new Error('Mindestens ein ausgewählter Platz ist bereits durch einen anderen Werbepartner belegt.');
+      }
+      const { error: deleteError } = await context.supabaseAdmin
+        .from('social_sponsor_assignments')
+        .delete()
+        .eq('sponsor_id', sponsorId);
+      if (deleteError) throw deleteError;
+      if (normalized.length) {
+        const { error: insertError } = await context.supabaseAdmin
+          .from('social_sponsor_assignments')
+          .insert(normalized);
+        if (insertError) throw insertError;
+      }
+      const automation = await invalidateSponsorPreviews(context.supabaseAdmin, sponsorId, previousContexts);
+      return json({ ok: true, assignments: normalized, automation });
+    }
+
+    if (action === 'delete_sponsor') {
+      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
+      const sponsorId = required(body.sponsorId, 'Werbepartner');
+      const { data: sponsor, error: sponsorError } = await context.supabaseAdmin
+        .from('social_sponsors')
+        .select('logo_original_path, logo_transparent_path, logo_white_path')
+        .eq('id', sponsorId)
+        .maybeSingle();
+      if (sponsorError) throw sponsorError;
+      if (!sponsor) throw new Error('Der Werbepartner wurde nicht gefunden.');
+      const { data: previousAssignments, error: previousAssignmentsError } = await context.supabaseAdmin
+        .from('social_sponsor_assignments')
+        .select('context')
+        .eq('sponsor_id', sponsorId);
+      if (previousAssignmentsError) throw previousAssignmentsError;
+      const previousContexts = (previousAssignments ?? []).map((assignment: any) => String(assignment.context ?? ''));
+      const paths = [...new Set([
+        sponsor.logo_original_path,
+        sponsor.logo_transparent_path,
+        sponsor.logo_white_path,
+      ].map((path) => String(path ?? '').trim()).filter((path) => path.startsWith('sponsors/')))];
+      if (paths.length) {
+        const { error: removeError } = await context.supabaseAdmin.storage.from(bucket).remove(paths);
+        if (removeError) throw removeError;
+      }
+      const { error } = await context.supabaseAdmin.from('social_sponsors').delete().eq('id', sponsorId);
+      if (error) throw error;
+      const automation = await invalidateSponsorPreviews(context.supabaseAdmin, sponsorId, previousContexts);
+      return json({ ok: true, automation });
     }
 
     if (action === 'save_club_crest') {

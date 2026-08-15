@@ -52,10 +52,10 @@ if (!adminApi.includes("last_error: 'Spielbericht wurde geändert. Bitte erneut 
 if (!edgeRenderer.includes('for (let index = 0; index < pageCount; index += 1)') || edgeRenderer.includes('Promise.all(svgs.map')) {
   throw new Error('Spielbericht-Seiten werden nicht ressourcenschonend nacheinander gerendert.');
 }
-if (!socialWorker.includes('reportPageIndex') || !socialWorker.includes('renderGamePreview(candidate)')) {
+if (!socialWorker.includes('reportPageIndex') || !socialWorker.includes('renderGamePreview(candidate, sponsors)')) {
   throw new Error('Spielbericht-Seiten erhalten keine getrennten Renderer-Aufrufe.');
 }
-if (!socialWorker.includes('targetPostJobIds') || !socialWorker.includes('renderPostPreview(candidate)')) {
+if (!socialWorker.includes('targetPostJobIds') || !socialWorker.includes('renderPostPreview(candidate, sponsors)')) {
   throw new Error('Unabhängige Beiträge erhalten keine getrennten Carousel-Renderer-Aufrufe.');
 }
 

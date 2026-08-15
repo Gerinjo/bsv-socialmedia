@@ -57,6 +57,7 @@
     <g transform="translate(0 82)">{{SCORER_ROWS}}</g>
   </g>
 
+  {{SPONSOR_LOGOS}}
   <text x="48" y="1050" fill="#164f32" font-size="27" class="handwritten">#aufgehtsgrün</text>
   <text x="1032" y="1050" text-anchor="end" fill="#092f20" font-size="23" class="handwritten">bsvnordstern.de</text>
 </svg>
