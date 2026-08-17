@@ -67,6 +67,8 @@ test('lineup card OCR ignores text fragments beside a valid shirt number and nam
   assert.equal(normalizeLineupCard('10\nLan', 'Brian\nda Costa Monteiro'), '10, B. da Costa Monteiro');
   assert.equal(normalizeLineupCard('18 be NS', 'A ü\nShawn\nGoethe\nN\nSn'), '18, S. Goethe');
   assert.equal(normalizeLineupCard('17°', 'Giuseppe\nKi\nVazquez Gabino'), '17, G. Vazquez Gabino');
+  assert.equal(normalizeLineupCard('170', 'Giuseppe Vazquez Gabino'), '17, G. Vazquez Gabino');
+  assert.equal(normalizeLineupCard('171', 'Giuseppe Vazquez Gabino'), '');
   assert.equal(normalizeLineupCard('fl] 1\n20', 'Samet\nGünes'), '20, S. Günes');
   assert.equal(normalizeLineupCard('18', 'san Shawn Goethe'), '18, S. Goethe');
 });

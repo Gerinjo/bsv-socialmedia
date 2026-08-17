@@ -613,8 +613,14 @@ function shirtNumber(value) {
   tokens.sort((left, right) => right.length - left.length || Number(/\d/.test(right)) - Number(/\d/.test(left)));
   for (const token of tokens) {
     const candidate = token.replace(/[oO]/g, '0').replace(/[iIlL|]/g, '1');
-    const number = Number(candidate);
-    if (candidate && Number.isInteger(number) && number >= 1 && number <= 99) return String(number);
+    const candidates = [candidate];
+    // A bright card edge is occasionally recognized as a trailing zero (for example 17 -> 170).
+    // Only strip that specific artifact; genuine or otherwise ambiguous three-digit values stay invalid.
+    if (/^\d{2}0$/.test(candidate)) candidates.push(candidate.slice(0, -1));
+    for (const possibleNumber of candidates) {
+      const number = Number(possibleNumber);
+      if (possibleNumber && Number.isInteger(number) && number >= 1 && number <= 99) return String(number);
+    }
   }
   return '';
 }
