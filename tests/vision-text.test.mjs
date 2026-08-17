@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  compactLineupPersonName,
   createOcrRecognizer,
   findLineupCardRegions,
   isolateLineupCardPixels,
@@ -46,20 +47,28 @@ test('OCR lineup removes isolated quote artifacts after player names', () => {
   assert.equal(normalizeOcrText('lineup', "01 Pascal Brandenburg '"), '01, P. Brandenburg');
 });
 
+test('OCR lineup abbreviates the first name before showing the result for review', () => {
+  assert.equal(compactLineupPersonName('Mohamad Salim Hartel'), 'M. Salim Hartel');
+  assert.equal(compactLineupPersonName('Baqer Al Daraji'), 'B. Al Daraji');
+  assert.equal(compactLineupPersonName('David Pereira Honorato'), 'D. Pereira Honorato');
+  assert.equal(normalizeLineupCard('17', 'Giuseppe Vazquez Gabino'), '17, G. Vazquez Gabino');
+});
+
 test('lineup card OCR repairs small name errors with the known BSV roster', () => {
   const knownNames = ['Baqer Al Daraji', 'Julian Brendle', 'Momodou Sidibeh', 'Raphael Buckel'];
   assert.equal(matchKnownPersonName('Bager\nAl Daraji', knownNames), 'Baqer Al Daraji');
   assert.equal(matchKnownPersonName('A Daraji\nBager', knownNames), 'Baqer Al Daraji');
   assert.equal(matchKnownPersonName('Julian\nBrendie', knownNames), 'Julian Brendle');
   assert.equal(matchKnownPersonName('Momadou\nSidibeh', knownNames), 'Momodou Sidibeh');
-  assert.equal(normalizeLineupCard('O7', 'Momadou\nSidibeh', knownNames), '07, Momodou Sidibeh');
+  assert.equal(normalizeLineupCard('O7', 'Momadou\nSidibeh', knownNames), '07, M. Sidibeh');
 });
 
 test('lineup card OCR ignores text fragments beside a valid shirt number and name', () => {
-  assert.equal(normalizeLineupCard('10\nLan', 'Brian\nda Costa Monteiro'), '10, Brian da Costa Monteiro');
-  assert.equal(normalizeLineupCard('18 be NS', 'A ü\nShawn\nGoethe\nN\nSn'), '18, Shawn Goethe');
-  assert.equal(normalizeLineupCard('17°', 'Giuseppe\nKi\nVazquez Gabino'), '17, Giuseppe Vazquez Gabino');
-  assert.equal(normalizeLineupCard('fl] 1\n20', 'Samet\nGünes'), '20, Samet Günes');
+  assert.equal(normalizeLineupCard('10\nLan', 'Brian\nda Costa Monteiro'), '10, B. da Costa Monteiro');
+  assert.equal(normalizeLineupCard('18 be NS', 'A ü\nShawn\nGoethe\nN\nSn'), '18, S. Goethe');
+  assert.equal(normalizeLineupCard('17°', 'Giuseppe\nKi\nVazquez Gabino'), '17, G. Vazquez Gabino');
+  assert.equal(normalizeLineupCard('fl] 1\n20', 'Samet\nGünes'), '20, S. Günes');
+  assert.equal(normalizeLineupCard('18', 'san Shawn Goethe'), '18, S. Goethe');
 });
 
 test('lineup card OCR does not turn short garbage into a catalog name', () => {
@@ -296,4 +305,36 @@ test('segmented lineup retries a missed shirt number as a single line', async ()
   assert.match(result.text, /^08, Spieler$/m);
   assert.equal(firstCardNumberAttempts, 2);
   assert.ok(parameters.some((value) => value.tessedit_pageseg_mode === '7'));
+});
+
+test('segmented lineup retries duplicate shirt numbers instead of losing a card', async () => {
+  let activeMode = '3';
+  const numberAttempts = new Map();
+  const fakeWorker = {
+    async setParameters(value) { activeMode = value.tessedit_pageseg_mode ?? activeMode; },
+    async recognize(image, options) {
+      const index = Number(String(image).replace('card-', ''));
+      const numberCrop = options?.rectangle?.left >= 100;
+      if (!numberCrop) return { data: { text: `Spieler ${index}`, confidence: 90 } };
+      numberAttempts.set(index, (numberAttempts.get(index) ?? 0) + 1);
+      if (index === 7) return { data: { text: activeMode === '7' ? '17' : '1', confidence: 82 } };
+      return { data: { text: String(index).padStart(2, '0'), confidence: 90 } };
+    },
+    async terminate() {},
+  };
+  const recognize = createOcrRecognizer(() => ({
+    OEM: { LSTM_ONLY: 1 },
+    PSM: { AUTO: '3', SPARSE_TEXT: '11', SINGLE_BLOCK: '6', SINGLE_LINE: '7' },
+    async createWorker() { return fakeWorker; },
+  }), async () => ({
+    image: 'segmented-image',
+    cards: Array.from({ length: 11 }, (_, index) => ({ image: `card-${index + 1}`, width: 200, height: 60 })),
+    segmented: true,
+  }));
+
+  const result = await recognize('original-image', 'lineup', () => {}, [], { isHome: true });
+  assert.equal(result.text.split('\n').length, 11);
+  assert.match(result.text, /^17, Spieler$/m);
+  assert.equal(numberAttempts.get(1), 2);
+  assert.equal(numberAttempts.get(7), 2);
 });

@@ -48,8 +48,9 @@ test('Gastwappen werden für bekannte Vereinsnamen zugeordnet', () => {
 
 test('Vornamen werden in der Aufstellung platzsparend abgekürzt', () => {
   assert.equal(compactLineupName('Pascal Brandenburg'), 'P. Brandenburg');
-  assert.equal(compactLineupName('Mohamad Salim Hartel'), 'M. S. Hartel');
+  assert.equal(compactLineupName('Mohamad Salim Hartel'), 'M. Salim Hartel');
   assert.equal(compactLineupName('Baqer Al Daraji'), 'B. Al Daraji');
+  assert.equal(compactLineupName('David Pereira Honorato'), 'D. Pereira Honorato');
   assert.equal(compactLineupName('M. Test'), 'M. Test');
 });
 
@@ -60,7 +61,7 @@ test('Aufstellungs-SVG zeigt abgekürzte Vornamen', async () => {
     match,
     lineup: { players: [{ number: 14, name: 'Mohamad Salim Hartel' }] },
   });
-  assert.match(svg, />M\. S\. Hartel<\/text>/);
+  assert.match(svg, />M\. Salim Hartel<\/text>/);
   assert.doesNotMatch(svg, />Mohamad Salim Hartel<\/text>/);
 });
 

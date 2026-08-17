@@ -60,6 +60,16 @@ export function compactPersonName(value) {
   return initial ? `${initial}. ${parts.slice(surnameStart).join(' ')}` : name;
 }
 
+export function compactLineupPersonName(value) {
+  const name = cleanPersonName(value);
+  if (!name || (name.match(/\p{L}/gu)?.length ?? 0) < 3) return '';
+  const parts = name.split(/\s+/);
+  if (parts.length < 2) return name;
+  if (/^[\p{L}]\.$/u.test(parts[0])) return name;
+  const firstLetter = parts[0].match(/\p{L}/u)?.[0];
+  return firstLetter ? `${firstLetter.toLocaleUpperCase('de-DE')}. ${parts.slice(1).join(' ')}` : name;
+}
+
 function minutesFrom(value) {
   const minutes = [];
   for (const match of String(value ?? '').matchAll(/(?<!\d)(\d{1,3})(?:\s*[.'’′*])?(?:\s*\+\s*(\d{1,2})(?:\s*[.'’′*])?)?(?!\d)/g)) {
@@ -154,7 +164,7 @@ function normalizeLineup(lines) {
       }
     }
     if (!number || /^\d/.test(rawName.trim())) continue;
-    const name = compactPersonName(rawName);
+    const name = compactLineupPersonName(recognizedPersonName(rawName));
     if (!name) continue;
     const entry = `${number.padStart(2, '0')}, ${name}`;
     const key = entry.toLocaleLowerCase('de-DE');
@@ -554,7 +564,18 @@ function recognizedPersonName(value) {
       return letters >= 3 || particles.has(token.toLocaleLowerCase('de-DE')) || /^[\p{L}]\.$/u.test(token);
     }).join(' ')).filter(Boolean);
   }
-  return cleanPersonName(parts.slice(0, 4).join(' '));
+  const name = cleanPersonName(parts.slice(0, 4).join(' '));
+  const tokens = name.split(/\s+/);
+  if (tokens.length >= 3) {
+    const fragment = comparablePersonName(tokens[0]).replaceAll(' ', '');
+    const following = comparablePersonName(tokens[1]).replaceAll(' ', '');
+    let position = 0;
+    for (const character of following) if (character === fragment[position]) position += 1;
+    if (fragment.length >= 2 && fragment.length <= 3 && following.length >= 4 && position === fragment.length) {
+      return cleanPersonName(tokens.slice(1).join(' '));
+    }
+  }
+  return name;
 }
 
 export function matchKnownPersonName(value, knownNames = []) {
@@ -593,9 +614,18 @@ export function matchKnownPersonName(value, knownNames = []) {
 
 export function normalizeLineupCard(numberValue, nameValue, knownNames = []) {
   const number = shirtNumber(numberValue);
-  const name = cleanPersonName(matchKnownPersonName(nameValue, knownNames));
+  const name = compactLineupPersonName(matchKnownPersonName(nameValue, knownNames));
   const letters = name.match(/\p{L}/gu)?.length ?? 0;
   return number && name && letters >= 3 ? `${number.padStart(2, '0')}, ${name}` : '';
+}
+
+function lineupNumberRetryIndexes(cardResults) {
+  const numbers = cardResults.map((card) => shirtNumber(card.number));
+  const counts = new Map();
+  for (const number of numbers) if (number) counts.set(number, (counts.get(number) ?? 0) + 1);
+  return numbers
+    .map((number, index) => !number || counts.get(number) > 1 ? index : -1)
+    .filter((index) => index >= 0);
 }
 
 export function orderLineupCards(cards, isHome = true) {
@@ -705,7 +735,10 @@ export function createOcrRecognizer(
           if (cards.length >= 6) {
             const cardResults = cards.map(() => ({ number: '', name: '', nameConfidence: 0 }));
             const cardConfidences = [];
-            await activeWorker.setParameters({ tessedit_pageseg_mode: pageSegmentationModes.sparse });
+            await activeWorker.setParameters({
+              tessedit_pageseg_mode: pageSegmentationModes.sparse,
+              tessedit_char_whitelist: '0123456789OoIlL|',
+            });
             for (let index = 0; index < cards.length; index += 1) {
               progressListener(`Rückennummer ${index + 1} von ${cards.length} wird gelesen …`);
               const card = typeof cards[index] === 'string' ? { image: cards[index] } : cards[index];
@@ -714,9 +747,12 @@ export function createOcrRecognizer(
               cardResults[index].number = result?.data?.text ?? '';
               cardConfidences.push(Number(result?.data?.confidence) || 0);
             }
-            const unmatchedNumbers = cardResults.map((card, index) => shirtNumber(card.number) ? -1 : index).filter((index) => index >= 0);
+            const unmatchedNumbers = lineupNumberRetryIndexes(cardResults);
             if (unmatchedNumbers.length) {
-              await activeWorker.setParameters({ tessedit_pageseg_mode: pageSegmentationModes.line });
+              await activeWorker.setParameters({
+                tessedit_pageseg_mode: pageSegmentationModes.line,
+                tessedit_char_whitelist: '0123456789',
+              });
               for (const index of unmatchedNumbers) {
                 progressListener(`Rückennummer ${index + 1} wird noch einmal geprüft …`);
                 const card = typeof cards[index] === 'string' ? { image: cards[index] } : cards[index];
@@ -726,7 +762,10 @@ export function createOcrRecognizer(
                 cardConfidences.push(Number(result?.data?.confidence) || 0);
               }
             }
-            await activeWorker.setParameters({ tessedit_pageseg_mode: pageSegmentationModes.sparse });
+            await activeWorker.setParameters({
+              tessedit_pageseg_mode: pageSegmentationModes.sparse,
+              tessedit_char_whitelist: '',
+            });
             for (let index = 0; index < cards.length; index += 1) {
               progressListener(`Spielername ${index + 1} von ${cards.length} wird gelesen …`);
               const card = typeof cards[index] === 'string' ? { image: cards[index] } : cards[index];

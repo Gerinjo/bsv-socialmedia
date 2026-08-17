@@ -632,6 +632,16 @@ export function compactPersonName(value) {
   return initial ? `${initial}. ${parts.slice(surnameStart).join(' ')}` : name;
 }
 
+export function compactLineupPersonName(value) {
+  const name = cleanPersonName(value);
+  if (!name || (name.match(/\p{L}/gu)?.length ?? 0) < 3) return '';
+  const parts = name.split(/\s+/);
+  if (parts.length < 2) return name;
+  if (/^[\p{L}]\.$/u.test(parts[0])) return name;
+  const firstLetter = parts[0].match(/\p{L}/u)?.[0];
+  return firstLetter ? `${firstLetter.toLocaleUpperCase('de-DE')}. ${parts.slice(1).join(' ')}` : name;
+}
+
 function minutesFrom(value) {
   const minutes = [];
   for (const match of String(value ?? '').matchAll(/(?<!\d)(\d{1,3})(?:\s*[.'’′*])?(?:\s*\+\s*(\d{1,2})(?:\s*[.'’′*])?)?(?!\d)/g)) {
@@ -726,7 +736,7 @@ function normalizeLineup(lines) {
       }
     }
     if (!number || /^\d/.test(rawName.trim())) continue;
-    const name = compactPersonName(rawName);
+    const name = compactLineupPersonName(recognizedPersonName(rawName));
     if (!name) continue;
     const entry = `${number.padStart(2, '0')}, ${name}`;
     const key = entry.toLocaleLowerCase('de-DE');
@@ -1126,7 +1136,18 @@ function recognizedPersonName(value) {
       return letters >= 3 || particles.has(token.toLocaleLowerCase('de-DE')) || /^[\p{L}]\.$/u.test(token);
     }).join(' ')).filter(Boolean);
   }
-  return cleanPersonName(parts.slice(0, 4).join(' '));
+  const name = cleanPersonName(parts.slice(0, 4).join(' '));
+  const tokens = name.split(/\s+/);
+  if (tokens.length >= 3) {
+    const fragment = comparablePersonName(tokens[0]).replaceAll(' ', '');
+    const following = comparablePersonName(tokens[1]).replaceAll(' ', '');
+    let position = 0;
+    for (const character of following) if (character === fragment[position]) position += 1;
+    if (fragment.length >= 2 && fragment.length <= 3 && following.length >= 4 && position === fragment.length) {
+      return cleanPersonName(tokens.slice(1).join(' '));
+    }
+  }
+  return name;
 }
 
 export function matchKnownPersonName(value, knownNames = []) {
@@ -1165,9 +1186,18 @@ export function matchKnownPersonName(value, knownNames = []) {
 
 export function normalizeLineupCard(numberValue, nameValue, knownNames = []) {
   const number = shirtNumber(numberValue);
-  const name = cleanPersonName(matchKnownPersonName(nameValue, knownNames));
+  const name = compactLineupPersonName(matchKnownPersonName(nameValue, knownNames));
   const letters = name.match(/\p{L}/gu)?.length ?? 0;
   return number && name && letters >= 3 ? `${number.padStart(2, '0')}, ${name}` : '';
+}
+
+function lineupNumberRetryIndexes(cardResults) {
+  const numbers = cardResults.map((card) => shirtNumber(card.number));
+  const counts = new Map();
+  for (const number of numbers) if (number) counts.set(number, (counts.get(number) ?? 0) + 1);
+  return numbers
+    .map((number, index) => !number || counts.get(number) > 1 ? index : -1)
+    .filter((index) => index >= 0);
 }
 
 export function orderLineupCards(cards, isHome = true) {
@@ -1277,7 +1307,10 @@ export function createOcrRecognizer(
           if (cards.length >= 6) {
             const cardResults = cards.map(() => ({ number: '', name: '', nameConfidence: 0 }));
             const cardConfidences = [];
-            await activeWorker.setParameters({ tessedit_pageseg_mode: pageSegmentationModes.sparse });
+            await activeWorker.setParameters({
+              tessedit_pageseg_mode: pageSegmentationModes.sparse,
+              tessedit_char_whitelist: '0123456789OoIlL|',
+            });
             for (let index = 0; index < cards.length; index += 1) {
               progressListener(`Rückennummer ${index + 1} von ${cards.length} wird gelesen …`);
               const card = typeof cards[index] === 'string' ? { image: cards[index] } : cards[index];
@@ -1286,9 +1319,12 @@ export function createOcrRecognizer(
               cardResults[index].number = result?.data?.text ?? '';
               cardConfidences.push(Number(result?.data?.confidence) || 0);
             }
-            const unmatchedNumbers = cardResults.map((card, index) => shirtNumber(card.number) ? -1 : index).filter((index) => index >= 0);
+            const unmatchedNumbers = lineupNumberRetryIndexes(cardResults);
             if (unmatchedNumbers.length) {
-              await activeWorker.setParameters({ tessedit_pageseg_mode: pageSegmentationModes.line });
+              await activeWorker.setParameters({
+                tessedit_pageseg_mode: pageSegmentationModes.line,
+                tessedit_char_whitelist: '0123456789',
+              });
               for (const index of unmatchedNumbers) {
                 progressListener(`Rückennummer ${index + 1} wird noch einmal geprüft …`);
                 const card = typeof cards[index] === 'string' ? { image: cards[index] } : cards[index];
@@ -1298,7 +1334,10 @@ export function createOcrRecognizer(
                 cardConfidences.push(Number(result?.data?.confidence) || 0);
               }
             }
-            await activeWorker.setParameters({ tessedit_pageseg_mode: pageSegmentationModes.sparse });
+            await activeWorker.setParameters({
+              tessedit_pageseg_mode: pageSegmentationModes.sparse,
+              tessedit_char_whitelist: '',
+            });
             for (let index = 0; index < cards.length; index += 1) {
               progressListener(`Spielername ${index + 1} von ${cards.length} wird gelesen …`);
               const card = typeof cards[index] === 'string' ? { image: cards[index] } : cards[index];
@@ -1446,7 +1485,7 @@ export const recognizeOcrImage = createOcrRecognizer();
       const canStop=!terminal&&game.status!=='finished'&&game.home_score==null&&game.away_score==null;
       const actions=canStop?'<div class="game-actions"><button type="button" class="danger gameStatus" data-id="'+esc(game.id)+'" data-status="cancelled">Spiel absagen</button><button type="button" class="warning gameStatus" data-id="'+esc(game.id)+'" data-status="aborted">Spiel abbrechen</button></div>':'';
       const lineupView=lineupApprovalView(game);
-      const lineup=isPast||terminal?'':'<form class="lineupForm workflow-form" data-id="'+esc(game.id)+'" data-is-home="'+String(game.is_home!==false)+'"><section class="workflow-section"><div class="workflow-heading"><div><h4>1 · Aufstellung</h4><p>Bild einfügen oder die Angaben manuell öffnen. Zum Erstellen der Vorschau anschließend freigeben.</p></div></div><div class="vision-upload"><label class="vision-picker">Aufstellungsbild auswählen<input class="lineupVisionInput" type="file" accept="image/jpeg,image/png,image/webp"></label><span class="vision-status lineupVisionStatus">Kostenfreie lokale Erkennung · Heim/Auswärts wird automatisch berücksichtigt.</span><div class="vision-paste lineupVisionPaste" tabindex="0" role="button">Bild aus der Zwischenablage hier mit Strg+V einfügen</div></div><details class="manual-entry"><summary>Aufstellung manuell eingeben oder erkannten Text prüfen</summary><div class="fields"><label>Formation<input name="formation" value="'+esc((game.lineup&&game.lineup.formation)||'4-4-2')+'"></label><label class="wide">Aufstellung: Nummer, vollständiger Name<textarea name="players" placeholder="01, Pascal Brandenburg\n10, Raphael Buckel">'+esc(players)+'</textarea></label></div></details><div class="workflow-actions"><span class="approval-state lineupApprovalState '+esc(lineupView.className)+'">'+esc(lineupView.label)+'</span><button class="secondary" type="submit" data-approved="false">Nur als Entwurf speichern</button><button class="primary-action" type="submit" data-approved="true">Freigeben &amp; Vorschau erstellen</button></div></section></form>';
+      const lineup=isPast||terminal?'':'<form class="lineupForm workflow-form" data-id="'+esc(game.id)+'" data-is-home="'+String(game.is_home!==false)+'"><section class="workflow-section"><div class="workflow-heading"><div><h4>1 · Aufstellung</h4><p>Bild einfügen oder die Angaben manuell öffnen. Zum Erstellen der Vorschau anschließend freigeben.</p></div></div><div class="vision-upload"><label class="vision-picker">Aufstellungsbild auswählen<input class="lineupVisionInput" type="file" accept="image/jpeg,image/png,image/webp"></label><span class="vision-status lineupVisionStatus">Kostenfreie lokale Erkennung · Heim/Auswärts wird automatisch berücksichtigt.</span><div class="vision-paste lineupVisionPaste" tabindex="0" role="button">Bild aus der Zwischenablage hier mit Strg+V einfügen</div></div><details class="manual-entry"><summary>Aufstellung manuell eingeben oder erkannten Text prüfen</summary><div class="fields"><label>Formation<input name="formation" value="'+esc((game.lineup&&game.lineup.formation)||'4-4-2')+'"></label><label class="wide">Aufstellung: Nummer, abgekürzter Vorname und Nachname<textarea name="players" placeholder="01, P. Brandenburg\n10, R. Buckel">'+esc(players)+'</textarea></label></div></details><div class="workflow-actions"><span class="approval-state lineupApprovalState '+esc(lineupView.className)+'">'+esc(lineupView.label)+'</span><button class="secondary" type="submit" data-approved="false">Nur als Entwurf speichern</button><button class="primary-action" type="submit" data-approved="true">Freigeben &amp; Vorschau erstellen</button></div></section></form>';
       const reportJob=(game.jobs||[]).find(job=>job.story_type==='report');
       const reportView=reportApprovalView(reportJob);
       const result=terminal?'':'<form class="resultForm workflow-form" data-id="'+esc(game.id)+'"><section class="workflow-section"><div class="workflow-heading"><div><h4>2 · Ergebnis &amp; Spielbericht</h4><p>Ergebnis und Texte eingeben; die gelbe Schaltfläche speichert alles und erstellt die Vorschau.</p></div></div><details class="manual-entry"><summary>Ergebnis und Texte manuell eingeben</summary><div class="fields"><label>Heim<input name="homeScore" type="number" min="0" value="'+esc(game.home_score??'')+'" required></label><label>Gast<input name="awayScore" type="number" min="0" value="'+esc(game.away_score??'')+'" required></label><label class="wide">Überschrift<input name="resultLabel" value="'+esc(game.result_label||'')+'"></label><div class="wide"><button class="secondary" type="submit">Ergebnis speichern &amp; Vorschau erstellen</button></div><label class="wide">Spielbericht<textarea class="rich-report-field" name="resultMessage" rows="7">'+esc(game.result_message||'')+'</textarea></label><label class="wide">Torschützen<textarea name="reportScorers" rows="4" placeholder="(19., 46.) M. Oosbrugger\n(72.) N. Beispiel">'+esc(game.report_scorers||'')+'</textarea></label></div></details><div class="vision-upload"><label class="vision-picker">Torschützenbild auswählen<input class="scorersVisionInput" type="file" accept="image/jpeg,image/png,image/webp"></label><span class="vision-status scorersVisionStatus">Kostenfreie lokale Erkennung. Der Text kann anschließend geprüft werden.</span><div class="vision-paste scorersVisionPaste" tabindex="0" role="button">Bild aus der Zwischenablage hier mit Strg+V einfügen</div></div><details class="manual-entry"><summary>Spielbericht-Bilder verwalten (maximal 10)</summary><div class="fields"><label class="wide">Bilder auswählen<input class="reportImageInput" type="file" accept="image/jpeg,image/png,image/webp" multiple></label><div class="report-image-grid wide">'+reportImageCards(game)+'</div></div></details><div class="workflow-actions"><span class="approval-state reportApprovalState '+esc(reportView.className)+'">'+esc(reportView.label)+'</span><button class="secondary reportSave" type="button" data-id="'+esc(game.id)+'">Nur Spielbericht speichern</button><button class="primary-action reportApprove" type="button" data-id="'+esc(game.id)+'" '+(reportView.disabled?'disabled':'')+'>'+esc(reportView.button==='Freigeben'?'Freigeben & Vorschau erstellen':reportView.button)+'</button></div></section></form>';
