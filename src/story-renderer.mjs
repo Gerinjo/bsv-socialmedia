@@ -100,6 +100,27 @@ export function lineupMatchup(match) {
   };
 }
 
+export function compactLineupName(value) {
+  const parts = String(value ?? '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length < 2) return parts[0] || '';
+
+  const surnameParticles = new Set([
+    'al', 'da', 'de', 'del', 'della', 'di', 'do', 'dos', 'du', 'la', 'le',
+    'van', 'von', 'zu', 'zum', 'zur',
+  ]);
+  let surnameStart = parts.length - 1;
+  while (surnameStart > 0 && surnameParticles.has(parts[surnameStart - 1].toLocaleLowerCase('de-DE'))) {
+    surnameStart -= 1;
+  }
+
+  const initials = parts.slice(0, surnameStart).map((part) => {
+    if (/^\p{L}\.$/u.test(part)) return part;
+    const firstLetter = part.match(/\p{L}/u)?.[0];
+    return firstLetter ? `${firstLetter.toLocaleUpperCase('de-DE')}.` : part;
+  });
+  return [...initials, ...parts.slice(surnameStart)].join(' ');
+}
+
 function lineupRows(players = []) {
   const normalized = players.slice(0, 11);
   if (!normalized.length) {
@@ -116,7 +137,7 @@ function lineupRows(players = []) {
     return [
       `<g transform="translate(${x} ${y})">`,
       `<text x="0" y="58" class="number">${xmlEscape(number)}</text>`,
-      `<text x="76" y="58" class="player">${xmlEscape(truncate(player.name, 22))}</text>`,
+      `<text x="76" y="58" class="player">${xmlEscape(truncate(compactLineupName(player.name), 22))}</text>`,
       '<path d="M76 77H402" stroke="#a8cbb4" stroke-width="2" opacity=".22"/>',
       '</g>',
     ].join('');

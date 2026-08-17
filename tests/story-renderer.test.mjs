@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { birthdayRoleText, displayTeamName, fillTemplate, renderStorySvg, scorerRows, teamCrestKey, xmlEscape } from '../src/story-renderer.mjs';
+import { birthdayRoleText, compactLineupName, displayTeamName, fillTemplate, renderStorySvg, scorerRows, teamCrestKey, xmlEscape } from '../src/story-renderer.mjs';
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const match = {
@@ -36,6 +36,24 @@ test('Gastwappen werden für bekannte Vereinsnamen zugeordnet', () => {
   assert.equal(teamCrestKey('TSV Aach Linz II'), 'tsv-aach-linz');
   assert.equal(teamCrestKey('SG Nordstern Radolfzell/Öhningen-Gaienhofen/Bankholzen-Moos'), 'bsv');
   assert.equal(teamCrestKey('Unbekannter Gegner'), undefined);
+});
+
+test('Vornamen werden in der Aufstellung platzsparend abgekürzt', () => {
+  assert.equal(compactLineupName('Pascal Brandenburg'), 'P. Brandenburg');
+  assert.equal(compactLineupName('Mohamad Salim Hartel'), 'M. S. Hartel');
+  assert.equal(compactLineupName('Baqer Al Daraji'), 'B. Al Daraji');
+  assert.equal(compactLineupName('M. Test'), 'M. Test');
+});
+
+test('Aufstellungs-SVG zeigt abgekürzte Vornamen', async () => {
+  const svg = await renderStorySvg({
+    rootDir,
+    type: 'lineup',
+    match,
+    lineup: { players: [{ number: 14, name: 'Mohamad Salim Hartel' }] },
+  });
+  assert.match(svg, />M\. S\. Hartel<\/text>/);
+  assert.doesNotMatch(svg, />Mohamad Salim Hartel<\/text>/);
 });
 
 test('Heim- und Gastwappen bilden in der Spielankündigung ein diagonales Duell', async () => {
