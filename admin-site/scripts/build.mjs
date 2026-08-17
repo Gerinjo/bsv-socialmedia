@@ -13,12 +13,19 @@ const crestCutout = await readFile(resolve(adminDir, 'crest-cutout.js'), 'utf8')
 const richTextEditor = await readFile(resolve(adminDir, 'rich-text-editor.mjs'), 'utf8');
 const visionOcr = await readFile(resolve(adminDir, 'vision-ocr.mjs'), 'utf8');
 const tesseract = await readFile(resolve(adminDir, 'node_modules/tesseract.js/dist/tesseract.min.js'), 'utf8');
-const html = (await readFile(resolve(adminDir, 'admin-page.html'), 'utf8'))
-  .replaceAll('__BSV_LOGO_DATA_URL__', `data:image/png;base64,${logo.toString('base64')}`)
-  .replaceAll('__CREST_CUTOUT_SCRIPT__', crestCutout)
-  .replaceAll('__RICH_TEXT_EDITOR_SCRIPT__', richTextEditor)
-  .replaceAll('__VISION_OCR_SCRIPT__', visionOcr)
-  .replaceAll('__TESSERACT_SCRIPT__', tesseract.replaceAll('</script', '<\\/script'));
+let html = await readFile(resolve(adminDir, 'admin-page.html'), 'utf8');
+for (const [placeholder, source] of [
+  ['__BSV_LOGO_DATA_URL__', `data:image/png;base64,${logo.toString('base64')}`],
+  ['__CREST_CUTOUT_SCRIPT__', crestCutout],
+  ['__RICH_TEXT_EDITOR_SCRIPT__', richTextEditor],
+  ['__VISION_OCR_SCRIPT__', visionOcr],
+  ['__TESSERACT_SCRIPT__', tesseract.replaceAll('</script', '<\\/script')],
+]) {
+  html = html.replaceAll(placeholder, () => source);
+}
+if ((html.match(/<!doctype html>/gi) ?? []).length !== 1 || /__[A-Z0-9_]+__/.test(html)) {
+  throw new Error('Die Admin-Oberfläche wurde nicht korrekt eingebettet.');
+}
 const worker = `const html = ${JSON.stringify(html)};
 
 export default {
