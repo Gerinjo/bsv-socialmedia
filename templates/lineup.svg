@@ -49,15 +49,15 @@
   <text x="72" y="555" fill="#a8cbb4" font-size="105" class="handwritten">Startelf.</text>
   <g transform="translate(676 417)">
     <rect width="316" height="112" rx="56" fill="#ffffff" opacity=".08"/>
-    <text x="158" y="48" text-anchor="middle" fill="#91c82f" font-size="18" class="caps">EIN TEAM.</text>
-    <text x="158" y="82" text-anchor="middle" fill="#ffffff" font-size="18" class="caps">EIN ZIEL.</text>
+    <text x="158" y="49" text-anchor="middle" fill="#91c82f" font-size="28" class="caps">EIN TEAM.</text>
+    <text x="158" y="87" text-anchor="middle" fill="#ffffff" font-size="28" class="caps">EIN ZIEL.</text>
   </g>
 
   <g transform="translate(72 628)">
     <text x="0" y="0" fill="#ffffff" font-size="25" class="sans" font-weight="900">{{LINEUP_BSV_TEAM}}</text>
     <g transform="translate(664 -38)">
       <rect width="272" height="54" rx="27" fill="#91c82f"/>
-      <text x="136" y="36" text-anchor="middle" fill="#092f20" font-size="18" class="caps">{{FORMATION}}</text>
+      <text x="136" y="40" text-anchor="middle" fill="#092f20" font-size="{{FORMATION_SIZE}}" class="caps">{{FORMATION}}</text>
     </g>
   </g>
 

@@ -291,6 +291,7 @@ export function renderStorySvg({
         ? 'SPIELBERICHT'
         : 'ABPFIFF · ERGEBNIS';
   const resolvedActionPhotoDataUri = actionPhotoDataUri || match.actionPhotoDataUri;
+  const formation = text(match.formation, 'FORMATION FOLGT');
   const values = {
     LOGO_DATA_URI: imageAssets.logo,
     ACTION_PLAYER_DATA_URI: resolvedActionPhotoDataUri || imageAssets.actionPlayer,
@@ -322,7 +323,8 @@ export function renderStorySvg({
     TIME: text(match.time),
     VENUE: truncate(match.venue, 44),
     MATCH_ID_SHORT: truncate(match.matchId, 22),
-    FORMATION: text(match.formation, 'FORMATION FOLGT'),
+    FORMATION: formation,
+    FORMATION_SIZE: formation.length <= 11 ? 34 : 18,
     PLAYER_ROWS: lineupRows(lineup.players),
     HOME_SCORE: Number.isFinite(Number(match.homeScore)) ? Number(match.homeScore) : '–',
     AWAY_SCORE: Number.isFinite(Number(match.awayScore)) ? Number(match.awayScore) : '–',

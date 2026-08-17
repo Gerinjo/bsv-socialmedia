@@ -272,10 +272,13 @@ test('Startelf verwendet Matchday-Titel, freien Footer und Fußball in der Gegne
   const svg = await renderStorySvg({
     rootDir,
     type: 'lineup',
-    match: { ...match, homeTeam: 'BSV Nordstern Radolfzell' },
+    match: { ...match, homeTeam: 'BSV Nordstern Radolfzell', formation: '4 – 4 – 2' },
     lineup: { players: [{ number: 1, name: 'M. Test' }] },
   });
   assert.match(svg, /font-size="132" class="handwritten">MATCHDAY<\/text>/);
+  assert.match(svg, /font-size="28" class="caps">EIN TEAM\.<\/text>/);
+  assert.match(svg, /font-size="28" class="caps">EIN ZIEL\.<\/text>/);
+  assert.match(svg, /<text x="136" y="40"[^>]*font-size="34" class="caps">4 – 4 – 2<\/text>/);
   assert.match(svg, /<text x="72" y="1780"[^>]*>#aufgehtsgrün<\/text>/);
   assert.match(svg, /<text x="1008" y="1780"[^>]*>bsvnordstern\.de<\/text>/);
   assert.match(svg, /<g transform="translate\(842 95\)">[\s\S]*M0-21 20-7/);

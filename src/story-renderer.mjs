@@ -279,6 +279,7 @@ export async function renderStorySvg({
       ? 'ABGEBROCHEN'
       : '';
   const teamCategory = text(match.teamCategory || teamCategoryLabel({ slug: match.teamSlug, label: match.teamName }), '');
+  const formation = text(match.formation, 'FORMATION FOLGT');
   const values = {
     LOGO_DATA_URI: logoDataUri,
     ACTION_PLAYER_DATA_URI: resolvedActionPhotoDataUri || actionPlayerDataUri,
@@ -310,7 +311,8 @@ export async function renderStorySvg({
     TIME: text(match.time),
     VENUE: truncate(match.venue, 44),
     MATCH_ID_SHORT: truncate(match.matchId, 22),
-    FORMATION: text(match.formation, 'FORMATION FOLGT'),
+    FORMATION: formation,
+    FORMATION_SIZE: formation.length <= 11 ? 34 : 18,
     PLAYER_ROWS: lineupRows(lineup.players),
     HOME_SCORE: Number.isFinite(Number(match.homeScore)) ? Number(match.homeScore) : '–',
     AWAY_SCORE: Number.isFinite(Number(match.awayScore)) ? Number(match.awayScore) : '–',
