@@ -6,10 +6,12 @@ import {
   findLineupCardRegions,
   isolateLineupCardPixels,
   isolateLineupTextPixels,
+  lineupCardRectangle,
   matchKnownPersonName,
   normalizeLineupCard,
   normalizeOcrText,
   ocrProgressText,
+  orderLineupCards,
 } from '../admin-site/vision-ocr.mjs';
 
 test('OCR lineup text is normalized for the existing player parser', () => {
@@ -47,14 +49,44 @@ test('OCR lineup removes isolated quote artifacts after player names', () => {
 test('lineup card OCR repairs small name errors with the known BSV roster', () => {
   const knownNames = ['Baqer Al Daraji', 'Julian Brendle', 'Momodou Sidibeh', 'Raphael Buckel'];
   assert.equal(matchKnownPersonName('Bager\nAl Daraji', knownNames), 'Baqer Al Daraji');
+  assert.equal(matchKnownPersonName('A Daraji\nBager', knownNames), 'Baqer Al Daraji');
   assert.equal(matchKnownPersonName('Julian\nBrendie', knownNames), 'Julian Brendle');
   assert.equal(matchKnownPersonName('Momadou\nSidibeh', knownNames), 'Momodou Sidibeh');
-  assert.equal(normalizeLineupCard('O7', 'Momadou\nSidibeh', knownNames), '07, M. Sidibeh');
+  assert.equal(normalizeLineupCard('O7', 'Momadou\nSidibeh', knownNames), '07, Momodou Sidibeh');
+});
+
+test('lineup card OCR ignores text fragments beside a valid shirt number and name', () => {
+  assert.equal(normalizeLineupCard('10\nLan', 'Brian\nda Costa Monteiro'), '10, Brian da Costa Monteiro');
+  assert.equal(normalizeLineupCard('18 be NS', 'A ü\nShawn\nGoethe\nN\nSn'), '18, Shawn Goethe');
+  assert.equal(normalizeLineupCard('17°', 'Giuseppe\nKi\nVazquez Gabino'), '17, Giuseppe Vazquez Gabino');
+  assert.equal(normalizeLineupCard('fl] 1\n20', 'Samet\nGünes'), '20, Samet Günes');
 });
 
 test('lineup card OCR does not turn short garbage into a catalog name', () => {
   assert.equal(matchKnownPersonName('B. X', ['Raphael Buckel']), 'B. X');
   assert.equal(normalizeLineupCard('10', 'B. X', ['Raphael Buckel']), '');
+});
+
+test('lineup cards start with the six-player side of the home or away team', () => {
+  const homeCards = [
+    ...Array.from({ length: 6 }, (_, index) => ({ column: 'left', id: `L${index + 1}` })),
+    ...Array.from({ length: 5 }, (_, index) => ({ column: 'right', id: `R${index + 1}` })),
+  ];
+  const awayCards = [
+    ...Array.from({ length: 5 }, (_, index) => ({ column: 'left', id: `L${index + 1}` })),
+    ...Array.from({ length: 6 }, (_, index) => ({ column: 'right', id: `R${index + 1}` })),
+  ];
+  assert.deepEqual(orderLineupCards(homeCards, true).map((card) => card.id), ['L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'R1', 'R2', 'R3', 'R4', 'R5']);
+  assert.deepEqual(orderLineupCards(awayCards, false).map((card) => card.id), ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'L1', 'L2', 'L3', 'L4', 'L5']);
+});
+
+test('lineup card crops follow the mirrored home and away graphic', () => {
+  const leftCard = { width: 200, height: 60, column: 'left' };
+  const rightCard = { width: 200, height: 60, column: 'right' };
+  assert.deepEqual(lineupCardRectangle(leftCard, 'number', false), { left: 0, top: 0, width: 72, height: 60 });
+  assert.deepEqual(lineupCardRectangle(leftCard, 'number', true), { left: 128, top: 0, width: 72, height: 60 });
+  assert.deepEqual(lineupCardRectangle(leftCard, 'name', true), { left: 20, top: 0, width: 132, height: 60 });
+  assert.deepEqual(lineupCardRectangle(rightCard, 'name', true), { left: 2, top: 0, width: 134, height: 60 });
 });
 
 test('lineup image isolation keeps light card text and removes grass and card background', () => {
@@ -199,7 +231,7 @@ test('segmented lineup cards read number and name in separate sparse regions', a
     segmented: true,
   }));
 
-  const result = await recognize('original-image', 'lineup');
+  const result = await recognize('original-image', 'lineup', () => {}, [], { isHome: false });
   assert.equal(result.text.split('\n').length, 11);
   assert.equal(calls.length, 22);
   assert.ok(calls.slice(0, 11).every((call) => call.options.rectangle.left === 0));

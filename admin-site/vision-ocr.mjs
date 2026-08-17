@@ -37,13 +37,14 @@ function cleanPersonName(value) {
 }
 
 function shirtNumber(value) {
-  const candidate = String(value ?? '')
-    .trim()
-    .replace(/[oO]/g, '0')
-    .replace(/[iIlL|]/g, '1')
-    .replace(/[^0-9]/g, '');
-  const number = Number(candidate);
-  return candidate && Number.isInteger(number) && number >= 1 && number <= 99 ? String(number) : '';
+  const tokens = String(value ?? '').match(/[0-9oOilL|]{1,3}/g) ?? [];
+  tokens.sort((left, right) => right.length - left.length || Number(/\d/.test(right)) - Number(/\d/.test(left)));
+  for (const token of tokens) {
+    const candidate = token.replace(/[oO]/g, '0').replace(/[iIlL|]/g, '1');
+    const number = Number(candidate);
+    if (candidate && Number.isInteger(number) && number >= 1 && number <= 99) return String(number);
+  }
+  return '';
 }
 
 export function compactPersonName(value) {
@@ -278,7 +279,7 @@ export function findLineupCardRegions(imageData) {
       if (endY - startY < Math.max(8, height * 0.07)) continue;
       const bestRun = rowRuns.slice(startY, endY).reduce((best, run) => run.length > best.length ? run : best, { start: startX, length: 0 });
       if (bestRun.length < halfWidth * 0.35) continue;
-      const paddingX = Math.max(4, Math.round(width * 0.005));
+      const paddingX = Math.max(6, Math.round(width * 0.025));
       const paddingY = Math.max(3, Math.round(height * 0.003));
       const regionX = Math.max(0, bestRun.start - paddingX);
       const regionY = Math.max(0, startY - paddingY);
@@ -402,6 +403,7 @@ export async function prepareLineupOcrImage(image, documentRef = globalThis.docu
       image: card.toDataURL('image/png'),
       width: card.width,
       height: card.height,
+      column: region.x + region.width / 2 < canvas.width / 2 ? 'left' : 'right',
     });
     outputY += region.height + gap;
   }
@@ -504,9 +506,17 @@ function nameSimilarity(left, right) {
 }
 
 function recognizedPersonName(value) {
-  const parts = cleanOcrLines(value)
+  let parts = cleanOcrLines(value)
     .map(cleanPersonName)
     .filter((part) => (part.match(/\p{L}/gu)?.length ?? 0) >= 2);
+  const longTokens = parts.flatMap((part) => part.split(/\s+/)).filter((token) => (token.match(/\p{L}/gu)?.length ?? 0) >= 3);
+  if (longTokens.length >= 2) {
+    const particles = new Set(['al', 'da', 'de', 'di', 'do', 'dos', 'du', 'la', 'le', 'van', 'von', 'zu']);
+    parts = parts.map((part) => part.split(/\s+/).filter((token) => {
+      const letters = token.match(/\p{L}/gu)?.length ?? 0;
+      return letters >= 3 || particles.has(token.toLocaleLowerCase('de-DE')) || /^[\p{L}]\.$/u.test(token);
+    }).join(' ')).filter(Boolean);
+  }
   return cleanPersonName(parts.slice(0, 4).join(' '));
 }
 
@@ -530,7 +540,13 @@ export function matchKnownPersonName(value, knownNames = []) {
   if (exactSurname.length === 1) return exactSurname[0].name;
 
   const ranked = candidates
-    .map((entry) => ({ ...entry, score: nameSimilarity(comparable, entry.comparable) }))
+    .map((entry) => ({
+      ...entry,
+      score: Math.max(
+        nameSimilarity(comparable, entry.comparable),
+        nameSimilarity(comparable.split(' ').sort().join(' '), entry.comparable.split(' ').sort().join(' ')),
+      ),
+    }))
     .sort((left, right) => right.score - left.score);
   const best = ranked[0];
   const runnerUp = ranked[1];
@@ -540,8 +556,36 @@ export function matchKnownPersonName(value, knownNames = []) {
 
 export function normalizeLineupCard(numberValue, nameValue, knownNames = []) {
   const number = shirtNumber(numberValue);
-  const name = compactPersonName(matchKnownPersonName(nameValue, knownNames));
-  return number && name ? `${number.padStart(2, '0')}, ${name}` : '';
+  const name = cleanPersonName(matchKnownPersonName(nameValue, knownNames));
+  const letters = name.match(/\p{L}/gu)?.length ?? 0;
+  return number && name && letters >= 3 ? `${number.padStart(2, '0')}, ${name}` : '';
+}
+
+export function orderLineupCards(cards, isHome = true) {
+  const source = Array.isArray(cards) ? cards : [];
+  if (!source.length || !source.every((card) => card?.column === 'left' || card?.column === 'right')) return source;
+  const firstColumn = isHome ? 'left' : 'right';
+  const secondColumn = isHome ? 'right' : 'left';
+  return [
+    ...source.filter((card) => card.column === firstColumn),
+    ...source.filter((card) => card.column === secondColumn),
+  ];
+}
+
+export function lineupCardRectangle(card, part, isHome = true) {
+  const width = Number(card?.width) || 0;
+  const height = Number(card?.height) || 0;
+  if (!width || !height) return undefined;
+  if (part === 'number') {
+    const left = isHome ? Math.round(width * 0.64) : 0;
+    return { left, top: 0, width: Math.max(1, isHome ? width - left : Math.round(width * 0.36)), height };
+  }
+  if (part === 'name') {
+    const left = isHome ? Math.round(width * (card?.column === 'left' ? 0.1 : 0.01)) : Math.round(width * 0.3);
+    const right = isHome ? Math.round(width * (card?.column === 'left' ? 0.76 : 0.68)) : width;
+    return { left, top: 0, width: Math.max(1, right - left), height };
+  }
+  return undefined;
 }
 
 export function normalizeOcrText(kindValue, value) {
@@ -606,7 +650,7 @@ export function createOcrRecognizer(
     await staleWorker?.terminate?.().catch(() => {});
   }
 
-  return function recognizeOcrImage(image, kindValue, onProgress = () => {}, knownNames = []) {
+  return function recognizeOcrImage(image, kindValue, onProgress = () => {}, knownNames = [], options = {}) {
     const kind = requiredOcrKind(kindValue);
     const task = queue.then(async () => {
       progressListener = onProgress;
@@ -617,7 +661,8 @@ export function createOcrRecognizer(
           progressListener('Aufstellungs-Grafik wird für die Texterkennung bereinigt …');
           const prepared = await prepareLineupImage(image);
           const preparedImage = typeof prepared === 'string' ? prepared : prepared.image;
-          const cards = Array.isArray(prepared?.cards) ? prepared.cards : [];
+          const cards = orderLineupCards(Array.isArray(prepared?.cards) ? prepared.cards : [], options?.isHome !== false);
+          const isHome = options?.isHome !== false;
           let firstCandidate;
           if (cards.length >= 6) {
             const cardResults = cards.map(() => ({ number: '', name: '', nameConfidence: 0 }));
@@ -626,22 +671,29 @@ export function createOcrRecognizer(
             for (let index = 0; index < cards.length; index += 1) {
               progressListener(`Rückennummer ${index + 1} von ${cards.length} wird gelesen …`);
               const card = typeof cards[index] === 'string' ? { image: cards[index] } : cards[index];
-              const width = Number(card?.width) || 0;
-              const height = Number(card?.height) || 0;
-              const options = width && height ? { rectangle: { left: 0, top: 0, width: Math.max(1, Math.round(width * 0.36)), height } } : undefined;
-              const result = await activeWorker.recognize(card?.image ?? cards[index], options);
+              const rectangle = lineupCardRectangle(card, 'number', isHome);
+              const result = await activeWorker.recognize(card?.image ?? cards[index], rectangle ? { rectangle } : undefined);
               cardResults[index].number = result?.data?.text ?? '';
               cardConfidences.push(Number(result?.data?.confidence) || 0);
+            }
+            const unmatchedNumbers = cardResults.map((card, index) => shirtNumber(card.number) ? -1 : index).filter((index) => index >= 0);
+            if (unmatchedNumbers.length) {
+              await activeWorker.setParameters({ tessedit_pageseg_mode: pageSegmentationModes.block });
+              for (const index of unmatchedNumbers) {
+                progressListener(`Rückennummer ${index + 1} wird noch einmal geprüft …`);
+                const card = typeof cards[index] === 'string' ? { image: cards[index] } : cards[index];
+                const rectangle = lineupCardRectangle(card, 'number', isHome);
+                const result = await activeWorker.recognize(card?.image ?? cards[index], rectangle ? { rectangle } : undefined);
+                if (shirtNumber(result?.data?.text)) cardResults[index].number = result.data.text;
+                cardConfidences.push(Number(result?.data?.confidence) || 0);
+              }
             }
             await activeWorker.setParameters({ tessedit_pageseg_mode: pageSegmentationModes.sparse });
             for (let index = 0; index < cards.length; index += 1) {
               progressListener(`Spielername ${index + 1} von ${cards.length} wird gelesen …`);
               const card = typeof cards[index] === 'string' ? { image: cards[index] } : cards[index];
-              const width = Number(card?.width) || 0;
-              const height = Number(card?.height) || 0;
-              const left = Math.max(0, Math.round(width * 0.3));
-              const options = width && height ? { rectangle: { left, top: 0, width: Math.max(1, width - left), height } } : undefined;
-              const result = await activeWorker.recognize(card?.image ?? cards[index], options);
+              const rectangle = lineupCardRectangle(card, 'name', isHome);
+              const result = await activeWorker.recognize(card?.image ?? cards[index], rectangle ? { rectangle } : undefined);
               cardResults[index].name = result?.data?.text ?? '';
               cardResults[index].nameConfidence = Number(result?.data?.confidence) || 0;
               cardConfidences.push(Number(result?.data?.confidence) || 0);
@@ -658,11 +710,8 @@ export function createOcrRecognizer(
               for (const index of unmatchedNames) {
                 progressListener(`Spielername ${index + 1} wird noch einmal geprüft …`);
                 const card = typeof cards[index] === 'string' ? { image: cards[index] } : cards[index];
-                const width = Number(card?.width) || 0;
-                const height = Number(card?.height) || 0;
-                const left = Math.max(0, Math.round(width * 0.3));
-                const options = width && height ? { rectangle: { left, top: 0, width: Math.max(1, width - left), height } } : undefined;
-                const result = await activeWorker.recognize(card?.image ?? cards[index], options);
+                const rectangle = lineupCardRectangle(card, 'name', isHome);
+                const result = await activeWorker.recognize(card?.image ?? cards[index], rectangle ? { rectangle } : undefined);
                 const alternative = result?.data?.text ?? '';
                 const alternativeMatch = matchKnownPersonName(alternative, knownNames);
                 const alternativeConfidence = Number(result?.data?.confidence) || 0;
