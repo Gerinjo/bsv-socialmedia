@@ -7,6 +7,7 @@
     "node": ">=22.12.0"
   },
   "scripts": {
+    "build": "npm --prefix admin-site run build",
     "catalog:sync": "node scripts/build-bsv-catalog.mjs",
     "render": "node scripts/render-story.mjs",
     "render:all": "node scripts/render-all.mjs",
