@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const adminDir = resolve(scriptDir, '..');
 const repoDir = resolve(adminDir, '..');
-const distDir = resolve(adminDir, 'dist');
+const distDir = resolve(repoDir, 'dist');
 const previewDir = resolve(repoDir, '.preview');
 
 const logo = await readFile(resolve(adminDir, 'assets/bsv-nordstern.png'));
