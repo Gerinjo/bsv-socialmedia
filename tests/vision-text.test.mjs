@@ -2,34 +2,55 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  normalizeVisionText,
-  responseOutputText,
-  visionTextPrompt,
-} from '../supabase/functions/_shared/vision-text.mjs';
+  createOcrRecognizer,
+  normalizeOcrText,
+  ocrProgressText,
+} from '../admin-site/vision-ocr.mjs';
 
-test('lineup prompt requires renderer-compatible text and the BSV team', () => {
-  const prompt = visionTextPrompt('lineup', { bsvTeam: 'BSV Nordstern Radolfzell', opponent: 'SV Beispiel' });
-  assert.match(prompt, /BSV Nordstern Radolfzell/);
-  assert.match(prompt, /01, Vorname Nachname/);
-  assert.match(prompt, /höchstens elf/);
-});
-
-test('lineup text is normalized for the existing player parser', () => {
+test('OCR lineup text is normalized for the existing player parser', () => {
   assert.equal(
-    normalizeVisionText('lineup', '```text\nAufstellung:\n- 1 - P. Branden\n- 11, M. Muster\n```'),
+    normalizeOcrText('lineup', 'Aufstellung:\n1 - P. Branden\n11, M. Muster\n2:1 SV Beispiel'),
     '01, P. Branden\n11, M. Muster',
   );
 });
 
-test('scorer text is normalized for the report image', () => {
+test('OCR scorer text is normalized and repeated names are grouped', () => {
   assert.equal(
-    normalizeVisionText('scorers', 'M. Oosbrugger (19., 46.)\n72 - N. Beispiel'),
+    normalizeOcrText('scorers', 'Torschützen\n19′ M. Oosbrugger\nM. Oosbrugger (46.)\n72 - N. Beispiel\nEndstand 3:1'),
     '(19., 46.) M. Oosbrugger\n(72.) N. Beispiel',
   );
 });
 
-test('Responses API text is read from message content', () => {
-  assert.equal(responseOutputText({
-    output: [{ content: [{ type: 'output_text', text: '01, P. Branden' }] }],
-  }), '01, P. Branden');
+test('OCR scorer text supports separate minute and name lines', () => {
+  assert.equal(normalizeOcrText('scorers', "19'\nM. Oosbrugger\nN. Beispiel\n72."), '(19.) M. Oosbrugger\n(72.) N. Beispiel');
+});
+
+test('OCR progress is translated for the UI', () => {
+  assert.equal(ocrProgressText({ status: 'recognizing text', progress: 0.42 }), 'Text wird lokal erkannt · 42 %');
+});
+
+test('browser OCR worker is reused and its text is normalized', async () => {
+  let workers = 0;
+  const fakeWorker = {
+    async setParameters() {},
+    async recognize() {
+      return { data: { text: "19' M. Oosbrugger", confidence: 91 } };
+    },
+    async terminate() {},
+  };
+  const recognize = createOcrRecognizer(() => ({
+    OEM: { LSTM_ONLY: 1 },
+    PSM: { AUTO: '3' },
+    async createWorker() {
+      workers += 1;
+      return fakeWorker;
+    },
+  }));
+
+  assert.deepEqual(await recognize('data:image/png;base64,abc', 'scorers'), {
+    text: '(19.) M. Oosbrugger',
+    confidence: 91,
+  });
+  await recognize('data:image/png;base64,def', 'scorers');
+  assert.equal(workers, 1);
 });

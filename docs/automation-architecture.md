@@ -84,9 +84,9 @@ Die Admin-Oberfläche läuft owner-only unter <https://bsv-story-automatik.jerom
 
 ### Aufstellung und Torschützen aus Bildern
 
-Aufstellung und Torschützen können weiterhin direkt als Text eingegeben oder alternativ aus einem PNG-, JPG- oder WebP-Bild gelesen werden. Das Admin-Frontend verkleinert das Bild vor dem Versand. `social-media-admin-api` prüft Anmeldung, Teamrolle, Spiel-ID, Dateityp und Dateigröße und sendet das Bild danach unmittelbar an die OpenAI Responses API. Der Upload wird weder im Storage noch in der Datenbank gespeichert. Die API-Antwort wird in das bereits bestehende Textformat normalisiert und als bearbeitbarer Entwurf in das jeweilige Eingabefeld übernommen. Erst ein anschließendes Speichern beziehungsweise Freigeben aktualisiert das Spiel und erzeugt Bilder.
+Aufstellung und Torschützen können weiterhin direkt als Text eingegeben oder alternativ aus einem PNG-, JPG- oder WebP-Bild gelesen werden. Das Admin-Frontend verkleinert das Bild und wertet es anschließend mit Tesseract.js vollständig lokal im Browser aus. Das Bild wird weder an die Admin-API gesendet noch im Storage oder in der Datenbank gespeichert. Nur das deutsche Sprachmodell und die WebAssembly-Laufzeit werden beim ersten Einsatz versionsgebunden von jsDelivr geladen und danach vom Browser zwischengespeichert.
 
-Der OpenAI-Schlüssel liegt ausschließlich als Edge-Function-Secret `OPENAI_API_KEY` vor. Das optionale Secret `OPENAI_VISION_MODEL` wählt das Bildmodell; ohne Angabe wird `gpt-5.4-mini` verwendet. Details zur Bildauswertung stehen in der [offiziellen OpenAI-Dokumentation](https://developers.openai.com/api/docs/guides/images-vision).
+Der erkannte Text wird in das bereits bestehende Format normalisiert und als bearbeitbarer Entwurf in das jeweilige Eingabefeld übernommen. Erst ein anschließendes Speichern beziehungsweise Freigeben aktualisiert das Spiel und erzeugt Bilder. Für die lokale Texterkennung wird kein API-Schlüssel benötigt und es entstehen keine nutzungsabhängigen API-Kosten.
 
 Aktuelle Referenzen:
 
@@ -109,8 +109,6 @@ Secrets:
 - `STORY_RENDER_ENDPOINT`
 - `STORY_RENDER_SECRET`
 - `SOCIAL_WORKER_CRON_SECRET`
-- `OPENAI_API_KEY`
-- `OPENAI_VISION_MODEL` (optional)
 
 ## Betrieb und Freigabe
 

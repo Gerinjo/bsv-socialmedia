@@ -36,6 +36,4 @@ export const runtimeConfig = Object.freeze({
   websiteSponsorSyncSecret: Deno.env.get('WEBSITE_SPONSOR_SYNC_SECRET')?.trim() ?? '',
   instagramAccountId: Deno.env.get('INSTAGRAM_ACCOUNT_ID')?.trim() ?? '',
   instagramAccessToken: Deno.env.get('INSTAGRAM_ACCESS_TOKEN')?.trim() ?? '',
-  openaiApiKey: Deno.env.get('OPENAI_API_KEY')?.trim() ?? '',
-  openaiVisionModel: Deno.env.get('OPENAI_VISION_MODEL')?.trim() || 'gpt-5.4-mini',
 });

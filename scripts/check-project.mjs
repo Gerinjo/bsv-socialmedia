@@ -33,7 +33,7 @@ const adminPage = await readFile(resolve(rootDir, 'admin-site/admin-page.html'),
 const adminApi = await readFile(resolve(rootDir, 'supabase/functions/social-media-admin-api/index.ts'), 'utf8');
 const edgeRenderer = await readFile(resolve(rootDir, 'supabase/functions/story-renderer/index.ts'), 'utf8');
 const socialWorker = await readFile(resolve(rootDir, 'supabase/functions/social-media-worker/index.ts'), 'utf8');
-for (const marker of ['workspaceSearch', 'memberSearch', 'crestSearch', 'discardCrest', 'remove-report-image', 'markReportNeedsApproval', 'reportApprovalView', 'report-action-bar', 'postAudienceGroup', 'persistPostForm', 'approve_post', 'lineupVisionInput', 'scorersVisionInput', 'extract_game_text']) {
+for (const marker of ['workspaceSearch', 'memberSearch', 'crestSearch', 'discardCrest', 'remove-report-image', 'markReportNeedsApproval', 'reportApprovalView', 'report-action-bar', 'postAudienceGroup', 'persistPostForm', 'approve_post', 'lineupVisionInput', 'scorersVisionInput', 'recognizeOcrImage']) {
   if (!adminPage.includes(marker)) throw new Error(`Admin-Oberfläche enthält ${marker} nicht.`);
 }
 const reportSaveHandler = adminPage.match(/document\.querySelectorAll\('\.reportSave'\)[\s\S]*?document\.querySelectorAll\('\.reportApprove'\)/)?.[0] ?? '';
@@ -43,8 +43,11 @@ if (!reportSaveHandler || reportSaveHandler.includes("action:'approve_result'"))
 if (!adminApi.includes("action === 'discard_club_crest'")) {
   throw new Error('Admin-API enthält das Verwerfen von Wappen-Uploads nicht.');
 }
-if (!adminApi.includes("action === 'extract_game_text'") || !adminApi.includes('OPENAI_API_KEY')) {
-  throw new Error('Admin-API enthält keine sichere Bildauswertung für Aufstellung und Torschützen.');
+if (!adminPage.includes('__TESSERACT_SCRIPT__') || !adminPage.includes('__VISION_OCR_SCRIPT__')) {
+  throw new Error('Admin-Oberfläche bindet die lokale Texterkennung nicht ein.');
+}
+if (adminPage.includes("action:'extract_game_text'") || adminApi.includes('api.openai.com') || adminApi.includes('OPENAI_API_KEY')) {
+  throw new Error('Die alte kostenpflichtige Bildauswertung ist noch aktiv.');
 }
 if (!adminApi.includes("last_error: 'Spielbericht wurde geändert. Bitte erneut freigeben.'")) {
   throw new Error('Admin-API macht eine alte Spielbericht-Freigabe nach Änderungen nicht ungültig.');

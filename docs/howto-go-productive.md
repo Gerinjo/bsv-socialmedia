@@ -86,8 +86,6 @@ Pfad im Dashboard:
 | `STORY_RENDER_ENDPOINT` | vorhandenen Wert beibehalten | vorhandenen Wert beibehalten |
 | `STORY_RENDER_SECRET` | vorhandenen Wert beibehalten | vorhandenen Wert beibehalten |
 | `SOCIAL_WORKER_CRON_SECRET` | vorhandenen Wert beibehalten | vorhandenen Wert beibehalten |
-| `OPENAI_API_KEY` | vorhandenen Wert beibehalten | vorhandenen Wert beibehalten |
-| `OPENAI_VISION_MODEL` | optional | optional |
 
 Supabase zeigt nach dem Speichern nur noch einen SHA-256-Digest, nicht den ursprünglichen Secret-Wert. Das ist normal. Secrets stehen Edge Functions nach dem Speichern sofort zur Verfügung; allein deshalb ist kein erneutes Deployment erforderlich. Siehe [Supabase: Environment Variables](https://supabase.com/docs/guides/functions/secrets).
 
@@ -207,7 +205,7 @@ Mindestens monatlich und nach jeder größeren Änderung:
 - Supabase Edge-Function-Logs auf Fehler prüfen.
 - Cron-Jobs und ihre Zeitpläne prüfen.
 - Offene Jobs mit `failed`, `needs_input` oder lange laufendem `rendering` prüfen.
-- OpenAI-API-Nutzung und Kostenlimit für die Bildauslese kontrollieren.
+- Lokale Bildauslese nach Browser- oder Tesseract-Aktualisierungen stichprobenartig prüfen.
 - Supabase-Nutzung, Storage und ausgehenden Traffic kontrollieren.
 - Zugang ausscheidender Mitglieder des Social-Media-Teams deaktivieren.
 - Secrets bei Verdacht auf Offenlegung sofort rotieren.
