@@ -14,7 +14,17 @@ const sponsorStatuses = new Set(['missing', 'needs_review', 'approved', 'rejecte
 const sponsorContexts = new Set(['announcement', 'lineup', 'result', 'report', 'birthday', 'post']);
 const stoppedGameStatuses = new Set(['cancelled', 'aborted']);
 const publishingModes = new Set(['manual', 'automatic']);
+const teamColorSources = new Set(['global', 'group', 'custom']);
 const teamColorKeys = ['background', 'panel', 'primary', 'accent', 'muted', 'surface', 'ink'] as const;
+const defaultTeamColorScheme = {
+  background: '#071f16',
+  panel: '#164f32',
+  primary: '#91c82f',
+  accent: '#f4d638',
+  muted: '#a8cbb4',
+  surface: '#f4f1e8',
+  ink: '#10251a',
+};
 const originalMimeTypes = new Map([
   ['image/jpeg', 'jpg'],
   ['image/png', 'png'],
@@ -494,6 +504,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       { data: games, error: gamesError },
       { data: birthdays, error: birthdaysError },
       { data: teamSettings, error: teamsError },
+      { data: teamColorGroups, error: teamColorGroupsError },
       { data: people, error: peopleError },
       { data: clubs, error: clubsError },
       { data: members, error: membersError },
@@ -512,7 +523,11 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .order('birth_date', { ascending: true }),
       context.supabaseAdmin
         .from('social_teams')
-        .select('id, slug, name, competition, website_path, fussball_de_url, fussball_de_widget_id, sync_enabled, last_synced_at, last_sync_error, active, content_enabled, publishing_mode, color_scheme, sort_order')
+        .select('id, slug, name, competition, website_path, fussball_de_url, fussball_de_widget_id, sync_enabled, last_synced_at, last_sync_error, active, content_enabled, publishing_mode, family_key, color_source, color_scheme, sort_order')
+        .order('sort_order', { ascending: true }),
+      context.supabaseAdmin
+        .from('social_team_color_groups')
+        .select('key, label, color_scheme, sort_order')
         .order('sort_order', { ascending: true }),
       context.supabaseAdmin
         .from('social_people')
@@ -547,7 +562,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .select('sponsor_id, audience_id, context, slot')
         .order('slot', { ascending: true }),
     ]);
-    const readError = gamesError ?? birthdaysError ?? teamsError ?? peopleError ?? clubsError ?? membersError
+    const readError = gamesError ?? birthdaysError ?? teamsError ?? teamColorGroupsError ?? peopleError ?? clubsError ?? membersError
       ?? postAudiencesError ?? postsError ?? sponsorsError ?? sponsorAssignmentsError;
     if (readError) return json({ error: readError.message }, 500);
     return json({
@@ -557,6 +572,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       venues: [...homeVenues],
       teams: (teamSettings ?? []).filter((team: any) => team.active),
       teamSettings: teamSettings ?? [],
+      teamColorGroups: teamColorGroups ?? [],
       people: people ?? [],
       postAudiences: postAudiences ?? [],
       posts: await freshPostUrls(context.supabaseAdmin, posts ?? []),
@@ -611,18 +627,36 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       const teamId = required(body.teamId, 'Mannschaft');
       const publishingMode = required(body.publishingMode, 'Veröffentlichungsmodus');
       if (!publishingModes.has(publishingMode)) throw new Error('Der Veröffentlichungsmodus ist ungültig.');
+      const colorSource = String(body.colorSource ?? 'custom').trim();
+      if (!teamColorSources.has(colorSource)) throw new Error('Die Farbquelle ist ungültig.');
       const { data: previousTeam, error: previousTeamError } = await context.supabaseAdmin
         .from('social_teams')
-        .select('id, color_scheme')
+        .select('id, family_key, color_scheme')
         .eq('id', teamId)
         .maybeSingle();
       if (previousTeamError) throw previousTeamError;
       if (!previousTeam) throw new Error('Die Mannschaft wurde nicht gefunden.');
+      let resolvedColorScheme: Record<string, string>;
+      if (colorSource === 'global') {
+        resolvedColorScheme = { ...defaultTeamColorScheme };
+      } else if (colorSource === 'group') {
+        const { data: colorGroup, error: colorGroupError } = await context.supabaseAdmin
+          .from('social_team_color_groups')
+          .select('color_scheme')
+          .eq('key', previousTeam.family_key)
+          .maybeSingle();
+        if (colorGroupError) throw colorGroupError;
+        if (!colorGroup) throw new Error('Für diese Mannschaft wurde keine Familienfarbe gefunden.');
+        resolvedColorScheme = teamColorScheme(colorGroup.color_scheme);
+      } else {
+        resolvedColorScheme = teamColorScheme(body.colorScheme);
+      }
       const payload = {
         active: body.active === true,
         content_enabled: body.contentEnabled === true,
         publishing_mode: publishingMode,
-        color_scheme: teamColorScheme(body.colorScheme),
+        color_source: colorSource,
+        color_scheme: resolvedColorScheme,
       };
       const previousColorScheme = teamColorScheme(previousTeam.color_scheme);
       const colorSchemeChanged = teamColorKeys.some((key) => previousColorScheme[key] !== payload.color_scheme[key]);
@@ -659,6 +693,43 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         previewRefresh = await rerenderTeamAnnouncementPreviews(context.supabaseAdmin, teamId);
       }
       return json({ ok: true, team, colorSchemeChanged, previewRefresh });
+    }
+
+    if (action === 'save_team_color_group') {
+      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
+      const groupKey = required(body.groupKey, 'Mannschaftsfamilie');
+      const colorScheme = teamColorScheme(body.colorScheme);
+      const { data: colorGroup, error: colorGroupError } = await context.supabaseAdmin
+        .from('social_team_color_groups')
+        .update({ color_scheme: colorScheme })
+        .eq('key', groupKey)
+        .select('key, label, color_scheme, sort_order')
+        .maybeSingle();
+      if (colorGroupError) throw colorGroupError;
+      if (!colorGroup) throw new Error('Die Mannschaftsfamilie wurde nicht gefunden.');
+      const { data: inheritedTeams, error: inheritedTeamsError } = await context.supabaseAdmin
+        .from('social_teams')
+        .update({ color_scheme: colorScheme })
+        .eq('family_key', groupKey)
+        .eq('color_source', 'group')
+        .select('id, active, content_enabled');
+      if (inheritedTeamsError) throw inheritedTeamsError;
+      const previewRefreshes = [];
+      for (const team of inheritedTeams ?? []) {
+        if (team.active && team.content_enabled) {
+          previewRefreshes.push(await rerenderTeamAnnouncementPreviews(context.supabaseAdmin, team.id));
+        }
+      }
+      return json({
+        ok: true,
+        colorGroup,
+        inheritedTeams: (inheritedTeams ?? []).length,
+        previewRefresh: {
+          requested: previewRefreshes.reduce((total, item) => total + Number(item.requested ?? 0), 0),
+          generated: previewRefreshes.reduce((total, item) => total + Number(item.generated ?? 0), 0),
+          failed: previewRefreshes.reduce((total, item) => total + Number(item.failed ?? 0), 0),
+        },
+      });
     }
 
     if (action === 'save_game') {

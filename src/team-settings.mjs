@@ -10,6 +10,8 @@ export const DEFAULT_TEAM_COLOR_SCHEME = Object.freeze({
 
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 const COLOR_KEYS = Object.keys(DEFAULT_TEAM_COLOR_SCHEME);
+export const TEAM_COLOR_SOURCES = Object.freeze(['global', 'group', 'custom']);
+export const TEAM_FAMILY_KEYS = Object.freeze(['herren', 'frauen', 'junioren', 'juniorinnen']);
 
 export function normalizeTeamColorScheme(value) {
   const input = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
@@ -17,6 +19,20 @@ export function normalizeTeamColorScheme(value) {
     const candidate = String(input[key] ?? '').trim();
     return [key, HEX_COLOR.test(candidate) ? candidate.toLowerCase() : DEFAULT_TEAM_COLOR_SCHEME[key]];
   }));
+}
+
+export function teamFamilyKey(slug) {
+  const value = String(slug ?? '').trim().toLowerCase();
+  if (value.includes('juniorinnen')) return 'juniorinnen';
+  if (value.startsWith('frauen-')) return 'frauen';
+  if (value.startsWith('herren-') || value === 'alte-herren') return 'herren';
+  return 'junioren';
+}
+
+export function resolveTeamColorScheme({ source, teamScheme, groupScheme } = {}) {
+  if (source === 'global') return normalizeTeamColorScheme(DEFAULT_TEAM_COLOR_SCHEME);
+  if (source === 'group') return normalizeTeamColorScheme(groupScheme);
+  return normalizeTeamColorScheme(teamScheme);
 }
 
 export function teamContentEnabled(team) {

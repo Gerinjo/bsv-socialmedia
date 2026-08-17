@@ -4,6 +4,8 @@ import {
   DEFAULT_TEAM_COLOR_SCHEME,
   applyTeamColorScheme,
   normalizeTeamColorScheme,
+  resolveTeamColorScheme,
+  teamFamilyKey,
   teamAllowsAutomaticPublishing,
   teamContentEnabled,
 } from '../src/team-settings.mjs';
@@ -12,6 +14,22 @@ test('team content requires an active team and enabled generation', () => {
   assert.equal(teamContentEnabled({ active: true, content_enabled: true }), true);
   assert.equal(teamContentEnabled({ active: false, content_enabled: true }), false);
   assert.equal(teamContentEnabled({ active: true, content_enabled: false }), false);
+});
+
+test('team slugs map to the four color families', () => {
+  assert.equal(teamFamilyKey('herren-1'), 'herren');
+  assert.equal(teamFamilyKey('alte-herren'), 'herren');
+  assert.equal(teamFamilyKey('frauen-2'), 'frauen');
+  assert.equal(teamFamilyKey('u15-c1-junioren'), 'junioren');
+  assert.equal(teamFamilyKey('u17-juniorinnen'), 'juniorinnen');
+});
+
+test('team color source resolves global, family, and individual palettes', () => {
+  const groupScheme = { ...DEFAULT_TEAM_COLOR_SCHEME, primary: '#123456' };
+  const teamScheme = { ...DEFAULT_TEAM_COLOR_SCHEME, primary: '#abcdef' };
+  assert.equal(resolveTeamColorScheme({ source: 'global', groupScheme, teamScheme }).primary, '#91c82f');
+  assert.equal(resolveTeamColorScheme({ source: 'group', groupScheme, teamScheme }).primary, '#123456');
+  assert.equal(resolveTeamColorScheme({ source: 'custom', groupScheme, teamScheme }).primary, '#abcdef');
 });
 
 test('automatic publishing additionally respects the global safety switch', () => {
