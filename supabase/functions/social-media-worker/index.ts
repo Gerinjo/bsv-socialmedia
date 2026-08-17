@@ -2,6 +2,7 @@ import { withSupabase } from 'npm:@supabase/server@1.4.1';
 import { runtimeConfig } from '../_shared/config.ts';
 import { publishInstagramCarousel, publishInstagramImage } from '../../../src/instagram-publisher.mjs';
 import { selectAssignedSponsors, sponsorMentionLine } from '../../../src/sponsor-assignments.mjs';
+import { teamAllowsAutomaticPublishing, teamContentEnabled } from '../../../src/team-settings.mjs';
 
 type JobStatus = 'pending' | 'rendering' | 'preview_ready' | 'published' | 'failed' | 'skipped' | 'needs_input';
 
@@ -27,7 +28,13 @@ type GameJob = {
     report_image_paths: string[] | null;
     status: 'scheduled' | 'live' | 'finished' | 'postponed' | 'cancelled' | 'aborted';
     lineup: { players?: unknown[]; formation?: string; approvedAt?: string } | null;
-    team: { slug: string } | null;
+    team: {
+      slug: string;
+      active: boolean;
+      content_enabled: boolean;
+      publishing_mode: 'manual' | 'automatic';
+      color_scheme: Record<string, string> | null;
+    } | null;
     home_club: {
       crest_status: 'missing' | 'needs_review' | 'approved' | 'rejected';
       crest_transparent_path: string | null;
@@ -72,6 +79,12 @@ type PostJob = {
       slug: string;
       label: string;
       audience_group: string;
+      team: {
+        active: boolean;
+        content_enabled: boolean;
+        publishing_mode: 'manual' | 'automatic';
+        color_scheme: Record<string, string> | null;
+      } | null;
     } | null;
   };
 };
@@ -91,7 +104,7 @@ const gameJobSelect = `
     kickoff_at, home_score, away_score, result_label, result_message, report_scorers,
     action_image_path, report_image_paths, status,
     lineup, enabled,
-    team:social_teams(slug),
+    team:social_teams(slug, active, content_enabled, publishing_mode, color_scheme),
     home_club:social_clubs!social_games_home_club_id_fkey(
       crest_status, crest_transparent_path
     ),
@@ -105,7 +118,10 @@ const postJobSelect = `
   id, attempts, status,
   post:social_posts!inner(
     id, title, body, image_paths, enabled,
-    audience:social_post_audiences(id, slug, label, audience_group)
+    audience:social_post_audiences(
+      id, slug, label, audience_group,
+      team:social_teams(active, content_enabled, publishing_mode, color_scheme)
+    )
   )
 `;
 
@@ -157,6 +173,7 @@ async function renderGamePreview(candidate: GameJob, sponsors: any[]): Promise<R
       jobId: candidate.id,
       game: candidate.game,
       sponsors,
+      colorScheme: candidate.game.team?.color_scheme,
     });
   }
 
@@ -173,6 +190,7 @@ async function renderGamePreview(candidate: GameJob, sponsors: any[]): Promise<R
       sponsors,
       reportPageIndex,
       reportPageCount: pageCount,
+      colorScheme: candidate.game.team?.color_scheme,
     }));
   }
   return {
@@ -197,6 +215,7 @@ async function renderPostPreview(candidate: PostJob, sponsors: any[]): Promise<R
       sponsors,
       postPageIndex,
       postPageCount: paths.length,
+      colorScheme: candidate.post.audience?.team?.color_scheme,
     }));
   }
   return {
@@ -260,7 +279,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       if (previewError) return Response.json({ error: previewError.message }, { status: 500 });
 
       for (const candidate of (previewData ?? []) as unknown as GameJob[]) {
-        if (!candidate.game.enabled) continue;
+        if (!candidate.game.enabled || !teamContentEnabled(candidate.game.team)) continue;
         try {
           const sponsors = assignedSponsors(sponsorData, candidate.game.team, candidate.story_type);
           const preview = await render({
@@ -268,6 +287,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
             jobId: candidate.id,
             game: candidate.game,
             sponsors,
+            colorScheme: candidate.game.team?.color_scheme,
           });
           await context.supabaseAdmin
             .from('social_story_jobs')
@@ -306,7 +326,14 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
     }
 
     for (const candidate of gameData as unknown as GameJob[]) {
-      if (!candidate.game.enabled) continue;
+      if (!candidate.game.enabled || !teamContentEnabled(candidate.game.team)) {
+        await context.supabaseAdmin
+          .from('social_story_jobs')
+          .update({ status: 'skipped', last_error: 'Die Inhaltserzeugung ist in den Team-Stammdaten deaktiviert.' })
+          .eq('id', candidate.id)
+          .eq('status', 'pending');
+        continue;
+      }
       const attempt = candidate.attempts + 1;
       const { data: claimed } = await context.supabaseAdmin
         .from('social_story_jobs')
@@ -361,7 +388,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
         const sponsors = assignedSponsors(sponsorData, candidate.game.team, candidate.story_type);
         const preview = await renderGamePreview(candidate, sponsors);
 
-        if (!runtimeConfig.testMode) {
+        if (teamAllowsAutomaticPublishing(candidate.game.team, runtimeConfig.testMode)) {
           const caption = candidate.story_type === 'report'
             ? [
               candidate.game.result_message,
@@ -448,7 +475,15 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
     }
 
     for (const candidate of postData as unknown as PostJob[]) {
-      if (!candidate.post.enabled) continue;
+      const postTeam = candidate.post.audience?.team;
+      if (!candidate.post.enabled || (postTeam && !teamContentEnabled(postTeam))) {
+        await context.supabaseAdmin
+          .from('social_post_jobs')
+          .update({ status: 'skipped', last_error: 'Die Inhaltserzeugung ist in den Team-Stammdaten deaktiviert.' })
+          .eq('id', candidate.id)
+          .eq('status', 'pending');
+        continue;
+      }
       const attempt = candidate.attempts + 1;
       const { data: claimed } = await context.supabaseAdmin
         .from('social_post_jobs')
@@ -472,7 +507,10 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       try {
         const sponsors = assignedSponsors(sponsorData, candidate.post.audience, 'post');
         const preview = await renderPostPreview(candidate, sponsors);
-        if (!runtimeConfig.testMode) {
+        const automaticallyPublish = postTeam
+          ? teamAllowsAutomaticPublishing(postTeam, runtimeConfig.testMode)
+          : !runtimeConfig.testMode;
+        if (automaticallyPublish) {
           const caption = [candidate.post.title, candidate.post.body, sponsorMentionLine(sponsors), '#aufgehtsgrün']
             .filter(Boolean)
             .join('\n\n')

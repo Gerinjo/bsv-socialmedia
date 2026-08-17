@@ -1,4 +1,5 @@
 import { STORY_ASSETS, STORY_TEMPLATES } from './story-assets.generated.ts';
+import { applyTeamColorScheme } from '../../../src/team-settings.mjs';
 
 export const STORY_TYPES = ['announcement', 'lineup', 'result', 'report', 'post', 'birthday'] as const;
 export type StoryType = typeof STORY_TYPES[number];
@@ -220,6 +221,7 @@ export function renderStorySvg({
   reportPage = 1,
   reportPageCount = 1,
   reportPageKind = 'result',
+  colorScheme,
 }: {
   type: StoryType;
   match: StoryInput;
@@ -233,6 +235,7 @@ export function renderStorySvg({
   reportPage?: number;
   reportPageCount?: number;
   reportPageKind?: 'result' | 'scorers' | 'photo';
+  colorScheme?: Record<string, unknown>;
 }): string {
   if (!STORY_TYPES.includes(type)) throw new Error(`Unbekannter Story-Typ: ${type}`);
 
@@ -327,5 +330,8 @@ export function renderStorySvg({
     : type === 'report' && reportPageKind === 'photo'
       ? STORY_TEMPLATES.reportPhoto
       : STORY_TEMPLATES[type];
-  return fillTemplate(template, values, new Set(['PLAYER_ROWS', 'SCORER_ROWS', 'SPONSOR_LOGOS']));
+  return applyTeamColorScheme(
+    fillTemplate(template, values, new Set(['PLAYER_ROWS', 'SCORER_ROWS', 'SPONSOR_LOGOS'])),
+    colorScheme,
+  );
 }

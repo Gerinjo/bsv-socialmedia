@@ -13,6 +13,8 @@ const crestStatuses = new Set(['missing', 'needs_review', 'approved', 'rejected'
 const sponsorStatuses = new Set(['missing', 'needs_review', 'approved', 'rejected']);
 const sponsorContexts = new Set(['announcement', 'lineup', 'result', 'report', 'birthday', 'post']);
 const stoppedGameStatuses = new Set(['cancelled', 'aborted']);
+const publishingModes = new Set(['manual', 'automatic']);
+const teamColorKeys = ['background', 'panel', 'primary', 'accent', 'muted', 'surface', 'ink'] as const;
 const originalMimeTypes = new Map([
   ['image/jpeg', 'jpg'],
   ['image/png', 'png'],
@@ -89,6 +91,15 @@ function validHttpUrl(value: unknown): string | null {
   const url = new URL(input);
   if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw new Error('Der Quellenlink ist ungültig.');
   return url.toString();
+}
+
+function teamColorScheme(value: unknown): Record<string, string> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Das Farbschema ist ungültig.');
+  return Object.fromEntries(teamColorKeys.map((key) => {
+    const color = String((value as Record<string, unknown>)[key] ?? '').trim().toLowerCase();
+    if (!/^#[0-9a-f]{6}$/.test(color)) throw new Error(`Die Farbe „${key}“ ist ungültig.`);
+    return [key, color];
+  }));
 }
 
 function pngHasAlpha(bytes: Uint8Array): boolean {
@@ -171,6 +182,23 @@ async function runWorker(targetJobIds: string[] = [], targetPostJobIds: string[]
 }
 
 async function renderGameJobNow(admin: any, gameId: string, storyType: 'announcement' | 'lineup' | 'result' | 'report') {
+  const { data: game, error: gameError } = await admin
+    .from('social_games')
+    .select('id, team:social_teams(active, content_enabled)')
+    .eq('id', gameId)
+    .maybeSingle();
+  if (gameError) throw gameError;
+  if (!game) throw new Error('Das Spiel wurde nicht gefunden.');
+  const team = Array.isArray(game.team) ? game.team[0] : game.team;
+  if (!team?.active || !team?.content_enabled) {
+    await admin
+      .from('social_story_jobs')
+      .update({ status: 'skipped', last_error: 'Die Inhaltserzeugung ist in den Team-Stammdaten deaktiviert.' })
+      .eq('game_id', gameId)
+      .eq('story_type', storyType)
+      .in('status', ['pending', 'preview_ready', 'failed', 'needs_input']);
+    return { skipped: true, reason: 'team_content_disabled' };
+  }
   const { data: existing, error: selectError } = await admin
     .from('social_story_jobs')
     .select('id')
@@ -401,7 +429,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     const [
       { data: games, error: gamesError },
       { data: birthdays, error: birthdaysError },
-      { data: teams, error: teamsError },
+      { data: teamSettings, error: teamsError },
       { data: people, error: peopleError },
       { data: clubs, error: clubsError },
       { data: members, error: membersError },
@@ -420,8 +448,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .order('birth_date', { ascending: true }),
       context.supabaseAdmin
         .from('social_teams')
-        .select('id, slug, name, competition, website_path, fussball_de_url, fussball_de_widget_id, sync_enabled, last_synced_at, last_sync_error, sort_order')
-        .eq('active', true)
+        .select('id, slug, name, competition, website_path, fussball_de_url, fussball_de_widget_id, sync_enabled, last_synced_at, last_sync_error, active, content_enabled, publishing_mode, color_scheme, sort_order')
         .order('sort_order', { ascending: true }),
       context.supabaseAdmin
         .from('social_people')
@@ -438,7 +465,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .order('email', { ascending: true }),
       context.supabaseAdmin
         .from('social_post_audiences')
-        .select('id, slug, audience_group, label, sort_order')
+        .select('id, slug, audience_group, label, sort_order, team_id')
         .eq('active', true)
         .order('sort_order', { ascending: true }),
       context.supabaseAdmin
@@ -462,9 +489,10 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     return json({
       user: { userId, email, role: String(membership.role ?? '').trim() || 'sm-team' },
       members: members ?? [],
-      testMode: true,
+      testMode: runtimeConfig.testMode,
       venues: [...homeVenues],
-      teams: teams ?? [],
+      teams: (teamSettings ?? []).filter((team: any) => team.active),
+      teamSettings: teamSettings ?? [],
       people: people ?? [],
       postAudiences: postAudiences ?? [],
       posts: await freshPostUrls(context.supabaseAdmin, posts ?? []),
@@ -514,13 +542,56 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       return json({ ok: true, member });
     }
 
+    if (action === 'save_team_settings') {
+      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
+      const teamId = required(body.teamId, 'Mannschaft');
+      const publishingMode = required(body.publishingMode, 'Veröffentlichungsmodus');
+      if (!publishingModes.has(publishingMode)) throw new Error('Der Veröffentlichungsmodus ist ungültig.');
+      const payload = {
+        active: body.active === true,
+        content_enabled: body.contentEnabled === true,
+        publishing_mode: publishingMode,
+        color_scheme: teamColorScheme(body.colorScheme),
+      };
+      const { data: team, error: teamError } = await context.supabaseAdmin
+        .from('social_teams')
+        .update(payload)
+        .eq('id', teamId)
+        .select('*')
+        .single();
+      if (teamError) throw teamError;
+      const { error: audienceError } = await context.supabaseAdmin
+        .from('social_post_audiences')
+        .update({ active: payload.active })
+        .eq('team_id', teamId);
+      if (audienceError) throw audienceError;
+      if (!payload.active || !payload.content_enabled) {
+        const { data: gameRows, error: gamesError } = await context.supabaseAdmin
+          .from('social_games')
+          .select('id')
+          .eq('team_id', teamId)
+          .eq('enabled', true);
+        if (gamesError) throw gamesError;
+        const gameIds = (gameRows ?? []).map((game: any) => game.id);
+        if (gameIds.length) {
+          const { error: jobsError } = await context.supabaseAdmin
+            .from('social_story_jobs')
+            .update({ status: 'skipped', last_error: 'Die Inhaltserzeugung ist in den Team-Stammdaten deaktiviert.' })
+            .in('game_id', gameIds)
+            .in('status', ['pending', 'preview_ready', 'failed', 'needs_input']);
+          if (jobsError) throw jobsError;
+        }
+      }
+      return json({ ok: true, team });
+    }
+
     if (action === 'save_game') {
       const kickoff = new Date(required(body.kickoffAt, 'Anstoß'));
       if (Number.isNaN(kickoff.getTime())) throw new Error('Anstoß ist ungültig.');
       const teamId = required(body.teamId, 'BSV-Mannschaft');
       const { data: team, error: teamError } = await context.supabaseAdmin
         .from('social_teams')
-        .select('id, name, competition')
+        .select('id, name, competition, content_enabled')
         .eq('id', teamId)
         .eq('active', true)
         .maybeSingle();
@@ -840,7 +911,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       const postId = required(body.postId, 'Beitrags-ID');
       const { data: post, error: postError } = await context.supabaseAdmin
         .from('social_posts')
-        .select('id, title, body, image_paths, enabled')
+        .select('id, title, body, image_paths, enabled, audience:social_post_audiences(team:social_teams(active, content_enabled))')
         .eq('id', postId)
         .maybeSingle();
       if (postError) throw postError;
@@ -848,6 +919,11 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       if (!String(post.title ?? '').trim()) throw new Error('Der Titel fehlt.');
       if (!String(post.body ?? '').trim()) throw new Error('Der Beitragstext fehlt.');
       if (!Array.isArray(post.image_paths) || post.image_paths.length < 1) throw new Error('Bitte mindestens ein Bild hochladen.');
+      const audience = Array.isArray(post.audience) ? post.audience[0] : post.audience;
+      const audienceTeam = Array.isArray(audience?.team) ? audience.team[0] : audience?.team;
+      if (audienceTeam && (!audienceTeam.active || !audienceTeam.content_enabled)) {
+        throw new Error('Für diese Mannschaft ist die Inhaltserzeugung in den Stammdaten deaktiviert.');
+      }
       const { data: job, error: jobError } = await context.supabaseAdmin
         .from('social_post_jobs')
         .upsert({

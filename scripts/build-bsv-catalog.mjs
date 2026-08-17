@@ -4,18 +4,37 @@ import { pathToFileURL } from 'node:url';
 
 const websiteRoot = new URL('../../bsv-website/', import.meta.url);
 const websiteBaseUrl = 'https://gerinjo.github.io/bsv-website';
-const activeTeamPaths = [
+const activeTeamPaths = new Set([
   'fussball/herren/bezirksliga',
   'fussball/herren/kreisliga-2',
   'fussball/frauen/bezirksliga',
   'fussball/frauen/kreisliga',
-];
-const teamSlugs = new Map([
-  ['fussball/herren/bezirksliga', 'herren-1'],
-  ['fussball/herren/kreisliga-2', 'herren-2'],
-  ['fussball/frauen/bezirksliga', 'frauen-1'],
-  ['fussball/frauen/kreisliga', 'frauen-2'],
 ]);
+const websiteTeams = [
+  ['fussball/herren/bezirksliga', 'herren-1', 'BSV Nordstern Radolfzell', 10],
+  ['fussball/herren/kreisliga-2', 'herren-2', 'SG Markelfingen/BSV Nordstern Radolfzell 2', 11],
+  ['fussball/alte-herren', 'alte-herren', 'BSV Nordstern Radolfzell · Alte Herren', 12],
+  ['fussball/frauen/bezirksliga', 'frauen-1', 'SG Nordstern Radolfzell/Öhningen-Gaienhofen/Bankholzen-Moos', 20],
+  ['fussball/frauen/kreisliga', 'frauen-2', 'SG Nordstern Radolfzell/Öhningen-Gaienhofen/Bankholzen-Moos 2', 21],
+  ['jugend/u19', 'u19-junioren', 'BSV Nordstern Radolfzell · U19 A-Junioren', 30],
+  ['jugend/u17', 'u17-junioren', 'BSV Nordstern Radolfzell · U17 B-Junioren', 31],
+  ['jugend/u15-c1', 'u15-c1-junioren', 'BSV Nordstern Radolfzell · U15 C1-Junioren', 32],
+  ['jugend/u15-c2', 'u15-c2-junioren', 'BSV Nordstern Radolfzell · U15 C2-Junioren', 33],
+  ['jugend/u13-d1', 'u13-d1-junioren', 'BSV Nordstern Radolfzell · U13 D1-Junioren', 34],
+  ['jugend/u13-d2', 'u13-d2-junioren', 'BSV Nordstern Radolfzell · U13 D2-Junioren', 35],
+  ['jugend/u13-d3', 'u13-d3-junioren', 'BSV Nordstern Radolfzell · U13 D3-Junioren', 36],
+  ['jugend/u11-e1', 'u11-e1-junioren', 'BSV Nordstern Radolfzell · U11 E1-Junioren', 37],
+  ['jugend/u11-e2', 'u11-e2-junioren', 'BSV Nordstern Radolfzell · U11 E2-Junioren', 38],
+  ['jugend/u11-e3', 'u11-e3-junioren', 'BSV Nordstern Radolfzell · U11 E3-Junioren', 39],
+  ['jugend/u9-f', 'u9-f-junioren', 'BSV Nordstern Radolfzell · U9 F-Junioren', 40],
+  ['jugend/u8-f', 'u8-f-junioren', 'BSV Nordstern Radolfzell · U8 F-Junioren', 41],
+  ['jugend/u7-g', 'u7-bambinis', 'BSV Nordstern Radolfzell · U7 Bambinis', 42],
+  ['jugend/u6-g', 'u6-spielgruppe', 'BSV Nordstern Radolfzell · U6 Spielgruppe', 43],
+  ['jugend/juniorinnen/u17', 'u17-juniorinnen', 'BSV Nordstern Radolfzell · U17 B-Juniorinnen', 50],
+  ['jugend/juniorinnen/u15', 'u15-juniorinnen', 'BSV Nordstern Radolfzell · U15 C-Juniorinnen', 51],
+  ['jugend/juniorinnen/u13', 'u13-juniorinnen', 'BSV Nordstern Radolfzell · U13 D-Juniorinnen', 52],
+];
+const teamSlugs = new Map(websiteTeams.map(([path, slug]) => [path, slug]));
 const nameCorrections = new Map([
   ['Eberhardt Klinkenberg', 'Eberhard Klinkenberg'],
   ['Migo Jentsch', 'Michael Jentsch'],
@@ -75,18 +94,21 @@ const [{ teamProfiles }, { personImageByName }] = await Promise.all([
   loadModule('src/data/personImages.ts'),
 ]);
 
-const teams = activeTeamPaths.map((path, index) => {
+const teams = websiteTeams.map(([path, slug, name, sortOrder]) => {
   const profile = teamProfiles[path];
-  const { name, competition } = splitKicker(profile.kicker);
+  const competition = activeTeamPaths.has(path) ? splitKicker(profile.kicker).competition : profile.kicker;
   return {
-    slug: teamSlugs.get(path),
+    slug,
     name,
     competition,
     websitePath: path,
     fussballDeUrl: profile.fussballDeUrl ?? null,
     fussballDeTeamId: profile.fussballDeUrl?.match(/\/team-id\/([^/?#]+)/)?.[1] ?? null,
     fussballDeWidgetId: profile.fussballDeWidgetId ?? null,
-    sortOrder: index + 1,
+    sortOrder,
+    active: activeTeamPaths.has(path),
+    contentEnabled: activeTeamPaths.has(path),
+    publishingMode: 'manual',
   };
 });
 
@@ -141,5 +163,5 @@ const catalog = {
 const output = new URL('../config/bsv-catalog.json', import.meta.url);
 await mkdir(new URL('../config/', import.meta.url), { recursive: true });
 await writeFile(output, `${JSON.stringify(catalog, null, 2)}\n`);
-console.log(`BSV-Katalog: ${catalog.teams.length} aktive Teams, ${catalog.people.length} Personen, ${catalog.memberships.length} Zuordnungen.`);
+console.log(`BSV-Katalog: ${catalog.teams.length} Website-Teams, ${catalog.people.length} Personen, ${catalog.memberships.length} Zuordnungen.`);
 console.log(pathToFileURL(output.pathname).href);

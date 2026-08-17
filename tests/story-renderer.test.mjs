@@ -56,6 +56,29 @@ test('Aufstellungs-SVG zeigt abgekürzte Vornamen', async () => {
   assert.doesNotMatch(svg, />Mohamad Salim Hartel<\/text>/);
 });
 
+test('Mannschaftsfarben werden auf das fertige Story-Template angewendet', async () => {
+  const svg = await renderStorySvg({
+    rootDir,
+    type: 'lineup',
+    match,
+    lineup: { players: [{ number: 14, name: 'M. Test' }] },
+    colorScheme: {
+      background: '#112233',
+      panel: '#223344',
+      primary: '#33aa77',
+      accent: '#ffbb22',
+      muted: '#aabbcc',
+      surface: '#fefefe',
+      ink: '#111111',
+    },
+  });
+  assert.match(svg, /#112233/);
+  assert.match(svg, /#33aa77/);
+  assert.match(svg, /#ffbb22/);
+  assert.doesNotMatch(svg, /#071f16/i);
+  assert.doesNotMatch(svg, /#91c82f/i);
+});
+
 test('Heim- und Gastwappen bilden in der Spielankündigung ein diagonales Duell', async () => {
   const svg = await renderStorySvg({
     rootDir,

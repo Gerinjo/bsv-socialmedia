@@ -31,6 +31,7 @@ type RequestBody = {
   reportPageCount?: number;
   postPageIndex?: number;
   postPageCount?: number;
+  colorScheme?: Record<string, unknown>;
 };
 
 function json(data: unknown, status = 200): Response {
@@ -203,6 +204,7 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
         imageAssets: images,
         sponsorLogoDataUris,
         playerPhotoDataUri,
+        colorScheme: body.colorScheme,
       });
     } else if (body.type === 'post') {
       if (!body.post) return json({ error: 'post_missing' }, 400);
@@ -237,6 +239,7 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
           actionPhotoDataUri,
           reportPage: sourceIndex + 1,
           reportPageCount: outputPageCount,
+          colorScheme: body.colorScheme,
         });
       };
     } else {
@@ -283,6 +286,7 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
             reportPage: sourceIndex + 1,
             reportPageCount: outputPageCount,
             reportPageKind: sourceIndex === 0 ? 'result' : sourceIndex === 1 ? 'scorers' : 'photo',
+            colorScheme: body.colorScheme,
           });
         };
       } else {
@@ -299,6 +303,7 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
             homeCrestDataUri,
             awayCrestDataUri,
             actionPhotoDataUri,
+            colorScheme: body.colorScheme,
           });
         };
       }

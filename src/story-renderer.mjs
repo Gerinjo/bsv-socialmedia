@@ -1,6 +1,7 @@
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import { extname, resolve } from 'node:path';
+import { applyTeamColorScheme } from './team-settings.mjs';
 
 export const STORY_TYPES = ['announcement', 'lineup', 'result', 'report', 'post', 'birthday'];
 
@@ -212,6 +213,7 @@ export async function renderStorySvg({
   reportPage = 1,
   reportPageCount = 1,
   reportPageKind = 'result',
+  colorScheme,
 }) {
   if (!STORY_TYPES.includes(type)) throw new Error(`Unbekannter Story-Typ: ${type}`);
 
@@ -314,7 +316,10 @@ export async function renderStorySvg({
     SPONSOR_LOGOS: sponsorLogoStrip(type, sponsorLogoDataUris ?? (type === 'announcement' ? [sparkasseLogoDataUri] : [])),
   };
 
-  return fillTemplate(template, values, new Set(['PLAYER_ROWS', 'SCORER_ROWS', 'SPONSOR_LOGOS']));
+  return applyTeamColorScheme(
+    fillTemplate(template, values, new Set(['PLAYER_ROWS', 'SCORER_ROWS', 'SPONSOR_LOGOS'])),
+    colorScheme,
+  );
 }
 
 export async function writeStoryFiles({
@@ -328,8 +333,9 @@ export async function writeStoryFiles({
   reportPage,
   reportPageCount,
   reportPageKind,
+  colorScheme,
 }) {
-  const svg = await renderStorySvg({ rootDir, type, match, lineup, photoPath, reportPage, reportPageCount, reportPageKind });
+  const svg = await renderStorySvg({ rootDir, type, match, lineup, photoPath, reportPage, reportPageCount, reportPageKind, colorScheme });
   await mkdir(outputDir, { recursive: true });
 
   const svgPath = resolve(outputDir, `${basename}.svg`);
