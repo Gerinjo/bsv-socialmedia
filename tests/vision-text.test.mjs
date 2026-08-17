@@ -120,6 +120,29 @@ test('graphical lineup cards are detected separately in both columns', () => {
   assert.equal(findLineupCardRegions({ width, height, data }).length, 4);
 });
 
+test('lineup card detection restores a card hidden by multi-line name gaps', () => {
+  const width = 200;
+  const height = 240;
+  const data = new Uint8ClampedArray(width * height * 4);
+  for (let offset = 0; offset < data.length; offset += 4) {
+    data[offset] = 20; data[offset + 1] = 90; data[offset + 2] = 30; data[offset + 3] = 255;
+  }
+  const cards = [
+    ...[10, 50, 130, 170, 210].map((y) => [5, y, 90, y + 29]),
+    ...[30, 70, 110, 150, 190].map((y) => [105, y, 190, y + 29]),
+  ];
+  for (const [fromX, fromY, toX, toY] of cards) {
+    for (let y = fromY; y <= toY; y += 1) for (let x = fromX; x <= toX; x += 1) {
+      const offset = (y * width + x) * 4;
+      data[offset] = 34; data[offset + 1] = 34; data[offset + 2] = 34;
+    }
+  }
+  const regions = findLineupCardRegions({ width, height, data });
+  assert.equal(regions.length, 11);
+  assert.equal(regions.filter((region) => region.x + region.width / 2 < width / 2).length, 6);
+  assert.ok(regions.some((region) => region.y >= 85 && region.y <= 100));
+});
+
 test('card isolation keeps the full light glyph without requiring a dark neighboring pixel', () => {
   const card = isolateLineupCardPixels({
     width: 3,
@@ -237,4 +260,40 @@ test('segmented lineup cards read number and name in separate sparse regions', a
   assert.ok(calls.slice(0, 11).every((call) => call.options.rectangle.left === 0));
   assert.ok(calls.slice(11).every((call) => call.options.rectangle.left > 0));
   assert.ok(parameters.filter((value) => value.tessedit_pageseg_mode === '11').length >= 2);
+});
+
+test('segmented lineup retries a missed shirt number as a single line', async () => {
+  const parameters = [];
+  let activeMode = '3';
+  let firstCardNumberAttempts = 0;
+  const fakeWorker = {
+    async setParameters(value) {
+      parameters.push(value);
+      activeMode = value.tessedit_pageseg_mode ?? activeMode;
+    },
+    async recognize(image, options) {
+      const index = Number(String(image).replace('card-', ''));
+      const numberCrop = options?.rectangle?.left >= 100;
+      if (index === 1 && numberCrop) {
+        firstCardNumberAttempts += 1;
+        return { data: { text: activeMode === '7' ? '08' : '', confidence: activeMode === '7' ? 83 : 0 } };
+      }
+      return { data: { text: numberCrop ? String(index + 10) : `Spieler ${index}`, confidence: 90 } };
+    },
+    async terminate() {},
+  };
+  const recognize = createOcrRecognizer(() => ({
+    OEM: { LSTM_ONLY: 1 },
+    PSM: { AUTO: '3', SPARSE_TEXT: '11', SINGLE_BLOCK: '6', SINGLE_LINE: '7' },
+    async createWorker() { return fakeWorker; },
+  }), async () => ({
+    image: 'segmented-image',
+    cards: Array.from({ length: 11 }, (_, index) => ({ image: `card-${index + 1}`, width: 200, height: 60 })),
+    segmented: true,
+  }));
+
+  const result = await recognize('original-image', 'lineup', () => {}, [], { isHome: true });
+  assert.match(result.text, /^08, Spieler$/m);
+  assert.equal(firstCardNumberAttempts, 2);
+  assert.ok(parameters.some((value) => value.tessedit_pageseg_mode === '7'));
 });

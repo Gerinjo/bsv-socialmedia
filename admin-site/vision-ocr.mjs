@@ -308,13 +308,50 @@ export function findLineupCardRegions(imageData) {
       height: Math.round(region.y + (index + 1) * partHeight) - Math.round(region.y + index * partHeight),
     }));
   });
-  return separated
+  const sorted = separated
     .sort((left, right) => {
       const leftColumn = left.x + left.width / 2 < width / 2 ? 0 : 1;
       const rightColumn = right.x + right.width / 2 < width / 2 ? 0 : 1;
       return leftColumn - rightColumn || left.y - right.y;
-    })
-    .slice(0, 12);
+    });
+  if (sorted.length === 10) {
+    const columns = [
+      sorted.filter((region) => region.x + region.width / 2 < width / 2),
+      sorted.filter((region) => region.x + region.width / 2 >= width / 2),
+    ];
+    if (columns.every((column) => column.length === 5)) {
+      const centerGaps = columns.flatMap((column) => column.slice(1).map((region, index) => {
+        const previous = column[index];
+        return (region.y + region.height / 2) - (previous.y + previous.height / 2);
+      })).sort((left, right) => left - right);
+      const typicalGap = centerGaps[Math.floor(centerGaps.length / 2)] ?? 0;
+      const missing = columns.flatMap((column) => column.slice(1).map((region, index) => ({
+        column,
+        previous: column[index],
+        next: region,
+        gap: (region.y + region.height / 2) - (column[index].y + column[index].height / 2),
+      }))).sort((left, right) => right.gap - left.gap)[0];
+      if (typicalGap && missing?.gap >= typicalGap * 1.55) {
+        const values = (key) => missing.column.map((region) => region[key]).sort((left, right) => left - right);
+        const regionWidth = values('width')[Math.floor(missing.column.length / 2)];
+        const regionHeight = values('height')[Math.floor(missing.column.length / 2)];
+        const regionX = values('x')[Math.floor(missing.column.length / 2)];
+        const centerY = ((missing.previous.y + missing.previous.height / 2) + (missing.next.y + missing.next.height / 2)) / 2;
+        sorted.push({
+          x: regionX,
+          y: Math.max(0, Math.round(centerY - regionHeight / 2)),
+          width: Math.min(regionWidth, width - regionX),
+          height: Math.min(regionHeight, height - Math.max(0, Math.round(centerY - regionHeight / 2))),
+        });
+        sorted.sort((left, right) => {
+          const leftColumn = left.x + left.width / 2 < width / 2 ? 0 : 1;
+          const rightColumn = right.x + right.width / 2 < width / 2 ? 0 : 1;
+          return leftColumn - rightColumn || left.y - right.y;
+        });
+      }
+    }
+  }
+  return sorted.slice(0, 12);
 }
 
 export function isolateLineupCardPixels(imageData, region) {
@@ -619,7 +656,7 @@ export function createOcrRecognizer(
   let workerPromise;
   let progressListener = () => {};
   let queue = Promise.resolve();
-  let pageSegmentationModes = { auto: '3', sparse: '11', block: '6' };
+  let pageSegmentationModes = { auto: '3', sparse: '11', block: '6', line: '7' };
 
   async function worker() {
     if (!workerPromise) {
@@ -629,6 +666,7 @@ export function createOcrRecognizer(
         auto: tesseract.PSM?.AUTO ?? '3',
         sparse: tesseract.PSM?.SPARSE_TEXT ?? '11',
         block: tesseract.PSM?.SINGLE_BLOCK ?? '6',
+        line: tesseract.PSM?.SINGLE_LINE ?? '7',
       };
       workerPromise = tesseract.createWorker('deu', tesseract.OEM?.LSTM_ONLY ?? 1, {
         logger: (message) => progressListener(ocrProgressText(message)),
@@ -678,7 +716,7 @@ export function createOcrRecognizer(
             }
             const unmatchedNumbers = cardResults.map((card, index) => shirtNumber(card.number) ? -1 : index).filter((index) => index >= 0);
             if (unmatchedNumbers.length) {
-              await activeWorker.setParameters({ tessedit_pageseg_mode: pageSegmentationModes.block });
+              await activeWorker.setParameters({ tessedit_pageseg_mode: pageSegmentationModes.line });
               for (const index of unmatchedNumbers) {
                 progressListener(`Rückennummer ${index + 1} wird noch einmal geprüft …`);
                 const card = typeof cards[index] === 'string' ? { image: cards[index] } : cards[index];
