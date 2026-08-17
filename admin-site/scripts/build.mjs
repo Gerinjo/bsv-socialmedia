@@ -12,7 +12,7 @@ const logo = await readFile(resolve(adminDir, 'assets/bsv-nordstern.png'));
 const crestCutout = await readFile(resolve(adminDir, 'crest-cutout.js'), 'utf8');
 const richTextEditor = await readFile(resolve(adminDir, 'rich-text-editor.mjs'), 'utf8');
 const visionOcr = await readFile(resolve(adminDir, 'vision-ocr.mjs'), 'utf8');
-const tesseract = await readFile(resolve(adminDir, 'node_modules/tesseract.js/dist/tesseract.min.js'), 'utf8');
+const tesseract = await readFile(resolve(repoDir, 'node_modules/tesseract.js/dist/tesseract.min.js'), 'utf8');
 let html = await readFile(resolve(adminDir, 'admin-page.html'), 'utf8');
 for (const [placeholder, source] of [
   ['__BSV_LOGO_DATA_URL__', `data:image/png;base64,${logo.toString('base64')}`],
