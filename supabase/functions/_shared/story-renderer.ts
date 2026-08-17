@@ -217,10 +217,11 @@ export function sponsorLogoStrip(type: StoryType, logos: string[] = []): string 
         : { x: 72, y: 1758, width: 936, height: 68, logoHeight: 48 };
   const innerWidth = layout.width - 48;
   const cellWidth = innerWidth / items.length;
+  const logoHeight = type === 'lineup' && items.length === 1 ? layout.logoHeight * 2 : layout.logoHeight;
   const images = items.map((logo, index) => {
     const x = layout.x + 24 + index * cellWidth;
-    const y = layout.y + (layout.height - layout.logoHeight) / 2;
-    return `<image href="${xmlEscape(logo)}" x="${x}" y="${y}" width="${cellWidth}" height="${layout.logoHeight}" preserveAspectRatio="xMidYMid meet"/>`;
+    const y = layout.y + (layout.height - logoHeight) / 2;
+    return `<image href="${xmlEscape(logo)}" x="${x}" y="${y}" width="${cellWidth}" height="${logoHeight}" preserveAspectRatio="xMidYMid meet"/>`;
   }).join('');
   return `<g aria-label="Werbepartner">${images}</g>`;
 }

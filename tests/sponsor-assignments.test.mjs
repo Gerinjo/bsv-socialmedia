@@ -43,6 +43,15 @@ test('renderer centers one sponsor and places two sponsors side by side', () => 
   assert.match(two, /<image[^>]+x="540"[^>]+width="396"/);
 });
 
+test('lineup doubles the height of a single sponsor but keeps two sponsors compact', () => {
+  const one = sponsorLogoStrip('lineup', ['data:image/png;base64,ONE']);
+  assert.match(one, /<image[^>]+y="1744"[^>]+height="96"/);
+
+  const two = sponsorLogoStrip('lineup', ['data:image/png;base64,ONE', 'data:image/png;base64,TWO']);
+  assert.match(two, /<image[^>]+y="1768"[^>]+height="48"/);
+  assert.equal((two.match(/height="48"/g) ?? []).length, 2);
+});
+
 test('result uses the colored transparent sponsor logo at a larger size', () => {
   const sponsor = { logo_transparent_path: 'sponsors/acme/transparent.png', logo_white_path: 'sponsors/acme/white.png' };
   assert.equal(sponsorLogoReference(sponsor, 'result'), 'sponsors/acme/transparent.png');

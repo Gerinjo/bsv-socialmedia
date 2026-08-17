@@ -209,8 +209,9 @@ export function sponsorLogoStrip(type, logos = []) {
   if (!items.length) return '';
   const feed = type === 'report' || type === 'post';
   const layout = feed ? {x:48,y:968,width:984,height:62,logoHeight:42} : type === 'announcement' ? {x:120,y:1328,width:840,height:250,logoHeight:180} : type === 'result' ? {x:72,y:1360,width:936,height:340,logoHeight:250} : {x:72,y:1758,width:936,height:68,logoHeight:48};
+  const logoHeight = type === 'lineup' && items.length === 1 ? layout.logoHeight * 2 : layout.logoHeight;
   const cellWidth=(layout.width-48)/items.length;
-  const images=items.map((logo,index)=>`<image href="${xmlEscape(logo)}" x="${layout.x+24+index*cellWidth}" y="${layout.y+(layout.height-layout.logoHeight)/2}" width="${cellWidth}" height="${layout.logoHeight}" preserveAspectRatio="xMidYMid meet"/>`).join('');
+  const images=items.map((logo,index)=>`<image href="${xmlEscape(logo)}" x="${layout.x+24+index*cellWidth}" y="${layout.y+(layout.height-logoHeight)/2}" width="${cellWidth}" height="${logoHeight}" preserveAspectRatio="xMidYMid meet"/>`).join('');
   return `<g aria-label="Werbepartner">${images}</g>`;
 }
 
