@@ -35,7 +35,7 @@
   <image href="{{LOGO_DATA_URI}}" x="48" y="40" width="82" height="82"/>
   <text x="156" y="72" fill="#a8cbb4" font-size="18" class="caps">BSV NORDSTERN</text>
   <text x="156" y="104" fill="#ffffff" font-size="22" class="sans" font-weight="800">Radolfzell · Fußball</text>
-  <text x="1032" y="78" text-anchor="end" fill="#a8cbb4" font-size="24" class="handwritten">{{COMPETITION}}</text>
+  <text x="1032" y="76" text-anchor="end" fill="#f4d638" font-size="{{TEAM_CATEGORY_SIZE}}" class="handwritten">{{TEAM_CATEGORY}}</text>
   <text x="1032" y="108" text-anchor="end" fill="#ffffff" font-size="15" class="caps">SEITE {{REPORT_PAGE}} / {{REPORT_PAGE_COUNT}}</text>
 
   <g transform="translate(48 124) rotate(-3 350 44)">

@@ -35,8 +35,10 @@
   <image href="{{LOGO_DATA_URI}}" x="72" y="64" width="104" height="104"/>
   <text x="208" y="106" fill="#a8cbb4" font-size="22" class="caps">BSV NORDSTERN</text>
   <text x="208" y="141" fill="#ffffff" font-size="24" class="sans" font-weight="800">Radolfzell · Fußball</text>
-  <circle cx="982" cy="116" r="38" fill="#f4d638"/>
-  <circle cx="982" cy="116" r="17" fill="#092f20"/>
+  <g transform="translate(600 64)">
+    <rect width="408" height="104" rx="30" fill="#ffffff" opacity=".1"/>
+    <text x="204" y="70" text-anchor="middle" fill="#f4d638" font-size="{{TEAM_CATEGORY_SIZE}}" class="handwritten">{{TEAM_CATEGORY}}</text>
+  </g>
 
   <g transform="translate(62 186) rotate(-4 350 64)">
     <text x="7" y="115" fill="#91c82f" font-size="132" class="handwritten" opacity=".72">{{KICKER}}</text>

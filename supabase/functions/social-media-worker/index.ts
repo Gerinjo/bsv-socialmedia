@@ -253,6 +253,12 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
         .filter((value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)))]
         .slice(0, 40)
       : [];
+    const previewPostJobIds = Array.isArray(body.previewPostJobIds)
+      ? [...new Set(body.previewPostJobIds
+        .map((value) => String(value))
+        .filter((value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)))]
+        .slice(0, 40)
+      : [];
 
     const now = new Date().toISOString();
     const summary = {
@@ -268,27 +274,24 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
     const sponsorData = await sponsorConfig(context.supabaseAdmin);
 
     if (previewOnly) {
-      if (!previewJobIds.length) {
+      if (!previewJobIds.length && !previewPostJobIds.length) {
         return Response.json({ ...summary, error: 'preview_job_ids_missing' }, { status: 400 });
       }
-      const { data: previewData, error: previewError } = await context.supabaseAdmin
-        .from('social_story_jobs')
-        .select(gameJobSelect)
-        .in('id', previewJobIds)
-        .eq('story_type', 'announcement');
-      if (previewError) return Response.json({ error: previewError.message }, { status: 500 });
+      let previewData: unknown[] = [];
+      if (previewJobIds.length) {
+        const { data, error } = await context.supabaseAdmin
+          .from('social_story_jobs')
+          .select(gameJobSelect)
+          .in('id', previewJobIds);
+        if (error) return Response.json({ error: error.message }, { status: 500 });
+        previewData = data ?? [];
+      }
 
-      for (const candidate of (previewData ?? []) as unknown as GameJob[]) {
+      for (const candidate of previewData as unknown as GameJob[]) {
         if (!candidate.game.enabled || !teamContentEnabled(candidate.game.team)) continue;
         try {
           const sponsors = assignedSponsors(sponsorData, candidate.game.team, candidate.story_type);
-          const preview = await render({
-            type: candidate.story_type,
-            jobId: candidate.id,
-            game: candidate.game,
-            sponsors,
-            colorScheme: candidate.game.team?.color_scheme,
-          });
+          const preview = await renderGamePreview(candidate, sponsors);
           await context.supabaseAdmin
             .from('social_story_jobs')
             .update({
@@ -304,6 +307,43 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
           const message = workerError instanceof Error ? workerError.message : 'Unbekannter Vorschaufehler';
           await context.supabaseAdmin
             .from('social_story_jobs')
+            .update({ last_error: message })
+            .eq('id', candidate.id);
+          summary.previewFailed += 1;
+        }
+      }
+
+      let previewPostData: unknown[] = [];
+      if (previewPostJobIds.length) {
+        const { data, error } = await context.supabaseAdmin
+          .from('social_post_jobs')
+          .select(postJobSelect)
+          .in('id', previewPostJobIds);
+        if (error) return Response.json({ error: error.message }, { status: 500 });
+        previewPostData = data ?? [];
+      }
+
+      for (const candidate of previewPostData as unknown as PostJob[]) {
+        const postTeam = candidate.post.audience?.team;
+        if (!candidate.post.enabled || (postTeam && !teamContentEnabled(postTeam))) continue;
+        try {
+          const sponsors = assignedSponsors(sponsorData, candidate.post.audience, 'post');
+          const preview = await renderPostPreview(candidate, sponsors);
+          await context.supabaseAdmin
+            .from('social_post_jobs')
+            .update({
+              media_url: preview.mediaUrl,
+              storage_path: preview.storagePath,
+              media_urls: preview.mediaUrls,
+              storage_paths: preview.storagePaths,
+              last_error: null,
+            })
+            .eq('id', candidate.id);
+          summary.previewGenerated += 1;
+        } catch (workerError) {
+          const message = workerError instanceof Error ? workerError.message : 'Unbekannter Vorschaufehler';
+          await context.supabaseAdmin
+            .from('social_post_jobs')
             .update({ last_error: message })
             .eq('id', candidate.id);
           summary.previewFailed += 1;

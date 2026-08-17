@@ -41,6 +41,18 @@ export function fillTemplate(template, values, rawKeys = new Set()) {
   });
 }
 
+export function teamCategoryLabel({ slug, audienceGroup, label, name } = {}) {
+  const normalized = [slug, label, name]
+    .map((value) => String(value ?? '').trim().toLocaleLowerCase('de-DE'))
+    .filter(Boolean)
+    .join(' ');
+  if (normalized.includes('juniorinnen')) return 'JUNIORINNEN';
+  if (audienceGroup === 'womens_team' || normalized.includes('frauen')) return 'FRAUEN';
+  if (audienceGroup === 'youth_team' || /(?:^|\s|-)u\d{1,2}(?:\s|-|$)/.test(normalized) || normalized.includes('junioren')) return 'JUNIOREN';
+  if (audienceGroup === 'mens_team' || normalized.includes('herren')) return 'HERREN';
+  return '';
+}
+
 export async function fileDataUri(filePath) {
   const extension = extname(filePath).toLowerCase();
   const mime = MIME_TYPES.get(extension);
@@ -265,6 +277,7 @@ export async function renderStorySvg({
     : match.gameStatus === 'aborted'
       ? 'ABGEBROCHEN'
       : '';
+  const teamCategory = text(match.teamCategory || teamCategoryLabel({ slug: match.teamSlug, label: match.teamName }), '');
   const values = {
     LOGO_DATA_URI: logoDataUri,
     ACTION_PLAYER_DATA_URI: resolvedActionPhotoDataUri || actionPlayerDataUri,
@@ -278,6 +291,8 @@ export async function renderStorySvg({
     GAME_STATUS_LABEL: gameStatusLabel,
     GAME_STATUS_OPACITY: gameStatusLabel ? 1 : 0,
     GAME_STATUS_SIZE: gameStatusLabel === 'ABGEBROCHEN' ? 130 : 160,
+    TEAM_CATEGORY: teamCategory,
+    TEAM_CATEGORY_SIZE: teamCategory === 'JUNIORINNEN' ? 38 : 46,
     KICKER: type === 'announcement' ? 'MATCHDAY' : type === 'lineup' ? 'MATCHDAY · STARTELF' : type === 'report' ? 'SPIELBERICHT' : 'ABPFIFF · ERGEBNIS',
     HOME_TEAM: truncate(displayTeamName(match.homeTeam), 32),
     HOME_TEAM_SIZE: fittedSize(displayTeamName(match.homeTeam), 44, 36, 24),

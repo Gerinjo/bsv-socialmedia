@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { birthdayRoleText, compactLineupName, displayTeamName, fillTemplate, renderStorySvg, scorerRows, teamCrestKey, xmlEscape } from '../src/story-renderer.mjs';
+import { birthdayRoleText, compactLineupName, displayTeamName, fillTemplate, renderStorySvg, scorerRows, teamCategoryLabel, teamCrestKey, xmlEscape } from '../src/story-renderer.mjs';
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const match = {
@@ -23,6 +23,14 @@ test('XML-Inhalte werden sicher escaped', () => {
 
 test('fehlende Template-Werte führen zu einem Fehler', () => {
   assert.throws(() => fillTemplate('{{MISSING}}', {}), /Fehlender Template-Wert/);
+});
+
+test('Mannschaftskategorien unterscheiden Herren, Frauen, Junioren und Juniorinnen', () => {
+  assert.equal(teamCategoryLabel({ slug: 'herren-1' }), 'HERREN');
+  assert.equal(teamCategoryLabel({ slug: 'frauen-1' }), 'FRAUEN');
+  assert.equal(teamCategoryLabel({ slug: 'u15-c1-junioren' }), 'JUNIOREN');
+  assert.equal(teamCategoryLabel({ slug: 'u15-juniorinnen', audienceGroup: 'youth_team' }), 'JUNIORINNEN');
+  assert.equal(teamCategoryLabel({ slug: 'u7-bambinis', audienceGroup: 'youth_team' }), 'JUNIOREN');
 });
 
 test('lange SG-Mannschaftsnamen werden nur im Bild abgekürzt', () => {
@@ -99,6 +107,15 @@ test('Mannschaftsfarben werden auch auf Spielankündigungen angewendet', async (
   }
   assert.doesNotMatch(svg, /#071f16/i);
   assert.doesNotMatch(svg, /#91c82f/i);
+});
+
+test('Spielankündigungen zeigen die Mannschaftskategorie groß im Header', async () => {
+  const svg = await renderStorySvg({
+    rootDir,
+    type: 'announcement',
+    match: { ...match, teamCategory: 'JUNIORINNEN' },
+  });
+  assert.match(svg, /font-size="38" class="handwritten">JUNIORINNEN<\/text>/);
 });
 
 test('Heim- und Gastwappen bilden in der Spielankündigung ein diagonales Duell', async () => {

@@ -4,6 +4,7 @@ import {
   edgeFontBuffers,
   renderStorySvg,
   STORY_TYPES,
+  teamCategoryLabel,
   type StoryType,
 } from '../_shared/story-renderer.ts';
 import { sponsorLogoReference } from '../../../src/sponsor-assignments.mjs';
@@ -61,6 +62,7 @@ function gameInput(game: Record<string, unknown>) {
   const lineup = (game.lineup ?? {}) as { formation?: string; players?: unknown[] };
   const homeClub = (game.home_club ?? {}) as { crest_status?: string; crest_transparent_path?: string };
   const awayClub = (game.away_club ?? {}) as { crest_status?: string; crest_transparent_path?: string };
+  const team = (game.team ?? {}) as { slug?: string; name?: string };
 
   return {
     match: {
@@ -78,6 +80,7 @@ function gameInput(game: Record<string, unknown>) {
       resultMessage: game.result_message,
       reportScorers: game.report_scorers,
       gameStatus: game.status,
+      teamCategory: teamCategoryLabel({ slug: team.slug, name: team.name }),
       actionImagePath: game.action_image_path ?? null,
       reportImagePaths: Array.isArray(game.report_image_paths)
         ? game.report_image_paths.map((path) => String(path ?? '').trim()).filter(Boolean).slice(0, 10)
@@ -212,6 +215,11 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
       const title = String(post.title ?? '').trim();
       const audience = post.audience as Record<string, unknown> | undefined;
       const audienceLabel = String(audience?.label ?? '').trim();
+      const teamCategory = teamCategoryLabel({
+        slug: audience?.slug,
+        audienceGroup: audience?.audience_group,
+        label: audienceLabel,
+      });
       const paths = Array.isArray(post.image_paths)
         ? post.image_paths.map((path) => String(path ?? '').trim()).filter(Boolean).slice(0, 10)
         : [];
@@ -233,7 +241,7 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
         const actionPhotoDataUri = await actionPhoto(context.supabaseAdmin, paths[sourceIndex]);
         return renderStorySvg({
           type: body.type as StoryType,
-          match: { postTitle: title, postAudience: audienceLabel },
+          match: { postTitle: title, postAudience: audienceLabel, teamCategory },
           imageAssets: images,
           sponsorLogoDataUris,
           actionPhotoDataUri,

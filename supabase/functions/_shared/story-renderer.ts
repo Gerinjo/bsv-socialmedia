@@ -46,6 +46,23 @@ function fillTemplate(template: string, values: Record<string, unknown>, rawKeys
   });
 }
 
+export function teamCategoryLabel({ slug, audienceGroup, label, name }: {
+  slug?: unknown;
+  audienceGroup?: unknown;
+  label?: unknown;
+  name?: unknown;
+} = {}): string {
+  const normalized = [slug, label, name]
+    .map((value) => String(value ?? '').trim().toLocaleLowerCase('de-DE'))
+    .filter(Boolean)
+    .join(' ');
+  if (normalized.includes('juniorinnen')) return 'JUNIORINNEN';
+  if (audienceGroup === 'womens_team' || normalized.includes('frauen')) return 'FRAUEN';
+  if (audienceGroup === 'youth_team' || /(?:^|\s|-)u\d{1,2}(?:\s|-|$)/.test(normalized) || normalized.includes('junioren')) return 'JUNIOREN';
+  if (audienceGroup === 'mens_team' || normalized.includes('herren')) return 'HERREN';
+  return '';
+}
+
 function text(value: unknown, fallback = 'NOCH OFFEN'): string {
   const normalized = String(value ?? '').trim();
   return normalized || fallback;
@@ -264,6 +281,7 @@ export function renderStorySvg({
     : match.gameStatus === 'aborted'
       ? 'ABGEBROCHEN'
       : '';
+  const teamCategory = text(match.teamCategory || teamCategoryLabel({ slug: match.teamSlug, label: match.teamName }), '');
   const kicker = type === 'announcement'
     ? 'MATCHDAY'
     : type === 'lineup'
@@ -285,6 +303,8 @@ export function renderStorySvg({
     GAME_STATUS_LABEL: gameStatusLabel,
     GAME_STATUS_OPACITY: gameStatusLabel ? 1 : 0,
     GAME_STATUS_SIZE: gameStatusLabel === 'ABGEBROCHEN' ? 130 : 160,
+    TEAM_CATEGORY: teamCategory,
+    TEAM_CATEGORY_SIZE: teamCategory === 'JUNIORINNEN' ? 38 : 46,
     KICKER: kicker,
     HOME_TEAM: truncate(displayTeamName(match.homeTeam), 32),
     HOME_TEAM_SIZE: fittedSize(displayTeamName(match.homeTeam), 44, 36, 24),
