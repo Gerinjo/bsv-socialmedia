@@ -14,15 +14,29 @@ test('OCR lineup text is normalized for the existing player parser', () => {
   );
 });
 
+test('OCR lineup accepts pipes, number labels and trailing shirt numbers', () => {
+  assert.equal(
+    normalizeOcrText('lineup', '1 Domenik Wannemacher | Nr. 11 Raphael Buckel | Justin Kihimann (#7) | 9 | Ilia Gogichaishvili'),
+    '01, D. Wannemacher\n11, R. Buckel\n07, J. Kihimann\n09, I. Gogichaishvili',
+  );
+});
+
 test('OCR scorer text is normalized and repeated names are grouped', () => {
   assert.equal(
     normalizeOcrText('scorers', 'Torschützen\n19′ M. Oosbrugger\nM. Oosbrugger (46.)\n72 - N. Beispiel\nEndstand 3:1'),
-    '(19., 46.) M. Oosbrugger\n(72.) N. Beispiel',
+    "(19', 46') M. Oosbrugger\n(72') N. Beispiel",
+  );
+});
+
+test('OCR scorer text accepts pipe separators, missing minute marks and stoppage time', () => {
+  assert.equal(
+    normalizeOcrText('scorers', "(18, 42) Domenik Wannemacher | (21') Raphael Buckel | (45' +2) Justin Kihimann | (47) Ilia Gogichaishvili | (81') Marco Wacker"),
+    "(18', 42') D. Wannemacher\n(21') R. Buckel\n(45'+2) J. Kihimann\n(47') I. Gogichaishvili\n(81') M. Wacker",
   );
 });
 
 test('OCR scorer text supports separate minute and name lines', () => {
-  assert.equal(normalizeOcrText('scorers', "19'\nM. Oosbrugger\nN. Beispiel\n72."), '(19.) M. Oosbrugger\n(72.) N. Beispiel');
+  assert.equal(normalizeOcrText('scorers', "19'\nM. Oosbrugger\nN. Beispiel\n72."), "(19') M. Oosbrugger\n(72') N. Beispiel");
 });
 
 test('OCR progress is translated for the UI', () => {
@@ -48,7 +62,7 @@ test('browser OCR worker is reused and its text is normalized', async () => {
   }));
 
   assert.deepEqual(await recognize('data:image/png;base64,abc', 'scorers'), {
-    text: '(19.) M. Oosbrugger',
+    text: "(19') M. Oosbrugger",
     confidence: 91,
   });
   await recognize('data:image/png;base64,def', 'scorers');

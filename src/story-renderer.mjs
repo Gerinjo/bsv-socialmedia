@@ -149,11 +149,25 @@ export function scorerRows(value) {
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean)
-    .slice(0, 4);
+    .slice(0, 12);
   const rows = lines.length ? lines : ['Noch keine Torschützen eingetragen.'];
-  return rows.map((line, index) => (
-    `<text x="0" y="${36 + index * 42}" fill="#10251a" font-size="34" class="scorer">${xmlEscape(truncate(line, 47))}</text>`
-  )).join('');
+  if (rows.length <= 3) {
+    return rows.map((line, index) => (
+      `<text x="0" y="${36 + index * 42}" fill="#10251a" font-size="34" class="scorer">${xmlEscape(truncate(line, 47))}</text>`
+    )).join('');
+  }
+
+  const rowsPerColumn = Math.ceil(rows.length / 2);
+  const step = rowsPerColumn === 1 ? 0 : Math.min(36, 82 / (rowsPerColumn - 1));
+  const fontSize = Math.max(16, Math.min(30, Math.floor(step - 2)));
+  const maximumCharacters = Math.max(22, Math.floor(450 / (fontSize * 0.53)));
+  return rows.map((line, index) => {
+    const rightColumn = index >= rowsPerColumn;
+    const row = rightColumn ? index - rowsPerColumn : index;
+    const x = rightColumn ? 984 : 0;
+    const anchor = rightColumn ? ' text-anchor="end"' : '';
+    return `<text x="${x}" y="${26 + row * step}"${anchor} fill="#10251a" font-size="${fontSize}" class="scorer">${xmlEscape(truncate(line, maximumCharacters))}</text>`;
+  }).join('');
 }
 
 export function sponsorLogoStrip(type, logos = []) {

@@ -170,10 +170,12 @@ test('weitere Beitragsbilder werden als reine Wellen-Fotoseite gerendert', async
   assert.doesNotMatch(svg, /Saisonabschluss 2026/);
 });
 
-test('Torschützenzeilen werden escaped und auf vier Einträge begrenzt', () => {
+test('Torschützenzeilen werden escaped und bei fünf Einträgen nach außen ausgerichtet', () => {
   const rows = scorerRows('1. A & B\n2. C\n3. D\n4. E\n5. F');
   assert.match(rows, /A &amp; B/);
-  assert.doesNotMatch(rows, /5\. F/);
+  assert.match(rows, /5\. F/);
+  assert.match(rows, /x="0"/);
+  assert.match(rows, /x="984"[^>]*text-anchor="end"/);
 });
 
 test('BSV wird im Spielbericht größer als der Gegner gesetzt', async () => {
