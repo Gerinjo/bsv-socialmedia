@@ -4,7 +4,10 @@ import assert from 'node:assert/strict';
 import {
   createOcrRecognizer,
   findLineupCardRegions,
+  isolateLineupCardPixels,
   isolateLineupTextPixels,
+  matchKnownPersonName,
+  normalizeLineupCard,
   normalizeOcrText,
   ocrProgressText,
 } from '../admin-site/vision-ocr.mjs';
@@ -41,6 +44,19 @@ test('OCR lineup removes isolated quote artifacts after player names', () => {
   assert.equal(normalizeOcrText('lineup', "01 Pascal Brandenburg '"), '01, P. Brandenburg');
 });
 
+test('lineup card OCR repairs small name errors with the known BSV roster', () => {
+  const knownNames = ['Baqer Al Daraji', 'Julian Brendle', 'Momodou Sidibeh', 'Raphael Buckel'];
+  assert.equal(matchKnownPersonName('Bager\nAl Daraji', knownNames), 'Baqer Al Daraji');
+  assert.equal(matchKnownPersonName('Julian\nBrendie', knownNames), 'Julian Brendle');
+  assert.equal(matchKnownPersonName('Momadou\nSidibeh', knownNames), 'Momodou Sidibeh');
+  assert.equal(normalizeLineupCard('O7', 'Momadou\nSidibeh', knownNames), '07, M. Sidibeh');
+});
+
+test('lineup card OCR does not turn short garbage into a catalog name', () => {
+  assert.equal(matchKnownPersonName('B. X', ['Raphael Buckel']), 'B. X');
+  assert.equal(normalizeLineupCard('10', 'B. X', ['Raphael Buckel']), '');
+});
+
 test('lineup image isolation keeps light card text and removes grass and card background', () => {
   const pixels = isolateLineupTextPixels({
     width: 3,
@@ -70,6 +86,23 @@ test('graphical lineup cards are detected separately in both columns', () => {
     }
   }
   assert.equal(findLineupCardRegions({ width, height, data }).length, 4);
+});
+
+test('card isolation keeps the full light glyph without requiring a dark neighboring pixel', () => {
+  const card = isolateLineupCardPixels({
+    width: 3,
+    height: 1,
+    data: new Uint8ClampedArray([
+      34, 34, 34, 255,
+      110, 110, 110, 255,
+      240, 240, 240, 255,
+    ]),
+  }, { x: 0, y: 0, width: 3, height: 1 });
+  assert.deepEqual([...card.data], [
+    255, 255, 255, 255,
+    0, 0, 0, 255,
+    0, 0, 0, 255,
+  ]);
 });
 
 test('OCR scorer text is normalized and repeated names are grouped', () => {
@@ -143,21 +176,33 @@ test('graphical lineup uses isolated sparse-text OCR without retry after ten pla
   assert.ok(parameters.some((value) => value.tessedit_pageseg_mode === '11'));
 });
 
-test('segmented lineup cards use single-block OCR mode', async () => {
+test('segmented lineup cards read number and name in separate sparse regions', async () => {
   const parameters = [];
+  const calls = [];
   const fakeWorker = {
     async setParameters(value) { parameters.push(value); },
-    async recognize() {
-      return { data: { text: Array.from({ length: 11 }, (_, index) => `${index + 1} Spieler ${index + 1}`).join('\n'), confidence: 90 } };
+    async recognize(image, options) {
+      calls.push({ image, options });
+      const index = Number(String(image).replace('card-', ''));
+      const text = options?.rectangle?.left === 0 ? String(index) : `Spieler ${index}`;
+      return { data: { text, confidence: 90 } };
     },
     async terminate() {},
   };
   const recognize = createOcrRecognizer(() => ({
     OEM: { LSTM_ONLY: 1 },
-    PSM: { AUTO: '3', SPARSE_TEXT: '11', SINGLE_BLOCK: '6' },
+    PSM: { AUTO: '3', SPARSE_TEXT: '11', SINGLE_BLOCK: '6', SINGLE_WORD: '8' },
     async createWorker() { return fakeWorker; },
-  }), async () => ({ image: 'segmented-image', segmented: true }));
+  }), async () => ({
+    image: 'segmented-image',
+    cards: Array.from({ length: 11 }, (_, index) => ({ image: `card-${index + 1}`, width: 200, height: 60 })),
+    segmented: true,
+  }));
 
-  await recognize('original-image', 'lineup');
-  assert.ok(parameters.some((value) => value.tessedit_pageseg_mode === '6'));
+  const result = await recognize('original-image', 'lineup');
+  assert.equal(result.text.split('\n').length, 11);
+  assert.equal(calls.length, 22);
+  assert.ok(calls.slice(0, 11).every((call) => call.options.rectangle.left === 0));
+  assert.ok(calls.slice(11).every((call) => call.options.rectangle.left > 0));
+  assert.ok(parameters.filter((value) => value.tessedit_pageseg_mode === '11').length >= 2);
 });
