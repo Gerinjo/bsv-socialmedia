@@ -79,6 +79,28 @@ test('Mannschaftsfarben werden auf das fertige Story-Template angewendet', async
   assert.doesNotMatch(svg, /#91c82f/i);
 });
 
+test('Mannschaftsfarben werden auch auf Spielankündigungen angewendet', async () => {
+  const svg = await renderStorySvg({
+    rootDir,
+    type: 'announcement',
+    match,
+    colorScheme: {
+      background: '#05010e',
+      panel: '#5113ae',
+      primary: '#9a8dc9',
+      accent: '#2f1736',
+      muted: '#a8cbb4',
+      surface: '#f4f1e8',
+      ink: '#12071d',
+    },
+  });
+  for (const color of ['#05010e', '#5113ae', '#9a8dc9', '#2f1736', '#a8cbb4', '#f4f1e8', '#12071d']) {
+    assert.match(svg, new RegExp(color, 'i'));
+  }
+  assert.doesNotMatch(svg, /#071f16/i);
+  assert.doesNotMatch(svg, /#91c82f/i);
+});
+
 test('Heim- und Gastwappen bilden in der Spielankündigung ein diagonales Duell', async () => {
   const svg = await renderStorySvg({
     rootDir,

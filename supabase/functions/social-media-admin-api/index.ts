@@ -181,6 +181,70 @@ async function runWorker(targetJobIds: string[] = [], targetPostJobIds: string[]
   return payload;
 }
 
+async function runAnnouncementPreviewWorker(previewJobIds: string[]): Promise<Record<string, unknown>> {
+  if (!runtimeConfig.supabaseUrl || !runtimeConfig.workerApiKey) {
+    throw new Error('Die automatische Vorschau ist nicht konfiguriert.');
+  }
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    const response = await fetch(`${runtimeConfig.supabaseUrl}/functions/v1/social-media-worker`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        apikey: runtimeConfig.workerApiKey,
+      },
+      body: JSON.stringify({
+        trigger: 'team-color-change',
+        requested_at: new Date().toISOString(),
+        previewOnly: true,
+        previewJobIds,
+      }),
+    });
+    const responseText = await response.text();
+    let payload: Record<string, unknown> = {};
+    try {
+      payload = JSON.parse(responseText) as Record<string, unknown>;
+    } catch {
+      payload = {};
+    }
+    if (response.ok) return payload;
+    const message = String(payload.error ?? (responseText || `Vorschau-Worker antwortet mit HTTP ${response.status}.`));
+    if (response.status < 500 || attempt === 3) throw new Error(message);
+    await new Promise((resolve) => setTimeout(resolve, attempt * 300));
+  }
+  throw new Error('Die Ankündigungsvorschauen konnten nicht aktualisiert werden.');
+}
+
+async function rerenderTeamAnnouncementPreviews(admin: any, teamId: string) {
+  const { data: games, error: gamesError } = await admin
+    .from('social_games')
+    .select('id')
+    .eq('team_id', teamId)
+    .eq('enabled', true)
+    .gte('kickoff_at', new Date().toISOString());
+  if (gamesError) throw gamesError;
+  const gameIds = (games ?? []).map((game: any) => game.id);
+  if (!gameIds.length) return { requested: 0, generated: 0, failed: 0, runs: [] };
+
+  const { data: jobs, error: jobsError } = await admin
+    .from('social_story_jobs')
+    .select('id')
+    .in('game_id', gameIds)
+    .eq('story_type', 'announcement')
+    .in('status', ['pending', 'preview_ready', 'failed', 'needs_input']);
+  if (jobsError) throw jobsError;
+  const jobIds = (jobs ?? []).map((job: any) => job.id);
+  const runs: Record<string, unknown>[] = [];
+  for (let index = 0; index < jobIds.length; index += 40) {
+    runs.push(await runAnnouncementPreviewWorker(jobIds.slice(index, index + 40)));
+  }
+  return {
+    requested: jobIds.length,
+    generated: runs.reduce((total, run) => total + Number(run.previewGenerated ?? 0), 0),
+    failed: runs.reduce((total, run) => total + Number(run.previewFailed ?? 0), 0),
+    runs,
+  };
+}
+
 async function renderGameJobNow(admin: any, gameId: string, storyType: 'announcement' | 'lineup' | 'result' | 'report') {
   const { data: game, error: gameError } = await admin
     .from('social_games')
@@ -547,12 +611,21 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       const teamId = required(body.teamId, 'Mannschaft');
       const publishingMode = required(body.publishingMode, 'Veröffentlichungsmodus');
       if (!publishingModes.has(publishingMode)) throw new Error('Der Veröffentlichungsmodus ist ungültig.');
+      const { data: previousTeam, error: previousTeamError } = await context.supabaseAdmin
+        .from('social_teams')
+        .select('id, color_scheme')
+        .eq('id', teamId)
+        .maybeSingle();
+      if (previousTeamError) throw previousTeamError;
+      if (!previousTeam) throw new Error('Die Mannschaft wurde nicht gefunden.');
       const payload = {
         active: body.active === true,
         content_enabled: body.contentEnabled === true,
         publishing_mode: publishingMode,
         color_scheme: teamColorScheme(body.colorScheme),
       };
+      const previousColorScheme = teamColorScheme(previousTeam.color_scheme);
+      const colorSchemeChanged = teamColorKeys.some((key) => previousColorScheme[key] !== payload.color_scheme[key]);
       const { data: team, error: teamError } = await context.supabaseAdmin
         .from('social_teams')
         .update(payload)
@@ -565,6 +638,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .update({ active: payload.active })
         .eq('team_id', teamId);
       if (audienceError) throw audienceError;
+      let previewRefresh = null;
       if (!payload.active || !payload.content_enabled) {
         const { data: gameRows, error: gamesError } = await context.supabaseAdmin
           .from('social_games')
@@ -581,8 +655,10 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
             .in('status', ['pending', 'preview_ready', 'failed', 'needs_input']);
           if (jobsError) throw jobsError;
         }
+      } else if (colorSchemeChanged) {
+        previewRefresh = await rerenderTeamAnnouncementPreviews(context.supabaseAdmin, teamId);
       }
-      return json({ ok: true, team });
+      return json({ ok: true, team, colorSchemeChanged, previewRefresh });
     }
 
     if (action === 'save_game') {
