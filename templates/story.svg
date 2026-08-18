@@ -2,15 +2,22 @@
   <defs>
     <linearGradient id="background" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#071f16"/><stop offset="1" stop-color="#164f32"/></linearGradient>
     <linearGradient id="photoShade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#071f16" stop-opacity=".04"/><stop offset="1" stop-color="#071f16" stop-opacity=".55"/></linearGradient>
+    <radialGradient id="headerGlow"><stop offset="0" stop-color="#91c82f" stop-opacity=".3"/><stop offset="1" stop-color="#91c82f" stop-opacity="0"/></radialGradient>
     <pattern id="dots" width="34" height="34" patternUnits="userSpaceOnUse"><circle cx="4" cy="4" r="2" fill="#ffffff" opacity=".05"/></pattern>
-    <clipPath id="photoClip"><rect x="48" y="428" width="984" height="760" rx="42"/></clipPath>
+    <clipPath id="photoClip"><path d="M48 474C212 416 371 454 531 434c184-23 343-20 501 36v641c-185 67-341 30-514 61-191 35-337 39-470-8Z"/></clipPath>
     <style>
       @font-face{font-family:'Capture it';src:url('{{HANDWRITTEN_FONT_DATA_URI}}') format('truetype');font-weight:400;font-style:normal}
       .sans{font-family:Inter,Arial,sans-serif}.handwritten{font-family:'Capture it',Impact,Inter,sans-serif;letter-spacing:1px}.caps{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:4px}
     </style>
   </defs>
   <rect width="1080" height="1920" fill="#f4f1e8"/>
-  <rect width="1080" height="1250" fill="url(#background)"/><rect width="1080" height="1250" fill="url(#dots)"/>
+  <path d="M0 0H1080V1238c-180-48-342 12-520 26-209 16-373-44-560 6Z" fill="url(#background)"/>
+  <path d="M0 0H1080V1238c-180-48-342 12-520 26-209 16-373-44-560 6Z" fill="url(#dots)"/>
+  <circle cx="1008" cy="290" r="420" fill="url(#headerGlow)"/>
+  <circle cx="1026" cy="312" r="255" fill="none" stroke="#a8cbb4" stroke-width="3" opacity=".17"/>
+  <circle cx="1026" cy="312" r="142" fill="none" stroke="#ffffff" stroke-width="3" opacity=".08"/>
+  <path d="M-76 386C153 319 313 407 511 376c211-33 339-129 625-74" fill="none" stroke="#a8cbb4" stroke-width="5" opacity=".19"/>
+  <path d="M-84 410c225-65 397 26 597-8 216-36 355-127 624-70" fill="none" stroke="#91c82f" stroke-width="3" opacity=".22"/>
   <image href="{{LOGO_DATA_URI}}" x="58" y="56" width="92" height="92"/>
   <text x="176" y="91" fill="#a8cbb4" font-size="19" class="caps">BSV NORDSTERN</text>
   <text x="176" y="127" fill="#ffffff" font-size="25" class="sans" font-weight="800">Radolfzell · Fußball</text>
@@ -18,11 +25,15 @@
   <text x="871" y="99" text-anchor="middle" fill="#071f16" font-size="19" class="caps">{{STORY_CATEGORY}}</text>
   <text x="1019" y="160" text-anchor="end" fill="#a8cbb4" font-size="20" class="sans" font-weight="800">FÜR {{STORY_AUDIENCE}}</text>
   {{STORY_TITLE_LINES}}
+  <path d="M48 492C212 434 371 472 531 452c184-23 343-20 501 36v641c-185 67-341 30-514 61-191 35-337 39-470-8Z" fill="#071f16" opacity=".34"/>
   <g clip-path="url(#photoClip)">
-    <rect x="48" y="428" width="984" height="760" fill="#0d3525"/>
-    <image href="{{ACTION_PLAYER_DATA_URI}}" x="48" y="428" width="984" height="760" preserveAspectRatio="xMidYMid slice"/>
-    <rect x="48" y="428" width="984" height="760" fill="url(#photoShade)"/>
+    <rect x="48" y="400" width="984" height="820" fill="#0d3525"/>
+    <image href="{{ACTION_PLAYER_DATA_URI}}" x="48" y="400" width="984" height="820" preserveAspectRatio="xMidYMid slice"/>
+    <rect x="48" y="400" width="984" height="820" fill="url(#photoShade)"/>
   </g>
+  <path d="M48 474C212 416 371 454 531 434c184-23 343-20 501 36" fill="none" stroke="#a8cbb4" stroke-width="5" opacity=".86"/>
+  <path d="M48 1164c133 47 279 43 470 8 173-31 329 6 514-61" fill="none" stroke="#ffffff" stroke-width="5" opacity=".72"/>
+  <path d="M48 1182c149 44 290 34 474 2 174-30 335 10 510-55" fill="none" stroke="#91c82f" stroke-width="3" opacity=".82"/>
   <rect x="78" y="1084" width="924" height="150" rx="30" fill="#f4d638"/>
   <text x="112" y="1133" fill="#071f16" font-size="17" class="caps">TERMIN</text>
   <text x="112" y="1190" fill="#071f16" font-size="39" class="sans" font-weight="900">{{STORY_EVENT_DATE}}</text>
@@ -31,7 +42,10 @@
   {{STORY_ACTIVITY_LINES}}
   <text x="82" y="1480" fill="#164f32" font-size="18" class="caps">DARUM SOLLTEST DU DABEI SEIN</text>
   {{STORY_MOTIVATION_LINES}}
-  <path d="M72 1697H1008" stroke="#a8cbb4" stroke-width="2" opacity=".55"/>
+  <path d="M-80 1778c230-122 410-23 607-70 222-52 360-183 633-112v324H-80Z" fill="#a8cbb4" opacity=".12"/>
+  <path d="M-90 1850c226-107 423-15 617-64 207-51 366-148 643-72v206H-90Z" fill="#91c82f" opacity=".1"/>
+  <path d="M72 1704c193-65 340 26 516-18 170-43 274-109 420-66" fill="none" stroke="#164f32" stroke-width="4" opacity=".34"/>
+  <path d="M72 1724c190-61 339 30 518-16 166-42 271-103 418-62" fill="none" stroke="#91c82f" stroke-width="3" opacity=".5"/>
   {{SPONSOR_LOGOS}}
   <text x="72" y="1880" fill="#164f32" font-size="28" class="handwritten">#aufgehtsgrün</text>
   <text x="1008" y="1880" text-anchor="end" fill="#071f16" font-size="24" class="handwritten">bsvnordstern.de</text>
