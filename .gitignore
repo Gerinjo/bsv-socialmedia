@@ -1,8 +1,0 @@
-node_modules/
-dist/
-output/
-.env
-.env.*
-!.env.example
-supabase/.temp/
-supabase/functions/_shared/story-assets.generated.ts
