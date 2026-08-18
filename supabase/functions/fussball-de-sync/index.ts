@@ -189,7 +189,7 @@ async function syncTeam(admin: any, team: Team) {
       .from('social_games')
       .select(`
         id, status, venue, team_id, is_home, home_team, away_team,
-        home_club_id, away_club_id, competition, kickoff_at, enabled
+        home_club_id, away_club_id, competition, kickoff_at, enabled, archived_at
       `)
       .eq('source', 'fussball.de')
       .eq('source_match_id', match.sourceMatchId)
@@ -211,7 +211,7 @@ async function syncTeam(admin: any, team: Team) {
       venue: isHome ? (existing?.venue || 'Hauptplatz') : null,
       kickoff_at: match.kickoffAt,
       status: importedStatus,
-      enabled: true,
+      enabled: !existing?.archived_at,
     };
 
     const changed = !existing || gameChanged(existing, payload);

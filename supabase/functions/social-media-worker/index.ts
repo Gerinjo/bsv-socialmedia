@@ -101,6 +101,8 @@ type IndependentStoryJob = {
     title: string;
     motivation: string;
     activity: string;
+    show_activity_heading: boolean;
+    show_motivation_heading: boolean;
     event_at: string;
     image_path: string | null;
     schedule_kind: 'once' | 'weekly';
@@ -164,7 +166,8 @@ const postJobSelect = `
 const independentStoryJobSelect = `
   id, attempts, status, scheduled_for, event_at,
   story:social_independent_stories!inner(
-    id, title, motivation, activity, event_at, image_path, schedule_kind, publish_at,
+    id, title, motivation, activity, show_activity_heading, show_motivation_heading,
+    event_at, image_path, schedule_kind, publish_at,
     weekly_weekday, weekly_time, schedule_timezone, enabled,
     category:social_story_categories(id, slug, label),
     audience:social_post_audiences(
@@ -549,21 +552,34 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
               `${candidate.game.home_team} vs ${candidate.game.away_team} · ${candidate.game.competition || 'BSV Nordstern'} • ${new Date(candidate.game.kickoff_at).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}`,
               sponsorMentionLine(sponsors),
             ].filter(Boolean).join('\n\n');
-          const result = candidate.story_type === 'report' && (preview.mediaUrls?.length ?? 0) > 1
-            ? await publishInstagramCarousel({
+          let result;
+          if (candidate.story_type !== 'report') {
+            result = await publishInstagramStory({
               accountId: runtimeConfig.instagramAccountId,
               accessToken: runtimeConfig.instagramAccessToken,
+              graphApiVersion: runtimeConfig.metaGraphApiVersion,
+              imageUrl: preview.mediaUrl,
+              testMode: runtimeConfig.testMode,
+            });
+          } else if ((preview.mediaUrls?.length ?? 0) > 1) {
+            result = await publishInstagramCarousel({
+              accountId: runtimeConfig.instagramAccountId,
+              accessToken: runtimeConfig.instagramAccessToken,
+              graphApiVersion: runtimeConfig.metaGraphApiVersion,
               imageUrls: preview.mediaUrls,
               caption,
               testMode: runtimeConfig.testMode,
-            })
-            : await publishInstagramImage({
+            });
+          } else {
+            result = await publishInstagramImage({
               accountId: runtimeConfig.instagramAccountId,
               accessToken: runtimeConfig.instagramAccessToken,
+              graphApiVersion: runtimeConfig.metaGraphApiVersion,
               imageUrl: preview.mediaUrl,
               caption,
               testMode: runtimeConfig.testMode,
             });
+          }
           await context.supabaseAdmin
             .from('social_story_jobs')
             .update({
@@ -668,6 +684,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
             ? await publishInstagramCarousel({
               accountId: runtimeConfig.instagramAccountId,
               accessToken: runtimeConfig.instagramAccessToken,
+              graphApiVersion: runtimeConfig.metaGraphApiVersion,
               imageUrls: preview.mediaUrls,
               caption,
               testMode: runtimeConfig.testMode,
@@ -675,6 +692,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
             : await publishInstagramImage({
               accountId: runtimeConfig.instagramAccountId,
               accessToken: runtimeConfig.instagramAccessToken,
+              graphApiVersion: runtimeConfig.metaGraphApiVersion,
               imageUrl: preview.mediaUrl,
               caption,
               testMode: runtimeConfig.testMode,
@@ -770,6 +788,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
           const result = await publishInstagramStory({
             accountId: runtimeConfig.instagramAccountId,
             accessToken: runtimeConfig.instagramAccessToken,
+            graphApiVersion: runtimeConfig.metaGraphApiVersion,
             imageUrl: preview.mediaUrl,
             testMode: runtimeConfig.testMode,
           });
@@ -842,12 +861,11 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
           sponsors,
         });
         if (!runtimeConfig.testMode) {
-          const caption = [`${candidate.birthday.person_name} · Geburtstag • ${candidate.birthday.message}`, sponsorMentionLine(sponsors)].filter(Boolean).join('\n\n').slice(0, 2200);
-          const result = await publishInstagramImage({
+          const result = await publishInstagramStory({
             accountId: runtimeConfig.instagramAccountId,
             accessToken: runtimeConfig.instagramAccessToken,
+            graphApiVersion: runtimeConfig.metaGraphApiVersion,
             imageUrl: preview.mediaUrl,
-            caption,
             testMode: runtimeConfig.testMode,
           });
           await context.supabaseAdmin
@@ -903,13 +921,20 @@ function secretsMatch(candidate: string, expected: string): boolean {
 }
 
 export default {
-  fetch(request: Request): Promise<Response> {
-    const cronSecret = request.headers.get('x-bsv-cron-secret') ?? '';
-    if (runtimeConfig.workerCronSecret && secretsMatch(cronSecret, runtimeConfig.workerCronSecret)) {
-      const headers = new Headers(request.headers);
-      headers.set('apikey', runtimeConfig.workerApiKey);
-      return secretHandler(new Request(request, { headers }));
+  async fetch(request: Request): Promise<Response> {
+    try {
+      const cronSecret = request.headers.get('x-bsv-cron-secret') ?? '';
+      if (runtimeConfig.workerCronSecret && secretsMatch(cronSecret, runtimeConfig.workerCronSecret)) {
+        const headers = new Headers(request.headers);
+        headers.set('apikey', runtimeConfig.workerApiKey);
+        headers.set('authorization', `Bearer ${runtimeConfig.workerApiKey}`);
+        return await secretHandler(new Request(request, { headers }));
+      }
+      return await secretHandler(request);
+    } catch (workerError) {
+      const message = workerError instanceof Error ? workerError.message : 'Unbekannter Laufzeitfehler';
+      console.error('social-media-worker failed', workerError);
+      return Response.json({ error: `Worker konnte nicht ausgeführt werden: ${message.slice(0, 800)}` }, { status: 500 });
     }
-    return secretHandler(request);
   },
 };

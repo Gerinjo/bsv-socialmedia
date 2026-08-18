@@ -71,7 +71,7 @@ function truncate(value, maximum) {
   return normalized.length > maximum ? `${normalized.slice(0, maximum - 1).trimEnd()}…` : normalized;
 }
 
-function multilineText(value, { x, y, width = 900, fontSize = 42, lineHeight = 52, maximumLines = 3, className = 'sans', fill = '#10251a', weight = 700 } = {}) {
+function multilineText(value, { x, y, width = 900, fontSize = 42, lineHeight = 52, maximumLines = 3, className = 'sans', fill = '#10251a', weight = 700, textAnchor } = {}) {
   const words = String(value ?? '').trim().split(/\s+/).filter(Boolean);
   if (!words.length) return '';
   const maximumCharacters = Math.max(8, Math.floor(width / (fontSize * 0.54)));
@@ -87,9 +87,45 @@ function multilineText(value, { x, y, width = 900, fontSize = 42, lineHeight = 5
       lines[maximumLines - 1] = truncate(`${lines[maximumLines - 1]} ${word}`, maximumCharacters);
     }
   }
+  const anchorAttribute = textAnchor ? ` text-anchor="${textAnchor}"` : '';
   return lines.slice(0, maximumLines).map((line, index) => (
-    `<text x="${x}" y="${y + index * lineHeight}" fill="${fill}" font-size="${fontSize}" class="${className}" font-weight="${weight}">${xmlEscape(line)}</text>`
+    `<text x="${x}" y="${y + index * lineHeight}"${anchorAttribute} fill="${fill}" font-size="${fontSize}" class="${className}" font-weight="${weight}">${xmlEscape(line)}</text>`
   )).join('');
+}
+
+function storyContentBlock(match, hasSponsors = false) {
+  const showActivityHeading = match.storyShowActivityHeading !== false;
+  const showMotivationHeading = match.storyShowMotivationHeading !== false;
+  const activityOptions = { x: 72, width: 936, fontSize: 58, lineHeight: 66, maximumLines: 2, className: 'handwritten', fill: '#10251a', weight: 400 };
+  const motivationOptions = { x: 72, width: 936, fontSize: 46, lineHeight: 54, maximumLines: 2, className: 'handwritten', fill: '#164f32', weight: 400 };
+  const activityLineCount = Math.max(1, (multilineText(match.storyActivity, { ...activityOptions, y: 0 }).match(/<text /g) ?? []).length);
+  const motivationLineCount = Math.max(1, (multilineText(match.storyMotivation, { ...motivationOptions, y: 0 }).match(/<text /g) ?? []).length);
+  const headingHeight = 31;
+  const headingGap = 20;
+  const sectionGap = 44;
+  const activityHeight = activityOptions.fontSize + (activityLineCount - 1) * activityOptions.lineHeight;
+  const motivationHeight = motivationOptions.fontSize + (motivationLineCount - 1) * motivationOptions.lineHeight;
+  const totalHeight = (showActivityHeading ? headingHeight + headingGap : 0)
+    + activityHeight
+    + sectionGap
+    + (showMotivationHeading ? headingHeight + headingGap : 0)
+    + motivationHeight;
+  const areaTop = 1435;
+  const areaBottom = hasSponsors ? 1735 : 1810;
+  let cursor = Math.max(areaTop, areaTop + (areaBottom - areaTop - totalHeight) / 2);
+  const parts = [];
+  if (showActivityHeading) {
+    parts.push(`<text x="72" y="${Math.round(cursor + headingHeight)}" fill="#164f32" font-size="31" class="handwritten">AKTIVITÄT</text>`);
+    cursor += headingHeight + headingGap;
+  }
+  parts.push(multilineText(match.storyActivity, { ...activityOptions, y: Math.round(cursor + activityOptions.fontSize) }));
+  cursor += activityHeight + sectionGap;
+  if (showMotivationHeading) {
+    parts.push(`<text x="72" y="${Math.round(cursor + headingHeight)}" fill="#164f32" font-size="31" class="handwritten">DARUM SOLLTEST DU DABEI SEIN</text>`);
+    cursor += headingHeight + headingGap;
+  }
+  parts.push(multilineText(match.storyMotivation, { ...motivationOptions, y: Math.round(cursor + motivationOptions.fontSize) }));
+  return parts.join('');
 }
 
 export function birthdayRoleText(value) {
@@ -216,7 +252,7 @@ export function sponsorLogoStrip(type, logos = []) {
   const items = logos.filter(Boolean).slice(0, 2);
   if (!items.length) return '';
   const feed = type === 'report' || type === 'post';
-  const layout = feed ? {x:48,y:968,width:984,height:62,logoHeight:42} : type === 'announcement' ? {x:120,y:1328,width:840,height:250,logoHeight:180} : type === 'result' ? {x:72,y:1360,width:936,height:340,logoHeight:250} : type === 'story' ? {x:72,y:1744,width:936,height:92,logoHeight:66} : {x:72,y:1758,width:936,height:68,logoHeight:48};
+  const layout = feed ? {x:48,y:968,width:984,height:62,logoHeight:42} : type === 'announcement' ? {x:120,y:1328,width:840,height:250,logoHeight:180} : type === 'result' ? {x:72,y:1360,width:936,height:340,logoHeight:250} : type === 'story' ? {x:72,y:1760,width:936,height:60,logoHeight:42} : {x:72,y:1758,width:936,height:68,logoHeight:48};
   const logoHeight = type === 'lineup' && items.length === 1 ? layout.logoHeight * 2 : layout.logoHeight;
   const cellWidth=(layout.width-48)/items.length;
   const images=items.map((logo,index)=>`<image href="${xmlEscape(logo)}" x="${layout.x+24+index*cellWidth}" y="${layout.y+(layout.height-logoHeight)/2}" width="${cellWidth}" height="${logoHeight}" preserveAspectRatio="xMidYMid meet"/>`).join('');
@@ -333,10 +369,10 @@ export async function renderStorySvg({
     POST_AUDIENCE: truncate(match.postAudience, 36),
     STORY_CATEGORY: truncate(match.storyCategory, 24),
     STORY_AUDIENCE: truncate(match.storyAudience, 34),
-    STORY_TITLE_LINES: multilineText(match.storyTitle, { x: 72, y: 268, width: 936, fontSize: 72, lineHeight: 76, maximumLines: 2, className: 'handwritten', fill: '#f4f1e8', weight: 400 }),
-    STORY_ACTIVITY_LINES: multilineText(match.storyActivity, { x: 82, y: 1392, width: 916, fontSize: 42, lineHeight: 52, maximumLines: 2, fill: '#10251a', weight: 900 }),
-    STORY_MOTIVATION_LINES: multilineText(match.storyMotivation, { x: 82, y: 1532, width: 916, fontSize: 32, lineHeight: 42, maximumLines: 3, fill: '#164f32', weight: 700 }),
+    STORY_TITLE_LINES: multilineText(match.storyTitle, { x: 54, y: 270, width: 972, fontSize: 80, lineHeight: 84, maximumLines: 2, className: 'handwritten', fill: '#f4f1e8', weight: 400 }),
+    STORY_CONTENT_BLOCK: storyContentBlock(match, Boolean(sponsorLogoDataUris?.length)),
     STORY_EVENT_DATE: truncate(match.storyEventDate, 34),
+    STORY_EVENT_DATE_SIZE: fittedSize(match.storyEventDate, 48, 42, 25),
     STORY_EVENT_TIME: truncate(match.storyEventTime, 18),
     REPORT_PAGE: reportPage,
     REPORT_PAGE_COUNT: reportPageCount,
@@ -350,7 +386,7 @@ export async function renderStorySvg({
   };
 
   return applyTeamColorScheme(
-    fillTemplate(template, values, new Set(['PLAYER_ROWS', 'SCORER_ROWS', 'SPONSOR_LOGOS', 'STORY_TITLE_LINES', 'STORY_ACTIVITY_LINES', 'STORY_MOTIVATION_LINES'])),
+    fillTemplate(template, values, new Set(['PLAYER_ROWS', 'SCORER_ROWS', 'SPONSOR_LOGOS', 'STORY_TITLE_LINES', 'STORY_CONTENT_BLOCK'])),
     colorScheme,
   );
 }

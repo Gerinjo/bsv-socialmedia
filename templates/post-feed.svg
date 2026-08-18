@@ -30,8 +30,8 @@
 
   <g>
     <image href="data:image/png;base64," x="64" y="56" width="104" height="104" opacity="0.96"/>
-    <text x="196" y="97" fill="#a8cbb4" font-size="20" class="caps">BSV NORDSTERN</text>
-    <text x="196" y="128" fill="#ffffff" font-size="24" class="sans" font-weight="700">Radolfzell · Fußball</text>
+    <text x="196" y="95" fill="#a8cbb4" font-size="42" class="caps" textLength="320" lengthAdjust="spacingAndGlyphs">BSV NORDSTERN</text>
+    <text x="196" y="141" fill="#ffffff" font-size="42" class="caps" textLength="320" lengthAdjust="spacingAndGlyphs">RADOLFZELL</text>
 
     <g transform="translate(818 54)">
       <rect x="0" y="0" width="176" height="56" rx="28" fill="#f4d638"/>

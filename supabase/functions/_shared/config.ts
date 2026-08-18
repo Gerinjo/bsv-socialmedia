@@ -22,6 +22,10 @@ function configuredValue(name: string): string {
   return value === name ? '' : value;
 }
 
+function metaGraphApiVersion(value: string): string {
+  return /^v\d+\.\d+$/.test(value) ? value : 'v26.0';
+}
+
 const supabaseUrl = Deno.env.get('SUPABASE_URL')?.trim() ?? '';
 const internalSecretKey = defaultSecretKey();
 
@@ -36,4 +40,5 @@ export const runtimeConfig = Object.freeze({
   websiteSponsorSyncSecret: Deno.env.get('WEBSITE_SPONSOR_SYNC_SECRET')?.trim() ?? '',
   instagramAccountId: Deno.env.get('INSTAGRAM_ACCOUNT_ID')?.trim() ?? '',
   instagramAccessToken: Deno.env.get('INSTAGRAM_ACCESS_TOKEN')?.trim() ?? '',
+  metaGraphApiVersion: metaGraphApiVersion(configuredValue('META_GRAPH_API_VERSION')),
 });

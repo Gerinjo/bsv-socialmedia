@@ -244,6 +244,8 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
           storyActivity: activity,
           storyAudience: audienceLabel,
           storyCategory: categoryLabel,
+          storyShowActivityHeading: story.show_activity_heading !== false,
+          storyShowMotivationHeading: story.show_motivation_heading !== false,
           storyEventDate: eventDate,
           storyEventTime: `${eventTime} Uhr`,
         },

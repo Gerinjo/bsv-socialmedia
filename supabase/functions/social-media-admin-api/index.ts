@@ -2,6 +2,13 @@ import { withSupabase } from 'npm:@supabase/server@1.4.1';
 import { runtimeConfig } from '../_shared/config.ts';
 import { CLUB_CREST_SEEDS } from '../_shared/club-crest-seeds.ts';
 import { currentWeeklyEventAt, nextStoryDueAt } from '../../../src/story-schedule.mjs';
+import { inspectInstagramAccount } from '../../../src/instagram-publisher.mjs';
+import {
+  cleanupSummary,
+  historyState,
+  normalizeRetentionDays,
+  withHistoryState,
+} from '../../../src/history-retention.mjs';
 
 const corsHeaders = {
   'access-control-allow-origin': '*',
@@ -430,6 +437,25 @@ async function freshSponsorUrls(admin: any, rows: any[]): Promise<any[]> {
   })));
 }
 
+function cleanupStoragePaths(kind: 'game' | 'post' | 'story', record: any): string[] {
+  const jobs = Array.isArray(record.jobs) ? record.jobs : record.job ? [record.job] : [];
+  const paths = jobs.flatMap((job: any) => [
+    job?.storage_path,
+    ...(Array.isArray(job?.storage_paths) ? job.storage_paths : []),
+  ]);
+  if (kind === 'game') paths.push(record.action_image_path, ...(Array.isArray(record.report_image_paths) ? record.report_image_paths : []));
+  if (kind === 'post') paths.push(...(Array.isArray(record.image_paths) ? record.image_paths : []));
+  if (kind === 'story') paths.push(record.image_path);
+  return [...new Set(paths.map((path: unknown) => String(path ?? '').trim()).filter(Boolean))];
+}
+
+async function removeStoragePaths(admin: any, paths: string[]): Promise<void> {
+  for (let index = 0; index < paths.length; index += 100) {
+    const { error } = await admin.storage.from(bucket).remove(paths.slice(index, index + 100));
+    if (error) throw error;
+  }
+}
+
 async function rerenderUpcomingClubGames(admin: any, clubId: string) {
   const now = new Date().toISOString();
   const [homeGames, awayGames] = await Promise.all([
@@ -552,6 +578,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       { data: independentStories, error: independentStoriesError },
       { data: sponsors, error: sponsorsError },
       { data: sponsorAssignments, error: sponsorAssignmentsError },
+      { data: cleanupSettings, error: cleanupSettingsError },
     ] = await Promise.all([
       context.supabaseAdmin
         .from('social_games')
@@ -590,7 +617,6 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       context.supabaseAdmin
         .from('social_posts')
         .select('*, audience:social_post_audiences(id, slug, audience_group, label), job:social_post_jobs(*)')
-        .eq('enabled', true)
         .order('updated_at', { ascending: false }),
       context.supabaseAdmin
         .from('social_story_categories')
@@ -600,7 +626,6 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       context.supabaseAdmin
         .from('social_independent_stories')
         .select('*, category:social_story_categories(id, slug, label), audience:social_post_audiences(id, slug, audience_group, label, team_id), jobs:social_independent_story_jobs(*)')
-        .eq('enabled', true)
         .order('updated_at', { ascending: false }),
       context.supabaseAdmin
         .from('social_sponsors')
@@ -611,10 +636,27 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .from('social_sponsor_assignments')
         .select('sponsor_id, audience_id, context, slot')
         .order('slot', { ascending: true }),
+      context.supabaseAdmin
+        .from('social_cleanup_settings')
+        .select('retention_days, updated_at')
+        .eq('id', 1)
+        .maybeSingle(),
     ]);
     const readError = gamesError ?? birthdaysError ?? teamsError ?? teamColorGroupsError ?? peopleError ?? clubsError ?? membersError
-      ?? postAudiencesError ?? postsError ?? storyCategoriesError ?? independentStoriesError ?? sponsorsError ?? sponsorAssignmentsError;
+      ?? postAudiencesError ?? postsError ?? storyCategoriesError ?? independentStoriesError ?? sponsorsError ?? sponsorAssignmentsError
+      ?? cleanupSettingsError;
     if (readError) return json({ error: readError.message }, 500);
+    const retentionDays = normalizeRetentionDays(cleanupSettings?.retention_days);
+    const [preparedGames, preparedPosts, preparedIndependentStories] = await Promise.all([
+      freshPreviewUrls(context.supabaseAdmin, games ?? []),
+      freshPostUrls(context.supabaseAdmin, posts ?? []),
+      freshIndependentStoryUrls(context.supabaseAdmin, independentStories ?? []),
+    ]);
+    const historyRecords = {
+      game: preparedGames.map((record: any) => withHistoryState(record, 'game', retentionDays)),
+      post: preparedPosts.map((record: any) => withHistoryState(record, 'post', retentionDays)),
+      story: preparedIndependentStories.map((record: any) => withHistoryState(record, 'story', retentionDays)),
+    };
     return json({
       user: { userId, email, role: String(membership.role ?? '').trim() || 'sm-team' },
       members: members ?? [],
@@ -625,14 +667,21 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       teamColorGroups: teamColorGroups ?? [],
       people: people ?? [],
       postAudiences: postAudiences ?? [],
-      posts: await freshPostUrls(context.supabaseAdmin, posts ?? []),
+      posts: historyRecords.post,
       storyCategories: storyCategories ?? [],
-      independentStories: await freshIndependentStoryUrls(context.supabaseAdmin, independentStories ?? []),
+      independentStories: historyRecords.story,
       sponsors: await freshSponsorUrls(context.supabaseAdmin, sponsors ?? []),
       sponsorAssignments: sponsorAssignments ?? [],
       clubs: await freshClubUrls(context.supabaseAdmin, clubs ?? []),
-      games: await freshPreviewUrls(context.supabaseAdmin, games ?? []),
+      games: historyRecords.game,
       birthdays: await freshPreviewUrls(context.supabaseAdmin, birthdays ?? []),
+      cleanupSettings: { retentionDays, updatedAt: cleanupSettings?.updated_at ?? null },
+      cleanupSummary: cleanupSummary(historyRecords, retentionDays),
+      instagramConfiguration: {
+        accountIdConfigured: Boolean(runtimeConfig.instagramAccountId),
+        accessTokenConfigured: Boolean(runtimeConfig.instagramAccessToken),
+        graphApiVersion: runtimeConfig.metaGraphApiVersion,
+      },
     });
   }
 
@@ -641,6 +690,117 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
   try {
     const body = await request.json() as Record<string, any>;
     const action = required(body.action, 'Aktion');
+
+    if (action === 'test_instagram_connection') {
+      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
+      if (!runtimeConfig.instagramAccountId || !runtimeConfig.instagramAccessToken) {
+        throw new Error('Instagram Account ID und Access Token sind in Supabase noch nicht vollständig konfiguriert.');
+      }
+      const expectedUsername = required(body.expectedUsername, 'Erwarteter Instagram-Benutzername')
+        .replace(/^@+/, '')
+        .toLowerCase();
+      if (!/^[a-z0-9._]{1,30}$/.test(expectedUsername)) throw new Error('Der erwartete Instagram-Benutzername ist ungültig.');
+      const account = await inspectInstagramAccount({
+        accountId: runtimeConfig.instagramAccountId,
+        accessToken: runtimeConfig.instagramAccessToken,
+        graphApiVersion: runtimeConfig.metaGraphApiVersion,
+      });
+      if (account.username.toLowerCase() !== expectedUsername) {
+        throw new Error(`Das konfigurierte Instagram-Konto ist @${account.username}, erwartet wurde @${expectedUsername}.`);
+      }
+      if (account.accountType !== 'BUSINESS') {
+        throw new Error(`@${account.username} ist kein Instagram-Business-Konto (Kontotyp: ${account.accountType || 'unbekannt'}).`);
+      }
+      return json({ ok: true, account, testMode: runtimeConfig.testMode });
+    }
+
+    if (action === 'save_cleanup_settings') {
+      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
+      const retentionDays = normalizeRetentionDays(body.retentionDays, -1);
+      if (retentionDays < 1) throw new Error('Die Aufbewahrungsdauer muss zwischen 1 und 3.650 Tagen liegen.');
+      const { data, error } = await context.supabaseAdmin.from('social_cleanup_settings').upsert({
+        id: 1,
+        retention_days: retentionDays,
+        updated_by: userId,
+      }).select('retention_days, updated_at').single();
+      if (error) throw error;
+      return json({ ok: true, cleanupSettings: { retentionDays: data.retention_days, updatedAt: data.updated_at } });
+    }
+
+    if (action === 'set_record_archived') {
+      const kind = required(body.kind, 'Datensatzart') as 'game' | 'post' | 'story';
+      const recordId = required(body.recordId, 'Datensatz-ID');
+      const archived = body.archived !== false;
+      const configs = {
+        game: { table: 'social_games', jobs: 'social_story_jobs', foreignKey: 'game_id' },
+        post: { table: 'social_posts', jobs: 'social_post_jobs', foreignKey: 'post_id' },
+        story: { table: 'social_independent_stories', jobs: 'social_independent_story_jobs', foreignKey: 'story_id' },
+      } as const;
+      const config = configs[kind];
+      if (!config) throw new Error('Die Datensatzart ist ungültig.');
+      const { data: record, error: updateError } = await context.supabaseAdmin.from(config.table).update({
+        archived_at: archived ? new Date().toISOString() : null,
+        archived_by: archived ? userId : null,
+        enabled: !archived,
+      }).eq('id', recordId).select('id, archived_at').maybeSingle();
+      if (updateError) throw updateError;
+      if (!record) throw new Error('Der Datensatz wurde nicht gefunden.');
+      if (archived) {
+        const { error: jobError } = await context.supabaseAdmin.from(config.jobs).update({
+          status: 'skipped',
+          last_error: 'Manuell als nicht mehr benötigt markiert.',
+        }).eq(config.foreignKey, recordId).in('status', ['pending', 'preview_ready', 'failed', 'needs_input', 'skipped']);
+        if (jobError) throw jobError;
+      }
+      return json({ ok: true, archived, archivedAt: record.archived_at });
+    }
+
+    if (action === 'purge_historical_data') {
+      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
+      if (body.confirm !== 'DELETE_ELIGIBLE_HISTORY') throw new Error('Die endgültige Löschung wurde nicht bestätigt.');
+      const [settingsResult, gamesResult, postsResult, storiesResult] = await Promise.all([
+        context.supabaseAdmin.from('social_cleanup_settings').select('retention_days').eq('id', 1).maybeSingle(),
+        context.supabaseAdmin.from('social_games').select('id, kickoff_at, archived_at, action_image_path, report_image_paths, jobs:social_story_jobs(status, published_at, storage_path, storage_paths)'),
+        context.supabaseAdmin.from('social_posts').select('id, archived_at, image_paths, job:social_post_jobs(status, published_at, storage_path, storage_paths)'),
+        context.supabaseAdmin.from('social_independent_stories').select('id, schedule_kind, archived_at, image_path, jobs:social_independent_story_jobs(status, published_at, storage_path)'),
+      ]);
+      const cleanupError = settingsResult.error ?? gamesResult.error ?? postsResult.error ?? storiesResult.error;
+      if (cleanupError) throw cleanupError;
+      const retentionDays = normalizeRetentionDays(settingsResult.data?.retention_days);
+      const now = Date.now();
+      const candidates = {
+        game: (gamesResult.data ?? []).filter((record: any) => historyState(record, 'game', retentionDays, now).cleanup_eligible),
+        post: (postsResult.data ?? []).filter((record: any) => historyState(record, 'post', retentionDays, now).cleanup_eligible),
+        story: (storiesResult.data ?? []).filter((record: any) => historyState(record, 'story', retentionDays, now).cleanup_eligible),
+      };
+      const storagePaths = [...new Set([
+        ...candidates.game.flatMap((record: any) => cleanupStoragePaths('game', record)),
+        ...candidates.post.flatMap((record: any) => cleanupStoragePaths('post', record)),
+        ...candidates.story.flatMap((record: any) => cleanupStoragePaths('story', record)),
+      ])];
+      if (storagePaths.length) await removeStoragePaths(context.supabaseAdmin, storagePaths);
+      const deletions = [
+        ['social_games', candidates.game],
+        ['social_posts', candidates.post],
+        ['social_independent_stories', candidates.story],
+      ] as const;
+      for (const [table, records] of deletions) {
+        const ids = records.map((record: any) => record.id);
+        if (!ids.length) continue;
+        const { error } = await context.supabaseAdmin.from(table).delete().in('id', ids);
+        if (error) throw error;
+      }
+      return json({
+        ok: true,
+        retentionDays,
+        deleted: {
+          games: candidates.game.length,
+          posts: candidates.post.length,
+          stories: candidates.story.length,
+          storageObjects: storagePaths.length,
+        },
+      });
+    }
 
     if (action === 'create_team_member') {
       if (String(membership.role ?? '').trim().toLowerCase() !== 'admin') {
@@ -1016,6 +1176,8 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       const title = required(body.title, 'Titel');
       const motivation = required(body.motivation, 'Motivation');
       const activity = required(body.activity, 'Aktivität');
+      const showActivityHeading = body.showActivityHeading !== false;
+      const showMotivationHeading = body.showMotivationHeading !== false;
       const eventAt = new Date(required(body.eventAt, 'Termin'));
       const scheduleKind = String(body.scheduleKind ?? 'once');
       if (Number.isNaN(eventAt.getTime())) throw new Error('Der Termin ist ungültig.');
@@ -1045,6 +1207,8 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         title,
         motivation,
         activity,
+        show_activity_heading: showActivityHeading,
+        show_motivation_heading: showMotivationHeading,
         event_at: eventAt.toISOString(),
         schedule_kind: scheduleKind,
         publish_at: publishAt?.toISOString() ?? null,
@@ -1121,10 +1285,18 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     }
 
     if (action === 'delete_independent_story') {
+      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
       const storyId = required(body.storyId, 'Story-ID');
-      const { data: story, error: storyError } = await context.supabaseAdmin.from('social_independent_stories').select('image_path, jobs:social_independent_story_jobs(storage_path)').eq('id', storyId).maybeSingle();
+      const [{ data: story, error: storyError }, { data: cleanupSettings, error: settingsError }] = await Promise.all([
+        context.supabaseAdmin.from('social_independent_stories').select('schedule_kind, archived_at, image_path, jobs:social_independent_story_jobs(status, published_at, storage_path)').eq('id', storyId).maybeSingle(),
+        context.supabaseAdmin.from('social_cleanup_settings').select('retention_days').eq('id', 1).maybeSingle(),
+      ]);
       if (storyError) throw storyError;
+      if (settingsError) throw settingsError;
       if (!story) throw new Error('Die Story wurde nicht gefunden.');
+      if (!historyState(story, 'story', normalizeRetentionDays(cleanupSettings?.retention_days)).cleanup_eligible) {
+        throw new Error('Die Story ist noch innerhalb der Aufbewahrungsfrist.');
+      }
       const paths = [...new Set([story.image_path, ...(story.jobs ?? []).map((job: any) => job.storage_path)].map((path) => String(path ?? '').trim()).filter(Boolean))];
       if (paths.length) {
         const { error: removeError } = await context.supabaseAdmin.storage.from(bucket).remove(paths);
@@ -1267,14 +1439,22 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     }
 
     if (action === 'delete_post') {
+      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
       const postId = required(body.postId, 'Beitrags-ID');
-      const { data: post, error: postError } = await context.supabaseAdmin
-        .from('social_posts')
-        .select('image_paths, job:social_post_jobs(storage_paths, storage_path)')
-        .eq('id', postId)
-        .maybeSingle();
+      const [{ data: post, error: postError }, { data: cleanupSettings, error: settingsError }] = await Promise.all([
+        context.supabaseAdmin
+          .from('social_posts')
+          .select('archived_at, image_paths, job:social_post_jobs(status, published_at, storage_paths, storage_path)')
+          .eq('id', postId)
+          .maybeSingle(),
+        context.supabaseAdmin.from('social_cleanup_settings').select('retention_days').eq('id', 1).maybeSingle(),
+      ]);
       if (postError) throw postError;
+      if (settingsError) throw settingsError;
       if (!post) throw new Error('Der Beitrag wurde nicht gefunden.');
+      if (!historyState(post, 'post', normalizeRetentionDays(cleanupSettings?.retention_days)).cleanup_eligible) {
+        throw new Error('Der Beitrag ist noch innerhalb der Aufbewahrungsfrist.');
+      }
       const postJob = Array.isArray(post.job) ? post.job[0] : post.job;
       const paths = [...new Set([
         ...(Array.isArray(post.image_paths) ? post.image_paths : []),

@@ -12,8 +12,8 @@
   <rect width="1080" height="1080" fill="#f4f1e8"/>
   <rect width="1080" height="836" fill="url(#background)"/><rect width="1080" height="836" fill="url(#dots)"/>
   <image href="{{LOGO_DATA_URI}}" x="48" y="40" width="82" height="82"/>
-  <text x="156" y="72" fill="#a8cbb4" font-size="18" class="caps">BSV NORDSTERN</text>
-  <text x="156" y="104" fill="#ffffff" font-size="22" class="sans" font-weight="800">Radolfzell · Fußball</text>
+  <text x="156" y="72" fill="#a8cbb4" font-size="42" class="caps" textLength="300" lengthAdjust="spacingAndGlyphs">BSV NORDSTERN</text>
+  <text x="156" y="116" fill="#ffffff" font-size="42" class="caps" textLength="300" lengthAdjust="spacingAndGlyphs">RADOLFZELL</text>
   <text x="1032" y="68" text-anchor="end" fill="#f4d638" font-size="{{TEAM_CATEGORY_SIZE}}" class="handwritten">{{TEAM_CATEGORY}}</text>
   <text x="1032" y="100" text-anchor="end" fill="#a8cbb4" font-size="18" class="handwritten">{{POST_AUDIENCE}}</text>
   <text x="1032" y="124" text-anchor="end" fill="#ffffff" font-size="12" class="caps">SEITE {{REPORT_PAGE}} / {{REPORT_PAGE_COUNT}}</text>

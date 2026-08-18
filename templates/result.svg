@@ -27,8 +27,8 @@
   <path d="M0 1165c265 118 520 75 720-10 145-62 258-55 360-8" fill="none" stroke="#a8cbb4" stroke-width="5" opacity=".58"/>
 
   <image href="{{LOGO_DATA_URI}}" x="72" y="64" width="104" height="104"/>
-  <text x="208" y="106" fill="#a8cbb4" font-size="22" class="caps">BSV NORDSTERN</text>
-  <text x="208" y="141" fill="#ffffff" font-size="24" class="sans" font-weight="800">Radolfzell · Fußball</text>
+  <text x="208" y="105" fill="#a8cbb4" font-size="42" class="caps" textLength="320" lengthAdjust="spacingAndGlyphs">BSV NORDSTERN</text>
+  <text x="208" y="151" fill="#ffffff" font-size="42" class="caps" textLength="320" lengthAdjust="spacingAndGlyphs">RADOLFZELL</text>
   <g transform="translate(600 64)">
     <rect width="408" height="104" rx="30" fill="#ffffff" opacity=".1"/>
     <text x="204" y="70" text-anchor="middle" fill="#f4d638" font-size="{{TEAM_CATEGORY_SIZE}}" class="handwritten">{{TEAM_CATEGORY}}</text>
@@ -51,7 +51,7 @@
       <text x="320" y="153" text-anchor="middle" fill="#092f20" font-size="188" class="team">{{HOME_SCORE}} : {{AWAY_SCORE}}</text>
     </g>
 
-    <text x="58" y="348" fill="#10251a" font-size="{{HOME_TEAM_SIZE}}" class="team">{{HOME_TEAM}}</text>
+    <text x="58" y="334" fill="#10251a" font-size="{{HOME_TEAM_SIZE}}" class="team">{{HOME_TEAM}}</text>
     <image href="{{HOME_CREST_DATA_URI}}" x="280" y="356" width="140" height="140" preserveAspectRatio="xMidYMid meet" opacity="{{HOME_CREST_OPACITY}}"/>
     <line x1="468" y1="356" x2="468" y2="488" transform="rotate(15 468 422)" stroke="#111111" stroke-width="6" stroke-linecap="round" opacity="{{DUEL_MARK_OPACITY}}"/>
     <image href="{{AWAY_CREST_DATA_URI}}" x="530" y="386" width="140" height="140" preserveAspectRatio="xMidYMid meet" opacity="{{AWAY_CREST_OPACITY}}"/>

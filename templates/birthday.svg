@@ -28,8 +28,8 @@
   <circle cx="950" cy="550" r="226" fill="none" stroke="#ffffff" stroke-width="3" opacity=".08"/>
 
   <image href="{{LOGO_DATA_URI}}" x="72" y="64" width="104" height="104"/>
-  <text x="208" y="106" fill="#a8cbb4" font-size="22" class="caps">BSV NORDSTERN</text>
-  <text x="208" y="141" fill="#ffffff" font-size="24" class="sans" font-weight="800">Radolfzell · Fußball</text>
+  <text x="208" y="105" fill="#a8cbb4" font-size="42" class="caps" textLength="320" lengthAdjust="spacingAndGlyphs">BSV NORDSTERN</text>
+  <text x="208" y="151" fill="#ffffff" font-size="42" class="caps" textLength="320" lengthAdjust="spacingAndGlyphs">RADOLFZELL</text>
   <circle cx="982" cy="116" r="38" fill="#f4d638"/>
   <circle cx="982" cy="116" r="17" fill="#092f20"/>
 

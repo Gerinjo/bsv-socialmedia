@@ -251,7 +251,7 @@ test('weitere Beitragsbilder werden als reine Wellen-Fotoseite gerendert', async
   assert.doesNotMatch(svg, /Saisonabschluss 2026/);
 });
 
-test('freie Story zeigt Kategorie, Zielgruppe, Termin, Aktivität und Motivation', async () => {
+test('freie Story zeigt Kategorie, Termin, Aktivität und Motivation ohne Zielgruppe', async () => {
   const customImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAF';
   const svg = await renderStorySvg({
     rootDir,
@@ -268,12 +268,47 @@ test('freie Story zeigt Kategorie, Zielgruppe, Termin, Aktivität und Motivation
     actionPhotoDataUri: customImage,
   });
   assert.match(svg, /JUNIORINNEN/i);
-  assert.match(svg, /U15 · C-Juniorinnen/);
+  assert.doesNotMatch(svg, /U15 · C-Juniorinnen/);
   assert.match(svg, /Mittwoch, 19\.08\.2026/);
   assert.match(svg, /Gemeinsam Fußball spielen/);
-  assert.match(svg, /Komm vorbei und lerne unser Team kennen\./);
+  assert.match(svg, /Komm vorbei und lerne unser Team/);
+  assert.match(svg, />kennen\.<\/text>/);
+  assert.match(svg, new RegExp(`<image href="${customImage}" x="0" y="400" width="1080" height="940"`));
+  assert.match(svg, /path d="M0 0H1080V1392/);
+  assert.match(svg, /text x="1019" y="105"[^>]+fill="#f4d638"[^>]+font-size="48"[^>]+class="handwritten"[^>]*>Juniorinnen</i);
+  assert.match(svg, /text x="72" y="\d+"[^>]+font-size="31"[^>]+class="handwritten"[^>]*>AKTIVITÄT</i);
+  assert.match(svg, /text x="72" y="\d+"[^>]+font-size="58"[^>]+class="handwritten"[^>]+font-weight="400"[^>]*>Gemeinsam Fußball spielen</i);
+  assert.match(svg, /text x="72" y="\d+"[^>]+font-size="31"[^>]+class="handwritten"[^>]*>DARUM SOLLTEST DU DABEI SEIN</i);
+  assert.match(svg, /text x="72" y="\d+"[^>]+font-size="46"[^>]+class="handwritten"[^>]+font-weight="400"[^>]*>Komm vorbei und lerne unser Team</i);
+  assert.doesNotMatch(svg, /text x="540"[^>]+text-anchor="middle"[^>]*(?:AKTIVITÄT|Gemeinsam Fußball spielen)/i);
+  assert.match(svg, /text x="72" y="1880"[^>]+font-size="42"[^>]+class="handwritten"[^>]*>#aufgehtsgrün</i);
+  assert.match(svg, /text x="1008" y="1880"[^>]+font-size="42"[^>]+class="handwritten"[^>]*>bsvnordstern\.de</i);
+  assert.match(svg, /font-size="48" class="sans" font-weight="900">Mittwoch, 19\.08\.2026</);
+  assert.doesNotMatch(svg, /rect x="720" y="61"/);
   assert.match(svg, /width="1080" height="1920"/);
   assert.doesNotMatch(svg, /\{\{[A-Z0-9_]+\}\}/);
+});
+
+test('freie Story blendet Inhaltsüberschriften getrennt aus und zentriert den Textblock vertikal neu', async () => {
+  const svg = await renderStorySvg({
+    rootDir,
+    type: 'story',
+    match: {
+      storyTitle: 'Flohmarkt',
+      storyCategory: 'Förderverein',
+      storyAudience: 'Alle Abteilungen',
+      storyEventDate: 'Mittwoch, 19.08.2026',
+      storyEventTime: '09:00 Uhr',
+      storyActivity: 'Suchen und Finden',
+      storyMotivation: 'Neue Schätze entdecken',
+      storyShowActivityHeading: false,
+      storyShowMotivationHeading: false,
+    },
+  });
+  assert.doesNotMatch(svg, />AKTIVITÄT</);
+  assert.doesNotMatch(svg, />DARUM SOLLTEST DU DABEI SEIN</);
+  assert.match(svg, /text x="72" y="1607"[^>]+font-size="58"[^>]+class="handwritten"[^>]*>Suchen und Finden</);
+  assert.match(svg, /text x="72" y="1697"[^>]+font-size="46"[^>]+class="handwritten"[^>]*>Neue Schätze entdecken</);
 });
 
 test('Torschützenzeilen werden escaped und bei fünf Einträgen nach außen ausgerichtet', () => {
