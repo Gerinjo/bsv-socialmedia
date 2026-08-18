@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920" role="img" aria-label="BSV Nordstern Story">
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#071f16"/><stop offset="1" stop-color="#164f32"/></linearGradient>
+    <linearGradient id="photoShade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#071f16" stop-opacity=".04"/><stop offset="1" stop-color="#071f16" stop-opacity=".55"/></linearGradient>
+    <pattern id="dots" width="34" height="34" patternUnits="userSpaceOnUse"><circle cx="4" cy="4" r="2" fill="#ffffff" opacity=".05"/></pattern>
+    <clipPath id="photoClip"><rect x="48" y="428" width="984" height="760" rx="42"/></clipPath>
+    <style>
+      @font-face{font-family:'Capture it';src:url('{{HANDWRITTEN_FONT_DATA_URI}}') format('truetype');font-weight:400;font-style:normal}
+      .sans{font-family:Inter,Arial,sans-serif}.handwritten{font-family:'Capture it',Impact,Inter,sans-serif;letter-spacing:1px}.caps{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:4px}
+    </style>
+  </defs>
+  <rect width="1080" height="1920" fill="#f4f1e8"/>
+  <rect width="1080" height="1250" fill="url(#background)"/><rect width="1080" height="1250" fill="url(#dots)"/>
+  <image href="{{LOGO_DATA_URI}}" x="58" y="56" width="92" height="92"/>
+  <text x="176" y="91" fill="#a8cbb4" font-size="19" class="caps">BSV NORDSTERN</text>
+  <text x="176" y="127" fill="#ffffff" font-size="25" class="sans" font-weight="800">Radolfzell · Fußball</text>
+  <rect x="720" y="61" width="302" height="58" rx="29" fill="#f4d638"/>
+  <text x="871" y="99" text-anchor="middle" fill="#071f16" font-size="19" class="caps">{{STORY_CATEGORY}}</text>
+  <text x="1019" y="160" text-anchor="end" fill="#a8cbb4" font-size="20" class="sans" font-weight="800">FÜR {{STORY_AUDIENCE}}</text>
+  {{STORY_TITLE_LINES}}
+  <g clip-path="url(#photoClip)">
+    <rect x="48" y="428" width="984" height="760" fill="#0d3525"/>
+    <image href="{{ACTION_PLAYER_DATA_URI}}" x="48" y="428" width="984" height="760" preserveAspectRatio="xMidYMid slice"/>
+    <rect x="48" y="428" width="984" height="760" fill="url(#photoShade)"/>
+  </g>
+  <rect x="78" y="1084" width="924" height="150" rx="30" fill="#f4d638"/>
+  <text x="112" y="1133" fill="#071f16" font-size="17" class="caps">TERMIN</text>
+  <text x="112" y="1190" fill="#071f16" font-size="39" class="sans" font-weight="900">{{STORY_EVENT_DATE}}</text>
+  <text x="962" y="1190" text-anchor="end" fill="#071f16" font-size="39" class="sans" font-weight="900">{{STORY_EVENT_TIME}}</text>
+  <text x="82" y="1334" fill="#164f32" font-size="18" class="caps">AKTIVITÄT</text>
+  {{STORY_ACTIVITY_LINES}}
+  <text x="82" y="1480" fill="#164f32" font-size="18" class="caps">DARUM SOLLTEST DU DABEI SEIN</text>
+  {{STORY_MOTIVATION_LINES}}
+  <path d="M72 1697H1008" stroke="#a8cbb4" stroke-width="2" opacity=".55"/>
+  {{SPONSOR_LOGOS}}
+  <text x="72" y="1880" fill="#164f32" font-size="28" class="handwritten">#aufgehtsgrün</text>
+  <text x="1008" y="1880" text-anchor="end" fill="#071f16" font-size="24" class="handwritten">bsvnordstern.de</text>
+</svg>

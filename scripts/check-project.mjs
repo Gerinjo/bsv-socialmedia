@@ -33,7 +33,7 @@ const adminPage = await readFile(resolve(rootDir, 'admin-site/admin-page.html'),
 const adminApi = await readFile(resolve(rootDir, 'supabase/functions/social-media-admin-api/index.ts'), 'utf8');
 const edgeRenderer = await readFile(resolve(rootDir, 'supabase/functions/story-renderer/index.ts'), 'utf8');
 const socialWorker = await readFile(resolve(rootDir, 'supabase/functions/social-media-worker/index.ts'), 'utf8');
-for (const marker of ['workspaceSearch', 'memberSearch', 'crestSearch', 'discardCrest', 'remove-report-image', 'markReportNeedsApproval', 'reportApprovalView', 'report-action-bar', 'postAudienceGroup', 'persistPostForm', 'approve_post', 'lineupVisionInput', 'scorersVisionInput', 'recognizeOcrImage']) {
+for (const marker of ['workspaceSearch', 'memberSearch', 'crestSearch', 'discardCrest', 'remove-report-image', 'markReportNeedsApproval', 'reportApprovalView', 'report-action-bar', 'postAudienceGroup', 'persistPostForm', 'approve_post', 'storiesTab', 'persistIndependentStory', 'scheduleIndependentStory', 'lineupVisionInput', 'scorersVisionInput', 'recognizeOcrImage']) {
   if (!adminPage.includes(marker)) throw new Error(`Admin-Oberfläche enthält ${marker} nicht.`);
 }
 const reportSaveHandler = adminPage.match(/document\.querySelectorAll\('\.reportSave'\)[\s\S]*?document\.querySelectorAll\('\.reportApprove'\)/)?.[0] ?? '';
@@ -60,6 +60,9 @@ if (!socialWorker.includes('reportPageIndex') || !socialWorker.includes('renderG
 }
 if (!socialWorker.includes('targetPostJobIds') || !socialWorker.includes('renderPostPreview(candidate, sponsors)')) {
   throw new Error('Unabhängige Beiträge erhalten keine getrennten Carousel-Renderer-Aufrufe.');
+}
+if (!socialWorker.includes('targetIndependentStoryJobIds') || !socialWorker.includes('queueNextStoryOccurrence')) {
+  throw new Error('Geplante freie Stories werden vom Worker nicht vollständig verarbeitet.');
 }
 
 console.log(`Projektstruktur geprüft: ${required.length} Pflichtdateien vorhanden.`);

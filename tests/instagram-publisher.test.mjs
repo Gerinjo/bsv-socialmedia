@@ -6,6 +6,7 @@ import {
   buildInstagramCarouselRequest,
   buildInstagramMediaRequest,
   buildInstagramPublishRequest,
+  buildInstagramStoryRequest,
 } from '../src/instagram-publisher.mjs';
 
 test('publishing requires valid credentials and disabled test mode', () => {
@@ -13,6 +14,16 @@ test('publishing requires valid credentials and disabled test mode', () => {
   assert.equal(isInstagramPublishingEnabled({ testMode: false, accountId: 'abc', accessToken: 'def' }), true);
   assert.equal(isInstagramPublishingEnabled({ testMode: false, accountId: '', accessToken: 'def' }), false);
   assert.equal(isInstagramPublishingEnabled({ testMode: false, accountId: 'abc', accessToken: '' }), false);
+});
+
+test('instagram stories use the STORIES media type', () => {
+  const request = buildInstagramStoryRequest({
+    accountId: '1234567890',
+    accessToken: 'secret-token',
+    imageUrl: 'https://example.com/story.png',
+  });
+  assert.match(request.body, /media_type=STORIES/);
+  assert.doesNotMatch(request.body, /caption=/);
 });
 
 test('instagram carousel requests preserve page order', () => {

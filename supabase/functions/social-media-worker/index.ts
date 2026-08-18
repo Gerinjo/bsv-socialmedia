@@ -1,8 +1,9 @@
 import { withSupabase } from 'npm:@supabase/server@1.4.1';
 import { runtimeConfig } from '../_shared/config.ts';
-import { publishInstagramCarousel, publishInstagramImage } from '../../../src/instagram-publisher.mjs';
+import { publishInstagramCarousel, publishInstagramImage, publishInstagramStory } from '../../../src/instagram-publisher.mjs';
 import { selectAssignedSponsors, sponsorMentionLine } from '../../../src/sponsor-assignments.mjs';
 import { teamAllowsAutomaticPublishing, teamContentEnabled } from '../../../src/team-settings.mjs';
+import { nextStoryDueAt, nextWeeklyEventAt } from '../../../src/story-schedule.mjs';
 
 type JobStatus = 'pending' | 'rendering' | 'preview_ready' | 'published' | 'failed' | 'skipped' | 'needs_input';
 
@@ -89,6 +90,41 @@ type PostJob = {
   };
 };
 
+type IndependentStoryJob = {
+  id: string;
+  attempts: number;
+  status: JobStatus;
+  scheduled_for: string;
+  event_at: string;
+  story: {
+    id: string;
+    title: string;
+    motivation: string;
+    activity: string;
+    event_at: string;
+    image_path: string | null;
+    schedule_kind: 'once' | 'weekly';
+    publish_at: string | null;
+    weekly_weekday: number | null;
+    weekly_time: string | null;
+    schedule_timezone: string;
+    enabled: boolean;
+    audience: {
+      id: string;
+      slug: string;
+      label: string;
+      audience_group: string;
+      team: {
+        active: boolean;
+        content_enabled: boolean;
+        publishing_mode: 'manual' | 'automatic';
+        color_scheme: Record<string, string> | null;
+      } | null;
+    } | null;
+    category: { id: string; slug: string; label: string } | null;
+  };
+};
+
 type RenderPayload = {
   mediaUrl?: string;
   storagePath?: string;
@@ -118,6 +154,19 @@ const postJobSelect = `
   id, attempts, status,
   post:social_posts!inner(
     id, title, body, image_paths, enabled,
+    audience:social_post_audiences(
+      id, slug, label, audience_group,
+      team:social_teams(active, content_enabled, publishing_mode, color_scheme)
+    )
+  )
+`;
+
+const independentStoryJobSelect = `
+  id, attempts, status, scheduled_for, event_at,
+  story:social_independent_stories!inner(
+    id, title, motivation, activity, event_at, image_path, schedule_kind, publish_at,
+    weekly_weekday, weekly_time, schedule_timezone, enabled,
+    category:social_story_categories(id, slug, label),
     audience:social_post_audiences(
       id, slug, label, audience_group,
       team:social_teams(active, content_enabled, publishing_mode, color_scheme)
@@ -226,6 +275,25 @@ async function renderPostPreview(candidate: PostJob, sponsors: any[]): Promise<R
   };
 }
 
+async function renderIndependentStoryPreview(candidate: IndependentStoryJob, sponsors: any[]): Promise<RenderPayload> {
+  if (!candidate.story.image_path) throw new Error('Bitte ein Story-Bild hochladen.');
+  return render({ type: 'story', jobId: candidate.id, story: { ...candidate.story, event_at: candidate.event_at }, sponsors });
+}
+
+async function queueNextStoryOccurrence(admin: any, candidate: IndependentStoryJob): Promise<void> {
+  if (candidate.story.schedule_kind !== 'weekly' || !candidate.story.enabled) return;
+  const scheduledFor = nextStoryDueAt(candidate.story, new Date(candidate.scheduled_for));
+  const eventAt = nextWeeklyEventAt(candidate.event_at, candidate.story.schedule_timezone);
+  const { error } = await admin.from('social_independent_story_jobs').upsert({
+    story_id: candidate.story.id,
+    scheduled_for: scheduledFor,
+    event_at: eventAt,
+    due_at: scheduledFor,
+    status: 'pending',
+  }, { onConflict: 'story_id,scheduled_for', ignoreDuplicates: true });
+  if (error) throw new Error(`Der nächste Serientermin konnte nicht geplant werden: ${error.message}`);
+}
+
 function retryAt(attempt: number): string {
   return new Date(Date.now() + Math.min(attempt, 3) * 5 * 60 * 1000).toISOString();
 }
@@ -247,6 +315,12 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
         .filter((value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)))]
         .slice(0, 10)
       : [];
+    const targetIndependentStoryJobIds = Array.isArray(body.targetIndependentStoryJobIds)
+      ? [...new Set(body.targetIndependentStoryJobIds
+        .map((value) => String(value))
+        .filter((value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)))]
+        .slice(0, 10)
+      : [];
     const previewJobIds = Array.isArray(body.previewJobIds)
       ? [...new Set(body.previewJobIds
         .map((value) => String(value))
@@ -255,6 +329,12 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       : [];
     const previewPostJobIds = Array.isArray(body.previewPostJobIds)
       ? [...new Set(body.previewPostJobIds
+        .map((value) => String(value))
+        .filter((value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)))]
+        .slice(0, 40)
+      : [];
+    const previewIndependentStoryJobIds = Array.isArray(body.previewIndependentStoryJobIds)
+      ? [...new Set(body.previewIndependentStoryJobIds
         .map((value) => String(value))
         .filter((value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)))]
         .slice(0, 40)
@@ -274,7 +354,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
     const sponsorData = await sponsorConfig(context.supabaseAdmin);
 
     if (previewOnly) {
-      if (!previewJobIds.length && !previewPostJobIds.length) {
+      if (!previewJobIds.length && !previewPostJobIds.length && !previewIndependentStoryJobIds.length) {
         return Response.json({ ...summary, error: 'preview_job_ids_missing' }, { status: 400 });
       }
       let previewData: unknown[] = [];
@@ -349,11 +429,40 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
           summary.previewFailed += 1;
         }
       }
+
+      let previewIndependentStoryData: unknown[] = [];
+      if (previewIndependentStoryJobIds.length) {
+        const { data, error } = await context.supabaseAdmin
+          .from('social_independent_story_jobs')
+          .select(independentStoryJobSelect)
+          .in('id', previewIndependentStoryJobIds);
+        if (error) return Response.json({ error: error.message }, { status: 500 });
+        previewIndependentStoryData = data ?? [];
+      }
+      for (const candidate of previewIndependentStoryData as unknown as IndependentStoryJob[]) {
+        const storyTeam = candidate.story.audience?.team;
+        if (!candidate.story.enabled || (storyTeam && !teamContentEnabled(storyTeam))) continue;
+        try {
+          const sponsors = assignedSponsors(sponsorData, candidate.story.audience, 'story');
+          const preview = await renderIndependentStoryPreview(candidate, sponsors);
+          await context.supabaseAdmin.from('social_independent_story_jobs').update({
+            status: 'preview_ready',
+            media_url: preview.mediaUrl,
+            storage_path: preview.storagePath,
+            last_error: null,
+          }).eq('id', candidate.id);
+          summary.previewGenerated += 1;
+        } catch (workerError) {
+          const message = workerError instanceof Error ? workerError.message : 'Unbekannter Vorschaufehler';
+          await context.supabaseAdmin.from('social_independent_story_jobs').update({ status: 'failed', last_error: message }).eq('id', candidate.id);
+          summary.previewFailed += 1;
+        }
+      }
       return Response.json(summary, { status: summary.previewFailed ? 207 : 200 });
     }
 
     let gameData: unknown[] = [];
-    if (!targetPostJobIds.length || targetJobIds.length) {
+    if ((!targetPostJobIds.length && !targetIndependentStoryJobIds.length) || targetJobIds.length) {
       let gameQuery = context.supabaseAdmin
         .from('social_story_jobs')
         .select(gameJobSelect)
@@ -502,7 +611,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
     }
 
     let postData: unknown[] = [];
-    if (!targetJobIds.length || targetPostJobIds.length) {
+    if ((!targetJobIds.length && !targetIndependentStoryJobIds.length) || targetPostJobIds.length) {
       let postQuery = context.supabaseAdmin
         .from('social_post_jobs')
         .select(postJobSelect)
@@ -609,6 +718,88 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
             last_error: message,
           })
           .eq('id', candidate.id);
+        if (retry) summary.retrying += 1;
+        else summary.failed += 1;
+      }
+    }
+
+    let independentStoryData: unknown[] = [];
+    if ((!targetJobIds.length && !targetPostJobIds.length) || targetIndependentStoryJobIds.length) {
+      let storyQuery = context.supabaseAdmin
+        .from('social_independent_story_jobs')
+        .select(independentStoryJobSelect)
+        .eq('status', 'pending')
+        .lte('due_at', now);
+      if (targetIndependentStoryJobIds.length) storyQuery = storyQuery.in('id', targetIndependentStoryJobIds);
+      const storyResult = await storyQuery.order('due_at', { ascending: true }).limit(10);
+      if (storyResult.error) return Response.json({ error: storyResult.error.message }, { status: 500 });
+      independentStoryData = storyResult.data ?? [];
+    }
+
+    for (const candidate of independentStoryData as unknown as IndependentStoryJob[]) {
+      const storyTeam = candidate.story.audience?.team;
+      if (!candidate.story.enabled || (storyTeam && !teamContentEnabled(storyTeam))) {
+        await context.supabaseAdmin.from('social_independent_story_jobs').update({
+          status: 'skipped',
+          last_error: 'Die Inhaltserzeugung ist für diese Zielgruppe deaktiviert.',
+        }).eq('id', candidate.id).eq('status', 'pending');
+        continue;
+      }
+      const attempt = candidate.attempts + 1;
+      const { data: claimed } = await context.supabaseAdmin.from('social_independent_story_jobs').update({
+        status: 'rendering', claimed_at: now, attempts: attempt,
+      }).eq('id', candidate.id).eq('status', 'pending').select('id').maybeSingle();
+      if (!claimed) continue;
+      summary.claimed += 1;
+
+      if (!candidate.story.title.trim() || !candidate.story.motivation.trim() || !candidate.story.activity.trim() || !candidate.story.image_path) {
+        await context.supabaseAdmin.from('social_independent_story_jobs').update({
+          status: 'needs_input', last_error: 'Titel, Motivation, Aktivität und ein Bild sind erforderlich.',
+        }).eq('id', candidate.id);
+        summary.needsInput += 1;
+        continue;
+      }
+
+      try {
+        const sponsors = assignedSponsors(sponsorData, candidate.story.audience, 'story');
+        const preview = await renderIndependentStoryPreview(candidate, sponsors);
+        const automaticallyPublish = storyTeam
+          ? teamAllowsAutomaticPublishing(storyTeam, runtimeConfig.testMode)
+          : !runtimeConfig.testMode;
+        if (automaticallyPublish) {
+          const result = await publishInstagramStory({
+            accountId: runtimeConfig.instagramAccountId,
+            accessToken: runtimeConfig.instagramAccessToken,
+            imageUrl: preview.mediaUrl,
+            testMode: runtimeConfig.testMode,
+          });
+          await context.supabaseAdmin.from('social_independent_story_jobs').update({
+            status: 'published',
+            media_url: preview.mediaUrl,
+            storage_path: preview.storagePath,
+            external_post_id: result.id,
+            published_at: new Date().toISOString(),
+            last_error: null,
+          }).eq('id', candidate.id);
+        } else {
+          await context.supabaseAdmin.from('social_independent_story_jobs').update({
+            status: 'preview_ready',
+            media_url: preview.mediaUrl,
+            storage_path: preview.storagePath,
+            last_error: null,
+          }).eq('id', candidate.id);
+        }
+        await queueNextStoryOccurrence(context.supabaseAdmin, candidate);
+        summary.previewReady += 1;
+      } catch (workerError) {
+        const message = workerError instanceof Error ? workerError.message : 'Unbekannter Workerfehler';
+        const retry = attempt < 3;
+        await context.supabaseAdmin.from('social_independent_story_jobs').update({
+          status: retry ? 'pending' : 'failed',
+          due_at: retry ? retryAt(attempt) : undefined,
+          claimed_at: null,
+          last_error: message,
+        }).eq('id', candidate.id);
         if (retry) summary.retrying += 1;
         else summary.failed += 1;
       }

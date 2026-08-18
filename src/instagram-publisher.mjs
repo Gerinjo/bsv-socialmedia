@@ -32,6 +32,21 @@ export function buildInstagramMediaRequest({ accountId, accessToken, imageUrl, c
   };
 }
 
+export function buildInstagramStoryRequest({ accountId, accessToken, imageUrl }) {
+  if (!accountId || !accessToken) throw new Error('Instagram Account ID und Access Token müssen konfiguriert sein.');
+  if (!imageUrl) throw new Error('Für Instagram fehlt eine gültige Bild-URL.');
+  const params = new URLSearchParams({
+    access_token: accessToken,
+    image_url: imageUrl,
+    media_type: 'STORIES',
+  });
+  return {
+    url: `https://graph.facebook.com/v20.0/${encodeURIComponent(accountId)}/media`,
+    body: params.toString(),
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  };
+}
+
 export function buildInstagramCarouselRequest({ accountId, accessToken, creationIds, caption = '' }) {
   if (!accountId || !accessToken) {
     throw new Error('Instagram Account ID und Access Token müssen konfiguriert sein.');
@@ -111,6 +126,19 @@ export async function publishInstagramImage({ accountId, accessToken, imageUrl, 
     status: publishPayload.status || 'published',
     published: true,
   };
+}
+
+export async function publishInstagramStory({ accountId, accessToken, imageUrl, testMode = true }) {
+  if (!isInstagramPublishingEnabled({ testMode, accountId, accessToken })) {
+    throw new Error('Instagram-Publishing ist deaktiviert. Bitte TESTMODE deaktivieren und Zugangsdaten konfigurieren.');
+  }
+  const createRequest = buildInstagramStoryRequest({ accountId, accessToken, imageUrl });
+  const creationId = await createInstagramContainer(createRequest, 'Instagram-Story konnte nicht vorbereitet werden.');
+  const publishRequest = buildInstagramPublishRequest({ accountId, accessToken, creationId });
+  const publishResponse = await fetch(publishRequest.url, { method: 'POST', headers: publishRequest.headers, body: publishRequest.body });
+  const publishPayload = await publishResponse.json();
+  if (!publishResponse.ok) throw new Error(publishPayload?.error?.message || 'Instagram-Story konnte nicht veröffentlicht werden.');
+  return { id: creationId, status: publishPayload.status || 'published', published: true };
 }
 
 export async function publishInstagramCarousel({ accountId, accessToken, imageUrls, caption, testMode = true }) {

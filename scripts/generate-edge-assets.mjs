@@ -14,6 +14,7 @@ const textFiles = {
   reportPhoto: 'templates/report-photo.svg',
   post: 'templates/post.svg',
   postPhoto: 'templates/post-photo.svg',
+  story: 'templates/story.svg',
   birthday: 'templates/birthday.svg',
 };
 

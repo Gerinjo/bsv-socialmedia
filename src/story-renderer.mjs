@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { extname, resolve } from 'node:path';
 import { applyTeamColorScheme } from './team-settings.mjs';
 
-export const STORY_TYPES = ['announcement', 'lineup', 'result', 'report', 'post', 'birthday'];
+export const STORY_TYPES = ['announcement', 'lineup', 'result', 'report', 'post', 'story', 'birthday'];
 
 const TEAM_DISPLAY_NAMES = new Map([
   [
@@ -69,6 +69,27 @@ function text(value, fallback = 'NOCH OFFEN') {
 function truncate(value, maximum) {
   const normalized = text(value);
   return normalized.length > maximum ? `${normalized.slice(0, maximum - 1).trimEnd()}…` : normalized;
+}
+
+function multilineText(value, { x, y, width = 900, fontSize = 42, lineHeight = 52, maximumLines = 3, className = 'sans', fill = '#10251a', weight = 700 } = {}) {
+  const words = String(value ?? '').trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return '';
+  const maximumCharacters = Math.max(8, Math.floor(width / (fontSize * 0.54)));
+  const lines = [];
+  for (const word of words) {
+    const current = lines.at(-1) ?? '';
+    if (!current || `${current} ${word}`.length <= maximumCharacters) {
+      if (current) lines[lines.length - 1] = `${current} ${word}`;
+      else lines.push(word);
+    } else if (lines.length < maximumLines) {
+      lines.push(word);
+    } else {
+      lines[maximumLines - 1] = truncate(`${lines[maximumLines - 1]} ${word}`, maximumCharacters);
+    }
+  }
+  return lines.slice(0, maximumLines).map((line, index) => (
+    `<text x="${x}" y="${y + index * lineHeight}" fill="${fill}" font-size="${fontSize}" class="${className}" font-weight="${weight}">${xmlEscape(line)}</text>`
+  )).join('');
 }
 
 export function birthdayRoleText(value) {
@@ -195,7 +216,7 @@ export function sponsorLogoStrip(type, logos = []) {
   const items = logos.filter(Boolean).slice(0, 2);
   if (!items.length) return '';
   const feed = type === 'report' || type === 'post';
-  const layout = feed ? {x:48,y:968,width:984,height:62,logoHeight:42} : type === 'announcement' ? {x:120,y:1328,width:840,height:250,logoHeight:180} : type === 'result' ? {x:72,y:1360,width:936,height:340,logoHeight:250} : {x:72,y:1758,width:936,height:68,logoHeight:48};
+  const layout = feed ? {x:48,y:968,width:984,height:62,logoHeight:42} : type === 'announcement' ? {x:120,y:1328,width:840,height:250,logoHeight:180} : type === 'result' ? {x:72,y:1360,width:936,height:340,logoHeight:250} : type === 'story' ? {x:72,y:1744,width:936,height:92,logoHeight:66} : {x:72,y:1758,width:936,height:68,logoHeight:48};
   const logoHeight = type === 'lineup' && items.length === 1 ? layout.logoHeight * 2 : layout.logoHeight;
   const cellWidth=(layout.width-48)/items.length;
   const images=items.map((logo,index)=>`<image href="${xmlEscape(logo)}" x="${layout.x+24+index*cellWidth}" y="${layout.y+(layout.height-logoHeight)/2}" width="${cellWidth}" height="${logoHeight}" preserveAspectRatio="xMidYMid meet"/>`).join('');
@@ -269,7 +290,7 @@ export async function renderStorySvg({
   const formation = text(match.formation, 'FORMATION FOLGT');
   const values = {
     LOGO_DATA_URI: logoDataUri,
-    ACTION_PLAYER_DATA_URI: resolvedActionPhotoDataUri || actionPlayerDataUri,
+    ACTION_PLAYER_DATA_URI: resolvedActionPhotoDataUri || (type === 'story' ? playerPhotoDataUri : actionPlayerDataUri),
     HANDWRITTEN_FONT_DATA_URI: handwrittenFontDataUri,
     PLAYER_PHOTO_DATA_URI: resolvedActionPhotoDataUri || playerPhotoDataUri,
     HOME_CREST_DATA_URI: homeCrestDataUri,
@@ -310,6 +331,13 @@ export async function renderStorySvg({
     POST_TITLE: truncate(match.postTitle, 48),
     POST_TITLE_SIZE: fittedSize(match.postTitle, 74, 54, 30),
     POST_AUDIENCE: truncate(match.postAudience, 36),
+    STORY_CATEGORY: truncate(match.storyCategory, 24),
+    STORY_AUDIENCE: truncate(match.storyAudience, 34),
+    STORY_TITLE_LINES: multilineText(match.storyTitle, { x: 72, y: 268, width: 936, fontSize: 72, lineHeight: 76, maximumLines: 2, className: 'handwritten', fill: '#f4f1e8', weight: 400 }),
+    STORY_ACTIVITY_LINES: multilineText(match.storyActivity, { x: 82, y: 1392, width: 916, fontSize: 42, lineHeight: 52, maximumLines: 2, fill: '#10251a', weight: 900 }),
+    STORY_MOTIVATION_LINES: multilineText(match.storyMotivation, { x: 82, y: 1532, width: 916, fontSize: 32, lineHeight: 42, maximumLines: 3, fill: '#164f32', weight: 700 }),
+    STORY_EVENT_DATE: truncate(match.storyEventDate, 34),
+    STORY_EVENT_TIME: truncate(match.storyEventTime, 18),
     REPORT_PAGE: reportPage,
     REPORT_PAGE_COUNT: reportPageCount,
     SCORER_ROWS: scorerRows(match.reportScorers),
@@ -322,7 +350,7 @@ export async function renderStorySvg({
   };
 
   return applyTeamColorScheme(
-    fillTemplate(template, values, new Set(['PLAYER_ROWS', 'SCORER_ROWS', 'SPONSOR_LOGOS'])),
+    fillTemplate(template, values, new Set(['PLAYER_ROWS', 'SCORER_ROWS', 'SPONSOR_LOGOS', 'STORY_TITLE_LINES', 'STORY_ACTIVITY_LINES', 'STORY_MOTIVATION_LINES'])),
     colorScheme,
   );
 }

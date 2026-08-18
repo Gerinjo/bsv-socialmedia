@@ -251,6 +251,31 @@ test('weitere Beitragsbilder werden als reine Wellen-Fotoseite gerendert', async
   assert.doesNotMatch(svg, /Saisonabschluss 2026/);
 });
 
+test('freie Story zeigt Kategorie, Zielgruppe, Termin, Aktivität und Motivation', async () => {
+  const customImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAF';
+  const svg = await renderStorySvg({
+    rootDir,
+    type: 'story',
+    match: {
+      storyTitle: 'Girlsday beim BSV',
+      storyCategory: 'Juniorinnen',
+      storyAudience: 'U15 · C-Juniorinnen',
+      storyEventDate: 'Mittwoch, 19.08.2026',
+      storyEventTime: '18:00 Uhr',
+      storyActivity: 'Gemeinsam Fußball spielen',
+      storyMotivation: 'Komm vorbei und lerne unser Team kennen.',
+    },
+    actionPhotoDataUri: customImage,
+  });
+  assert.match(svg, /JUNIORINNEN/i);
+  assert.match(svg, /U15 · C-Juniorinnen/);
+  assert.match(svg, /Mittwoch, 19\.08\.2026/);
+  assert.match(svg, /Gemeinsam Fußball spielen/);
+  assert.match(svg, /Komm vorbei und lerne unser Team kennen\./);
+  assert.match(svg, /width="1080" height="1920"/);
+  assert.doesNotMatch(svg, /\{\{[A-Z0-9_]+\}\}/);
+});
+
 test('Torschützenzeilen werden escaped und bei fünf Einträgen nach außen ausgerichtet', () => {
   const rows = scorerRows('1. A & B\n2. C\n3. D\n4. E\n5. F');
   assert.match(rows, /A &amp; B/);

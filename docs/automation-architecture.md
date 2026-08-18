@@ -8,6 +8,8 @@ Für freigegebene Spiele entstehen drei Story-Jobs:
 2. **Aufstellung:** 30 Minuten vor Anpfiff, aber nur nach manueller Freigabe.
 3. **Ergebnis:** ab 120 Minuten nach Anpfiff, sobald ein plausibles Endergebnis vorliegt.
 
+Spielunabhängige Stories liegen getrennt in `social_independent_stories`. Sie enthalten Kategorie, Zielgruppe, Termin, Titel, Aktivität, Motivation und ein hochgeladenes Bild. Einmalige Posting-Zeitpunkte und wöchentliche Regeln erzeugen Vorkommen in `social_independent_story_jobs`. Nach einer erfolgreich erzeugten wöchentlichen Story plant der Worker den nächsten lokalen Termin in `Europe/Berlin`, einschließlich Sommer-/Winterzeitwechsel.
+
 Die Spiel-ID aus einer fussball.de-URL ist der stabile externe Bezeichner. Für das Beispiel ist das `0316BRN2AC000000VS5489BTVU7GTVLE`.
 
 ## Komponenten

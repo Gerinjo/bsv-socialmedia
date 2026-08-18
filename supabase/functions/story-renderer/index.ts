@@ -27,6 +27,7 @@ type RequestBody = {
   game?: Record<string, unknown>;
   birthday?: Record<string, unknown>;
   post?: Record<string, unknown>;
+  story?: Record<string, unknown>;
   sponsors?: Array<Record<string, unknown>>;
   reportPageIndex?: number;
   reportPageCount?: number;
@@ -208,6 +209,48 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
         sponsorLogoDataUris,
         playerPhotoDataUri,
         colorScheme: body.colorScheme,
+      });
+    } else if (body.type === 'story') {
+      if (!body.story) return json({ error: 'story_missing' }, 400);
+      const story = body.story;
+      const title = String(story.title ?? '').trim();
+      const motivation = String(story.motivation ?? '').trim();
+      const activity = String(story.activity ?? '').trim();
+      const imagePath = String(story.image_path ?? '').trim();
+      const audience = story.audience as Record<string, unknown> | undefined;
+      const category = story.category as Record<string, unknown> | undefined;
+      const audienceLabel = String(audience?.label ?? '').trim();
+      const categoryLabel = String(category?.label ?? '').trim();
+      const eventAt = new Date(String(story.event_at ?? ''));
+      if (!title || !motivation || !activity || !audienceLabel || !categoryLabel || !imagePath || Number.isNaN(eventAt.getTime())) {
+        return json({ error: 'story_incomplete' }, 400);
+      }
+      if (!imagePath.startsWith(`generated/story-images/${safeSegment(story.id)}/`)) {
+        return json({ error: 'invalid_story_image_path' }, 400);
+      }
+      const actionPhotoDataUri = await actionPhoto(context.supabaseAdmin, imagePath);
+      const team = audience?.team as Record<string, unknown> | undefined;
+      const eventDate = new Intl.DateTimeFormat('de-DE', {
+        timeZone: 'Europe/Berlin', weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric',
+      }).format(eventAt);
+      const eventTime = new Intl.DateTimeFormat('de-DE', {
+        timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit',
+      }).format(eventAt);
+      svgForPage = async () => renderStorySvg({
+        type: body.type as StoryType,
+        match: {
+          storyTitle: title,
+          storyMotivation: motivation,
+          storyActivity: activity,
+          storyAudience: audienceLabel,
+          storyCategory: categoryLabel,
+          storyEventDate: eventDate,
+          storyEventTime: `${eventTime} Uhr`,
+        },
+        imageAssets: images,
+        sponsorLogoDataUris,
+        actionPhotoDataUri,
+        colorScheme: team?.color_scheme as Record<string, unknown> | undefined,
       });
     } else if (body.type === 'post') {
       if (!body.post) return json({ error: 'post_missing' }, 400);

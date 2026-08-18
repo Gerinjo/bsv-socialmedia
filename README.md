@@ -5,11 +5,11 @@ Eigenständiges Projekt für die Gestaltung und Automatisierung von Instagram-St
 Der aktuelle Stand liefert:
 
 - ein aus der Website abgeleitetes Corporate Design,
-- editierbare Story-Vorlagen in 1080 × 1920 Pixel, einschließlich eines Geburtstagsmotivs,
+- editierbare Story-Vorlagen in 1080 × 1920 Pixel, einschließlich eines Geburtstagsmotivs und freier Termin-Storys,
 - einen lokalen und einen online betriebenen Renderer für Spielankündigung, Aufstellung, Ergebnis und Geburtstag,
 - Beispieldaten für die fussball.de-Spiel-ID `0316BRN2AC000000VS5489BTVU7GTVLE`,
 - eine aktive Supabase-Struktur mit Datenbank, privatem Storage, Edge Functions und Fünf-Minuten-Cron,
-- eine [private Admin-Oberfläche](https://bsv-story-automatik.jerome-ernsberger.chatgpt.site) für Spiele, Aufstellungen, Ergebnisse und Geburtstage,
+- eine [private Admin-Oberfläche](https://bsv-story-automatik.jerome-ernsberger.chatgpt.site) für Spiele, freie Posts, geplante Stories und Geburtstage,
 - einen zentralen, standardmäßig aktiven Testmodus.
 
 ## Vorschau
@@ -42,6 +42,7 @@ npm run render -- --type announcement --input examples/match.json
 npm run render -- --type lineup --input examples/match.json --lineup examples/lineup.json
 npm run render -- --type result --input examples/match.json
 npm run render -- --type birthday --input examples/birthday.json --photo bilder/spieler.png
+npm run render -- --type story --input examples/story.json --photo bilder/aktion.jpg
 ```
 
 Für das Geburtstagsmotiv eignet sich ein freigestelltes PNG. Ohne `--photo` wird automatisch der freigestellte Action-Fußballer des Gestaltungssystems verwendet.
@@ -52,7 +53,7 @@ Die private Admin-Oberfläche läuft unter:
 
 <https://bsv-story-automatik.jerome-ernsberger.chatgpt.site>
 
-Sie ist auf den Site-Eigentümer beschränkt. Supabase Cron gleicht die kommenden Spiele der vier aktiven BSV-Mannschaften stündlich mit den auf der BSV-Webseite eingebetteten FUSSBALL.DE-Widgets ab und startet den Vorschau-Worker alle fünf Minuten. Neue Spiele erzeugen automatisch Jobs für Ankündigung, Aufstellung und Ergebnis; Geburtstage erzeugen jährlich einen eigenen Job. Fällige Jobs werden aktuell als PNG gerendert und in einem privaten Storage-Bucket abgelegt. Über zeitlich begrenzte Links können die Vorschauen in der Admin-Oberfläche kontrolliert werden.
+Sie ist auf freigeschaltete Social-Media-Nutzer beschränkt. Supabase Cron gleicht kommende Spiele stündlich mit den auf der BSV-Webseite eingebetteten FUSSBALL.DE-Widgets ab und startet den Vorschau-Worker alle fünf Minuten. Neue Spiele erzeugen automatisch Jobs für Ankündigung, Aufstellung und Ergebnis; Geburtstage erzeugen jährlich einen eigenen Job. Freie Stories können einmalig oder wöchentlich geplant und nach Kategorie und Zielgruppe gefiltert werden. Fällige Jobs werden als PNG gerendert und in einem privaten Storage-Bucket abgelegt. Über zeitlich begrenzte Links können die Vorschauen in der Admin-Oberfläche kontrolliert werden.
 
 Vor dem ersten Login muss die URL einmal in Supabase unter **Authentication → URL Configuration** als Site URL und Redirect URL eingetragen werden. Nach dem ersten Login wird die konkrete Supabase-Benutzer-ID einmalig in `social_admins` freigeschaltet.
 
@@ -67,7 +68,7 @@ Vor dem ersten Login muss die URL einmal in Supabase unter **Authentication → 
 
 ## Sicherheitsstandard
 
-`INSTAGRAM_TEST_MODE` ist zentral definiert und standardmäßig aktiv. Nur der exakte Wert `false` erlaubt später einem Publisher den echten Versand. Der aktuelle Code enthält absichtlich noch keinen aktiven Meta-Publisher. Er kann also keine Story versehentlich veröffentlichen.
+`INSTAGRAM_TEST_MODE` ist zentral definiert und standardmäßig aktiv. Nur der exakte Wert `false` erlaubt dem Meta-Publisher den echten Versand. Freie Storys werden technisch als Instagram Story (`media_type=STORIES`) veröffentlicht; im Testmodus werden ausschließlich Vorschauen erzeugt.
 
 Secrets gehören ausschließlich in GitHub Actions Secrets oder Supabase Project Secrets und niemals in dieses Repository.
 
