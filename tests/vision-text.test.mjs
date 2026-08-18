@@ -5,6 +5,7 @@ import {
   compactLineupPersonName,
   createOcrRecognizer,
   findLineupCardRegions,
+  inferLineupIsHome,
   isolateLineupCardPixels,
   isolateLineupTextPixels,
   lineupCardRectangle,
@@ -87,6 +88,9 @@ test('lineup cards start with the six-player side of the home or away team', () 
     ...Array.from({ length: 5 }, (_, index) => ({ column: 'left', id: `L${index + 1}` })),
     ...Array.from({ length: 6 }, (_, index) => ({ column: 'right', id: `R${index + 1}` })),
   ];
+  assert.equal(inferLineupIsHome(homeCards, false), true);
+  assert.equal(inferLineupIsHome(awayCards, true), false);
+  assert.equal(inferLineupIsHome(homeCards.slice(0, 4), false), false);
   assert.deepEqual(orderLineupCards(homeCards, true).map((card) => card.id), ['L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'R1', 'R2', 'R3', 'R4', 'R5']);
   assert.deepEqual(orderLineupCards(awayCards, false).map((card) => card.id), ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'L1', 'L2', 'L3', 'L4', 'L5']);
 });
@@ -342,6 +346,41 @@ test('segmented lineup retries a still missing shirt number on a downscaled card
   const result = await recognize('original-image', 'lineup', () => {}, [], { isHome: true });
   assert.match(result.text, /^17, Spieler$/m);
   assert.ok(calls.some((call) => call.image === 'card-1-small' && call.mode === '8'));
+});
+
+test('segmented lineup retries a missing shirt number on the original card', async () => {
+  let activeMode = '3';
+  const calls = [];
+  const fakeWorker = {
+    async setParameters(value) { activeMode = value.tessedit_pageseg_mode ?? activeMode; },
+    async recognize(image, options) {
+      calls.push({ image, mode: activeMode });
+      if (image === 'card-1-raw') return { data: { text: '17', confidence: 96 } };
+      const index = Number(String(image).replace('card-', ''));
+      const numberCrop = options?.rectangle?.left >= 100;
+      if (numberCrop) return { data: { text: index === 1 ? '' : String(index + 10), confidence: index === 1 ? 0 : 90 } };
+      return { data: { text: `Spieler ${index}`, confidence: 90 } };
+    },
+    async terminate() {},
+  };
+  const recognize = createOcrRecognizer(() => ({
+    OEM: { LSTM_ONLY: 1 },
+    PSM: { AUTO: '3', SPARSE_TEXT: '11', SINGLE_BLOCK: '6', SINGLE_LINE: '7', SINGLE_WORD: '8' },
+    async createWorker() { return fakeWorker; },
+  }), async () => ({
+    image: 'segmented-image',
+    cards: Array.from({ length: 11 }, (_, index) => ({
+      image: `card-${index + 1}`,
+      width: 200,
+      height: 60,
+      ...(index === 0 ? { rawImage: 'card-1-raw' } : {}),
+    })),
+    segmented: true,
+  }));
+
+  const result = await recognize('original-image', 'lineup', () => {}, [], { isHome: true });
+  assert.match(result.text, /^17, Spieler$/m);
+  assert.ok(calls.some((call) => call.image === 'card-1-raw' && call.mode === '11'));
 });
 
 test('segmented lineup retries duplicate shirt numbers instead of losing a card', async () => {

@@ -444,6 +444,20 @@ export async function prepareLineupOcrImage(image, documentRef = globalThis.docu
   const cards = [];
   for (const region of regions) {
     const isolatedCard = isolateLineupCardPixels(sourcePixels, region);
+    const rawCard = documentRef.createElement('canvas');
+    rawCard.width = isolatedCard.width;
+    rawCard.height = isolatedCard.height;
+    rawCard.getContext('2d').drawImage(
+      canvas,
+      region.x,
+      region.y,
+      isolatedCard.width,
+      isolatedCard.height,
+      0,
+      0,
+      isolatedCard.width,
+      isolatedCard.height,
+    );
     const card = documentRef.createElement('canvas');
     card.width = isolatedCard.width;
     card.height = isolatedCard.height;
@@ -469,6 +483,7 @@ export async function prepareLineupOcrImage(image, documentRef = globalThis.docu
     }
     cards.push({
       image: card.toDataURL('image/png'),
+      rawImage: rawCard.toDataURL('image/png'),
       width: card.width,
       height: card.height,
       numberImage,
@@ -652,6 +667,15 @@ function lineupNumberRetryIndexes(cardResults) {
     .filter((index) => index >= 0);
 }
 
+export function inferLineupIsHome(cards, fallback = true) {
+  const source = Array.isArray(cards) ? cards : [];
+  const left = source.filter((card) => card?.column === 'left').length;
+  const right = source.filter((card) => card?.column === 'right').length;
+  if (left === 6 && right === 5) return true;
+  if (left === 5 && right === 6) return false;
+  return fallback !== false;
+}
+
 export function orderLineupCards(cards, isHome = true) {
   const source = Array.isArray(cards) ? cards : [];
   if (!source.length || !source.every((card) => card?.column === 'left' || card?.column === 'right')) return source;
@@ -754,8 +778,9 @@ export function createOcrRecognizer(
           progressListener('Aufstellungs-Grafik wird für die Texterkennung bereinigt …');
           const prepared = await prepareLineupImage(image);
           const preparedImage = typeof prepared === 'string' ? prepared : prepared.image;
-          const cards = orderLineupCards(Array.isArray(prepared?.cards) ? prepared.cards : [], options?.isHome !== false);
-          const isHome = options?.isHome !== false;
+          const preparedCards = Array.isArray(prepared?.cards) ? prepared.cards : [];
+          const isHome = inferLineupIsHome(preparedCards, options?.isHome !== false);
+          const cards = orderLineupCards(preparedCards, isHome);
           let firstCandidate;
           if (cards.length >= 6) {
             const cardResults = cards.map(() => ({ number: '', name: '', nameConfidence: 0 }));
@@ -783,6 +808,22 @@ export function createOcrRecognizer(
                 const card = typeof cards[index] === 'string' ? { image: cards[index] } : cards[index];
                 const rectangle = lineupCardRectangle(card, 'number', isHome);
                 const result = await activeWorker.recognize(card?.image ?? cards[index], rectangle ? { rectangle } : undefined);
+                if (shirtNumber(result?.data?.text)) cardResults[index].number = result.data.text;
+                cardConfidences.push(Number(result?.data?.confidence) || 0);
+              }
+            }
+            const rawNumberRetries = lineupNumberRetryIndexes(cardResults)
+              .filter((index) => cards[index]?.rawImage);
+            if (rawNumberRetries.length) {
+              await activeWorker.setParameters({
+                tessedit_pageseg_mode: pageSegmentationModes.sparse,
+                tessedit_char_whitelist: '0123456789OoIlL|',
+              });
+              for (const index of rawNumberRetries) {
+                progressListener(`Rückennummer ${index + 1} wird im Original geprüft …`);
+                const card = cards[index];
+                const rectangle = lineupCardRectangle(card, 'number', isHome);
+                const result = await activeWorker.recognize(card.rawImage, rectangle ? { rectangle } : undefined);
                 if (shirtNumber(result?.data?.text)) cardResults[index].number = result.data.text;
                 cardConfidences.push(Number(result?.data?.confidence) || 0);
               }
