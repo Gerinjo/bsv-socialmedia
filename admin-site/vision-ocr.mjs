@@ -452,10 +452,28 @@ export async function prepareLineupOcrImage(image, documentRef = globalThis.docu
     cardPixels.data.set(isolatedCard.data);
     cardContext.putImageData(cardPixels, 0, 0);
     outputContext.drawImage(card, 0, outputY);
+    let numberImage;
+    let numberWidth;
+    let numberHeight;
+    if (card.height > 100) {
+      numberHeight = 80;
+      numberWidth = Math.max(1, Math.round(card.width * numberHeight / card.height));
+      const numberCard = documentRef.createElement('canvas');
+      numberCard.width = numberWidth;
+      numberCard.height = numberHeight;
+      const numberContext = numberCard.getContext('2d');
+      numberContext.fillStyle = '#fff';
+      numberContext.fillRect(0, 0, numberWidth, numberHeight);
+      numberContext.drawImage(card, 0, 0, numberWidth, numberHeight);
+      numberImage = numberCard.toDataURL('image/png');
+    }
     cards.push({
       image: card.toDataURL('image/png'),
       width: card.width,
       height: card.height,
+      numberImage,
+      numberWidth,
+      numberHeight,
       column: region.x + region.width / 2 < canvas.width / 2 ? 'left' : 'right',
     });
     outputY += region.height + gap;
@@ -692,7 +710,7 @@ export function createOcrRecognizer(
   let workerPromise;
   let progressListener = () => {};
   let queue = Promise.resolve();
-  let pageSegmentationModes = { auto: '3', sparse: '11', block: '6', line: '7' };
+  let pageSegmentationModes = { auto: '3', sparse: '11', block: '6', line: '7', word: '8' };
 
   async function worker() {
     if (!workerPromise) {
@@ -703,6 +721,7 @@ export function createOcrRecognizer(
         sparse: tesseract.PSM?.SPARSE_TEXT ?? '11',
         block: tesseract.PSM?.SINGLE_BLOCK ?? '6',
         line: tesseract.PSM?.SINGLE_LINE ?? '7',
+        word: tesseract.PSM?.SINGLE_WORD ?? '8',
       };
       workerPromise = tesseract.createWorker('deu', tesseract.OEM?.LSTM_ONLY ?? 1, {
         logger: (message) => progressListener(ocrProgressText(message)),
@@ -764,6 +783,27 @@ export function createOcrRecognizer(
                 const card = typeof cards[index] === 'string' ? { image: cards[index] } : cards[index];
                 const rectangle = lineupCardRectangle(card, 'number', isHome);
                 const result = await activeWorker.recognize(card?.image ?? cards[index], rectangle ? { rectangle } : undefined);
+                if (shirtNumber(result?.data?.text)) cardResults[index].number = result.data.text;
+                cardConfidences.push(Number(result?.data?.confidence) || 0);
+              }
+            }
+            const downscaledNumberRetries = lineupNumberRetryIndexes(cardResults)
+              .filter((index) => cards[index]?.numberImage && cards[index]?.numberWidth && cards[index]?.numberHeight);
+            if (downscaledNumberRetries.length) {
+              await activeWorker.setParameters({
+                tessedit_pageseg_mode: pageSegmentationModes.word,
+                tessedit_char_whitelist: '0123456789OoIlL|',
+              });
+              for (const index of downscaledNumberRetries) {
+                progressListener(`Rückennummer ${index + 1} wird verkleinert geprüft …`);
+                const card = cards[index];
+                const numberCard = {
+                  width: card.numberWidth,
+                  height: card.numberHeight,
+                  column: card.column,
+                };
+                const rectangle = lineupCardRectangle(numberCard, 'number', isHome);
+                const result = await activeWorker.recognize(card.numberImage, rectangle ? { rectangle } : undefined);
                 if (shirtNumber(result?.data?.text)) cardResults[index].number = result.data.text;
                 cardConfidences.push(Number(result?.data?.confidence) || 0);
               }

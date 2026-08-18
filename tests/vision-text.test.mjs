@@ -309,6 +309,41 @@ test('segmented lineup retries a missed shirt number as a single line', async ()
   assert.ok(parameters.some((value) => value.tessedit_pageseg_mode === '7'));
 });
 
+test('segmented lineup retries a still missing shirt number on a downscaled card', async () => {
+  let activeMode = '3';
+  const calls = [];
+  const fakeWorker = {
+    async setParameters(value) { activeMode = value.tessedit_pageseg_mode ?? activeMode; },
+    async recognize(image, options) {
+      calls.push({ image, mode: activeMode });
+      if (image === 'card-1-small') return { data: { text: '17', confidence: 81 } };
+      const index = Number(String(image).replace('card-', ''));
+      const numberCrop = options?.rectangle?.left >= 100;
+      if (numberCrop) return { data: { text: index === 1 ? '' : String(index + 10), confidence: index === 1 ? 0 : 90 } };
+      return { data: { text: `Spieler ${index}`, confidence: 90 } };
+    },
+    async terminate() {},
+  };
+  const recognize = createOcrRecognizer(() => ({
+    OEM: { LSTM_ONLY: 1 },
+    PSM: { AUTO: '3', SPARSE_TEXT: '11', SINGLE_BLOCK: '6', SINGLE_LINE: '7', SINGLE_WORD: '8' },
+    async createWorker() { return fakeWorker; },
+  }), async () => ({
+    image: 'segmented-image',
+    cards: Array.from({ length: 11 }, (_, index) => ({
+      image: `card-${index + 1}`,
+      width: 200,
+      height: 60,
+      ...(index === 0 ? { numberImage: 'card-1-small', numberWidth: 200, numberHeight: 80 } : {}),
+    })),
+    segmented: true,
+  }));
+
+  const result = await recognize('original-image', 'lineup', () => {}, [], { isHome: true });
+  assert.match(result.text, /^17, Spieler$/m);
+  assert.ok(calls.some((call) => call.image === 'card-1-small' && call.mode === '8'));
+});
+
 test('segmented lineup retries duplicate shirt numbers instead of losing a card', async () => {
   let activeMode = '3';
   const numberAttempts = new Map();
