@@ -6,6 +6,10 @@ on:
       - main
     paths:
       - 'supabase/functions/**'
+      - 'templates/**'
+      - 'brand/fonts/**'
+      - 'src/**'
+      - 'scripts/generate-edge-assets.mjs'
       - '.github/workflows/deploy-supabase-functions.yml'
   workflow_dispatch:
 
@@ -22,6 +26,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
       - name: Check deployment secret
         id: secret
         shell: bash
@@ -32,6 +41,12 @@ jobs:
             echo "available=false" >> "$GITHUB_OUTPUT"
             echo "SUPABASE_ACCESS_TOKEN is not configured; deployment is skipped."
           fi
+
+      - name: Build Edge Function assets
+        if: steps.secret.outputs.available == 'true'
+        run: |
+          npm ci
+          npm run build:edge-assets
 
       - name: Deploy story renderer
         if: steps.secret.outputs.available == 'true'
