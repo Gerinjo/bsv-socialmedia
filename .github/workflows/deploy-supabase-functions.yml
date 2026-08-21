@@ -1,0 +1,42 @@
+name: Deploy Supabase Edge Functions
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'supabase/functions/**'
+      - '.github/workflows/deploy-supabase-functions.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  SUPABASE_PROJECT_REF: maejihwjzxkmthjavgnx
+  SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check deployment secret
+        id: secret
+        shell: bash
+        run: |
+          if [ -n "$SUPABASE_ACCESS_TOKEN" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "SUPABASE_ACCESS_TOKEN is not configured; deployment is skipped."
+          fi
+
+      - name: Deploy story renderer
+        if: steps.secret.outputs.available == 'true'
+        run: npx --yes supabase@latest functions deploy story-renderer --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Deploy admin API
+        if: steps.secret.outputs.available == 'true'
+        run: npx --yes supabase@latest functions deploy social-media-admin-api --project-ref "$SUPABASE_PROJECT_REF"
