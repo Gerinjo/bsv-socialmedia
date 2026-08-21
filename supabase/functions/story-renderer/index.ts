@@ -362,7 +362,8 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
       }
     }
 
-    const stamp = Date.now();
+    const jobSegment = safeSegment(body.jobId);
+    const previewFolder = `generated/${body.type}/${jobSegment}`;
     const renderedPages: Array<{ mediaUrl: string; storagePath: string }> = [];
     for (let index = 0; index < pageCount; index += 1) {
       const svg = await svgForPage(index);
@@ -385,22 +386,38 @@ const securedHandler = withSupabase({ auth: ['user', 'secret'] }, async (request
       renderer.free();
       const pageNumber = pageCount > 1 ? index + 1 : outputPageNumber;
       const suffix = Math.max(pageCount, outputPageCount) > 1 ? `-${pageNumber}` : '';
-      const storagePath = `generated/${body.type}/${safeSegment(body.jobId)}/${stamp}${suffix}.png`;
+      const storagePath = `${previewFolder}/preview${suffix}.png`;
       const { error: uploadError } = await context.supabaseAdmin.storage
         .from(bucket)
         .upload(storagePath, png, {
           contentType: 'image/png',
-          cacheControl: '3600',
+          cacheControl: '604800',
           upsert: true,
         });
       if (uploadError) throw new Error(`Vorschau ${index + 1} konnte nicht gespeichert werden: ${uploadError.message}`);
       const { data: signed, error: signedError } = await context.supabaseAdmin.storage
         .from(bucket)
-        .createSignedUrl(storagePath, 60 * 60 * 24 * 7);
+        .createSignedUrl(storagePath, 60 * 60 * 24 * 30);
       if (signedError || !signed?.signedUrl) {
         throw new Error(`Vorschau-URL ${index + 1} konnte nicht erstellt werden: ${signedError?.message ?? 'unbekannt'}`);
       }
       renderedPages.push({ mediaUrl: signed.signedUrl, storagePath });
+    }
+
+    // A job keeps stable preview filenames. Remove older timestamped renders and
+    // surplus carousel pages so repeated edits do not grow Storage indefinitely.
+    const keepNames = new Set(renderedPages.map((page) => page.storagePath.split('/').pop()));
+    const { data: existingPreviewFiles, error: listError } = await context.supabaseAdmin.storage
+      .from(bucket)
+      .list(previewFolder, { limit: 100 });
+    if (!listError && existingPreviewFiles?.length) {
+      const stalePaths = existingPreviewFiles
+        .filter((file: { name?: string }) => file.name?.endsWith('.png') && !keepNames.has(file.name))
+        .map((file: { name: string }) => `${previewFolder}/${file.name}`);
+      if (stalePaths.length) {
+        const { error: cleanupError } = await context.supabaseAdmin.storage.from(bucket).remove(stalePaths);
+        if (cleanupError) console.warn(`Alte Vorschauen konnten nicht bereinigt werden: ${cleanupError.message}`);
+      }
     }
 
     const mediaUrls = renderedPages.map((page) => page.mediaUrl);

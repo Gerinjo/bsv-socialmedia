@@ -341,6 +341,55 @@ async function renderGameJobNow(admin: any, gameId: string, storyType: 'announce
   return runWorker(jobId ? [jobId] : []);
 }
 
+const signedUrlTtlSeconds = 60 * 60 * 24 * 30;
+const signedUrlRefreshWindowMs = 60 * 60 * 1000;
+const signedUrlCache = new Map<string, { url: string; expiresAt: number }>();
+
+function signedUrlExpiresAt(value: unknown): number {
+  try {
+    const input = String(value ?? '').trim();
+    if (!input) return 0;
+    const token = new URL(input).searchParams.get('token');
+    const payloadPart = token?.split('.')[1];
+    if (!payloadPart) return 0;
+    const base64 = payloadPart.replaceAll('-', '+').replaceAll('_', '/');
+    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+    const payload = JSON.parse(atob(padded)) as { exp?: unknown };
+    const expiresAt = Number(payload.exp) * 1000;
+    return Number.isFinite(expiresAt) ? expiresAt : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function signedUrlIsFresh(value: unknown): value is string {
+  return signedUrlExpiresAt(value) > Date.now() + signedUrlRefreshWindowMs;
+}
+
+function canCacheSignedPath(path: string): boolean {
+  return path.startsWith('generated/') || path.startsWith('assets/');
+}
+
+async function signedAssetUrl(admin: any, path: string | null, existingUrl: unknown = null): Promise<string | null> {
+  if (!path) return null;
+  if (signedUrlIsFresh(existingUrl)) {
+    if (canCacheSignedPath(path)) signedUrlCache.set(path, { url: existingUrl, expiresAt: signedUrlExpiresAt(existingUrl) });
+    return existingUrl;
+  }
+  if (canCacheSignedPath(path)) {
+    const cached = signedUrlCache.get(path);
+    if (cached && cached.expiresAt > Date.now() + signedUrlRefreshWindowMs) return cached.url;
+    signedUrlCache.delete(path);
+  }
+  const { data, error } = await admin.storage.from(bucket).createSignedUrl(path, signedUrlTtlSeconds);
+  if (error || !data?.signedUrl) return null;
+  if (canCacheSignedPath(path)) {
+    if (signedUrlCache.size > 1000) signedUrlCache.clear();
+    signedUrlCache.set(path, { url: data.signedUrl, expiresAt: signedUrlExpiresAt(data.signedUrl) });
+  }
+  return data.signedUrl;
+}
+
 async function freshPreviewUrls(admin: any, rows: any[]): Promise<any[]> {
   return await Promise.all(rows.map(async (row) => {
     const jobs = await Promise.all((row.jobs ?? []).map(async (job: any) => {
@@ -348,10 +397,10 @@ async function freshPreviewUrls(admin: any, rows: any[]): Promise<any[]> {
         ? job.storage_paths.map((path: unknown) => String(path ?? '').trim()).filter(Boolean).slice(0, 10)
         : job.storage_path ? [job.storage_path] : [];
       if (!storagePaths.length) return { ...job, media_urls: [] };
-      const mediaUrls = await Promise.all(storagePaths.map(async (path: string) => {
-        const { data } = await admin.storage.from(bucket).createSignedUrl(path, 60 * 60 * 24 * 7);
-        return data?.signedUrl ?? null;
-      }));
+      const existingMediaUrls = Array.isArray(job.media_urls) ? job.media_urls : [];
+      const mediaUrls = await Promise.all(storagePaths.map((path: string, index: number) =>
+        signedAssetUrl(admin, path, existingMediaUrls[index] ?? (index === 0 ? job.media_url : null))
+      ));
       const validMediaUrls = mediaUrls.filter(Boolean);
       return { ...job, media_url: validMediaUrls[0] ?? job.media_url, media_urls: validMediaUrls };
     }));
@@ -386,7 +435,10 @@ async function freshPostUrls(admin: any, rows: any[]): Promise<any[]> {
     const storagePaths = Array.isArray(job?.storage_paths) && job.storage_paths.length
       ? job.storage_paths.map((path: unknown) => String(path ?? '').trim()).filter(Boolean).slice(0, 10)
       : job?.storage_path ? [job.storage_path] : [];
-    const mediaUrls = await Promise.all(storagePaths.map((path: string) => signedAssetUrl(admin, path)));
+    const existingMediaUrls = Array.isArray(job?.media_urls) ? job.media_urls : [];
+    const mediaUrls = await Promise.all(storagePaths.map((path: string, index: number) =>
+      signedAssetUrl(admin, path, existingMediaUrls[index] ?? (index === 0 ? job?.media_url : null))
+    ));
     return {
       ...row,
       images: images.filter((image) => image.url),
@@ -403,7 +455,7 @@ async function freshIndependentStoryUrls(admin: any, rows: any[]): Promise<any[]
   return await Promise.all(rows.map(async (row) => {
     const jobs = await Promise.all((row.jobs ?? []).map(async (job: any) => ({
       ...job,
-      media_url: await signedAssetUrl(admin, job.storage_path) ?? job.media_url,
+      media_url: await signedAssetUrl(admin, job.storage_path, job.media_url) ?? job.media_url,
     })));
     return {
       ...row,
@@ -411,13 +463,6 @@ async function freshIndependentStoryUrls(admin: any, rows: any[]): Promise<any[]
       jobs: jobs.sort((left: any, right: any) => new Date(right.scheduled_for).getTime() - new Date(left.scheduled_for).getTime()),
     };
   }));
-}
-
-async function signedAssetUrl(admin: any, path: string | null): Promise<string | null> {
-  if (!path) return null;
-  const { data, error } = await admin.storage.from(bucket).createSignedUrl(path, 60 * 60 * 24 * 7);
-  if (error) return null;
-  return data?.signedUrl ?? null;
 }
 
 async function freshClubUrls(admin: any, rows: any[]): Promise<any[]> {
