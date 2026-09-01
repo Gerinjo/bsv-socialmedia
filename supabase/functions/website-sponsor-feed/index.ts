@@ -1,5 +1,6 @@
 import { withSupabase } from 'npm:@supabase/server@1.4.1';
 import { runtimeConfig } from '../_shared/config.ts';
+import { websiteTeamAudienceSlugs } from '../../../src/sponsor-assignments.mjs';
 
 const bucket = 'social-story-previews';
 
@@ -17,17 +18,29 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
     return Response.json({ error: 'method_not_allowed' }, { status: 405 });
   }
 
-  const { data, error } = await context.supabaseAdmin
-    .from('social_sponsors')
-    .select('id, slug, name, website_url, instagram_handle, logo_transparent_path, sort_order, updated_at')
-    .eq('active', true)
-    .eq('logo_status', 'approved')
-    .not('logo_transparent_path', 'is', null)
-    .order('sort_order', { ascending: true })
-    .order('name', { ascending: true });
+  const [
+    { data, error },
+    { data: audiences, error: audiencesError },
+    { data: websiteAssignments, error: websiteAssignmentsError },
+  ] = await Promise.all([
+    context.supabaseAdmin
+      .from('social_sponsors')
+      .select('id, slug, name, website_url, instagram_handle, logo_transparent_path, sort_order, updated_at')
+      .eq('active', true)
+      .eq('logo_status', 'approved')
+      .not('logo_transparent_path', 'is', null)
+      .order('sort_order', { ascending: true })
+      .order('name', { ascending: true }),
+    context.supabaseAdmin
+      .from('social_post_audiences')
+      .select('id, slug, audience_group'),
+    context.supabaseAdmin
+      .from('social_sponsor_website_assignments')
+      .select('sponsor_id, audience_id'),
+  ]);
 
-  if (error) {
-    console.error('Werbepartner konnten nicht geladen werden:', error);
+  if (error || audiencesError || websiteAssignmentsError) {
+    console.error('Werbepartner konnten nicht geladen werden:', error ?? audiencesError ?? websiteAssignmentsError);
     return Response.json({ error: 'sponsors_unavailable' }, { status: 500 });
   }
 
@@ -45,6 +58,11 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       websiteUrl: partner.website_url,
       instagramHandle: partner.instagram_handle,
       logoUrl: signed.signedUrl,
+      teamAudienceSlugs: websiteTeamAudienceSlugs({
+        websiteAssignments: websiteAssignments ?? [],
+        audiences: audiences ?? [],
+        sponsorId: partner.id,
+      }),
       sortOrder: partner.sort_order,
       updatedAt: partner.updated_at,
     };

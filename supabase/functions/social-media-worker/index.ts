@@ -205,7 +205,7 @@ type SponsorConfig = { sponsors: any[]; assignments: any[]; audiences: any[] };
 
 async function sponsorConfig(admin: any): Promise<SponsorConfig> {
   const [{ data: sponsors, error: sponsorError }, { data: assignments, error: assignmentError }, { data: audiences, error: audienceError }] = await Promise.all([
-    admin.from('social_sponsors').select('*').eq('active', true),
+    admin.from('social_sponsors').select('id, name, instagram_handle, logo_status, logo_transparent_path, logo_white_path, active').eq('active', true),
     admin.from('social_sponsor_assignments').select('sponsor_id, audience_id, context, slot'),
     admin.from('social_post_audiences').select('id, slug, audience_group').eq('active', true),
   ]);
@@ -354,7 +354,8 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       previewFailed: 0,
       testMode: runtimeConfig.testMode,
     };
-    const sponsorData = await sponsorConfig(context.supabaseAdmin);
+    let sponsorDataPromise: Promise<SponsorConfig> | null = null;
+    const loadSponsorData = () => sponsorDataPromise ??= sponsorConfig(context.supabaseAdmin);
 
     if (previewOnly) {
       if (!previewJobIds.length && !previewPostJobIds.length && !previewIndependentStoryJobIds.length) {
@@ -373,7 +374,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       for (const candidate of previewData as unknown as GameJob[]) {
         if (!candidate.game.enabled || !teamContentEnabled(candidate.game.team)) continue;
         try {
-          const sponsors = assignedSponsors(sponsorData, candidate.game.team, candidate.story_type);
+          const sponsors = assignedSponsors(await loadSponsorData(), candidate.game.team, candidate.story_type);
           const preview = await renderGamePreview(candidate, sponsors);
           await context.supabaseAdmin
             .from('social_story_jobs')
@@ -410,7 +411,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
         const postTeam = candidate.post.audience?.team;
         if (!candidate.post.enabled || (postTeam && !teamContentEnabled(postTeam))) continue;
         try {
-          const sponsors = assignedSponsors(sponsorData, candidate.post.audience, 'post');
+          const sponsors = assignedSponsors(await loadSponsorData(), candidate.post.audience, 'post');
           const preview = await renderPostPreview(candidate, sponsors);
           await context.supabaseAdmin
             .from('social_post_jobs')
@@ -446,7 +447,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
         const storyTeam = candidate.story.audience?.team;
         if (!candidate.story.enabled || (storyTeam && !teamContentEnabled(storyTeam))) continue;
         try {
-          const sponsors = assignedSponsors(sponsorData, candidate.story.audience, 'story');
+          const sponsors = assignedSponsors(await loadSponsorData(), candidate.story.audience, 'story');
           const preview = await renderIndependentStoryPreview(candidate, sponsors);
           await context.supabaseAdmin.from('social_independent_story_jobs').update({
             status: 'preview_ready',
@@ -537,7 +538,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       }
 
       try {
-        const sponsors = assignedSponsors(sponsorData, candidate.game.team, candidate.story_type);
+        const sponsors = assignedSponsors(await loadSponsorData(), candidate.game.team, candidate.story_type);
         const preview = await renderGamePreview(candidate, sponsors);
 
         if (teamAllowsAutomaticPublishing(candidate.game.team, runtimeConfig.testMode)) {
@@ -670,7 +671,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       }
 
       try {
-        const sponsors = assignedSponsors(sponsorData, candidate.post.audience, 'post');
+        const sponsors = assignedSponsors(await loadSponsorData(), candidate.post.audience, 'post');
         const preview = await renderPostPreview(candidate, sponsors);
         const automaticallyPublish = postTeam
           ? teamAllowsAutomaticPublishing(postTeam, runtimeConfig.testMode)
@@ -779,7 +780,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       }
 
       try {
-        const sponsors = assignedSponsors(sponsorData, candidate.story.audience, 'story');
+        const sponsors = assignedSponsors(await loadSponsorData(), candidate.story.audience, 'story');
         const preview = await renderIndependentStoryPreview(candidate, sponsors);
         const automaticallyPublish = storyTeam
           ? teamAllowsAutomaticPublishing(storyTeam, runtimeConfig.testMode)
@@ -853,7 +854,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       summary.claimed += 1;
 
       try {
-        const sponsors = assignedSponsors(sponsorData, { slug: 'gesamtverein', audience_group: 'club' }, 'birthday');
+        const sponsors = assignedSponsors(await loadSponsorData(), { slug: 'gesamtverein', audience_group: 'club' }, 'birthday');
         const preview = await render({
           type: 'birthday',
           jobId: candidate.id,

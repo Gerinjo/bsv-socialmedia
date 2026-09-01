@@ -14,6 +14,22 @@ export function audienceHierarchy(audience) {
   return [...new Set([slug, ...(groupParents[String(audience?.audience_group ?? '')] ?? ['gesamtverein'])])];
 }
 
+/** @param {{websiteAssignments?: any[], audiences?: any[], sponsorId: string}} options */
+export function websiteTeamAudienceSlugs({ websiteAssignments = [], audiences = [], sponsorId }) {
+  const audienceById = new Map(audiences.map((item) => [item.id, item]));
+  const assignedSlugs = new Set(
+    websiteAssignments
+      .filter((assignment) => assignment.sponsor_id === sponsorId)
+      .map((assignment) => audienceById.get(assignment.audience_id)?.slug)
+      .filter(Boolean),
+  );
+  return audiences
+    .filter((audience) => ['mens_team', 'womens_team', 'youth_team'].includes(String(audience.audience_group ?? '')))
+    .filter((audience) => audienceHierarchy(audience).some((slug) => assignedSlugs.has(slug)))
+    .map((audience) => String(audience.slug))
+    .sort();
+}
+
 /** @param {{sponsors?: any[], assignments?: any[], audiences?: any[], audience: any, context: string}} options */
 export function selectAssignedSponsors({ sponsors = [], assignments = [], audiences = [], audience, context }) {
   const audienceById = new Map(audiences.map((item) => [item.id, item]));

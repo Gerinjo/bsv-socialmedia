@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { audienceHierarchy, selectAssignedSponsors, sponsorLogoReference, sponsorMentionLine } from '../src/sponsor-assignments.mjs';
+import { audienceHierarchy, selectAssignedSponsors, sponsorLogoReference, sponsorMentionLine, websiteTeamAudienceSlugs } from '../src/sponsor-assignments.mjs';
 import { sponsorLogoStrip } from '../src/story-renderer.mjs';
 
 test('teams inherit sponsor slots while keeping their own overrides', () => {
@@ -22,6 +22,35 @@ test('teams inherit sponsor slots while keeping their own overrides', () => {
   const selected = selectAssignedSponsors({ sponsors, assignments, audiences, audience: audiences[2], context: 'announcement' });
   assert.deepEqual(selected.map((item) => item.name), ['Teampartner', 'Clubpartner']);
   assert.equal(sponsorMentionLine(selected), 'Partner: @team · @club');
+});
+
+test('website assignments inherit from club and departments independently of social media contexts', () => {
+  const audiences = [
+    { id: 'club', slug: 'gesamtverein', audience_group: 'club' },
+    { id: 'football', slug: 'fussballabteilung', audience_group: 'football_department' },
+    { id: 'youth', slug: 'jugendabteilung', audience_group: 'youth_department' },
+    { id: 'men', slug: 'herren-1', audience_group: 'mens_team' },
+    { id: 'women', slug: 'frauen-1', audience_group: 'womens_team' },
+    { id: 'u17', slug: 'u17-junioren', audience_group: 'youth_team', active: false },
+  ];
+  const websiteAssignments = [
+    { sponsor_id: 'club-partner', audience_id: 'club' },
+    { sponsor_id: 'youth-partner', audience_id: 'youth' },
+    { sponsor_id: 'team-partner', audience_id: 'men' },
+  ];
+
+  assert.deepEqual(
+    websiteTeamAudienceSlugs({ websiteAssignments, audiences, sponsorId: 'club-partner' }),
+    ['frauen-1', 'herren-1', 'u17-junioren'],
+  );
+  assert.deepEqual(
+    websiteTeamAudienceSlugs({ websiteAssignments, audiences, sponsorId: 'youth-partner' }),
+    ['u17-junioren'],
+  );
+  assert.deepEqual(
+    websiteTeamAudienceSlugs({ websiteAssignments, audiences, sponsorId: 'team-partner' }),
+    ['herren-1'],
+  );
 });
 
 test('renderer places at most two sponsor logos without a background box', () => {

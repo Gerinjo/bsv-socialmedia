@@ -618,11 +618,13 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       { data: clubs, error: clubsError },
       { data: members, error: membersError },
       { data: postAudiences, error: postAudiencesError },
+      { data: websiteAudiences, error: websiteAudiencesError },
       { data: posts, error: postsError },
       { data: storyCategories, error: storyCategoriesError },
       { data: independentStories, error: independentStoriesError },
       { data: sponsors, error: sponsorsError },
       { data: sponsorAssignments, error: sponsorAssignmentsError },
+      { data: sponsorWebsiteAssignments, error: sponsorWebsiteAssignmentsError },
       { data: cleanupSettings, error: cleanupSettingsError },
     ] = await Promise.all([
       context.supabaseAdmin
@@ -660,6 +662,10 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .eq('active', true)
         .order('sort_order', { ascending: true }),
       context.supabaseAdmin
+        .from('social_post_audiences')
+        .select('id, slug, audience_group, label, sort_order, team_id, active')
+        .order('sort_order', { ascending: true }),
+      context.supabaseAdmin
         .from('social_posts')
         .select('*, audience:social_post_audiences(id, slug, audience_group, label), job:social_post_jobs(*)')
         .order('updated_at', { ascending: false }),
@@ -682,14 +688,17 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .select('sponsor_id, audience_id, context, slot')
         .order('slot', { ascending: true }),
       context.supabaseAdmin
+        .from('social_sponsor_website_assignments')
+        .select('sponsor_id, audience_id'),
+      context.supabaseAdmin
         .from('social_cleanup_settings')
         .select('retention_days, updated_at')
         .eq('id', 1)
         .maybeSingle(),
     ]);
     const readError = gamesError ?? birthdaysError ?? teamsError ?? teamColorGroupsError ?? peopleError ?? clubsError ?? membersError
-      ?? postAudiencesError ?? postsError ?? storyCategoriesError ?? independentStoriesError ?? sponsorsError ?? sponsorAssignmentsError
-      ?? cleanupSettingsError;
+      ?? postAudiencesError ?? websiteAudiencesError ?? postsError ?? storyCategoriesError ?? independentStoriesError ?? sponsorsError ?? sponsorAssignmentsError
+      ?? sponsorWebsiteAssignmentsError ?? cleanupSettingsError;
     if (readError) return json({ error: readError.message }, 500);
     const retentionDays = normalizeRetentionDays(cleanupSettings?.retention_days);
     const [preparedGames, preparedPosts, preparedIndependentStories] = await Promise.all([
@@ -712,11 +721,13 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       teamColorGroups: teamColorGroups ?? [],
       people: people ?? [],
       postAudiences: postAudiences ?? [],
+      websiteAudiences: websiteAudiences ?? [],
       posts: historyRecords.post,
       storyCategories: storyCategories ?? [],
       independentStories: historyRecords.story,
       sponsors: await freshSponsorUrls(context.supabaseAdmin, sponsors ?? []),
       sponsorAssignments: sponsorAssignments ?? [],
+      sponsorWebsiteAssignments: sponsorWebsiteAssignments ?? [],
       clubs: await freshClubUrls(context.supabaseAdmin, clubs ?? []),
       games: historyRecords.game,
       birthdays: await freshPreviewUrls(context.supabaseAdmin, birthdays ?? []),
@@ -847,6 +858,76 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       });
     }
 
+    if (action === 'set_team_member_access') {
+      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
+      const targetUserId = required(body.userId, 'Benutzer-ID');
+      if (targetUserId === userId) throw new Error('Der eigene aktuell verwendete Admin-Zugang kann nicht gesperrt werden.');
+      const isActive = body.isActive === true;
+      const { data: target, error: targetError } = await context.supabaseAdmin
+        .from('social_admins')
+        .select('user_id, email, role, is_active')
+        .eq('user_id', targetUserId)
+        .maybeSingle();
+      if (targetError) throw targetError;
+      if (!target) throw new Error('Das Teammitglied wurde nicht gefunden.');
+      if (!isActive && target.role === 'admin' && target.is_active) {
+        const { count, error: countError } = await context.supabaseAdmin
+          .from('social_admins')
+          .select('user_id', { count: 'exact', head: true })
+          .eq('role', 'admin')
+          .eq('is_active', true)
+          .neq('user_id', targetUserId);
+        if (countError) throw countError;
+        if (!count) throw new Error('Der letzte aktive Administrator kann nicht gesperrt werden.');
+      }
+      const { data: updated, error: updateError } = await context.supabaseAdmin
+        .from('social_admins')
+        .update({ is_active: isActive })
+        .eq('user_id', targetUserId)
+        .select('user_id, email, role, is_active, created_at')
+        .single();
+      if (updateError) throw updateError;
+      const { error: authError } = await context.supabaseAdmin.auth.admin.updateUserById(targetUserId, {
+        ban_duration: isActive ? 'none' : '876000h',
+      });
+      if (authError) {
+        await context.supabaseAdmin.from('social_admins').update({ is_active: target.is_active }).eq('user_id', targetUserId);
+        throw new Error(`Der Auth-Zugang konnte nicht ${isActive ? 'entsperrt' : 'gesperrt'} werden: ${authError.message}`);
+      }
+      return json({ ok: true, member: updated });
+    }
+
+    if (action === 'delete_team_member') {
+      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
+      const targetUserId = required(body.userId, 'Benutzer-ID');
+      if (targetUserId === userId) throw new Error('Der eigene aktuell verwendete Admin-Zugang kann nicht gelöscht werden.');
+      const { data: target, error: targetError } = await context.supabaseAdmin
+        .from('social_admins')
+        .select('user_id, email, role, is_active')
+        .eq('user_id', targetUserId)
+        .maybeSingle();
+      if (targetError) throw targetError;
+      if (!target) throw new Error('Das Teammitglied wurde nicht gefunden.');
+      if (target.role === 'admin' && target.is_active) {
+        const { count, error: countError } = await context.supabaseAdmin
+          .from('social_admins')
+          .select('user_id', { count: 'exact', head: true })
+          .eq('role', 'admin')
+          .eq('is_active', true)
+          .neq('user_id', targetUserId);
+        if (countError) throw countError;
+        if (!count) throw new Error('Der letzte aktive Administrator kann nicht gelöscht werden.');
+      }
+      const { error: authError } = await context.supabaseAdmin.auth.admin.deleteUser(targetUserId);
+      if (authError) throw new Error(`Der Auth-Zugang konnte nicht gelöscht werden: ${authError.message}`);
+      const { error: membershipDeleteError } = await context.supabaseAdmin
+        .from('social_admins')
+        .delete()
+        .eq('user_id', targetUserId);
+      if (membershipDeleteError) throw membershipDeleteError;
+      return json({ ok: true, deletedUserId: targetUserId });
+    }
+
     if (action === 'create_team_member') {
       if (String(membership.role ?? '').trim().toLowerCase() !== 'admin') {
         return json({ error: 'admin_only' }, 403);
@@ -862,7 +943,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         email,
         password,
         email_confirm: true,
-        user_metadata: { role },
+        app_metadata: { social_role: role },
       });
       if (createUserError) throw new Error(createUserError.message || 'Der Benutzer konnte nicht angelegt werden.');
       const { data: member, error: insertError } = await context.supabaseAdmin
@@ -875,7 +956,18 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         }, { onConflict: 'user_id' })
         .select('*')
         .single();
-      if (insertError) throw insertError;
+      if (insertError) {
+        await context.supabaseAdmin.auth.admin.deleteUser(createdUser.user.id);
+        throw insertError;
+      }
+      if (!isActive) {
+        const { error: banError } = await context.supabaseAdmin.auth.admin.updateUserById(createdUser.user.id, { ban_duration: '876000h' });
+        if (banError) {
+          await context.supabaseAdmin.from('social_admins').delete().eq('user_id', createdUser.user.id);
+          await context.supabaseAdmin.auth.admin.deleteUser(createdUser.user.id);
+          throw new Error(`Der inaktive Zugang konnte nicht gesperrt werden: ${banError.message}`);
+        }
+      }
       return json({ ok: true, member });
     }
 
@@ -1796,6 +1888,10 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       if (previousAssignmentsError) throw previousAssignmentsError;
       const previousContexts = (previousAssignments ?? []).map((assignment: any) => String(assignment.context ?? ''));
       const assignments = Array.isArray(body.assignments) ? body.assignments : [];
+      const websiteAudienceIds = [...new Set(
+        (Array.isArray(body.websiteAudienceIds) ? body.websiteAudienceIds : [])
+          .map((audienceId: unknown) => required(audienceId, 'Website-Einheit')),
+      )];
       const normalized = assignments.map((assignment: any) => ({
         sponsor_id: sponsorId,
         audience_id: required(assignment?.audienceId, 'Einheit'),
@@ -1807,20 +1903,20 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       }
       const assignmentKeys = normalized.map((assignment: any) => `${assignment.audience_id}:${assignment.context}`);
       if (new Set(assignmentKeys).size !== assignmentKeys.length) throw new Error('Eine Einheit wurde im gleichen Kontext doppelt belegt.');
-      const audienceIds = [...new Set(normalized.map((assignment: any) => assignment.audience_id))];
-      if (audienceIds.length) {
+      const socialAudienceIds = [...new Set(normalized.map((assignment: any) => assignment.audience_id))];
+      if (socialAudienceIds.length) {
         const { data: audiences, error: audienceError } = await context.supabaseAdmin
           .from('social_post_audiences')
           .select('id')
-          .in('id', audienceIds)
+          .in('id', socialAudienceIds)
           .eq('active', true);
         if (audienceError) throw audienceError;
-        if ((audiences ?? []).length !== audienceIds.length) throw new Error('Mindestens eine Einheit ist nicht mehr aktiv.');
+        if ((audiences ?? []).length !== socialAudienceIds.length) throw new Error('Mindestens eine Social-Media-Einheit ist nicht mehr aktiv.');
         const contexts = [...new Set(normalized.map((assignment: any) => assignment.context))];
         const { data: occupied, error: occupiedError } = await context.supabaseAdmin
           .from('social_sponsor_assignments')
           .select('sponsor_id, audience_id, context, slot')
-          .in('audience_id', audienceIds)
+          .in('audience_id', socialAudienceIds)
           .in('context', contexts)
           .neq('sponsor_id', sponsorId);
         if (occupiedError) throw occupiedError;
@@ -1830,6 +1926,18 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
           && existing.slot === assignment.slot
         )));
         if (conflicts.length) throw new Error('Mindestens ein ausgewählter Platz ist bereits durch einen anderen Werbepartner belegt.');
+      }
+      if (websiteAudienceIds.length) {
+        const { data: websiteAudiences, error: websiteAudienceError } = await context.supabaseAdmin
+          .from('social_post_audiences')
+          .select('id, audience_group')
+          .in('id', websiteAudienceIds);
+        if (websiteAudienceError) throw websiteAudienceError;
+        const allowedWebsiteGroups = new Set(['club', 'all_departments', 'football_department', 'youth_department', 'mens_team', 'womens_team', 'youth_team']);
+        if (
+          (websiteAudiences ?? []).length !== websiteAudienceIds.length
+          || (websiteAudiences ?? []).some((audience: any) => !allowedWebsiteGroups.has(String(audience.audience_group ?? '')))
+        ) throw new Error('Mindestens eine Website-Einheit ist ungültig.');
       }
       const { error: deleteError } = await context.supabaseAdmin
         .from('social_sponsor_assignments')
@@ -1842,8 +1950,19 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
           .insert(normalized);
         if (insertError) throw insertError;
       }
+      const { error: deleteWebsiteError } = await context.supabaseAdmin
+        .from('social_sponsor_website_assignments')
+        .delete()
+        .eq('sponsor_id', sponsorId);
+      if (deleteWebsiteError) throw deleteWebsiteError;
+      if (websiteAudienceIds.length) {
+        const { error: insertWebsiteError } = await context.supabaseAdmin
+          .from('social_sponsor_website_assignments')
+          .insert(websiteAudienceIds.map((audienceId) => ({ sponsor_id: sponsorId, audience_id: audienceId })));
+        if (insertWebsiteError) throw insertWebsiteError;
+      }
       const automation = await invalidateSponsorPreviews(context.supabaseAdmin, sponsorId, previousContexts);
-      return json({ ok: true, assignments: normalized, automation });
+      return json({ ok: true, assignments: normalized, websiteAudienceIds, automation });
     }
 
     if (action === 'delete_sponsor') {
