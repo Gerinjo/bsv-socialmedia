@@ -55,3 +55,15 @@ jobs:
       - name: Deploy admin API
         if: steps.secret.outputs.available == 'true'
         run: npx --yes supabase@latest functions deploy social-media-admin-api --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Deploy social media worker
+        if: steps.secret.outputs.available == 'true'
+        run: npx --yes supabase@latest functions deploy social-media-worker --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Deploy football.de sync
+        if: steps.secret.outputs.available == 'true'
+        run: npx --yes supabase@latest functions deploy fussball-de-sync --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Deploy website sponsor feed
+        if: steps.secret.outputs.available == 'true'
+        run: npx --yes supabase@latest functions deploy website-sponsor-feed --project-ref "$SUPABASE_PROJECT_REF"
