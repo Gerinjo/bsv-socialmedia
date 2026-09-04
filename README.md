@@ -1,6 +1,6 @@
-# BSV Social Media
+# Social Media & Club Suite
 
-Eigenständiges Projekt für die Gestaltung und Automatisierung von Instagram-Stories des BSV Nordstern Radolfzell.
+Vereinssuite für Social Media, Sponsoring und Administration des BSV Nordstern Radolfzell.
 
 Der aktuelle Stand liefert:
 

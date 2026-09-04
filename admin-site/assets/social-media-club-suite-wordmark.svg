@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 142" role="img" aria-labelledby="title desc">
+  <title id="title">Social Media &amp; Club Suite</title>
+  <desc id="desc">Wortmarke der Social Media &amp; Club Suite</desc>
+  <g font-family="Roboto, Inter, 'Noto Sans', Arial, sans-serif">
+    <text x="4" y="39" fill="#1a73e8" font-size="28" font-weight="700" letter-spacing="4.2">SOCIAL MEDIA</text>
+    <text x="0" y="105" fill="#00a89d" font-size="60" font-weight="500">&amp;</text>
+    <text x="52" y="105" fill="#202124" font-size="60" font-weight="700" letter-spacing="-1.8">Club Suite</text>
+  </g>
+  <rect x="4" y="124" width="182" height="7" rx="3.5" fill="#1a73e8"/>
+  <rect x="194" y="124" width="44" height="7" rx="3.5" fill="#00a89d"/>
+  <circle cx="252" cy="127.5" r="7" fill="#f9ab00"/>
+</svg>

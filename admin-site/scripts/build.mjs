@@ -9,6 +9,8 @@ const distDir = resolve(repoDir, 'dist');
 const previewDir = resolve(repoDir, '.preview');
 
 const logo = await readFile(resolve(adminDir, 'assets/bsv-nordstern.png'));
+const suiteLogo = await readFile(resolve(adminDir, 'assets/social-media-club-suite-icon.png'));
+const suiteWordmark = await readFile(resolve(adminDir, 'assets/social-media-club-suite-wordmark.svg'));
 const crestCutout = await readFile(resolve(adminDir, 'crest-cutout.js'), 'utf8');
 const richTextEditor = await readFile(resolve(adminDir, 'rich-text-editor.mjs'), 'utf8');
 const visionOcr = await readFile(resolve(adminDir, 'vision-ocr.mjs'), 'utf8');
@@ -16,6 +18,8 @@ const tesseract = await readFile(resolve(repoDir, 'node_modules/tesseract.js/dis
 let html = await readFile(resolve(adminDir, 'admin-page.html'), 'utf8');
 for (const [placeholder, source] of [
   ['__BSV_LOGO_DATA_URL__', `data:image/png;base64,${logo.toString('base64')}`],
+  ['__SUITE_LOGO_DATA_URL__', `data:image/png;base64,${suiteLogo.toString('base64')}`],
+  ['__SUITE_WORDMARK_DATA_URL__', `data:image/svg+xml;base64,${suiteWordmark.toString('base64')}`],
   ['__CREST_CUTOUT_SCRIPT__', crestCutout],
   ['__RICH_TEXT_EDITOR_SCRIPT__', richTextEditor],
   ['__VISION_OCR_SCRIPT__', visionOcr],
