@@ -1853,18 +1853,46 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       const transparentPath = `sponsors/${sponsor.slug}/transparent.png`;
       const whitePath = `sponsors/${sponsor.slug}/white-v2.png`;
       const processing = body.processing && typeof body.processing === 'object' ? body.processing : {};
+      const processingMode = String(processing.mode ?? 'auto') === 'preserve' ? 'preserve' : 'auto';
+      const processingMethod = String(processing.method ?? 'edge-connected-background').slice(0, 80);
+      const removedRatio = Math.max(0, Math.min(1, Number(processing.removedRatio) || 0));
+      const candidateRemovedRatio = Math.max(0, Math.min(1, Number(processing.candidateRemovedRatio) || removedRatio));
+      const backgroundColor = processing.backgroundColor && typeof processing.backgroundColor === 'object'
+        ? processing.backgroundColor as Record<string, unknown>
+        : null;
+      const backgroundChannels = backgroundColor
+        ? ['red', 'green', 'blue'].map((channel) => Number(backgroundColor[channel]))
+        : [];
+      const borderChroma = backgroundChannels.length === 3 && backgroundChannels.every(Number.isFinite)
+        ? Math.max(...backgroundChannels) - Math.min(...backgroundChannels)
+        : 0;
+      if (Boolean(processing.safetyBlocked)) {
+        throw new Error('Die automatische Freistellung wurde aus Sicherheitsgründen gestoppt. Bitte das Original beibehalten.');
+      }
+      if (processingMode === 'auto' && processingMethod !== 'source-alpha' && borderChroma > 40) {
+        throw new Error('Kräftige Markenfarben am Bildrand dürfen nicht automatisch entfernt werden.');
+      }
+      if (processingMode === 'auto' && candidateRemovedRatio > 0.45) {
+        throw new Error('Die automatische Freistellung würde einen zu großen Bildanteil entfernen.');
+      }
       const confidenceValue = Number(processing.confidence);
       const metadata = {
-        method: String(processing.method ?? 'edge-connected-background').slice(0, 80),
+        mode: processingMode,
+        method: processingMethod,
         confidence: Number.isFinite(confidenceValue) ? Math.max(0, Math.min(1, confidenceValue)) : null,
         reviewRecommended: Boolean(processing.reviewRecommended),
         borderDominance: Number(processing.borderDominance) || 0,
         transparentBorderRatio: Number(processing.transparentBorderRatio) || 0,
-        removedRatio: Number(processing.removedRatio) || 0,
-        backgroundColor: processing.backgroundColor ?? null,
+        removedRatio,
+        candidateRemovedRatio,
+        backgroundColor,
+        borderChroma: Number(processing.borderChroma) || borderChroma,
         threshold: Number(processing.threshold) || null,
         width: Number(processing.width) || null,
         height: Number(processing.height) || null,
+        safetyBlocked: false,
+        safetyReason: null,
+        whiteVariantMode: String(processing.whiteVariantMode ?? 'monochrome').slice(0, 40),
         whiteVariantVersion: 2,
         reviewed: false,
       };

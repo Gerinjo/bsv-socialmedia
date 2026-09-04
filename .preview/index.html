@@ -327,6 +327,17 @@
     };
   }
 
+  function colorChroma(color) {
+    return Math.max(color.red, color.green, color.blue) - Math.min(color.red, color.green, color.blue);
+  }
+
+  function hasSourceTransparency(data) {
+    for (let offset = 3; offset < data.length; offset += 4) {
+      if (data[offset] < 255) return true;
+    }
+    return false;
+  }
+
   function removeEdgeConnectedBackground(image, options = {}) {
     const { width, height } = image;
     if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1) {
@@ -338,7 +349,7 @@
     const border = dominantBorderColor(width, height, data);
     const totalPixels = width * height;
 
-    if (border.transparentRatio >= 0.15) {
+    if (hasSourceTransparency(data)) {
       return {
         width,
         height,
@@ -351,6 +362,37 @@
           transparentBorderRatio: border.transparentRatio,
           removedRatio: 0,
           backgroundColor: null,
+          safetyBlocked: false,
+          safetyReason: null,
+        },
+      };
+    }
+
+    const borderChroma = colorChroma(border.color);
+    const maximumBorderChroma = Number.isFinite(options.maximumBorderChroma)
+      ? Math.max(0, Number(options.maximumBorderChroma))
+      : 40;
+    if (options.requireNeutralBackground === true && borderChroma > maximumBorderChroma) {
+      return {
+        width,
+        height,
+        data,
+        metadata: {
+          method: 'colored-border-preserved',
+          confidence: 0,
+          reviewRecommended: true,
+          borderDominance: border.dominance,
+          transparentBorderRatio: border.transparentRatio,
+          removedRatio: 0,
+          candidateRemovedRatio: null,
+          backgroundColor: {
+            red: Math.round(border.color.red),
+            green: Math.round(border.color.green),
+            blue: Math.round(border.color.blue),
+          },
+          borderChroma: Math.round(borderChroma),
+          safetyBlocked: true,
+          safetyReason: 'colored-border',
         },
       };
     }
@@ -397,6 +439,34 @@
       data[offset + 3] = 0;
     }
     const removedRatio = removed / totalPixels;
+    const maximumRemovedRatio = Number.isFinite(options.maximumRemovedRatio)
+      ? Math.max(0, Math.min(1, Number(options.maximumRemovedRatio)))
+      : null;
+    if (maximumRemovedRatio !== null && removedRatio > maximumRemovedRatio) {
+      return {
+        width,
+        height,
+        data: new Uint8ClampedArray(source),
+        metadata: {
+          method: 'large-removal-preserved',
+          confidence: 0,
+          reviewRecommended: true,
+          borderDominance: border.dominance,
+          transparentBorderRatio: border.transparentRatio,
+          removedRatio: 0,
+          candidateRemovedRatio: removedRatio,
+          backgroundColor: {
+            red: Math.round(border.color.red),
+            green: Math.round(border.color.green),
+            blue: Math.round(border.color.blue),
+          },
+          borderChroma: Math.round(borderChroma),
+          threshold,
+          safetyBlocked: true,
+          safetyReason: 'large-removal',
+        },
+      };
+    }
     const foregroundRatio = 1 - removedRatio;
     const geometryPlausible = foregroundRatio >= 0.02 && foregroundRatio <= 0.9;
     const confidence = Math.max(0, Math.min(1, border.dominance * (geometryPlausible ? 1 : 0.45)));
@@ -412,12 +482,16 @@
         borderDominance: border.dominance,
         transparentBorderRatio: border.transparentRatio,
         removedRatio,
+        candidateRemovedRatio: removedRatio,
         backgroundColor: {
           red: Math.round(border.color.red),
           green: Math.round(border.color.green),
           blue: Math.round(border.color.blue),
         },
         threshold,
+        borderChroma: Math.round(borderChroma),
+        safetyBlocked: false,
+        safetyReason: null,
       },
     };
   }
@@ -1696,13 +1770,13 @@ export const recognizeOcrImage = createOcrRecognizer();
     function birthdayHtml(item){const photo=item.person?.source_photo_url;return '<article class="card">'+(photo?'<img loading="lazy" decoding="async" class="birthday-photo" src="'+esc(photo)+'" alt="">':'')+'<h3>'+esc(item.person_name)+'</h3><div class="meta">'+esc(new Date(item.birth_date+'T12:00:00').toLocaleDateString('de-DE'))+' · '+esc(item.publish_time)+'</div><p>'+esc(item.message)+'</p><div class="jobs">'+(item.jobs||[]).map(j=>jobHtml(j,'birthday')).join('')+'</div></article>'}
     function fileDataUrl(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(new Error('Die Datei konnte nicht gelesen werden.'));reader.readAsDataURL(file)})}
     function imageFromUrl(url){return new Promise((resolve,reject)=>{const image=new Image();if(/^https?:/i.test(url))image.crossOrigin='anonymous';image.onload=()=>resolve(image);image.onerror=()=>reject(new Error('Das Bild konnte nicht geöffnet werden.'));image.src=url})}
-    async function prepareCrest(file){
+    async function prepareCrest(file,options={}){
       if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('Bitte PNG, JPG oder WebP auswählen.');
       if(file.size>5*1024*1024)throw new Error('Das Wappen darf höchstens 5 MB groß sein.');
-      const originalDataUrl=await fileDataUrl(file);const image=await imageFromUrl(originalDataUrl);const maximum=1200;const scale=Math.min(1,maximum/Math.max(image.naturalWidth,image.naturalHeight));const width=Math.max(1,Math.round(image.naturalWidth*scale));const height=Math.max(1,Math.round(image.naturalHeight*scale));const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;const context=canvas.getContext('2d',{willReadFrequently:true});context.drawImage(image,0,0,width,height);const source=context.getImageData(0,0,width,height);const result=globalThis.BsvCrestCutout.removeEdgeConnectedBackground(source);const output=document.createElement('canvas');output.width=width;output.height=height;const outputContext=output.getContext('2d');const imageData=outputContext.createImageData(width,height);imageData.data.set(result.data);outputContext.putImageData(imageData,0,0);return {originalDataUrl,transparentDataUrl:output.toDataURL('image/png'),processing:{...result.metadata,width,height}}
+      const originalDataUrl=await fileDataUrl(file);const image=await imageFromUrl(originalDataUrl);const maximum=1200;const scale=Math.min(1,maximum/Math.max(image.naturalWidth,image.naturalHeight));const width=Math.max(1,Math.round(image.naturalWidth*scale));const height=Math.max(1,Math.round(image.naturalHeight*scale));const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;const context=canvas.getContext('2d',{willReadFrequently:true});context.drawImage(image,0,0,width,height);const source=context.getImageData(0,0,width,height);const preserve=options.mode==='preserve';const result=preserve?{data:new Uint8ClampedArray(source.data),metadata:{method:'preserve-original',confidence:1,reviewRecommended:false,borderDominance:0,transparentBorderRatio:0,removedRatio:0,candidateRemovedRatio:0,backgroundColor:null,safetyBlocked:false,safetyReason:null}}:globalThis.BsvCrestCutout.removeEdgeConnectedBackground(source,options.cutout||{});const output=document.createElement('canvas');output.width=width;output.height=height;const outputContext=output.getContext('2d');const imageData=outputContext.createImageData(width,height);imageData.data.set(result.data);outputContext.putImageData(imageData,0,0);return {originalDataUrl,transparentDataUrl:output.toDataURL('image/png'),processing:{...result.metadata,width,height,mode:preserve?'preserve':'auto'}}
     }
     async function whiteLogoDataUrl(transparentDataUrl,processing={}){const image=await imageFromUrl(transparentDataUrl);const canvas=document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;const context=canvas.getContext('2d',{willReadFrequently:true});context.drawImage(image,0,0);const source=context.getImageData(0,0,canvas.width,canvas.height);const result=globalThis.BsvCrestCutout.createWhiteLogoVariant(source,processing);const pixels=context.createImageData(canvas.width,canvas.height);pixels.data.set(result.data);context.putImageData(pixels,0,0);return canvas.toDataURL('image/png')}
-    async function prepareSponsorLogo(file){const prepared=await prepareCrest(file);return {...prepared,whiteDataUrl:await whiteLogoDataUrl(prepared.transparentDataUrl,prepared.processing)}}
+    async function prepareSponsorLogo(file,mode='preserve'){const prepared=await prepareCrest(file,{mode,cutout:{requireNeutralBackground:true,maximumBorderChroma:40,maximumRemovedRatio:.45}});const keepColors=mode==='preserve'||prepared.processing.safetyBlocked;return {...prepared,whiteDataUrl:keepColors?prepared.transparentDataUrl:await whiteLogoDataUrl(prepared.transparentDataUrl,prepared.processing),processing:{...prepared.processing,whiteVariantMode:keepColors?'original-colors':'monochrome'}}}
     function crestHtml(club){
       const labels={missing:'Wappen fehlt',needs_review:'Prüfung nötig',approved:'Freigegeben',rejected:'Abgelehnt'};const source=club.crest_source_url?'<a class="crest-source" href="'+esc(club.crest_source_url)+'" target="_blank" rel="noreferrer">Quelle öffnen</a>':'';const hasUpload=Boolean(club.crest_original_url||club.crest_transparent_url);const existing=hasUpload?'<div class="crest-images">'+(club.crest_original_url?'<div class="crest-image"><div><img loading="lazy" decoding="async" src="'+esc(club.crest_original_url)+'" alt="Originalwappen"><span>Original</span></div></div>':'')+(club.crest_transparent_url?'<div class="crest-image checkerboard"><div><img loading="lazy" decoding="async" src="'+esc(club.crest_transparent_url)+'" alt="Freigestelltes Wappen"><span>Transparent</span></div></div>':'')+'</div>':'';const review=club.crest_status==='needs_review'?'<button type="button" class="secondary approveCrest" data-id="'+esc(club.id)+'">Freigeben</button><button type="button" class="ghost rejectCrest" data-id="'+esc(club.id)+'">Ablehnen</button>':'';const discard=hasUpload?'<button type="button" class="danger discardCrest" data-id="'+esc(club.id)+'">Upload verwerfen</button>':'';const confidence=club.transparency_confidence==null?'':' · Erkennung '+Math.round(Number(club.transparency_confidence)*100)+' %';const search='https://www.google.com/search?q='+encodeURIComponent(club.name+' Vereinswappen offizielle Homepage');return '<article class="crest-card" data-club="'+esc(club.id)+'"><div class="crest-head"><div><h3>'+esc(club.name)+'</h3><div class="small">'+esc((club.aliases||[]).map(item=>item.alias).join(' · '))+confidence+'</div></div><span class="crest-state '+esc(club.crest_status)+'">'+esc(labels[club.crest_status]||club.crest_status)+'</span></div>'+existing+'<div class="toolbar">'+source+'<a class="crest-source" href="'+esc(search)+'" target="_blank" rel="noreferrer">Wappen suchen</a></div><form class="crestForm fields" data-id="'+esc(club.id)+'"><label class="wide">Quellenlink<input name="sourceUrl" type="url" value="'+esc(club.crest_source_url||'')+'" placeholder="https://verein.de/…"></label><label class="wide">Originaldatei<input class="crestFile" type="file" accept="image/png,image/jpeg,image/webp" required></label><div class="crest-local-preview hidden wide"><div class="crest-image"><div><img loading="lazy" decoding="async" class="localOriginal" alt="Ausgewähltes Original"><span>Original</span></div></div><div class="crest-image checkerboard"><div><img loading="lazy" decoding="async" class="localTransparent" alt="Automatische Freistellung"><span>Vorschlag</span></div></div></div><div class="small crestLocalMeta wide"></div><div class="crest-actions wide"><button type="submit">Vorschlag speichern</button>'+review+discard+'</div></form></article>'
     }
@@ -1740,10 +1814,32 @@ export const recognizeOcrImage = createOcrRecognizer();
     }
     function sponsorContractStatus(sponsor){const today=new Date().toISOString().slice(0,10);if(sponsor.automatic_renewal)return {label:(sponsor.contract_start_date?'Seit '+new Date(sponsor.contract_start_date+'T00:00:00').toLocaleDateString('de-DE')+' · ':'')+'Verlängert sich automatisch',expired:false};if(sponsor.contract_end_date){const expired=sponsor.contract_end_date<today;const period=[sponsor.contract_start_date&&new Date(sponsor.contract_start_date+'T00:00:00').toLocaleDateString('de-DE'),new Date(sponsor.contract_end_date+'T00:00:00').toLocaleDateString('de-DE')].filter(Boolean).join(' bis ');return {label:(expired?'Abgelaufen: ':'Vertrag: ')+period,expired}}return {label:sponsor.contract_start_date?'Vertragsbeginn '+new Date(sponsor.contract_start_date+'T00:00:00').toLocaleDateString('de-DE')+' · Ende fehlt':'Vertragsdaten fehlen',expired:false}}
     function sponsorHtml(sponsor){
-      const labels={missing:'Logo fehlt',needs_review:'Prüfung nötig',approved:'Freigegeben',rejected:'Abgelehnt'};const hasUpload=Boolean(sponsor.logo_original_url||sponsor.logo_transparent_url||sponsor.logo_white_url);const previews=hasUpload?'<div class="sponsor-preview">'+[['Original',sponsor.logo_original_url,''],['Transparent',sponsor.logo_transparent_url,'checkerboard'],['Weiß',sponsor.logo_white_url,'dark']].map(([label,url,className])=>'<div class="crest-image '+className+'"><div>'+(url?'<img loading="lazy" decoding="async" src="'+esc(url)+'" alt="'+esc(label)+'">':'<span>Fehlt</span>')+'<span>'+esc(label)+'</span></div></div>').join('')+'</div>':'';const review=sponsor.logo_status==='needs_review'?'<button type="button" class="secondary approveSponsor" data-id="'+esc(sponsor.id)+'">Freigeben</button><button type="button" class="ghost rejectSponsor" data-id="'+esc(sponsor.id)+'">Ablehnen</button>':'';const repair=sponsor.logo_transparent_url&&Number(sponsor.processing_metadata?.whiteVariantVersion||0)<2?'<button type="button" class="secondary repairSponsorWhite" data-id="'+esc(sponsor.id)+'" aria-label="Weiße Logo-Variante reparieren">Weiß reparieren</button>':'';const discard=hasUpload&&String(sponsor.logo_original_path||'').startsWith('sponsors/')?'<button type="button" class="danger discardSponsor" data-id="'+esc(sponsor.id)+'">Logo verwerfen</button>':'';const contract=sponsorContractStatus(sponsor);
-      return '<article class="sponsor-card"><div class="crest-head"><div><h3>'+esc(sponsor.name)+'</h3><div class="small">'+esc([sponsor.instagram_handle,sponsor.website_url,sponsor.active?'aktiv':'passiv'].filter(Boolean).join(' · '))+'</div><span class="sponsor-contract-state '+(contract.expired?'expired':'')+'">'+esc(contract.label)+'</span></div><span class="crest-state '+esc(sponsor.logo_status)+'">'+esc(labels[sponsor.logo_status]||sponsor.logo_status)+'</span></div>'+previews+'<form class="sponsorForm fields" data-id="'+esc(sponsor.id)+'"><label>Name<input name="name" maxlength="120" value="'+esc(sponsor.name)+'" required></label><label>Sortierung<input name="sortOrder" type="number" min="0" value="'+esc(sponsor.sort_order??100)+'"></label><label>Website<input name="websiteUrl" type="url" value="'+esc(sponsor.website_url||'')+'"></label><label>Instagram<input name="instagramHandle" value="'+esc(sponsor.instagram_handle||'')+'"></label><label>Vertragsbeginn<input name="contractStartDate" type="date" value="'+esc(sponsor.contract_start_date||'')+'"></label><label>Vertragsende<input name="contractEndDate" type="date" value="'+esc(sponsor.contract_end_date||'')+'" '+(sponsor.automatic_renewal?'disabled':'')+'></label><label class="wide permission-option"><input name="automaticRenewal" type="checkbox" '+(sponsor.automatic_renewal?'checked':'')+'> Verlängert sich automatisch (kein Enddatum)</label><label class="wide">Logo-Quelle<input name="sourceUrl" type="url" value="'+esc(sponsor.logo_source_url||'')+'"></label><label class="wide"><input name="active" type="checkbox" '+(sponsor.active?'checked':'')+'> Aktiv</label><label class="wide">Neues Original-Logo<input class="sponsorFile" type="file" accept="image/png,image/jpeg,image/webp"></label><div class="sponsorLocalPreview sponsor-preview hidden wide"><div class="crest-image"><div><img loading="lazy" decoding="async" class="localOriginal" alt="Original"><span>Original</span></div></div><div class="crest-image checkerboard"><div><img loading="lazy" decoding="async" class="localTransparent" alt="Freigestellt"><span>Transparent</span></div></div><div class="crest-image dark"><div><img loading="lazy" decoding="async" class="localWhite" alt="Weiße Variante"><span>Weiß</span></div></div></div><div class="small sponsorLocalMeta wide"></div><div class="crest-actions wide"><button type="submit" class="secondary">Daten speichern</button><button type="button" class="saveSponsorLogo">Logo speichern</button>'+repair+review+discard+'<button type="button" class="danger deleteSponsor">Partner löschen</button></div></form></article>'}
+      const labels={missing:'Logo fehlt',needs_review:'Prüfung nötig',approved:'Freigegeben',rejected:'Abgelehnt'};const hasUpload=Boolean(sponsor.logo_original_url||sponsor.logo_transparent_url||sponsor.logo_white_url);const keepsOriginalColors=sponsor.processing_metadata?.whiteVariantMode==='original-colors';const previews=hasUpload?'<div class="sponsor-preview">'+[['Original',sponsor.logo_original_url,''],['Einsatzvariante',sponsor.logo_transparent_url,'checkerboard'],[keepsOriginalColors?'Originalfarben':'Weiß',sponsor.logo_white_url,'dark']].map(([label,url,className])=>'<div class="crest-image '+className+'"><div>'+(url?'<img loading="lazy" decoding="async" src="'+esc(url)+'" alt="'+esc(label)+'">':'<span>Fehlt</span>')+'<span>'+esc(label)+'</span></div></div>').join('')+'</div>':'';const review=sponsor.logo_status==='needs_review'?'<button type="button" class="secondary approveSponsor" data-id="'+esc(sponsor.id)+'">Freigeben</button><button type="button" class="ghost rejectSponsor" data-id="'+esc(sponsor.id)+'">Ablehnen</button>':'';const repair=sponsor.logo_transparent_url&&Number(sponsor.processing_metadata?.whiteVariantVersion||0)<2?'<button type="button" class="secondary repairSponsorWhite" data-id="'+esc(sponsor.id)+'" aria-label="Weiße Logo-Variante reparieren">Weiß reparieren</button>':'';const discard=hasUpload&&String(sponsor.logo_original_path||'').startsWith('sponsors/')?'<button type="button" class="danger discardSponsor" data-id="'+esc(sponsor.id)+'">Logo verwerfen</button>':'';const contract=sponsorContractStatus(sponsor);
+      return '<article class="sponsor-card"><div class="crest-head"><div><h3>'+esc(sponsor.name)+'</h3><div class="small">'+esc([sponsor.instagram_handle,sponsor.website_url,sponsor.active?'aktiv':'passiv'].filter(Boolean).join(' · '))+'</div><span class="sponsor-contract-state '+(contract.expired?'expired':'')+'">'+esc(contract.label)+'</span></div><span class="crest-state '+esc(sponsor.logo_status)+'">'+esc(labels[sponsor.logo_status]||sponsor.logo_status)+'</span></div>'+previews+'<form class="sponsorForm fields" data-id="'+esc(sponsor.id)+'"><label>Name<input name="name" maxlength="120" value="'+esc(sponsor.name)+'" required></label><label>Sortierung<input name="sortOrder" type="number" min="0" value="'+esc(sponsor.sort_order??100)+'"></label><label>Website<input name="websiteUrl" type="url" value="'+esc(sponsor.website_url||'')+'"></label><label>Instagram<input name="instagramHandle" value="'+esc(sponsor.instagram_handle||'')+'"></label><label>Vertragsbeginn<input name="contractStartDate" type="date" value="'+esc(sponsor.contract_start_date||'')+'"></label><label>Vertragsende<input name="contractEndDate" type="date" value="'+esc(sponsor.contract_end_date||'')+'" '+(sponsor.automatic_renewal?'disabled':'')+'></label><label class="wide permission-option"><input name="automaticRenewal" type="checkbox" '+(sponsor.automatic_renewal?'checked':'')+'> Verlängert sich automatisch (kein Enddatum)</label><label class="wide">Logo-Quelle<input name="sourceUrl" type="url" value="'+esc(sponsor.logo_source_url||'')+'"></label><label class="wide"><input name="active" type="checkbox" '+(sponsor.active?'checked':'')+'> Aktiv</label><label class="wide">Logo-Verarbeitung<select class="sponsorLogoMode"><option value="preserve" selected>Originalfarben und Hintergrund beibehalten</option><option value="auto">Neutralen Hintergrund automatisch entfernen</option></select><span class="small">Kräftige Markenfarben am Bildrand werden niemals automatisch entfernt.</span></label><label class="wide">Neues Original-Logo<input class="sponsorFile" type="file" accept="image/png,image/jpeg,image/webp"></label><div class="sponsorLocalPreview sponsor-preview hidden wide"><div class="crest-image"><div><img loading="lazy" decoding="async" class="localOriginal" alt="Original"><span>Original</span></div></div><div class="crest-image checkerboard"><div><img loading="lazy" decoding="async" class="localTransparent" alt="Einsatzvariante"><span>Einsatzvariante</span></div></div><div class="crest-image dark"><div><img loading="lazy" decoding="async" class="localWhite" alt="Variante für dunkle Flächen"><span>Dunkle Flächen</span></div></div></div><div class="small sponsorLocalMeta wide"></div><div class="crest-actions wide"><button type="submit" class="secondary">Daten speichern</button><button type="button" class="saveSponsorLogo">Logo speichern</button>'+repair+review+discard+'<button type="button" class="danger deleteSponsor">Partner löschen</button></div></form></article>'}
     function renderSponsors(){const query=document.querySelector('#sponsorSearch')?.value||'';const sponsors=(appData.sponsors||[]).filter(sponsor=>matchesSearch(query,[sponsor.name,sponsor.website_url,sponsor.instagram_handle,sponsor.logo_status,sponsorContractStatus(sponsor).label,sponsor.active?'aktiv':'passiv'])).sort((a,b)=>(a.sort_order??100)-(b.sort_order??100)||a.name.localeCompare(b.name,'de'));const attention=(appData.sponsors||[]).filter(sponsor=>sponsor.logo_status!=='approved').length;document.querySelector('#sponsorAttentionCount').textContent=attention?'('+attention+')':'';document.querySelector('#sponsorList').innerHTML=sponsors.length?sponsors.map(sponsorHtml).join(''):'<div class="empty">'+(query?'Keine Werbepartner passen zum Filter.':'Noch keine Werbepartner angelegt.')+'</div>';wireSponsorForms();renderAssignmentSponsorOptions()}
-    function wireSponsorForms(){document.querySelectorAll('.sponsorForm').forEach(form=>{const automatic=form.elements.automaticRenewal;const end=form.elements.contractEndDate;const syncContractEnd=()=>{end.disabled=automatic.checked;if(automatic.checked)end.value=''};automatic.onchange=syncContractEnd;syncContractEnd()});document.querySelectorAll('.sponsorFile').forEach(input=>input.onchange=async()=>{const form=input.closest('.sponsorForm');const file=input.files?.[0];if(!file)return;const meta=form.querySelector('.sponsorLocalMeta');meta.textContent='Logo wird freigestellt und weiß eingefärbt …';try{const prepared=await prepareSponsorLogo(file);preparedSponsors.set(form.dataset.id,prepared);form.querySelector('.localOriginal').src=prepared.originalDataUrl;form.querySelector('.localTransparent').src=prepared.transparentDataUrl;form.querySelector('.localWhite').src=prepared.whiteDataUrl;form.querySelector('.sponsorLocalPreview').classList.remove('hidden');meta.textContent='Drei Varianten vorbereitet. Bitte insbesondere feine Logoteile auf Transparenz prüfen.'}catch(error){preparedSponsors.delete(form.dataset.id);meta.textContent=error.message}});document.querySelectorAll('.sponsorForm').forEach(form=>form.onsubmit=async event=>{event.preventDefault();const data=formObject(form);const button=event.submitter||form.querySelector('button');await runBusy(button,{busyText:'Speichert …',pendingText:'Partnerdaten werden gespeichert …',successText:'Partnerdaten gespeichert.',errorText:'Partnerdaten konnten nicht gespeichert werden: '},async()=>{await api('POST',{action:'save_sponsor',sponsorId:form.dataset.id,...data,active:data.active==='on',automaticRenewal:data.automaticRenewal==='on'});await load();switchTab('admin');switchAdminSection('sponsors')})});document.querySelectorAll('.saveSponsorLogo').forEach(button=>button.onclick=async()=>{const form=button.closest('.sponsorForm');const prepared=preparedSponsors.get(form.dataset.id);if(!prepared){show('Bitte zuerst ein Logo auswählen.',true);return}await runBusy(button,{busyText:'Speichert …',pendingText:'Drei Logovarianten werden gespeichert …',successText:'Logo-Vorschlag gespeichert. Bitte prüfen und freigeben.',errorText:'Logo konnte nicht gespeichert werden: '},async()=>{await api('POST',{action:'save_sponsor_logo',sponsorId:form.dataset.id,...prepared});preparedSponsors.delete(form.dataset.id);await load();switchTab('admin');switchAdminSection('sponsors')})});document.querySelectorAll('.repairSponsorWhite').forEach(button=>button.onclick=async()=>{const sponsor=(appData.sponsors||[]).find(item=>item.id===button.dataset.id);if(!sponsor?.logo_transparent_url)return;await runBusy(button,{busyText:'Repariert …',pendingText:'Weiße Variante wird neu berechnet …',successText:'Weiße Variante repariert. Bitte prüfen und freigeben.',errorText:'Weiße Variante konnte nicht repariert werden: '},async()=>{const whiteDataUrl=await whiteLogoDataUrl(sponsor.logo_transparent_url,sponsor.processing_metadata||{});await api('POST',{action:'save_sponsor_white_logo',sponsorId:sponsor.id,whiteDataUrl});await load();switchTab('admin');switchAdminSection('sponsors')})});document.querySelectorAll('.approveSponsor,.rejectSponsor').forEach(button=>button.onclick=async()=>{const approve=button.classList.contains('approveSponsor');await api('POST',{action:approve?'approve_sponsor_logo':'reject_sponsor_logo',sponsorId:button.dataset.id});await load();switchTab('admin');switchAdminSection('sponsors')});document.querySelectorAll('.discardSponsor').forEach(button=>button.onclick=async()=>{if(!window.confirm('Alle hochgeladenen Logovarianten dieses Partners löschen?'))return;await api('POST',{action:'discard_sponsor_logo',sponsorId:button.dataset.id});await load();switchTab('admin');switchAdminSection('sponsors')});document.querySelectorAll('.deleteSponsor').forEach(button=>button.onclick=async()=>{if(!window.confirm('Werbepartner und alle Zuordnungen wirklich löschen?'))return;await api('POST',{action:'delete_sponsor',sponsorId:button.closest('.sponsorForm').dataset.id});await load();switchTab('admin');switchAdminSection('sponsors')})}
+    async function refreshSponsorLogoPreview(form){
+      const input=form.querySelector('.sponsorFile');const file=input.files?.[0];if(!file)return;
+      const mode=form.querySelector('.sponsorLogoMode').value;const meta=form.querySelector('.sponsorLocalMeta');const save=form.querySelector('.saveSponsorLogo');
+      meta.textContent=mode==='preserve'?'Original wird unverändert für alle Einsatzflächen vorbereitet …':'Neutraler Hintergrund wird geprüft …';save.disabled=true;
+      try{
+        const prepared=await prepareSponsorLogo(file,mode);const info=prepared.processing;
+        form.querySelector('.localOriginal').src=prepared.originalDataUrl;form.querySelector('.localTransparent').src=prepared.transparentDataUrl;form.querySelector('.localWhite').src=prepared.whiteDataUrl;form.querySelector('.sponsorLocalPreview').classList.remove('hidden');
+        if(info.safetyBlocked){preparedSponsors.delete(form.dataset.id);const percentage=Math.round(Number(info.candidateRemovedRatio||0)*100);meta.textContent=info.safetyReason==='colored-border'?'Automatik gestoppt: Am Bildrand liegt eine kräftige Markenfarbe. Bitte „Originalfarben und Hintergrund beibehalten“ wählen oder eine bereits transparente PNG-Datei hochladen.':'Automatik gestoppt: Sie würde '+percentage+' % des Bildes entfernen. Bitte Original beibehalten oder eine bereits transparente PNG-Datei hochladen.';return}
+        preparedSponsors.set(form.dataset.id,prepared);save.disabled=false;
+        if(info.method==='preserve-original')meta.textContent='Originalfarben und Hintergrund bleiben vollständig erhalten. Für dunkle Flächen wird ebenfalls die farbige Originalvariante verwendet.';
+        else if(info.method==='source-alpha')meta.textContent='Vorhandene Transparenz wurde unverändert übernommen; die Variante für dunkle Flächen wurde getrennt erzeugt.';
+        else meta.textContent=Math.round(Number(info.removedRatio||0)*100)+' % neutraler, randverbundener Hintergrund entfernt. Bitte die Einsatzvarianten prüfen.';
+      }catch(error){preparedSponsors.delete(form.dataset.id);save.disabled=true;meta.textContent=error.message}
+    }
+    function wireSponsorForms(){
+      document.querySelectorAll('.sponsorForm').forEach(form=>{const automatic=form.elements.automaticRenewal;const end=form.elements.contractEndDate;const syncContractEnd=()=>{end.disabled=automatic.checked;if(automatic.checked)end.value=''};automatic.onchange=syncContractEnd;syncContractEnd();const input=form.querySelector('.sponsorFile');const mode=form.querySelector('.sponsorLogoMode');input.onchange=()=>refreshSponsorLogoPreview(form);mode.onchange=()=>refreshSponsorLogoPreview(form)});
+      document.querySelectorAll('.sponsorForm').forEach(form=>form.onsubmit=async event=>{event.preventDefault();const data=formObject(form);const button=event.submitter||form.querySelector('button');await runBusy(button,{busyText:'Speichert …',pendingText:'Partnerdaten werden gespeichert …',successText:'Partnerdaten gespeichert.',errorText:'Partnerdaten konnten nicht gespeichert werden: '},async()=>{await api('POST',{action:'save_sponsor',sponsorId:form.dataset.id,...data,active:data.active==='on',automaticRenewal:data.automaticRenewal==='on'});await load();switchTab('admin');switchAdminSection('sponsors')})});
+      document.querySelectorAll('.saveSponsorLogo').forEach(button=>button.onclick=async()=>{const form=button.closest('.sponsorForm');const prepared=preparedSponsors.get(form.dataset.id);if(!prepared||prepared.processing.safetyBlocked){show('Bitte zuerst eine sichere Logo-Variante vorbereiten.',true);return}await runBusy(button,{busyText:'Speichert …',pendingText:'Drei Logovarianten werden gespeichert …',successText:'Logo-Vorschlag gespeichert. Bitte prüfen und freigeben.',errorText:'Logo konnte nicht gespeichert werden: '},async()=>{await api('POST',{action:'save_sponsor_logo',sponsorId:form.dataset.id,...prepared});preparedSponsors.delete(form.dataset.id);await load();switchTab('admin');switchAdminSection('sponsors')})});
+      document.querySelectorAll('.repairSponsorWhite').forEach(button=>button.onclick=async()=>{const sponsor=(appData.sponsors||[]).find(item=>item.id===button.dataset.id);if(!sponsor?.logo_transparent_url)return;await runBusy(button,{busyText:'Repariert …',pendingText:'Weiße Variante wird neu berechnet …',successText:'Weiße Variante repariert. Bitte prüfen und freigeben.',errorText:'Weiße Variante konnte nicht repariert werden: '},async()=>{const whiteDataUrl=await whiteLogoDataUrl(sponsor.logo_transparent_url,sponsor.processing_metadata||{});await api('POST',{action:'save_sponsor_white_logo',sponsorId:sponsor.id,whiteDataUrl});await load();switchTab('admin');switchAdminSection('sponsors')})});
+      document.querySelectorAll('.approveSponsor,.rejectSponsor').forEach(button=>button.onclick=async()=>{const approve=button.classList.contains('approveSponsor');await api('POST',{action:approve?'approve_sponsor_logo':'reject_sponsor_logo',sponsorId:button.dataset.id});await load();switchTab('admin');switchAdminSection('sponsors')});
+      document.querySelectorAll('.discardSponsor').forEach(button=>button.onclick=async()=>{if(!window.confirm('Alle hochgeladenen Logovarianten dieses Partners löschen?'))return;await api('POST',{action:'discard_sponsor_logo',sponsorId:button.dataset.id});await load();switchTab('admin');switchAdminSection('sponsors')});
+      document.querySelectorAll('.deleteSponsor').forEach(button=>button.onclick=async()=>{if(!window.confirm('Werbepartner und alle Zuordnungen wirklich löschen?'))return;await api('POST',{action:'delete_sponsor',sponsorId:button.closest('.sponsorForm').dataset.id});await load();switchTab('admin');switchAdminSection('sponsors')})
+    }
     const sponsorContextLabels={announcement:'Ankündigung',lineup:'Aufstellung',result:'Ergebnis',report:'Spielbericht',birthday:'Geburtstag',post:'Beitrag',story:'Freie Story'};
     function sponsorTypeOptions(currentId=''){return '<option value="">Noch nicht festgelegt</option>'+(appData.sponsorTypes||[]).filter(item=>item.active||item.id===currentId).sort((a,b)=>(a.sort_order??100)-(b.sort_order??100)||a.label.localeCompare(b.label,'de')).map(item=>'<option value="'+esc(item.id)+'" '+(item.id===currentId?'selected':'')+'>'+esc(item.label)+(item.active?'':' · inaktiv')+'</option>').join('')}
     function sponsorTypeHtml(item){return '<form class="sponsorTypeForm sponsor-type-card" data-id="'+esc(item.id)+'"><div class="fields"><label>Bezeichnung<input name="label" maxlength="80" value="'+esc(item.label)+'" required></label><label>Sortierung<input name="sortOrder" type="number" min="0" max="32767" value="'+esc(item.sort_order??100)+'" required></label><label class="wide">Erklärung<textarea name="description" rows="3" maxlength="500">'+esc(item.description||'')+'</textarea></label><label class="wide"><input name="active" type="checkbox" '+(item.active?'checked':'')+'> Aktiv und für neue Zuordnungen auswählbar</label><div class="wide"><button type="submit" class="secondary">Sponsorart speichern</button></div></div></form>'}

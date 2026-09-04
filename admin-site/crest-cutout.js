@@ -58,6 +58,17 @@
     };
   }
 
+  function colorChroma(color) {
+    return Math.max(color.red, color.green, color.blue) - Math.min(color.red, color.green, color.blue);
+  }
+
+  function hasSourceTransparency(data) {
+    for (let offset = 3; offset < data.length; offset += 4) {
+      if (data[offset] < 255) return true;
+    }
+    return false;
+  }
+
   function removeEdgeConnectedBackground(image, options = {}) {
     const { width, height } = image;
     if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1) {
@@ -69,7 +80,7 @@
     const border = dominantBorderColor(width, height, data);
     const totalPixels = width * height;
 
-    if (border.transparentRatio >= 0.15) {
+    if (hasSourceTransparency(data)) {
       return {
         width,
         height,
@@ -82,6 +93,37 @@
           transparentBorderRatio: border.transparentRatio,
           removedRatio: 0,
           backgroundColor: null,
+          safetyBlocked: false,
+          safetyReason: null,
+        },
+      };
+    }
+
+    const borderChroma = colorChroma(border.color);
+    const maximumBorderChroma = Number.isFinite(options.maximumBorderChroma)
+      ? Math.max(0, Number(options.maximumBorderChroma))
+      : 40;
+    if (options.requireNeutralBackground === true && borderChroma > maximumBorderChroma) {
+      return {
+        width,
+        height,
+        data,
+        metadata: {
+          method: 'colored-border-preserved',
+          confidence: 0,
+          reviewRecommended: true,
+          borderDominance: border.dominance,
+          transparentBorderRatio: border.transparentRatio,
+          removedRatio: 0,
+          candidateRemovedRatio: null,
+          backgroundColor: {
+            red: Math.round(border.color.red),
+            green: Math.round(border.color.green),
+            blue: Math.round(border.color.blue),
+          },
+          borderChroma: Math.round(borderChroma),
+          safetyBlocked: true,
+          safetyReason: 'colored-border',
         },
       };
     }
@@ -128,6 +170,34 @@
       data[offset + 3] = 0;
     }
     const removedRatio = removed / totalPixels;
+    const maximumRemovedRatio = Number.isFinite(options.maximumRemovedRatio)
+      ? Math.max(0, Math.min(1, Number(options.maximumRemovedRatio)))
+      : null;
+    if (maximumRemovedRatio !== null && removedRatio > maximumRemovedRatio) {
+      return {
+        width,
+        height,
+        data: new Uint8ClampedArray(source),
+        metadata: {
+          method: 'large-removal-preserved',
+          confidence: 0,
+          reviewRecommended: true,
+          borderDominance: border.dominance,
+          transparentBorderRatio: border.transparentRatio,
+          removedRatio: 0,
+          candidateRemovedRatio: removedRatio,
+          backgroundColor: {
+            red: Math.round(border.color.red),
+            green: Math.round(border.color.green),
+            blue: Math.round(border.color.blue),
+          },
+          borderChroma: Math.round(borderChroma),
+          threshold,
+          safetyBlocked: true,
+          safetyReason: 'large-removal',
+        },
+      };
+    }
     const foregroundRatio = 1 - removedRatio;
     const geometryPlausible = foregroundRatio >= 0.02 && foregroundRatio <= 0.9;
     const confidence = Math.max(0, Math.min(1, border.dominance * (geometryPlausible ? 1 : 0.45)));
@@ -143,12 +213,16 @@
         borderDominance: border.dominance,
         transparentBorderRatio: border.transparentRatio,
         removedRatio,
+        candidateRemovedRatio: removedRatio,
         backgroundColor: {
           red: Math.round(border.color.red),
           green: Math.round(border.color.green),
           blue: Math.round(border.color.blue),
         },
         threshold,
+        borderChroma: Math.round(borderChroma),
+        safetyBlocked: false,
+        safetyReason: null,
       },
     };
   }
