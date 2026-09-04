@@ -2094,7 +2094,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
           .select('id, audience_group')
           .in('id', websiteAudienceIds);
         if (websiteAudienceError) throw websiteAudienceError;
-        const allowedWebsiteGroups = new Set(['club', 'all_departments', 'football_department', 'youth_department', 'mens_team', 'womens_team', 'youth_team']);
+        const allowedWebsiteGroups = new Set(['club', 'all_departments', 'football_department', 'youth_department', 'department', 'mens_team', 'womens_team', 'youth_team']);
         if (
           (websiteAudiences ?? []).length !== websiteAudienceIds.length
           || (websiteAudiences ?? []).some((audience: any) => !allowedWebsiteGroups.has(String(audience.audience_group ?? '')))

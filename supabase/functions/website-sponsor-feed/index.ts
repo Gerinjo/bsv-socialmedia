@@ -1,6 +1,6 @@
 import { withSupabase } from 'npm:@supabase/server@1.4.1';
 import { runtimeConfig } from '../_shared/config.ts';
-import { websiteTeamAssignments } from '../../../src/sponsor-assignments.mjs';
+import { websiteAudienceAssignments } from '../../../src/sponsor-assignments.mjs';
 
 const bucket = 'social-story-previews';
 
@@ -36,7 +36,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       .order('name', { ascending: true }),
     context.supabaseAdmin
       .from('social_post_audiences')
-      .select('id, slug, audience_group'),
+      .select('id, slug, label, audience_group'),
     context.supabaseAdmin
       .from('social_sponsor_website_assignments')
       .select('sponsor_id, audience_id, sponsor_type_id, description'),
@@ -58,7 +58,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
     if (signedError || !signed?.signedUrl) {
       throw new Error(`Logo für ${partner.slug} konnte nicht bereitgestellt werden.`);
     }
-    const teamAssignments = websiteTeamAssignments({
+    const audienceAssignments = websiteAudienceAssignments({
       websiteAssignments: websiteAssignments ?? [],
       audiences: audiences ?? [],
       sponsorId: partner.id,
@@ -66,11 +66,20 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       const sponsorType = assignment.sponsorTypeId ? sponsorTypeById.get(assignment.sponsorTypeId) : null;
       return {
         audienceSlug: assignment.audienceSlug,
-        sourceAudienceSlug: assignment.sourceAudienceSlug,
+        audienceLabel: assignment.audienceLabel,
+        audienceGroup: assignment.audienceGroup,
         sponsorType: sponsorType ? { slug: sponsorType.slug, label: sponsorType.label } : null,
         description: assignment.description,
       };
     });
+    const teamAssignments = audienceAssignments
+      .filter((assignment) => ['mens_team', 'womens_team', 'youth_team'].includes(assignment.audienceGroup))
+      .map((assignment) => ({
+        audienceSlug: assignment.audienceSlug,
+        sourceAudienceSlug: assignment.audienceSlug,
+        sponsorType: assignment.sponsorType,
+        description: assignment.description,
+      }));
     return {
       id: partner.id,
       slug: partner.slug,
@@ -80,6 +89,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       logoUrl: signed.signedUrl,
       teamAudienceSlugs: teamAssignments.map((assignment) => assignment.audienceSlug),
       teamAssignments,
+      audienceAssignments,
       sortOrder: partner.sort_order,
       updatedAt: partner.updated_at,
     };

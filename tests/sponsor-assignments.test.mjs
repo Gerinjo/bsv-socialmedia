@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { audienceHierarchy, selectAssignedSponsors, sponsorLogoReference, sponsorMentionLine, websiteTeamAssignments, websiteTeamAudienceSlugs } from '../src/sponsor-assignments.mjs';
+import { audienceHierarchy, selectAssignedSponsors, sponsorLogoReference, sponsorMentionLine, websiteAudienceAssignments, websiteTeamAssignments, websiteTeamAudienceSlugs } from '../src/sponsor-assignments.mjs';
 import { sponsorLogoStrip } from '../src/story-renderer.mjs';
 
 test('teams inherit sponsor slots while keeping their own overrides', () => {
@@ -24,7 +24,7 @@ test('teams inherit sponsor slots while keeping their own overrides', () => {
   assert.equal(sponsorMentionLine(selected), 'Partner: @team · @club');
 });
 
-test('website assignments inherit from club and departments independently of social media contexts', () => {
+test('website team assignments are direct and do not inherit from departments', () => {
   const audiences = [
     { id: 'club', slug: 'gesamtverein', audience_group: 'club' },
     { id: 'football', slug: 'fussballabteilung', audience_group: 'football_department' },
@@ -41,11 +41,11 @@ test('website assignments inherit from club and departments independently of soc
 
   assert.deepEqual(
     websiteTeamAudienceSlugs({ websiteAssignments, audiences, sponsorId: 'club-partner' }),
-    ['frauen-1', 'herren-1', 'u17-junioren'],
+    [],
   );
   assert.deepEqual(
     websiteTeamAudienceSlugs({ websiteAssignments, audiences, sponsorId: 'youth-partner' }),
-    ['u17-junioren'],
+    [],
   );
   assert.deepEqual(
     websiteTeamAudienceSlugs({ websiteAssignments, audiences, sponsorId: 'team-partner' }),
@@ -53,7 +53,7 @@ test('website assignments inherit from club and departments independently of soc
   );
 });
 
-test('direct website assignments override inherited sponsor type and description', () => {
+test('website assignments retain their exact audience, sponsor type and description', () => {
   const audiences = [
     { id: 'club', slug: 'gesamtverein', audience_group: 'club' },
     { id: 'youth', slug: 'jugendabteilung', audience_group: 'youth_department' },
@@ -67,11 +67,16 @@ test('direct website assignments override inherited sponsor type and description
   ];
 
   assert.deepEqual(
-    websiteTeamAssignments({ websiteAssignments, audiences, sponsorId: 'partner' }),
+    websiteAudienceAssignments({ websiteAssignments, audiences, sponsorId: 'partner' }),
     [
-      { audienceSlug: 'u13-d1-junioren', sourceAudienceSlug: 'jugendabteilung', sponsorTypeId: 'team', description: 'Unterstützt die Jugendabteilung.' },
-      { audienceSlug: 'u15-c1-junioren', sourceAudienceSlug: 'u15-c1-junioren', sponsorTypeId: 'kit', description: 'Trikotsponsor der C1-Junioren.' },
+      { audienceSlug: 'gesamtverein', audienceLabel: 'gesamtverein', audienceGroup: 'club', sponsorTypeId: 'boards', description: 'Bandenwerbung am Vereinsgelände.' },
+      { audienceSlug: 'jugendabteilung', audienceLabel: 'jugendabteilung', audienceGroup: 'youth_department', sponsorTypeId: 'team', description: 'Unterstützt die Jugendabteilung.' },
+      { audienceSlug: 'u15-c1-junioren', audienceLabel: 'u15-c1-junioren', audienceGroup: 'youth_team', sponsorTypeId: 'kit', description: 'Trikotsponsor der C1-Junioren.' },
     ],
+  );
+  assert.deepEqual(
+    websiteTeamAssignments({ websiteAssignments, audiences, sponsorId: 'partner' }),
+    [{ audienceSlug: 'u15-c1-junioren', sourceAudienceSlug: 'u15-c1-junioren', sponsorTypeId: 'kit', description: 'Trikotsponsor der C1-Junioren.' }],
   );
 });
 
