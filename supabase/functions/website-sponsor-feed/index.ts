@@ -42,7 +42,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       .select('sponsor_id, audience_id, sponsor_type_id, description'),
     context.supabaseAdmin
       .from('social_sponsor_types')
-      .select('id, slug, label'),
+      .select('id, slug, label, sort_order, display_weight'),
   ]);
 
   if (error || audiencesError || websiteAssignmentsError || sponsorTypesError) {
@@ -68,7 +68,12 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
         audienceSlug: assignment.audienceSlug,
         audienceLabel: assignment.audienceLabel,
         audienceGroup: assignment.audienceGroup,
-        sponsorType: sponsorType ? { slug: sponsorType.slug, label: sponsorType.label } : null,
+        sponsorType: sponsorType ? {
+          slug: sponsorType.slug,
+          label: sponsorType.label,
+          sortOrder: sponsorType.sort_order,
+          displayWeight: sponsorType.display_weight,
+        } : null,
         description: assignment.description,
       };
     });

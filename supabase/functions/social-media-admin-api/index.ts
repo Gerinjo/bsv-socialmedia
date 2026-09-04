@@ -718,7 +718,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .order('name', { ascending: true }),
       context.supabaseAdmin
         .from('social_sponsor_types')
-        .select('id, slug, label, description, active, sort_order, created_at, updated_at')
+        .select('id, slug, label, description, active, sort_order, display_weight, created_at, updated_at')
         .order('sort_order', { ascending: true })
         .order('label', { ascending: true }),
       context.supabaseAdmin
@@ -1762,14 +1762,17 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       const label = required(body.label, 'Bezeichnung');
       const description = String(body.description ?? '').trim();
       const sortOrder = Number(body.sortOrder ?? 100);
+      const displayWeight = Number(body.displayWeight ?? 1);
       if (label.length > 80) throw new Error('Die Bezeichnung darf höchstens 80 Zeichen lang sein.');
       if (description.length > 500) throw new Error('Die Erklärung darf höchstens 500 Zeichen lang sein.');
       if (!Number.isInteger(sortOrder) || sortOrder < 0 || sortOrder > 32767) throw new Error('Die Sortierung ist ungültig.');
+      if (!Number.isInteger(displayWeight) || displayWeight < 1 || displayWeight > 3) throw new Error('Die Gewichtung ist ungültig.');
       const payload = {
         label,
         description,
         active: body.active !== false,
         sort_order: sortOrder,
+        display_weight: displayWeight,
       };
       if (sponsorTypeId) {
         const { data, error } = await context.supabaseAdmin
@@ -1890,6 +1893,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         threshold: Number(processing.threshold) || null,
         width: Number(processing.width) || null,
         height: Number(processing.height) || null,
+        sourceFormat: String(processing.sourceFormat ?? 'raster') === 'svg' ? 'svg' : 'raster',
         safetyBlocked: false,
         safetyReason: null,
         whiteVariantMode: String(processing.whiteVariantMode ?? 'monochrome').slice(0, 40),
