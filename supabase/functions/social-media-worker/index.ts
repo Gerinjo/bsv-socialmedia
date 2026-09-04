@@ -205,7 +205,7 @@ type SponsorConfig = { sponsors: any[]; assignments: any[]; audiences: any[] };
 
 async function sponsorConfig(admin: any): Promise<SponsorConfig> {
   const [{ data: sponsors, error: sponsorError }, { data: assignments, error: assignmentError }, { data: audiences, error: audienceError }] = await Promise.all([
-    admin.from('social_sponsors').select('id, name, instagram_handle, logo_status, logo_transparent_path, logo_white_path, active').eq('active', true),
+    admin.from('social_sponsors').select('id, name, instagram_handle, logo_status, logo_transparent_path, logo_white_path, active').eq('active', true).or(`contract_end_date.is.null,contract_end_date.gte.${new Date().toISOString().slice(0, 10)}`),
     admin.from('social_sponsor_assignments').select('sponsor_id, audience_id, context, slot'),
     admin.from('social_post_audiences').select('id, slug, audience_group').eq('active', true),
   ]);

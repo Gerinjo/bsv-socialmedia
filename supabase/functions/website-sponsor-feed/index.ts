@@ -17,6 +17,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
   if (request.method !== 'GET') {
     return Response.json({ error: 'method_not_allowed' }, { status: 405 });
   }
+  const today = new Date().toISOString().slice(0, 10);
 
   const [
     { data, error },
@@ -28,6 +29,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       .from('social_sponsors')
       .select('id, slug, name, website_url, instagram_handle, logo_transparent_path, sort_order, updated_at')
       .eq('active', true)
+      .or(`contract_end_date.is.null,contract_end_date.gte.${today}`)
       .eq('logo_status', 'approved')
       .not('logo_transparent_path', 'is', null)
       .order('sort_order', { ascending: true })

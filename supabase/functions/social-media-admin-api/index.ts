@@ -20,6 +20,22 @@ const homeVenues = new Set(['Hauptplatz', 'Nebenplatz', 'Kunstrasenplatz 1', 'Ku
 const crestStatuses = new Set(['missing', 'needs_review', 'approved', 'rejected']);
 const sponsorStatuses = new Set(['missing', 'needs_review', 'approved', 'rejected']);
 const sponsorContexts = new Set(['announcement', 'lineup', 'result', 'report', 'birthday', 'post', 'story']);
+const suiteAreas = ['social_media', 'sponsoring', 'administration', 'user_management'] as const;
+type SuiteArea = typeof suiteAreas[number];
+const actionAreas: Record<string, SuiteArea> = {
+  test_instagram_connection: 'administration', save_cleanup_settings: 'administration', purge_historical_data: 'administration',
+  save_team_settings: 'administration', save_team_color_group: 'administration', save_club_crest: 'administration',
+  discard_club_crest: 'administration', approve_club_crest: 'administration', reject_club_crest: 'administration',
+  set_team_member_access: 'user_management', update_team_member_permissions: 'user_management', delete_team_member: 'user_management', create_team_member: 'user_management',
+  save_game: 'social_media', save_lineup: 'social_media', set_game_status: 'social_media', save_result: 'social_media',
+  upload_report_image: 'social_media', approve_result: 'social_media', set_record_archived: 'social_media',
+  save_independent_story: 'social_media', upload_independent_story_image: 'social_media', preview_independent_story: 'social_media',
+  schedule_independent_story: 'social_media', delete_independent_story: 'social_media', save_post: 'social_media',
+  upload_post_image: 'social_media', approve_post: 'social_media', delete_post: 'social_media', save_birthday: 'social_media', retry_job: 'social_media',
+  save_sponsor_type: 'sponsoring', save_sponsor: 'sponsoring', save_sponsor_logo: 'sponsoring',
+  save_sponsor_white_logo: 'sponsoring', approve_sponsor_logo: 'sponsoring', reject_sponsor_logo: 'sponsoring',
+  discard_sponsor_logo: 'sponsoring', save_sponsor_assignments: 'sponsoring', delete_sponsor: 'sponsoring',
+};
 const stoppedGameStatuses = new Set(['cancelled', 'aborted']);
 const publishingModes = new Set(['manual', 'automatic']);
 const teamColorSources = new Set(['global', 'group', 'custom']);
@@ -109,6 +125,15 @@ function validHttpUrl(value: unknown): string | null {
   const url = new URL(input);
   if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw new Error('Der Quellenlink ist ungültig.');
   return url.toString();
+}
+
+function optionalDate(value: unknown, label: string): string | null {
+  const input = String(value ?? '').trim();
+  if (!input) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input) || Number.isNaN(new Date(`${input}T00:00:00Z`).getTime())) {
+    throw new Error(`${label} ist ungültig.`);
+  }
+  return input;
 }
 
 function teamColorScheme(value: unknown): Record<string, string> {
@@ -594,7 +619,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
 
   const { data: membership, error: membershipError } = await context.supabaseAdmin
     .from('social_admins')
-    .select('user_id, email, role, is_active')
+    .select('user_id, email, role, is_active, access_areas')
     .eq('user_id', userId)
     .maybeSingle();
   if (membershipError) return json({ error: membershipError.message }, 500);
@@ -606,6 +631,13 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
   if (!allowedRoles.has(normalizedRole)) {
     return json({ error: 'not_authorized', userId, email, reason: 'role_missing', role: membership.role }, 403);
   }
+  const accessAreas: SuiteArea[] = normalizedRole === 'admin'
+    ? [...suiteAreas]
+    : [...new Set((Array.isArray(membership.access_areas) ? membership.access_areas : ['social_media'])
+      .map((area: unknown) => String(area))
+      .filter((area: string): area is SuiteArea => suiteAreas.includes(area as SuiteArea)))];
+  const hasArea = (area: SuiteArea) => normalizedRole === 'admin' || accessAreas.includes(area);
+  const hasAnyArea = (...areas: SuiteArea[]) => areas.some(hasArea);
 
   if (request.method === 'GET') {
     await ensureSeedClubAssets(context.supabaseAdmin);
@@ -655,7 +687,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .order('name', { ascending: true }),
       context.supabaseAdmin
         .from('social_admins')
-        .select('user_id, email, role, is_active, created_at')
+        .select('user_id, email, role, is_active, access_areas, created_at')
         .order('email', { ascending: true }),
       context.supabaseAdmin
         .from('social_post_audiences')
@@ -718,33 +750,33 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       story: preparedIndependentStories.map((record: any) => withHistoryState(record, 'story', retentionDays)),
     };
     return json({
-      user: { userId, email, role: String(membership.role ?? '').trim() || 'sm-team' },
-      members: members ?? [],
+      user: { userId, email, role: String(membership.role ?? '').trim() || 'sm-team', accessAreas },
+      members: hasArea('user_management') ? members ?? [] : [],
       testMode: runtimeConfig.testMode,
-      venues: [...homeVenues],
-      teams: (teamSettings ?? []).filter((team: any) => team.active),
-      teamSettings: teamSettings ?? [],
-      teamColorGroups: teamColorGroups ?? [],
-      people: people ?? [],
-      postAudiences: postAudiences ?? [],
-      websiteAudiences: websiteAudiences ?? [],
-      posts: historyRecords.post,
-      storyCategories: storyCategories ?? [],
-      independentStories: historyRecords.story,
-      sponsors: await freshSponsorUrls(context.supabaseAdmin, sponsors ?? []),
-      sponsorTypes: sponsorTypes ?? [],
-      sponsorAssignments: sponsorAssignments ?? [],
-      sponsorWebsiteAssignments: sponsorWebsiteAssignments ?? [],
-      clubs: await freshClubUrls(context.supabaseAdmin, clubs ?? []),
-      games: historyRecords.game,
-      birthdays: await freshPreviewUrls(context.supabaseAdmin, birthdays ?? []),
-      cleanupSettings: { retentionDays, updatedAt: cleanupSettings?.updated_at ?? null },
-      cleanupSummary: cleanupSummary(historyRecords, retentionDays),
-      instagramConfiguration: {
+      venues: hasArea('social_media') ? [...homeVenues] : [],
+      teams: hasAnyArea('social_media', 'administration') ? (teamSettings ?? []).filter((team: any) => team.active) : [],
+      teamSettings: hasAnyArea('social_media', 'administration') ? teamSettings ?? [] : [],
+      teamColorGroups: hasArea('administration') ? teamColorGroups ?? [] : [],
+      people: hasArea('social_media') ? people ?? [] : [],
+      postAudiences: hasAnyArea('social_media', 'sponsoring') ? postAudiences ?? [] : [],
+      websiteAudiences: hasArea('sponsoring') ? websiteAudiences ?? [] : [],
+      posts: hasArea('social_media') ? historyRecords.post : [],
+      storyCategories: hasArea('social_media') ? storyCategories ?? [] : [],
+      independentStories: hasArea('social_media') ? historyRecords.story : [],
+      sponsors: hasAnyArea('social_media', 'sponsoring') ? await freshSponsorUrls(context.supabaseAdmin, sponsors ?? []) : [],
+      sponsorTypes: hasAnyArea('social_media', 'sponsoring') ? sponsorTypes ?? [] : [],
+      sponsorAssignments: hasAnyArea('social_media', 'sponsoring') ? sponsorAssignments ?? [] : [],
+      sponsorWebsiteAssignments: hasArea('sponsoring') ? sponsorWebsiteAssignments ?? [] : [],
+      clubs: hasAnyArea('social_media', 'administration') ? await freshClubUrls(context.supabaseAdmin, clubs ?? []) : [],
+      games: hasArea('social_media') ? historyRecords.game : [],
+      birthdays: hasArea('social_media') ? await freshPreviewUrls(context.supabaseAdmin, birthdays ?? []) : [],
+      cleanupSettings: hasArea('administration') ? { retentionDays, updatedAt: cleanupSettings?.updated_at ?? null } : null,
+      cleanupSummary: hasArea('administration') ? cleanupSummary(historyRecords, retentionDays) : null,
+      instagramConfiguration: hasArea('administration') ? {
         accountIdConfigured: Boolean(runtimeConfig.instagramAccountId),
         accessTokenConfigured: Boolean(runtimeConfig.instagramAccessToken),
         graphApiVersion: runtimeConfig.metaGraphApiVersion,
-      },
+      } : null,
     });
   }
 
@@ -753,9 +785,10 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
   try {
     const body = await request.json() as Record<string, any>;
     const action = required(body.action, 'Aktion');
+    const requiredArea = actionAreas[action];
+    if (requiredArea && !hasArea(requiredArea)) return json({ error: 'area_forbidden', area: requiredArea }, 403);
 
     if (action === 'test_instagram_connection') {
-      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
       if (!runtimeConfig.instagramAccountId || !runtimeConfig.instagramAccessToken) {
         throw new Error('Instagram Account ID und Access Token sind in Supabase noch nicht vollständig konfiguriert.');
       }
@@ -778,7 +811,6 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     }
 
     if (action === 'save_cleanup_settings') {
-      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
       const retentionDays = normalizeRetentionDays(body.retentionDays, -1);
       if (retentionDays < 1) throw new Error('Die Aufbewahrungsdauer muss zwischen 1 und 3.650 Tagen liegen.');
       const { data, error } = await context.supabaseAdmin.from('social_cleanup_settings').upsert({
@@ -819,7 +851,6 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     }
 
     if (action === 'purge_historical_data') {
-      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
       if (body.confirm !== 'DELETE_ELIGIBLE_HISTORY') throw new Error('Die endgültige Löschung wurde nicht bestätigt.');
       const [settingsResult, gamesResult, postsResult, storiesResult] = await Promise.all([
         context.supabaseAdmin.from('social_cleanup_settings').select('retention_days').eq('id', 1).maybeSingle(),
@@ -872,7 +903,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       const isActive = body.isActive === true;
       const { data: target, error: targetError } = await context.supabaseAdmin
         .from('social_admins')
-        .select('user_id, email, role, is_active')
+        .select('user_id, email, role, is_active, access_areas')
         .eq('user_id', targetUserId)
         .maybeSingle();
       if (targetError) throw targetError;
@@ -891,7 +922,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .from('social_admins')
         .update({ is_active: isActive })
         .eq('user_id', targetUserId)
-        .select('user_id, email, role, is_active, created_at')
+        .select('user_id, email, role, is_active, access_areas, created_at')
         .single();
       if (updateError) throw updateError;
       const { error: authError } = await context.supabaseAdmin.auth.admin.updateUserById(targetUserId, {
@@ -900,6 +931,51 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       if (authError) {
         await context.supabaseAdmin.from('social_admins').update({ is_active: target.is_active }).eq('user_id', targetUserId);
         throw new Error(`Der Auth-Zugang konnte nicht ${isActive ? 'entsperrt' : 'gesperrt'} werden: ${authError.message}`);
+      }
+      return json({ ok: true, member: updated });
+    }
+
+    if (action === 'update_team_member_permissions') {
+      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
+      const targetUserId = required(body.userId, 'Benutzer-ID');
+      if (targetUserId === userId) throw new Error('Die eigene Super-Admin-Rolle kann hier nicht geändert werden.');
+      const role = String(body.role ?? 'sm-team').trim();
+      if (!['admin', 'sm-team'].includes(role)) throw new Error('Die Rolle ist ungültig.');
+      const requestedAreas = Array.isArray(body.accessAreas) ? body.accessAreas.map((area: unknown) => String(area)) : [];
+      const nextAccessAreas: SuiteArea[] = role === 'admin'
+        ? [...suiteAreas]
+        : [...new Set(requestedAreas.filter((area: string): area is SuiteArea => suiteAreas.includes(area as SuiteArea) && area !== 'user_management'))];
+      if (!nextAccessAreas.length) throw new Error('Für einen Benutzer muss mindestens ein Bereich freigegeben sein.');
+      const { data: target, error: targetError } = await context.supabaseAdmin
+        .from('social_admins')
+        .select('user_id, email, role, is_active, access_areas')
+        .eq('user_id', targetUserId)
+        .maybeSingle();
+      if (targetError) throw targetError;
+      if (!target) throw new Error('Das Teammitglied wurde nicht gefunden.');
+      if (target.role === 'admin' && role !== 'admin' && target.is_active) {
+        const { count, error: countError } = await context.supabaseAdmin
+          .from('social_admins')
+          .select('user_id', { count: 'exact', head: true })
+          .eq('role', 'admin')
+          .eq('is_active', true)
+          .neq('user_id', targetUserId);
+        if (countError) throw countError;
+        if (!count) throw new Error('Der letzte aktive Super-Admin kann nicht herabgestuft werden.');
+      }
+      const { data: updated, error: updateError } = await context.supabaseAdmin
+        .from('social_admins')
+        .update({ role, access_areas: nextAccessAreas })
+        .eq('user_id', targetUserId)
+        .select('user_id, email, role, is_active, access_areas, created_at')
+        .single();
+      if (updateError) throw updateError;
+      const { error: authError } = await context.supabaseAdmin.auth.admin.updateUserById(targetUserId, {
+        app_metadata: { social_role: role, social_access_areas: nextAccessAreas },
+      });
+      if (authError) {
+        await context.supabaseAdmin.from('social_admins').update({ role: target.role, access_areas: target.access_areas }).eq('user_id', targetUserId);
+        throw new Error(`Die Auth-Rolle konnte nicht aktualisiert werden: ${authError.message}`);
       }
       return json({ ok: true, member: updated });
     }
@@ -942,15 +1018,20 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       const email = String(body.email ?? '').trim().toLowerCase();
       const password = String(body.password ?? '');
       const role = String(body.role ?? 'sm-team').trim();
+      const requestedAreas = Array.isArray(body.accessAreas) ? body.accessAreas.map((area: unknown) => String(area)) : [];
+      const nextAccessAreas: SuiteArea[] = role === 'admin'
+        ? [...suiteAreas]
+        : [...new Set(requestedAreas.filter((area: string): area is SuiteArea => suiteAreas.includes(area as SuiteArea) && area !== 'user_management'))];
       const isActive = body.is_active !== false;
       if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Bitte eine gültige E-Mail-Adresse eingeben.');
       if (password.length < 10) throw new Error('Das Passwort muss mindestens 10 Zeichen lang sein.');
       if (!['admin', 'sm-team'].includes(role)) throw new Error('Die Rolle ist ungültig.');
+      if (!nextAccessAreas.length) throw new Error('Für einen Benutzer muss mindestens ein Bereich freigegeben sein.');
       const { data: createdUser, error: createUserError } = await context.supabaseAdmin.auth.admin.createUser({
         email,
         password,
         email_confirm: true,
-        app_metadata: { social_role: role },
+        app_metadata: { social_role: role, social_access_areas: nextAccessAreas },
       });
       if (createUserError) throw new Error(createUserError.message || 'Der Benutzer konnte nicht angelegt werden.');
       const { data: member, error: insertError } = await context.supabaseAdmin
@@ -959,6 +1040,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
           user_id: createdUser.user.id,
           email,
           role,
+          access_areas: nextAccessAreas,
           is_active: isActive,
         }, { onConflict: 'user_id' })
         .select('*')
@@ -979,7 +1061,6 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     }
 
     if (action === 'save_team_settings') {
-      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
       const teamId = required(body.teamId, 'Mannschaft');
       const publishingMode = required(body.publishingMode, 'Veröffentlichungsmodus');
       if (!publishingModes.has(publishingMode)) throw new Error('Der Veröffentlichungsmodus ist ungültig.');
@@ -1052,7 +1133,6 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     }
 
     if (action === 'save_team_color_group') {
-      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
       const groupKey = required(body.groupKey, 'Mannschaftsfamilie');
       const colorScheme = teamColorScheme(body.colorScheme);
       const { data: colorGroup, error: colorGroupError } = await context.supabaseAdmin
@@ -1429,7 +1509,6 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     }
 
     if (action === 'delete_independent_story') {
-      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
       const storyId = required(body.storyId, 'Story-ID');
       const [{ data: story, error: storyError }, { data: cleanupSettings, error: settingsError }] = await Promise.all([
         context.supabaseAdmin.from('social_independent_stories').select('schedule_kind, archived_at, image_path, jobs:social_independent_story_jobs(status, published_at, storage_path)').eq('id', storyId).maybeSingle(),
@@ -1583,7 +1662,6 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     }
 
     if (action === 'delete_post') {
-      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
       const postId = required(body.postId, 'Beitrags-ID');
       const [{ data: post, error: postError }, { data: cleanupSettings, error: settingsError }] = await Promise.all([
         context.supabaseAdmin
@@ -1680,7 +1758,6 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     }
 
     if (action === 'save_sponsor_type') {
-      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
       const sponsorTypeId = String(body.sponsorTypeId ?? '').trim();
       const label = required(body.label, 'Bezeichnung');
       const description = String(body.description ?? '').trim();
@@ -1714,18 +1791,27 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     }
 
     if (action === 'save_sponsor') {
-      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
       const sponsorId = String(body.sponsorId ?? '').trim();
       const name = required(body.name, 'Partnername');
       if (name.length > 120) throw new Error('Der Partnername darf höchstens 120 Zeichen lang sein.');
       const sortOrder = Number(body.sortOrder ?? 100);
       if (!Number.isInteger(sortOrder) || sortOrder < 0 || sortOrder > 32767) throw new Error('Die Sortierung ist ungültig.');
+      const contractStartDate = optionalDate(body.contractStartDate, 'Vertragsbeginn');
+      const automaticRenewal = body.automaticRenewal === true;
+      const contractEndDate = automaticRenewal ? null : optionalDate(body.contractEndDate, 'Vertragsende');
+      if (contractStartDate && contractEndDate && contractEndDate < contractStartDate) {
+        throw new Error('Das Vertragsende darf nicht vor dem Vertragsbeginn liegen.');
+      }
+      const contractExpired = Boolean(contractEndDate && contractEndDate < new Date().toISOString().slice(0, 10));
       const payload = {
         name,
         website_url: validHttpUrl(body.websiteUrl),
         instagram_handle: instagramHandle(body.instagramHandle),
         logo_source_url: validHttpUrl(body.sourceUrl),
-        active: body.active !== false,
+        contract_start_date: contractStartDate,
+        contract_end_date: contractEndDate,
+        automatic_renewal: automaticRenewal,
+        active: body.active !== false && !contractExpired,
         sort_order: sortOrder,
       };
       if (sponsorId) {
@@ -1749,7 +1835,6 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     }
 
     if (action === 'save_sponsor_logo') {
-      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
       const sponsorId = required(body.sponsorId, 'Werbepartner');
       const { data: sponsor, error: sponsorError } = await context.supabaseAdmin
         .from('social_sponsors')
@@ -1814,7 +1899,6 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     }
 
     if (action === 'save_sponsor_white_logo') {
-      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
       const sponsorId = required(body.sponsorId, 'Werbepartner');
       const { data: sponsor, error: sponsorError } = await context.supabaseAdmin
         .from('social_sponsors')
@@ -1854,7 +1938,6 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     }
 
     if (action === 'approve_sponsor_logo' || action === 'reject_sponsor_logo') {
-      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
       const sponsorId = required(body.sponsorId, 'Werbepartner');
       const { data: sponsor, error: sponsorError } = await context.supabaseAdmin
         .from('social_sponsors')
@@ -1886,7 +1969,6 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     }
 
     if (action === 'discard_sponsor_logo') {
-      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
       const sponsorId = required(body.sponsorId, 'Werbepartner');
       const { data: sponsor, error: sponsorError } = await context.supabaseAdmin
         .from('social_sponsors')
@@ -1920,7 +2002,6 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     }
 
     if (action === 'save_sponsor_assignments') {
-      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
       const sponsorId = required(body.sponsorId, 'Werbepartner');
       const { data: previousAssignments, error: previousAssignmentsError } = await context.supabaseAdmin
         .from('social_sponsor_assignments')
@@ -2027,7 +2108,6 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     }
 
     if (action === 'delete_sponsor') {
-      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
       const sponsorId = required(body.sponsorId, 'Werbepartner');
       const { data: sponsor, error: sponsorError } = await context.supabaseAdmin
         .from('social_sponsors')
