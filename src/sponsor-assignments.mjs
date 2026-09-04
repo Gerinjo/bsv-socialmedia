@@ -15,19 +15,34 @@ export function audienceHierarchy(audience) {
 }
 
 /** @param {{websiteAssignments?: any[], audiences?: any[], sponsorId: string}} options */
-export function websiteTeamAudienceSlugs({ websiteAssignments = [], audiences = [], sponsorId }) {
+export function websiteTeamAssignments({ websiteAssignments = [], audiences = [], sponsorId }) {
   const audienceById = new Map(audiences.map((item) => [item.id, item]));
-  const assignedSlugs = new Set(
+  const assignmentsBySlug = new Map(
     websiteAssignments
       .filter((assignment) => assignment.sponsor_id === sponsorId)
-      .map((assignment) => audienceById.get(assignment.audience_id)?.slug)
-      .filter(Boolean),
+      .map((assignment) => [audienceById.get(assignment.audience_id)?.slug, assignment])
+      .filter(([slug]) => Boolean(slug)),
   );
   return audiences
     .filter((audience) => ['mens_team', 'womens_team', 'youth_team'].includes(String(audience.audience_group ?? '')))
-    .filter((audience) => audienceHierarchy(audience).some((slug) => assignedSlugs.has(slug)))
-    .map((audience) => String(audience.slug))
-    .sort();
+    .map((audience) => {
+      const sourceAudienceSlug = audienceHierarchy(audience).find((slug) => assignmentsBySlug.has(slug));
+      if (!sourceAudienceSlug) return null;
+      const assignment = assignmentsBySlug.get(sourceAudienceSlug);
+      return {
+        audienceSlug: String(audience.slug),
+        sourceAudienceSlug,
+        sponsorTypeId: assignment.sponsor_type_id ?? null,
+        description: String(assignment.description ?? '').trim(),
+      };
+    })
+    .filter(Boolean)
+    .sort((left, right) => left.audienceSlug.localeCompare(right.audienceSlug));
+}
+
+/** @param {{websiteAssignments?: any[], audiences?: any[], sponsorId: string}} options */
+export function websiteTeamAudienceSlugs(options) {
+  return websiteTeamAssignments(options).map((assignment) => assignment.audienceSlug);
 }
 
 /** @param {{sponsors?: any[], assignments?: any[], audiences?: any[], audience: any, context: string}} options */

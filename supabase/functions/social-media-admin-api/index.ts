@@ -623,6 +623,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       { data: storyCategories, error: storyCategoriesError },
       { data: independentStories, error: independentStoriesError },
       { data: sponsors, error: sponsorsError },
+      { data: sponsorTypes, error: sponsorTypesError },
       { data: sponsorAssignments, error: sponsorAssignmentsError },
       { data: sponsorWebsiteAssignments, error: sponsorWebsiteAssignmentsError },
       { data: cleanupSettings, error: cleanupSettingsError },
@@ -684,12 +685,17 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .order('sort_order', { ascending: true })
         .order('name', { ascending: true }),
       context.supabaseAdmin
+        .from('social_sponsor_types')
+        .select('id, slug, label, description, active, sort_order, created_at, updated_at')
+        .order('sort_order', { ascending: true })
+        .order('label', { ascending: true }),
+      context.supabaseAdmin
         .from('social_sponsor_assignments')
         .select('sponsor_id, audience_id, context, slot')
         .order('slot', { ascending: true }),
       context.supabaseAdmin
         .from('social_sponsor_website_assignments')
-        .select('sponsor_id, audience_id'),
+        .select('sponsor_id, audience_id, sponsor_type_id, description, updated_at'),
       context.supabaseAdmin
         .from('social_cleanup_settings')
         .select('retention_days, updated_at')
@@ -697,7 +703,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .maybeSingle(),
     ]);
     const readError = gamesError ?? birthdaysError ?? teamsError ?? teamColorGroupsError ?? peopleError ?? clubsError ?? membersError
-      ?? postAudiencesError ?? websiteAudiencesError ?? postsError ?? storyCategoriesError ?? independentStoriesError ?? sponsorsError ?? sponsorAssignmentsError
+      ?? postAudiencesError ?? websiteAudiencesError ?? postsError ?? storyCategoriesError ?? independentStoriesError ?? sponsorsError ?? sponsorTypesError ?? sponsorAssignmentsError
       ?? sponsorWebsiteAssignmentsError ?? cleanupSettingsError;
     if (readError) return json({ error: readError.message }, 500);
     const retentionDays = normalizeRetentionDays(cleanupSettings?.retention_days);
@@ -726,6 +732,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       storyCategories: storyCategories ?? [],
       independentStories: historyRecords.story,
       sponsors: await freshSponsorUrls(context.supabaseAdmin, sponsors ?? []),
+      sponsorTypes: sponsorTypes ?? [],
       sponsorAssignments: sponsorAssignments ?? [],
       sponsorWebsiteAssignments: sponsorWebsiteAssignments ?? [],
       clubs: await freshClubUrls(context.supabaseAdmin, clubs ?? []),
@@ -1672,6 +1679,40 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       return json({ ok: true, birthday: data, automation });
     }
 
+    if (action === 'save_sponsor_type') {
+      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
+      const sponsorTypeId = String(body.sponsorTypeId ?? '').trim();
+      const label = required(body.label, 'Bezeichnung');
+      const description = String(body.description ?? '').trim();
+      const sortOrder = Number(body.sortOrder ?? 100);
+      if (label.length > 80) throw new Error('Die Bezeichnung darf höchstens 80 Zeichen lang sein.');
+      if (description.length > 500) throw new Error('Die Erklärung darf höchstens 500 Zeichen lang sein.');
+      if (!Number.isInteger(sortOrder) || sortOrder < 0 || sortOrder > 32767) throw new Error('Die Sortierung ist ungültig.');
+      const payload = {
+        label,
+        description,
+        active: body.active !== false,
+        sort_order: sortOrder,
+      };
+      if (sponsorTypeId) {
+        const { data, error } = await context.supabaseAdmin
+          .from('social_sponsor_types')
+          .update(payload)
+          .eq('id', sponsorTypeId)
+          .select()
+          .single();
+        if (error) throw error;
+        return json({ ok: true, sponsorType: data });
+      }
+      const { data, error } = await context.supabaseAdmin
+        .from('social_sponsor_types')
+        .insert({ ...payload, slug: sponsorSlug(label) })
+        .select()
+        .single();
+      if (error) throw error;
+      return json({ ok: true, sponsorType: data });
+    }
+
     if (action === 'save_sponsor') {
       if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
       const sponsorId = String(body.sponsorId ?? '').trim();
@@ -1888,10 +1929,21 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       if (previousAssignmentsError) throw previousAssignmentsError;
       const previousContexts = (previousAssignments ?? []).map((assignment: any) => String(assignment.context ?? ''));
       const assignments = Array.isArray(body.assignments) ? body.assignments : [];
-      const websiteAudienceIds = [...new Set(
-        (Array.isArray(body.websiteAudienceIds) ? body.websiteAudienceIds : [])
-          .map((audienceId: unknown) => required(audienceId, 'Website-Einheit')),
-      )];
+      const requestedWebsiteAssignments = Array.isArray(body.websiteAssignments)
+        ? body.websiteAssignments
+        : (Array.isArray(body.websiteAudienceIds) ? body.websiteAudienceIds : []).map((audienceId: unknown) => ({ audienceId }));
+      const normalizedWebsiteAssignments = requestedWebsiteAssignments.map((assignment: any) => {
+        const description = String(assignment?.description ?? '').trim();
+        if (description.length > 1600) throw new Error('Ein Zuordnungstext darf höchstens 1600 Zeichen lang sein.');
+        return {
+          sponsor_id: sponsorId,
+          audience_id: required(assignment?.audienceId, 'Website-Einheit'),
+          sponsor_type_id: String(assignment?.sponsorTypeId ?? '').trim() || null,
+          description,
+        };
+      });
+      const websiteAudienceIds = normalizedWebsiteAssignments.map((assignment: any) => assignment.audience_id);
+      if (new Set(websiteAudienceIds).size !== websiteAudienceIds.length) throw new Error('Eine Website-Einheit wurde doppelt zugeordnet.');
       const normalized = assignments.map((assignment: any) => ({
         sponsor_id: sponsorId,
         audience_id: required(assignment?.audienceId, 'Einheit'),
@@ -1939,6 +1991,15 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
           || (websiteAudiences ?? []).some((audience: any) => !allowedWebsiteGroups.has(String(audience.audience_group ?? '')))
         ) throw new Error('Mindestens eine Website-Einheit ist ungültig.');
       }
+      const sponsorTypeIds = [...new Set(normalizedWebsiteAssignments.map((assignment: any) => assignment.sponsor_type_id).filter(Boolean))];
+      if (sponsorTypeIds.length) {
+        const { data: sponsorTypes, error: sponsorTypesError } = await context.supabaseAdmin
+          .from('social_sponsor_types')
+          .select('id')
+          .in('id', sponsorTypeIds);
+        if (sponsorTypesError) throw sponsorTypesError;
+        if ((sponsorTypes ?? []).length !== sponsorTypeIds.length) throw new Error('Mindestens eine Sponsorart ist ungültig.');
+      }
       const { error: deleteError } = await context.supabaseAdmin
         .from('social_sponsor_assignments')
         .delete()
@@ -1955,14 +2016,14 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .delete()
         .eq('sponsor_id', sponsorId);
       if (deleteWebsiteError) throw deleteWebsiteError;
-      if (websiteAudienceIds.length) {
+      if (normalizedWebsiteAssignments.length) {
         const { error: insertWebsiteError } = await context.supabaseAdmin
           .from('social_sponsor_website_assignments')
-          .insert(websiteAudienceIds.map((audienceId) => ({ sponsor_id: sponsorId, audience_id: audienceId })));
+          .insert(normalizedWebsiteAssignments);
         if (insertWebsiteError) throw insertWebsiteError;
       }
       const automation = await invalidateSponsorPreviews(context.supabaseAdmin, sponsorId, previousContexts);
-      return json({ ok: true, assignments: normalized, websiteAudienceIds, automation });
+      return json({ ok: true, assignments: normalized, websiteAssignments: normalizedWebsiteAssignments, automation });
     }
 
     if (action === 'delete_sponsor') {

@@ -1,6 +1,6 @@
 import { withSupabase } from 'npm:@supabase/server@1.4.1';
 import { runtimeConfig } from '../_shared/config.ts';
-import { websiteTeamAudienceSlugs } from '../../../src/sponsor-assignments.mjs';
+import { websiteTeamAssignments } from '../../../src/sponsor-assignments.mjs';
 
 const bucket = 'social-story-previews';
 
@@ -22,6 +22,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
     { data, error },
     { data: audiences, error: audiencesError },
     { data: websiteAssignments, error: websiteAssignmentsError },
+    { data: sponsorTypes, error: sponsorTypesError },
   ] = await Promise.all([
     context.supabaseAdmin
       .from('social_sponsors')
@@ -36,14 +37,18 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       .select('id, slug, audience_group'),
     context.supabaseAdmin
       .from('social_sponsor_website_assignments')
-      .select('sponsor_id, audience_id'),
+      .select('sponsor_id, audience_id, sponsor_type_id, description'),
+    context.supabaseAdmin
+      .from('social_sponsor_types')
+      .select('id, slug, label'),
   ]);
 
-  if (error || audiencesError || websiteAssignmentsError) {
-    console.error('Werbepartner konnten nicht geladen werden:', error ?? audiencesError ?? websiteAssignmentsError);
+  if (error || audiencesError || websiteAssignmentsError || sponsorTypesError) {
+    console.error('Werbepartner konnten nicht geladen werden:', error ?? audiencesError ?? websiteAssignmentsError ?? sponsorTypesError);
     return Response.json({ error: 'sponsors_unavailable' }, { status: 500 });
   }
 
+  const sponsorTypeById = new Map((sponsorTypes ?? []).map((sponsorType) => [sponsorType.id, sponsorType]));
   const partners = await Promise.all((data ?? []).map(async (partner) => {
     const { data: signed, error: signedError } = await context.supabaseAdmin.storage
       .from(bucket)
@@ -51,6 +56,19 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
     if (signedError || !signed?.signedUrl) {
       throw new Error(`Logo für ${partner.slug} konnte nicht bereitgestellt werden.`);
     }
+    const teamAssignments = websiteTeamAssignments({
+      websiteAssignments: websiteAssignments ?? [],
+      audiences: audiences ?? [],
+      sponsorId: partner.id,
+    }).map((assignment) => {
+      const sponsorType = assignment.sponsorTypeId ? sponsorTypeById.get(assignment.sponsorTypeId) : null;
+      return {
+        audienceSlug: assignment.audienceSlug,
+        sourceAudienceSlug: assignment.sourceAudienceSlug,
+        sponsorType: sponsorType ? { slug: sponsorType.slug, label: sponsorType.label } : null,
+        description: assignment.description,
+      };
+    });
     return {
       id: partner.id,
       slug: partner.slug,
@@ -58,11 +76,8 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       websiteUrl: partner.website_url,
       instagramHandle: partner.instagram_handle,
       logoUrl: signed.signedUrl,
-      teamAudienceSlugs: websiteTeamAudienceSlugs({
-        websiteAssignments: websiteAssignments ?? [],
-        audiences: audiences ?? [],
-        sponsorId: partner.id,
-      }),
+      teamAudienceSlugs: teamAssignments.map((assignment) => assignment.audienceSlug),
+      teamAssignments,
       sortOrder: partner.sort_order,
       updatedAt: partner.updated_at,
     };

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { audienceHierarchy, selectAssignedSponsors, sponsorLogoReference, sponsorMentionLine, websiteTeamAudienceSlugs } from '../src/sponsor-assignments.mjs';
+import { audienceHierarchy, selectAssignedSponsors, sponsorLogoReference, sponsorMentionLine, websiteTeamAssignments, websiteTeamAudienceSlugs } from '../src/sponsor-assignments.mjs';
 import { sponsorLogoStrip } from '../src/story-renderer.mjs';
 
 test('teams inherit sponsor slots while keeping their own overrides', () => {
@@ -50,6 +50,28 @@ test('website assignments inherit from club and departments independently of soc
   assert.deepEqual(
     websiteTeamAudienceSlugs({ websiteAssignments, audiences, sponsorId: 'team-partner' }),
     ['herren-1'],
+  );
+});
+
+test('direct website assignments override inherited sponsor type and description', () => {
+  const audiences = [
+    { id: 'club', slug: 'gesamtverein', audience_group: 'club' },
+    { id: 'youth', slug: 'jugendabteilung', audience_group: 'youth_department' },
+    { id: 'u15', slug: 'u15-c1-junioren', audience_group: 'youth_team' },
+    { id: 'u13', slug: 'u13-d1-junioren', audience_group: 'youth_team' },
+  ];
+  const websiteAssignments = [
+    { sponsor_id: 'partner', audience_id: 'club', sponsor_type_id: 'boards', description: 'Bandenwerbung am Vereinsgelände.' },
+    { sponsor_id: 'partner', audience_id: 'youth', sponsor_type_id: 'team', description: 'Unterstützt die Jugendabteilung.' },
+    { sponsor_id: 'partner', audience_id: 'u15', sponsor_type_id: 'kit', description: 'Trikotsponsor der C1-Junioren.' },
+  ];
+
+  assert.deepEqual(
+    websiteTeamAssignments({ websiteAssignments, audiences, sponsorId: 'partner' }),
+    [
+      { audienceSlug: 'u13-d1-junioren', sourceAudienceSlug: 'jugendabteilung', sponsorTypeId: 'team', description: 'Unterstützt die Jugendabteilung.' },
+      { audienceSlug: 'u15-c1-junioren', sourceAudienceSlug: 'u15-c1-junioren', sponsorTypeId: 'kit', description: 'Trikotsponsor der C1-Junioren.' },
+    ],
   );
 });
 
