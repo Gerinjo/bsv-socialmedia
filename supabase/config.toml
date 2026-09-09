@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.website-sponsor-feed]
 verify_jwt = false
+
+[functions.stadium-magazine-feed]
+verify_jwt = true
