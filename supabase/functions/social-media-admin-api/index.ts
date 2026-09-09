@@ -1,3 +1,5 @@
+import { DOMParser, XMLSerializer } from 'npm:@xmldom/xmldom@0.9.12';
+import { prepareSvgSource } from '../../../src/svg-upload.mjs';
 import { normalizeSponsorPageSize } from '../../../src/sponsor-assignments.mjs';
 import { withSupabase } from 'npm:@supabase/server@1.4.1';
 import { runtimeConfig } from '../_shared/config.ts';
@@ -54,6 +56,7 @@ const originalMimeTypes = new Map([
   ['image/jpeg', 'jpg'],
   ['image/png', 'png'],
   ['image/webp', 'webp'],
+  ['image/svg+xml', 'svg'],
 ]);
 
 function json(data: unknown, status = 200): Response {
@@ -1848,6 +1851,11 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       if (sponsorError) throw sponsorError;
       if (!sponsor) throw new Error('Der Werbepartner wurde nicht gefunden.');
       const original = parseDataUrl(body.originalDataUrl, new Set(originalMimeTypes.keys()), 5 * 1024 * 1024);
+      if (original.mime === 'image/svg+xml') {
+        const source = new TextDecoder('utf-8', { fatal: true }).decode(original.bytes);
+        const parser = new DOMParser({ onError: () => { throw new Error('Ungültiges SVG'); } });
+        original.bytes = new TextEncoder().encode(prepareSvgSource(source, parser, new XMLSerializer()));
+      }
       const transparent = parseDataUrl(body.transparentDataUrl, new Set(['image/png']), 5 * 1024 * 1024);
       const white = parseDataUrl(body.whiteDataUrl, new Set(['image/png']), 5 * 1024 * 1024);
       if (!pngHasAlpha(transparent.bytes) || !pngHasAlpha(white.bytes)) {
@@ -2188,6 +2196,11 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       if (!club) throw new Error('Der Verein wurde nicht gefunden.');
 
       const original = parseDataUrl(body.originalDataUrl, new Set(originalMimeTypes.keys()), 5 * 1024 * 1024);
+      if (original.mime === 'image/svg+xml') {
+        const source = new TextDecoder('utf-8', { fatal: true }).decode(original.bytes);
+        const parser = new DOMParser({ onError: () => { throw new Error('Ungültiges SVG'); } });
+        original.bytes = new TextEncoder().encode(prepareSvgSource(source, parser, new XMLSerializer()));
+      }
       const transparent = parseDataUrl(body.transparentDataUrl, new Set(['image/png']), 5 * 1024 * 1024);
       if (!pngHasAlpha(transparent.bytes)) throw new Error('Die freigestellte Datei muss ein PNG mit Alphakanal sein.');
       const originalExtension = originalMimeTypes.get(original.mime)!;

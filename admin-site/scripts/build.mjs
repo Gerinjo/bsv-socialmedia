@@ -13,6 +13,7 @@ const suiteLogo = await readFile(resolve(adminDir, 'assets/social-media-club-sui
 const suiteWordmark = await readFile(resolve(adminDir, 'assets/social-media-club-suite-wordmark.svg'));
 const crestCutout = await readFile(resolve(adminDir, 'crest-cutout.js'), 'utf8');
 const richTextEditor = await readFile(resolve(adminDir, 'rich-text-editor.mjs'), 'utf8');
+const svgUpload = await readFile(resolve(repoDir, 'src/svg-upload.mjs'), 'utf8');
 const visionOcr = await readFile(resolve(adminDir, 'vision-ocr.mjs'), 'utf8');
 const tesseract = await readFile(resolve(repoDir, 'node_modules/tesseract.js/dist/tesseract.min.js'), 'utf8');
 let html = await readFile(resolve(adminDir, 'admin-page.html'), 'utf8');
@@ -23,6 +24,7 @@ for (const [placeholder, source] of [
   ['__CREST_CUTOUT_SCRIPT__', crestCutout],
   ['__RICH_TEXT_EDITOR_SCRIPT__', richTextEditor],
   ['__VISION_OCR_SCRIPT__', visionOcr],
+  ['__SVG_UPLOAD_SCRIPT__', svgUpload],
   ['__TESSERACT_SCRIPT__', tesseract.replaceAll('</script', '<\\/script')],
 ]) {
   html = html.replaceAll(placeholder, () => source);

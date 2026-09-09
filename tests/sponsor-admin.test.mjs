@@ -7,13 +7,12 @@ const apiSource = readFileSync(new URL('../supabase/functions/social-media-admin
 const feedSource = readFileSync(new URL('../supabase/functions/website-sponsor-feed/index.ts', import.meta.url), 'utf8');
 const migrationSource = readFileSync(new URL('../supabase/migrations/20260904125648_add_sponsor_type_display_weight.sql', import.meta.url), 'utf8');
 
-test('sponsor logo upload accepts SVG and rasterizes only safely checked vectors', () => {
+test('sponsor logo upload preserves SVG originals and validates them on the server', () => {
   assert.match(adminSource, /accept="image\/png,image\/jpeg,image\/webp,image\/svg\+xml,\.svg"/);
-  assert.match(adminSource, /function safeSvgDataUrl/);
-  assert.match(adminSource, /script,style,foreignObject,iframe,object,embed,audio,video/);
-  assert.match(adminSource, /name\.startsWith\('on'\)/);
-  assert.match(adminSource, /!value\.startsWith\('#'\)/);
-  assert.match(adminSource, /const originalDataUrl=svg\?canvas\.toDataURL\('image\/png'\):sourceDataUrl/);
+  assert.match(adminSource, /prepareSvgSource\(await file.text\(\)/);
+  assert.match(adminSource, /const originalDataUrl=sourceDataUrl/);
+  assert.match(apiSource, /\['image\/svg\+xml', 'svg'\]/);
+  assert.equal((apiSource.match(/prepareSvgSource\(source, parser, new XMLSerializer\(\)\)/g)||[]).length, 2);
 });
 
 test('sponsor type display weight is maintained by the backend and exported to the website', () => {
