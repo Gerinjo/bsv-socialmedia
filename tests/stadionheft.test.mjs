@@ -38,12 +38,13 @@ test('dropdown offers all five formats and restores the saved selection', () => 
 });
 
 test('page size is required only for enabled Stadionheft assignments and cleared on type changes', () => {
-  const type = { value: 'heft' };
-  const size = { value: '1/2' };
+  const type = { value: 'heft', dataset: {} };
+  const size = { value: '1/2', dataset: {} };
   let hidden;
   const label = { classList: { toggle: (_name, value) => { hidden = value; } } };
   const container = {
-    querySelector: selector => ({ '.websiteSponsorType': type, '.stadiumPageSize': size, '.stadiumPageSizeLabel': label })[selector],
+    classList: { toggle() {} },
+    querySelector: selector => ({ '.websiteSponsorType': type, '.stadiumPageSize': size, '.stadiumPageSizeLabel': label, '.assignment-unit': {} })[selector],
     querySelectorAll: () => [type, size],
   };
   const input = { checked: true, closest: () => container };
