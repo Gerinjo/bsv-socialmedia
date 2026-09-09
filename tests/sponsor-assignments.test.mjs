@@ -69,14 +69,14 @@ test('website assignments retain their exact audience, sponsor type and descript
   assert.deepEqual(
     websiteAudienceAssignments({ websiteAssignments, audiences, sponsorId: 'partner' }),
     [
-      { audienceSlug: 'gesamtverein', audienceLabel: 'gesamtverein', audienceGroup: 'club', sponsorTypeId: 'boards', description: 'Bandenwerbung am Vereinsgelände.' },
-      { audienceSlug: 'jugendabteilung', audienceLabel: 'jugendabteilung', audienceGroup: 'youth_department', sponsorTypeId: 'team', description: 'Unterstützt die Jugendabteilung.' },
-      { audienceSlug: 'u15-c1-junioren', audienceLabel: 'u15-c1-junioren', audienceGroup: 'youth_team', sponsorTypeId: 'kit', description: 'Trikotsponsor der C1-Junioren.' },
+      { audienceSlug: 'gesamtverein', audienceLabel: 'gesamtverein', audienceGroup: 'club', sponsorTypeId: 'boards', pageSize: null, description: 'Bandenwerbung am Vereinsgelände.' },
+      { audienceSlug: 'jugendabteilung', audienceLabel: 'jugendabteilung', audienceGroup: 'youth_department', sponsorTypeId: 'team', pageSize: null, description: 'Unterstützt die Jugendabteilung.' },
+      { audienceSlug: 'u15-c1-junioren', audienceLabel: 'u15-c1-junioren', audienceGroup: 'youth_team', sponsorTypeId: 'kit', pageSize: null, description: 'Trikotsponsor der C1-Junioren.' },
     ],
   );
   assert.deepEqual(
     websiteTeamAssignments({ websiteAssignments, audiences, sponsorId: 'partner' }),
-    [{ audienceSlug: 'u15-c1-junioren', sourceAudienceSlug: 'u15-c1-junioren', sponsorTypeId: 'kit', description: 'Trikotsponsor der C1-Junioren.' }],
+    [{ audienceSlug: 'u15-c1-junioren', sourceAudienceSlug: 'u15-c1-junioren', sponsorTypeId: 'kit', pageSize: null, description: 'Trikotsponsor der C1-Junioren.' }],
   );
 });
 

@@ -1,3 +1,4 @@
+import { normalizeSponsorPageSize } from '../../../src/sponsor-assignments.mjs';
 import { withSupabase } from 'npm:@supabase/server@1.4.1';
 import { runtimeConfig } from '../_shared/config.ts';
 import { CLUB_CREST_SEEDS } from '../_shared/club-crest-seeds.ts';
@@ -727,7 +728,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .order('slot', { ascending: true }),
       context.supabaseAdmin
         .from('social_sponsor_website_assignments')
-        .select('sponsor_id, audience_id, sponsor_type_id, description, updated_at'),
+        .select('sponsor_id, audience_id, sponsor_type_id, description, page_size, updated_at'),
       context.supabaseAdmin
         .from('social_cleanup_settings')
         .select('retention_days, updated_at')
@@ -2052,6 +2053,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
           sponsor_id: sponsorId,
           audience_id: required(assignment?.audienceId, 'Website-Einheit'),
           sponsor_type_id: String(assignment?.sponsorTypeId ?? '').trim() || null,
+          page_size: String(assignment?.pageSize ?? '').trim() || null,
           description,
         };
       });
@@ -2108,10 +2110,16 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       if (sponsorTypeIds.length) {
         const { data: sponsorTypes, error: sponsorTypesError } = await context.supabaseAdmin
           .from('social_sponsor_types')
-          .select('id')
+          .select('id, slug')
           .in('id', sponsorTypeIds);
         if (sponsorTypesError) throw sponsorTypesError;
         if ((sponsorTypes ?? []).length !== sponsorTypeIds.length) throw new Error('Mindestens eine Sponsorart ist ungültig.');
+        const typeById = new Map<string, string>((sponsorTypes ?? []).map((type: any) => [type.id, type.slug]));
+        for (const assignment of normalizedWebsiteAssignments) {
+          assignment.page_size = normalizeSponsorPageSize(assignment.page_size, typeById.get(assignment.sponsor_type_id));
+        }
+      } else {
+        for (const assignment of normalizedWebsiteAssignments) assignment.page_size = null;
       }
       const { error: deleteError } = await context.supabaseAdmin
         .from('social_sponsor_assignments')

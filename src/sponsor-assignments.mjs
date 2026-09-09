@@ -1,3 +1,15 @@
+export const STADIONHEFT_PAGE_SIZES = ['1', '1/2', '1/3', '1/4', '1/6'];
+
+/** @param {unknown} value @param {string | undefined} sponsorTypeSlug */
+export function normalizeSponsorPageSize(value, sponsorTypeSlug) {
+  if (sponsorTypeSlug !== 'stadionheft') return null;
+  const pageSize = String(value ?? '').trim();
+  if (!STADIONHEFT_PAGE_SIZES.includes(pageSize)) {
+    throw new Error('Bitte eine gültige Seitengröße für das Stadionheft auswählen.');
+  }
+  return pageSize;
+}
+
 const groupParents = {
   mens_team: ['fussballabteilung', 'alle-abteilungen', 'gesamtverein'],
   womens_team: ['fussballabteilung', 'alle-abteilungen', 'gesamtverein'],
@@ -27,6 +39,7 @@ export function websiteAudienceAssignments({ websiteAssignments = [], audiences 
         audienceLabel: String(audience.label ?? audience.slug),
         audienceGroup: String(audience.audience_group ?? ''),
         sponsorTypeId: assignment.sponsor_type_id ?? null,
+        pageSize: assignment.page_size ?? null,
         description: String(assignment.description ?? '').trim(),
       };
     })
@@ -42,6 +55,7 @@ export function websiteTeamAssignments(options) {
       audienceSlug: assignment.audienceSlug,
       sourceAudienceSlug: assignment.audienceSlug,
       sponsorTypeId: assignment.sponsorTypeId,
+      pageSize: assignment.pageSize,
       description: assignment.description,
     }));
 }

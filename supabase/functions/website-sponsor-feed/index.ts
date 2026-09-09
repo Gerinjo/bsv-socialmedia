@@ -39,7 +39,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       .select('id, slug, label, audience_group'),
     context.supabaseAdmin
       .from('social_sponsor_website_assignments')
-      .select('sponsor_id, audience_id, sponsor_type_id, description'),
+      .select('sponsor_id, audience_id, sponsor_type_id, description, page_size'),
     context.supabaseAdmin
       .from('social_sponsor_types')
       .select('id, slug, label, sort_order, display_weight'),
@@ -75,6 +75,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
           displayWeight: sponsorType.display_weight,
         } : null,
         description: assignment.description,
+        pageSize: assignment.pageSize,
       };
     });
     const teamAssignments = audienceAssignments
@@ -84,6 +85,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
         sourceAudienceSlug: assignment.audienceSlug,
         sponsorType: assignment.sponsorType,
         description: assignment.description,
+        pageSize: assignment.pageSize,
       }));
     return {
       id: partner.id,
