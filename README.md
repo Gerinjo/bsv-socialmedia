@@ -87,6 +87,10 @@ templates/              editierbare SVG-Storyvorlagen
 tests/                  automatisierte Tests
 ```
 
+## Redaktion für Stadionheft und Newsletter
+
+Der neue Bereich **Redaktion** bietet Ausgabenplanung mit Kalender, feste Heftbeiträge, freie Abteilungstexte, Texteditor mit automatischer sprachlicher Überarbeitung und erhaltenem Original sowie Tabellen- und Ergebnisbeiträge je Mannschaft. Newsletter starten mit einem freien Inhaltsplan. Datenbankmigration, Betriebsanforderungen und Grenzen sind in [docs/editorial-workspace.md](docs/editorial-workspace.md) beschrieben.
+
 ## Nächste Betriebs-Schritte
 
 1. Admin-URL in Supabase Auth erlauben, einmal anmelden und den Benutzer freischalten.

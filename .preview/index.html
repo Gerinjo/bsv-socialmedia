@@ -44,6 +44,315 @@
     @media(max-width:980px){#app,#app.sidebar-collapsed{grid-template-columns:1fr}.suite-sidebar{grid-column:1;grid-row:auto;position:sticky;top:0;z-index:9;display:block;min-height:0;overflow:auto;border-radius:0;margin:0 -16px;padding:8px 16px}.suite-sidebar-top,.suite-sidebar-title,.suite-nav-caption,.suite-sidebar-spacer,.suite-mode{display:none}.suite-main-nav{display:flex;align-items:flex-start;gap:4px;width:max-content}.suite-nav-group{display:grid;flex:0 0 auto}.suite-nav-item,.sidebar-collapsed .suite-nav-item{width:auto;height:auto;justify-content:center;margin:0;padding:9px 13px}.sidebar-collapsed .suite-nav-label{display:inline}.suite-nav-item.active+.suite-subnav,.sidebar-collapsed .suite-nav-item.active+.suite-subnav{display:flex;margin:2px 0 0;padding:2px;border:0}.suite-subnav-item{min-height:30px;padding:5px 8px;white-space:nowrap}#app>:not(.suite-sidebar){grid-column:1}.workspace-nav{top:68px}.member-permission-actions{grid-template-columns:1fr}.permission-grid{grid-template-columns:1fr}}
     .suite-product-brand{display:flex;align-items:center;gap:18px}.suite-product-logo{display:block!important;width:88px;height:88px;object-fit:contain}.suite-product-wordmark{display:block;width:min(520px,60vw);height:auto}.suite-product-copy p{margin-top:2px}.suite-header-actions{display:flex;align-items:center;gap:10px;margin-left:auto}.suite-header-icon{width:48px;height:48px;padding:0;border:1px solid var(--outline);background:#fff;color:#3c4043;box-shadow:0 1px 3px rgba(60,64,67,.12)}.suite-header-icon:hover{background:#f1f3f4}.suite-header-icon[aria-busy="true"] svg{animation:spin .7s linear infinite}.suite-header-icon svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
     @media(max-width:620px){header,main{width:min(100% - 20px,1680px)}header{gap:8px}.suite-product-brand{gap:8px}.suite-product-logo{width:52px;height:52px}.suite-product-wordmark{width:min(260px,45vw)}.suite-product-copy p{display:none}.suite-header-actions{gap:4px}.suite-header-icon{width:38px;height:38px}.suite-sidebar{margin:0 -10px;padding:8px 10px}.suite-nav-item,.sidebar-collapsed .suite-nav-item{padding:10px 12px}.suite-nav-icon{display:grid}}
+    .editorial-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  background: linear-gradient(125deg, #edf4ff, #fff 75%);
+}
+.editorial-hero h2 {
+  font-size: clamp(24px, 3vw, 34px);
+  letter-spacing: -0.03em;
+  margin: 7px 0;
+}
+.editorial-hero p {
+  color: #5f6368;
+  margin: 0;
+  max-width: 620px;
+}
+.editorial-eyebrow {
+  color: #1967d2;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.editorial-calendar-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
+.editorial-calendar-heading label {
+  min-width: 180px;
+}
+.editorial-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 12px;
+  color: #5f6368;
+}
+.editorial-month-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 22px 0 14px;
+}
+.editorial-month-nav h3 {
+  margin: 0;
+  min-width: 175px;
+  text-align: center;
+}
+.editorial-calendar-scroll {
+  overflow: auto;
+}
+.editorial-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  min-width: 690px;
+  border: 1px solid #dadce0;
+  border-radius: 14px;
+  overflow: hidden;
+}
+.ed-weekday {
+  background: #f8f9fa;
+  padding: 9px;
+  color: #5f6368;
+  font-size: 12px;
+  text-align: center;
+}
+.ed-day {
+  min-height: 108px;
+  padding: 6px;
+  border-top: 1px solid #e8eaed;
+  border-right: 1px solid #e8eaed;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.ed-day:nth-child(7n) {
+  border-right: 0;
+}
+.ed-day time {
+  font-size: 12px;
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+}
+.ed-outside {
+  background: #f8f9fa;
+}
+.ed-outside time {
+  color: #9aa0a6;
+}
+.ed-today time {
+  border-radius: 50%;
+  background: #1967d2;
+  color: white;
+}
+.ed-event {
+  display: block !important;
+  text-align: left !important;
+  padding: 5px 7px !important;
+  border-radius: 5px !important;
+  font-size: 10px !important;
+  line-height: 1.3 !important;
+  width: 100%;
+  overflow: hidden;
+}
+.ed-event strong,
+.ed-event span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ed-start {
+  color: #137333 !important;
+}
+.ed-close {
+  color: #a45100 !important;
+}
+.ed-publish {
+  color: #174ea6 !important;
+}
+.ed-event.ed-start {
+  background: #e6f4ea !important;
+}
+.ed-event.ed-close {
+  background: #fef3d5 !important;
+}
+.ed-event.ed-publish {
+  background: #d2e3fc !important;
+}
+.ed-period {
+  display: block !important;
+  background: #eef3f8 !important;
+  color: #52657a !important;
+  width: 100%;
+  padding: 2px 6px !important;
+  min-height: 7px;
+  font-size: 9px !important;
+  border-radius: 2px !important;
+  white-space: nowrap !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left !important;
+}
+.editorial-columns {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(0, 2fr);
+  gap: 20px;
+}
+.ed-issue {
+  display: grid;
+  gap: 5px;
+  text-align: left;
+  justify-content: stretch;
+  width: 100%;
+  margin: 10px 0;
+  padding: 16px;
+  border: 1px solid #e8eaed;
+  border-radius: 12px;
+  background: white;
+  color: #202124;
+}
+.ed-issue.selected {
+  background: #e8f0fe;
+  border-color: #8ab4f8;
+}
+.ed-issue > span:last-child {
+  font-size: 12px;
+  font-weight: 400;
+  color: #5f6368;
+}
+.ed-timeline {
+  display: flex;
+  gap: 12px;
+  margin: 20px 0;
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 14px;
+}
+.ed-timeline span {
+  flex: 1;
+  font-weight: 600;
+  font-size: 14px;
+}
+.ed-timeline small {
+  display: block;
+  color: #5f6368;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+.ed-progress {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin: 18px 0;
+  font-size: 12px;
+  color: #5f6368;
+}
+.ed-progress progress {
+  flex: 1;
+  width: 80px;
+  height: 8px;
+  accent-color: #188038;
+}
+.ed-article-list {
+  margin-top: 14px;
+}
+.ed-article {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 14px;
+  padding: 17px 0;
+  text-align: left;
+  background: none;
+  color: #202124;
+  border-radius: 0;
+  border-bottom: 1px solid #e8eaed;
+}
+.ed-article strong {
+  font-size: 14px;
+}
+.ed-article small {
+  display: block;
+  color: #5f6368;
+  font-size: 11px;
+  font-weight: 400;
+  margin-top: 5px;
+}
+.ed-status {
+  flex: none;
+  padding: 5px 9px;
+  border-radius: 20px;
+  font-size: 10px;
+  background: #f1f3f4;
+  color: #5f6368;
+}
+.ed-status-review {
+  background: #fef3d5;
+  color: #a45100;
+}
+.ed-status-ready {
+  background: #e6f4ea;
+  color: #137333;
+}
+#edArticleForm textarea {
+  min-height: 320px;
+  line-height: 1.7;
+  font-size: 16px;
+  background: #fff;
+  border: 1px solid #dadce0;
+}
+#edRevisionList pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: 14px/1.6 inherit;
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 10px;
+}
+#edArticleMessage,
+#edIssueMessage {
+  font-size: 13px;
+  color: #174ea6;
+}
+.ed-article:hover {
+  background: #f8f9fa;
+}
+.ed-event:focus-visible,
+.ed-period:focus-visible,
+.ed-issue:focus-visible,
+.ed-article:focus-visible {
+  outline: 2px solid #1967d2;
+  outline-offset: -2px;
+}
+@media (max-width: 1100px) {
+  .editorial-columns {
+    grid-template-columns: 1fr;
+  }
+  .editorial-hero {
+    align-items: flex-start;
+  }
+}
+@media (max-width: 620px) {
+  .editorial-hero,
+  .editorial-calendar-heading {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .editorial-month-nav {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .ed-timeline {
+    gap: 8px;
+  }
+  .ed-timeline span {
+    font-size: 12px;
+  }
+  .ed-article {
+    align-items: flex-start;
+  }
+}
+
   </style>
 </head>
 <body>
@@ -123,6 +432,7 @@
               <button id="cleanupNavButton" type="button" class="suite-subnav-item" data-admin-section="cleanup" data-admin-area="administration">Aufbewahrung · 30 Tage</button>
             </div>
           </div>
+          <button class="suite-nav-item" type="button" data-suite-area="editorial" title="Redaktion"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 4h16v17H4zM8 2v4M16 2v4M4 9h16M8 13h3M8 17h8"/></svg></span><span class="suite-nav-label">Redaktion</span></button>
           <button id="profile" class="suite-nav-item" type="button" title="Profil"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><span class="suite-nav-label">Profil</span></button>
           <button class="suite-nav-item" type="button" data-suite-area="user_management" title="Benutzerverwaltung"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20a6 6 0 0 1 12 0M14 15.5a5 5 0 0 1 7 4.5"/></svg></span><span class="suite-nav-label">Benutzerverwaltung</span></button>
           <button id="adminTabButton" class="hidden" type="button" aria-controls="adminTab" tabindex="-1">Admin</button>
@@ -230,13 +540,14 @@
         </section>
         <section class="panel"><div class="list-heading"><h2>Geburtstage</h2><span id="birthdayCount" class="count"></span></div><div id="birthdays"></div></section>
       </div>
+      <div id="editorialArea" class="hidden"></div>
       <div id="adminTab" class="tab-panel hidden" role="tabpanel" aria-labelledby="adminTabButton">
         <section class="panel">
           <div class="list-heading"><div><h2 id="adminAreaTitle">Administration</h2><p id="adminAreaDescription" class="small">Mannschaften, Vereinswappen und technische Einstellungen zentral verwalten.</p></div></div>
           <section id="adminMembers" class="admin-section">
             <p>Nur Super-Admins legen Benutzer an und vergeben Zugriff auf einzelne Bereiche der Suite. Benutzerverwaltung selbst bleibt ausschließlich Super-Admins vorbehalten.</p>
             <label class="live-filter settings-filter">Teammitglieder filtern<input id="memberSearch" type="search" autocomplete="off" placeholder="Name oder E-Mail …"></label>
-            <form id="teamMemberForm" class="fields"><label>E-Mail<input id="memberEmail" type="email" autocomplete="username" required></label><label>Rolle<select id="memberRole"><option value="sm-team">Benutzer</option><option value="admin">Super-Admin</option></select></label><label>Passwort<input id="memberPassword" type="password" minlength="10" autocomplete="new-password" required></label><div class="wide permission-grid" id="newMemberPermissions"><label class="permission-option"><input class="memberArea" type="checkbox" value="social_media" checked> Social Media</label><label class="permission-option"><input class="memberArea" type="checkbox" value="sponsoring"> Sponsoring</label><label class="permission-option"><input class="memberArea" type="checkbox" value="administration"> Administration</label></div><label class="wide"><input id="memberActive" type="checkbox" checked> Zugangsberechtigt und sofort aktiv</label><div class="wide"><button type="submit" class="secondary">Benutzer anlegen</button></div></form>
+            <form id="teamMemberForm" class="fields"><label>E-Mail<input id="memberEmail" type="email" autocomplete="username" required></label><label>Rolle<select id="memberRole"><option value="sm-team">Benutzer</option><option value="admin">Super-Admin</option></select></label><label>Passwort<input id="memberPassword" type="password" minlength="10" autocomplete="new-password" required></label><div class="wide permission-grid" id="newMemberPermissions"><label class="permission-option"><input class="memberArea" type="checkbox" value="social_media" checked> Social Media</label><label class="permission-option"><input class="memberArea" type="checkbox" value="sponsoring"> Sponsoring</label><label class="permission-option"><input class="memberArea" type="checkbox" value="editorial"> Redaktion</label><label class="permission-option"><input class="memberArea" type="checkbox" value="administration"> Administration</label></div><label class="wide"><input id="memberActive" type="checkbox" checked> Zugangsberechtigt und sofort aktiv</label><div class="wide"><button type="submit" class="secondary">Benutzer anlegen</button></div></form>
             <div id="teamMemberMessage" class="small"></div><div id="teamMembersList" class="card" style="margin-top:16px"></div>
           </section>
           <section id="adminTeams" class="admin-section hidden">
@@ -1800,8 +2111,8 @@ export function prepareSvgSource(source, parser, serializer) {
     const apiUrl = 'https://maejihwjzxkmthjavgnx.supabase.co/functions/v1/social-media-admin-api';
     const login = document.querySelector('#login'); const app = document.querySelector('#app'); const status = document.querySelector('#status'); const authMessage = document.querySelector('#authMessage'); const suiteHeaderActions=document.querySelector('#suiteHeaderActions');
     let catalog={teams:[],people:[],venues:[],postAudiences:[],websiteAudiences:[],storyCategories:[]};let appData={games:[],posts:[],independentStories:[],birthdays:[],clubs:[],members:[],teamSettings:[],teamColorGroups:[],sponsors:[],sponsorTypes:[],sponsorAssignments:[],sponsorWebsiteAssignments:[]};let activeTab='games';let activeAdminSection='members';let activeSuiteArea='social_media';let currentUserRole='sm-team';let currentAccessAreas=['social_media'];let currentUserId='';let globalTestMode=true;let editingPostId='';let editingStoryId='';let storyImage=null;let expandedGameId='';let postImages=[];let cleanupSettings={retentionDays:30};let cleanupOverview={game:{historical:0,eligible:0},post:{historical:0,eligible:0},story:{historical:0,eligible:0}};let instagramConfiguration={accountIdConfigured:false,accessTokenConfigured:false,graphApiVersion:'v26.0'};let hideHistorical=localStorage.getItem('bsv-hide-historical')==='true';const preparedCrests=new Map();const preparedSponsors=new Map();const reportImageState=new Map();const searchTerms={games:'',posts:'',stories:'',birthdays:'',admin:''};
-    const allSuiteAreas=['social_media','sponsoring','administration','user_management'];
-    const suiteAreaLabels={social_media:'Social Media',sponsoring:'Sponsoring',administration:'Administration',user_management:'Benutzerverwaltung'};
+    const allSuiteAreas=['social_media','sponsoring','editorial','administration','user_management'];
+    const suiteAreaLabels={editorial:'Redaktion',social_media:'Social Media',sponsoring:'Sponsoring',administration:'Administration',user_management:'Benutzerverwaltung'};
     const adminSectionAreas={members:'user_management',teams:'administration',crests:'administration',sponsors:'sponsoring',assignments:'sponsoring',instagram:'administration',cleanup:'administration'};
     function hasSuiteArea(area){return currentUserRole==='admin'||currentAccessAreas.includes(area)}
     const defaultTeamColors={background:'#071f16',panel:'#164f32',primary:'#91c82f',accent:'#f4d638',muted:'#a8cbb4',surface:'#f4f1e8',ink:'#10251a'};
@@ -1828,6 +2139,454 @@ export function prepareSvgSource(source, parser, serializer) {
       const response = await fetch(apiUrl,{method,headers:{authorization:'Bearer '+session.access_token,apikey:'sb_publishable_a3DnmtbBycRR4mWV4Jmz-w_RJobGli9','content-type':'application/json'},body:body?JSON.stringify(body):undefined});
       const payload = await response.json(); if(!response.ok){const error=new Error(payload.error||'Fehler');error.payload=payload;throw error} return payload;
     }
+    export function editorialCalendarDays(month) {
+  const first = new Date(`${month}-01T12:00:00Z`);
+  if (Number.isNaN(first.getTime())) throw new Error("Ungültiger Monat.");
+  first.setUTCDate(first.getUTCDate() - ((first.getUTCDay() + 6) % 7));
+  return Array.from({ length: 42 }, (_, index) => {
+    const day = new Date(first);
+    day.setUTCDate(day.getUTCDate() + index);
+    return day.toISOString().slice(0, 10);
+  });
+}
+export function editorialMilestones(issue, date) {
+  return [
+    ["starts_on", "start", "Redaktionsstart"],
+    ["closes_on", "close", "Redaktionsschluss"],
+    ["publishes_on", "publish", "Erscheinung"],
+  ]
+    .filter(([key]) => issue[key] === date)
+    .map(([, kind, label]) => ({ kind, label }));
+}
+
+    export function createEditorialWorkspace(
+  root,
+  { api, esc, show, editorialCalendarDays, editorialMilestones },
+) {
+  let issues = [],
+    departments = [],
+    selected = null,
+    articles = [],
+    month = new Date()
+      .toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" })
+      .slice(0, 7),
+    filter = "",
+    loaded = false;
+  let editing = null,
+    editingIssue = null,
+    dirty = false,
+    busy = false,
+    selectionRequest = 0,
+    rewriteAvailable = false;
+  const $ = (selector) => root.querySelector(selector);
+  const kindLabel = (kind) =>
+    kind === "stadium" ? "Stadionheft" : "Newsletter";
+  const statusLabel = { draft: "Offen", review: "In Prüfung", ready: "Fertig" };
+  const dateLabel = (date) =>
+    new Date(`${date}T12:00:00`).toLocaleDateString("de-DE");
+  const call = (action, data = {}) =>
+    api("POST", { action: `editorial_${action}`, ...data });
+  root.innerHTML = `
+    <section class="panel editorial-hero"><div><span class="editorial-eyebrow">VEREINSREDAKTION</span><h2>Redaktion für Heft & Newsletter</h2><p>Stadionhefte und Newsletter gemeinsam planen, schreiben und fertigstellen.</p></div><button id="edNewIssue" class="primary-action">＋ Ausgabe anlegen</button></section>
+    <section class="panel"><div class="editorial-calendar-heading"><div><h3>Redaktionskalender</h3><div class="editorial-legend"><span class="ed-start">● Redaktionsstart</span><span class="ed-close">● Redaktionsschluss</span><span class="ed-publish">● Erscheinung</span><span>▰ Redaktionszeitraum</span></div></div><label>Ausgabeart<select id="edFilter"><option value="">Alle Ausgaben</option><option value="stadium">Stadionheft</option><option value="newsletter">Newsletter</option></select></label></div><div class="editorial-month-nav"><button class="ghost" id="edPrev" aria-label="Vorheriger Monat">←</button><h3 id="edMonth" aria-live="polite"></h3><button class="ghost" id="edNext" aria-label="Nächster Monat">→</button><button class="ghost" id="edToday">Heute</button></div><div class="editorial-calendar-scroll"><div id="edCalendar" class="editorial-calendar"></div></div></section>
+    <div class="editorial-columns"><section class="panel"><h3>Ausgaben</h3><div id="edIssues" aria-live="polite"></div></section><section class="panel" id="edDetail"><div class="empty">Lege die erste Ausgabe an oder wähle eine Ausgabe aus.</div></section></div>
+    <dialog id="edIssueDialog" aria-labelledby="edIssueHeading"><div class="dialog-header"><h2 id="edIssueHeading">Ausgabe anlegen</h2><button type="button" class="ghost" id="edIssueClose" aria-label="Schließen">✕</button></div><form id="edIssueForm" class="fields"><label>Ausgabeart<select name="kind"><option value="stadium">Stadionheft</option><option value="newsletter">Newsletter</option></select></label><label>Titel<input name="title" required maxlength="180" placeholder="Zum Beispiel: Nordstern · Heimspielausgabe 01"></label><label>Redaktionsstart<input name="starts_on" type="date" required></label><label>Redaktionsschluss<input name="closes_on" type="date" required></label><label>Erscheinungsdatum<input name="publishes_on" type="date" required></label><p class="small">Im Stadionheft werden Grußworte, Trainerbegrüßungen und Sportdaten als feste Beiträge angelegt. Newsletter starten mit einem freien Inhaltsplan.</p><div class="wide toolbar"><button type="submit">Ausgabe speichern</button><span id="edIssueMessage" role="status"></span></div></form></dialog>
+    <dialog id="edArticleDialog" aria-labelledby="edArticleHeading"><div class="dialog-header"><div><span class="editorial-eyebrow">TEXTREDAKTION</span><h2 id="edArticleHeading">Beitrag bearbeiten</h2></div><button type="button" class="ghost" id="edArticleClose" aria-label="Editor schließen">✕</button></div><form id="edArticleForm"><div class="fields"><label class="wide">Titel<input name="title" required maxlength="180"></label><label>Abteilung<select name="department_id"></select></label><label>Autor / Verantwortlich<input name="author" maxlength="180" placeholder="Name"></label><label>Status<select name="status"><option value="draft">Offen</option><option value="review">In Prüfung</option><option value="ready">Fertig</option></select></label><div class="small" id="edSource"></div><label class="wide">Beitrag<textarea name="body" maxlength="30000" rows="15" spellcheck="true" lang="de" placeholder="Hier ist Platz für euren Beitrag …"></textarea></label></div><p class="small" id="edRewriteHint"></p><div class="toolbar"><button type="submit" id="edSaveArticle">Speichern & überarbeiten</button><button type="submit" class="ghost" id="edRetryRewrite" data-rewrite="true">Erneut überarbeiten</button><button type="button" class="ghost" id="edHistory">Original & Verlauf</button><span class="small" id="edWordCount"></span></div><p id="edArticleMessage" role="status" aria-live="polite"></p><div id="edRevisionList"></div></form></dialog>`;
+
+  function calendar() {
+    $("#edMonth").textContent = new Date(
+      `${month}-01T12:00:00`,
+    ).toLocaleDateString("de-DE", { month: "long", year: "numeric" });
+    const visible = issues.filter((issue) => !filter || issue.kind === filter);
+    const today = new Date().toLocaleDateString("sv-SE", {
+      timeZone: "Europe/Berlin",
+    });
+    const cells = editorialCalendarDays(month).map((date) => {
+      const value = new Date(`${date}T12:00:00Z`);
+      const events = visible
+        .flatMap((issue) => {
+          const marks = editorialMilestones(issue, date);
+          if (
+            !marks.length &&
+            issue.starts_on <= date &&
+            date <= issue.closes_on
+          )
+            return [
+              `<button class="ed-period" data-issue="${esc(issue.id)}" title="${esc(issue.title)} · Redaktionszeitraum" aria-label="${esc(issue.title)} · Redaktionszeitraum am ${dateLabel(date)}">${esc(issue.title)}</button>`,
+            ];
+          return marks.map(
+            ({ kind, label }) =>
+              `<button class="ed-event ed-${kind}" data-issue="${esc(issue.id)}" title="${kindLabel(issue.kind)} · ${esc(issue.title)}"><strong>${label}</strong><span>${esc(issue.title)}</span></button>`,
+          );
+        })
+        .join("");
+      return `<div class="ed-day ${date.slice(0, 7) !== month ? "ed-outside" : ""} ${date === today ? "ed-today" : ""}"><time datetime="${date}">${value.getUTCDate()}</time>${events}</div>`;
+    });
+    $("#edCalendar").innerHTML =
+      ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
+        .map((day) => `<div class="ed-weekday">${day}</div>`)
+        .join("") + cells.join("");
+    $("#edCalendar")
+      .querySelectorAll("[data-issue]")
+      .forEach(
+        (button) => (button.onclick = () => selectIssue(button.dataset.issue)),
+      );
+  }
+  function issueList() {
+    const visible = issues.filter((issue) => !filter || issue.kind === filter);
+    $("#edIssues").innerHTML = visible.length
+      ? visible
+          .map(
+            (issue) =>
+              `<button class="ed-issue ${selected?.id === issue.id ? "selected" : ""}" data-issue="${esc(issue.id)}"><span class="editorial-eyebrow">${kindLabel(issue.kind)}</span><strong>${esc(issue.title)}</strong><span>${dateLabel(issue.publishes_on)} · ${issue.closes_on < new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" }) ? "Redaktionsschluss erreicht" : "In Planung"}</span></button>`,
+          )
+          .join("")
+      : '<p class="empty">Noch keine Ausgaben. Mit „Ausgabe anlegen“ beginnt euer Redaktionsplan.</p>';
+    $("#edIssues")
+      .querySelectorAll("[data-issue]")
+      .forEach(
+        (button) => (button.onclick = () => selectIssue(button.dataset.issue)),
+      );
+  }
+  function detail() {
+    if (!selected) return;
+    const ready = articles.filter(
+      (article) => article.status === "ready",
+    ).length;
+    $("#edDetail").innerHTML =
+      `<div class="list-heading"><div><span class="editorial-eyebrow">${kindLabel(selected.kind)}</span><h3>${esc(selected.title)}</h3></div><button class="ghost" id="edEditIssue">Termine bearbeiten</button></div><div class="ed-timeline"><span><small>Start</small>${dateLabel(selected.starts_on)}</span><span><small>Schluss</small>${dateLabel(selected.closes_on)}</span><span><small>Erscheinung</small>${dateLabel(selected.publishes_on)}</span></div><div class="ed-progress"><progress max="${Math.max(1, articles.length)}" value="${ready}" aria-label="Fertige Beiträge"></progress><span>${ready} von ${articles.length} Beiträgen fertig</span></div><div class="toolbar"><button id="edAddArticle">＋ Freier Beitrag</button>${articles.some((a) => a.kind === "sports") ? '<button class="secondary" id="edSports">Tabellen & Ergebnisse abrufen</button>' : ""}<button class="ghost" id="edExport">Texte exportieren</button></div><p id="edSportsMessage" class="small" role="status"></p><div class="ed-article-list">${articles.map((article) => `<button class="ed-article" data-article="${esc(article.id)}"><span><strong>${esc(article.title)}</strong><small>${article.kind === "free" ? "Freier Beitrag" : "Feste Rubrik"}${article.department_id ? " · " + esc(departments.find((d) => d.id === article.department_id)?.label || "Abteilung") : ""}${article.author ? " · " + esc(article.author) : ""}</small></span><span class="ed-status ed-status-${article.status}">${statusLabel[article.status]}</span></button>`).join("") || '<p class="empty">Der Inhaltsplan ist noch frei. Füge den ersten Beitrag hinzu.</p>'}</div>`;
+    $("#edEditIssue").onclick = () => openIssue(selected);
+    $("#edAddArticle").onclick = () => openArticle(null);
+    $("#edDetail")
+      .querySelectorAll("[data-article]")
+      .forEach(
+        (button) =>
+          (button.onclick = () =>
+            openArticle(articles.find((a) => a.id === button.dataset.article))),
+      );
+    if ($("#edSports")) $("#edSports").onclick = refreshSports;
+    $("#edExport").onclick = () => {
+      const content = [
+        selected.title,
+        `${kindLabel(selected.kind)} · ${dateLabel(selected.publishes_on)}`,
+        ...articles.map(
+          (a) =>
+            `\n${a.title}\n${a.author ? a.author + "\n" : ""}[${statusLabel[a.status]}]\n\n${a.body}`,
+        ),
+      ].join("\n");
+      const url = URL.createObjectURL(
+        new Blob([content], { type: "text/plain;charset=utf-8" }),
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${selected.kind}-${selected.publishes_on}.txt`;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    };
+  }
+  async function selectIssue(id) {
+    if (busy) return;
+    const request = ++selectionRequest;
+    const next = issues.find((issue) => issue.id === id);
+    if (!next) return;
+    $("#edDetail").innerHTML =
+      '<p class="empty" role="status">Beiträge werden geladen …</p>';
+    try {
+      const result = await call("articles", { issueId: id });
+      if (request !== selectionRequest) return;
+      selected = next;
+      articles = result.articles;
+      issueList();
+      detail();
+    } catch (error) {
+      if (request === selectionRequest)
+        $("#edDetail").textContent = error.message;
+    }
+  }
+  async function refresh() {
+    const data = await call("list");
+    issues = data.issues;
+    departments = data.departments;
+    rewriteAvailable = data.rewriteAvailable;
+    loaded = true;
+    calendar();
+    issueList();
+    if (selected && issues.some((i) => i.id === selected.id))
+      await selectIssue(selected.id);
+    else if (issues.length) await selectIssue(issues[0].id);
+  }
+  function openIssue(issue = null) {
+    editingIssue = issue;
+    const form = $("#edIssueForm");
+    form.reset();
+    $("#edIssueMessage").textContent = "";
+    $("#edIssueHeading").textContent = issue
+      ? "Ausgabe bearbeiten"
+      : "Ausgabe anlegen";
+    form.elements.kind.disabled = Boolean(issue);
+    if (issue)
+      for (const key of [
+        "kind",
+        "title",
+        "starts_on",
+        "closes_on",
+        "publishes_on",
+      ])
+        form.elements[key].value = issue[key];
+    else {
+      const today = new Date().toLocaleDateString("sv-SE", {
+        timeZone: "Europe/Berlin",
+      });
+      form.elements.starts_on.value = today;
+    }
+    dirty = false;
+    $("#edIssueDialog").showModal();
+  }
+  function hydrateArticle(article) {
+    editing = article;
+    const form = $("#edArticleForm");
+    for (const key of ["title", "author", "body", "status", "department_id"])
+      form.elements[key].value =
+        article?.[key] ?? (key === "status" ? "draft" : "");
+    $("#edHistory").disabled = !article?.id;
+    $("#edRetryRewrite").classList.toggle(
+      "hidden",
+      !article?.id || article.kind === "sports",
+    );
+    $("#edSource").textContent = article?.source_snapshot
+      ? `Datenabruf: ${new Date(article.source_snapshot.fetchedAt).toLocaleString("de-DE")}. Ergebnisse: letzte zehn gespeicherte Spiele. ${article.source_snapshot.warning || ""}`
+      : "";
+    $("#edSaveArticle").textContent =
+      article?.kind === "sports"
+        ? "Beitrag speichern"
+        : "Speichern & überarbeiten";
+    $("#edRewriteHint").textContent =
+      article?.kind === "sports"
+        ? "Sportdaten bleiben unverändert durch KI. Der Abruf ersetzt den Beitrag mit einem neuen Quellenstand."
+        : rewriteAvailable
+          ? "Beim Speichern werden Rechtschreibung und Lesefluss automatisch verbessert. Das Original bleibt im Verlauf. Überarbeitete Texte stehen anschließend auf „In Prüfung“."
+          : "Die KI-Überarbeitung ist noch nicht eingerichtet. Deine Texte werden trotzdem gespeichert; Original und Verlauf bleiben erhalten.";
+    dirty = false;
+    wordCount();
+  }
+  function openArticle(article) {
+    $("#edArticleForm").reset();
+    $("#edArticleMessage").textContent = "";
+    $("#edRevisionList").innerHTML = "";
+    $("#edArticleForm").elements.department_id.innerHTML =
+      '<option value="">Vereinsweit / ohne Abteilung</option>' +
+      departments
+        .map((d) => `<option value="${esc(d.id)}">${esc(d.label)}</option>`)
+        .join("");
+    hydrateArticle(article);
+    $("#edArticleDialog").showModal();
+  }
+  function wordCount() {
+    const text = $("#edArticleForm").elements.body.value.trim();
+    $("#edWordCount").textContent =
+      `${text ? text.split(/\s+/).length : 0} Wörter · ${text.length} Zeichen`;
+  }
+  function canLeave() {
+    if (busy) {
+      show("Bitte den laufenden Speichervorgang abwarten.");
+      return false;
+    }
+    if (dirty && !window.confirm("Ungespeicherte Änderungen verwerfen?"))
+      return false;
+    dirty = false;
+    $("#edArticleDialog").close();
+    $("#edIssueDialog").close();
+    return true;
+  }
+  function lock(form, value) {
+    busy = value;
+    form
+      .querySelectorAll("input,textarea,select,button")
+      .forEach((node) => (node.disabled = value));
+  }
+  $("#edIssueForm").oninput = () => (dirty = true);
+  $("#edArticleForm").oninput = () => {
+    dirty = true;
+    wordCount();
+  };
+  $("#edArticleClose").onclick = canLeave;
+  $("#edIssueClose").onclick = canLeave;
+  for (const dialog of [$("#edArticleDialog"), $("#edIssueDialog")])
+    dialog.addEventListener("cancel", (event) => {
+      event.preventDefault();
+      canLeave();
+    });
+  window.addEventListener("beforeunload", (event) => {
+    if (dirty || busy) {
+      event.preventDefault();
+      event.returnValue = "";
+    }
+  });
+  $("#edIssueForm").onsubmit = async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const payload = Object.fromEntries(new FormData(form));
+    payload.kind = editingIssue?.kind || payload.kind;
+    if (
+      payload.starts_on > payload.closes_on ||
+      payload.closes_on > payload.publishes_on
+    ) {
+      $("#edIssueMessage").textContent =
+        "Bitte Start, Schluss und Erscheinung in dieser Reihenfolge angeben.";
+      return;
+    }
+    lock(form, true);
+    $("#edIssueMessage").textContent = "Ausgabe wird gespeichert …";
+    try {
+      const result = await call("save_issue", {
+        ...payload,
+        id: editingIssue?.id,
+        version: editingIssue?.version,
+      });
+      dirty = false;
+      selected = result.issue;
+      month = selected.publishes_on.slice(0, 7);
+      $("#edIssueDialog").close();
+      lock(form, false);
+      await refresh();
+      show("Ausgabe gespeichert.");
+    } catch (error) {
+      $("#edIssueMessage").textContent = error.message;
+    } finally {
+      lock(form, false);
+      form.elements.kind.disabled = Boolean(editingIssue);
+    }
+  };
+  $("#edArticleForm").onsubmit = async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const payload = Object.fromEntries(new FormData(form));
+    payload.rewrite = event.submitter?.dataset.rewrite === "true";
+    lock(form, true);
+    $("#edArticleMessage").textContent =
+      "Text wird gespeichert und gegebenenfalls überarbeitet …";
+    try {
+      const result = await call("save_article", {
+        ...payload,
+        id: editing?.id,
+        version: editing?.version,
+        issueId: selected.id,
+      });
+      hydrateArticle(result.article);
+      articles = articles
+        .filter((a) => a.id !== result.article.id)
+        .concat(result.article)
+        .sort((a, b) => a.position - b.position);
+      detail();
+      $("#edArticleMessage").textContent =
+        result.warning ||
+        (result.rewritten
+          ? "Gespeichert und sprachlich überarbeitet. Das Original ist im Verlauf erhalten."
+          : "Beitrag gespeichert.");
+    } catch (error) {
+      $("#edArticleMessage").textContent = error.message;
+    } finally {
+      lock(form, false);
+      $("#edHistory").disabled = !editing?.id;
+    }
+  };
+  $("#edHistory").onclick = async () => {
+    try {
+      const { revisions } = await call("revisions", { id: editing.id });
+      $("#edRevisionList").innerHTML =
+        `<details open><summary>Original der aktuellen Fassung</summary><pre>${esc(editing.original_body)}</pre></details>` +
+        revisions
+          .map(
+            (r) =>
+              `<details><summary>Version ${r.version} · ${new Date(r.created_at).toLocaleString("de-DE")}</summary><pre>${esc(r.snapshot.body)}</pre></details>`,
+          )
+          .join("");
+    } catch (error) {
+      $("#edArticleMessage").textContent = error.message;
+    }
+  };
+  async function refreshSports() {
+    const sports = articles.filter((a) => a.kind === "sports");
+    if (
+      sports.some((a) => a.body) &&
+      !window.confirm(
+        "Sportbeiträge mit aktuellen Tabellen und Ergebnissen neu erzeugen? Bisherige Texte bleiben im Verlauf.",
+      )
+    )
+      return;
+    busy = true;
+    root
+      .querySelectorAll("button")
+      .forEach((button) => (button.disabled = true));
+    const warnings = [];
+    try {
+      for (let index = 0; index < sports.length; index++) {
+        const article = sports[index];
+        $("#edSportsMessage").textContent =
+          `Sportdaten ${index + 1}/${sports.length}: ${article.title}`;
+        try {
+          const result = await call("sports", {
+            id: article.id,
+            version: article.version,
+          });
+          articles = articles.map((a) =>
+            a.id === article.id ? result.article : a,
+          );
+          if (result.warning)
+            warnings.push(`${article.title}: ${result.warning}`);
+        } catch (error) {
+          warnings.push(`${article.title}: ${error.message}`);
+        }
+      }
+    } finally {
+      busy = false;
+      root
+        .querySelectorAll("button")
+        .forEach((button) => (button.disabled = false));
+      detail();
+      $("#edSportsMessage").textContent = warnings.length
+        ? `Abruf beendet. ${warnings.join(" · ")}`
+        : "Tabellen und Ergebnisse aktualisiert. Bitte den Quellenstand prüfen.";
+    }
+  }
+  $("#edNewIssue").onclick = () => openIssue();
+  $("#edFilter").onchange = (event) => {
+    filter = event.target.value;
+    calendar();
+    issueList();
+  };
+  function moveMonth(delta) {
+    const date = new Date(`${month}-01T12:00:00Z`);
+    date.setUTCMonth(date.getUTCMonth() + delta);
+    month = date.toISOString().slice(0, 7);
+    calendar();
+  }
+  $("#edPrev").onclick = () => moveMonth(-1);
+  $("#edNext").onclick = () => moveMonth(1);
+  $("#edToday").onclick = () => {
+    month = new Date()
+      .toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" })
+      .slice(0, 7);
+    calendar();
+  };
+  calendar();
+  return {
+    canLeave,
+    async open() {
+      if (busy) return;
+      try {
+        await refresh();
+      } catch (error) {
+        show(`Redaktion konnte nicht geladen werden: ${error.message}`, true);
+        if (!loaded)
+          $("#edIssues").textContent =
+            "Die Redaktion ist noch nicht verfügbar. Bitte wende dich an die Administration.";
+      }
+    },
+  };
+}
+
+    const editorialWorkspace=createEditorialWorkspace(document.querySelector('#editorialArea'),{api,esc,show,editorialCalendarDays,editorialMilestones});
     const storyTypeOrder=['announcement','lineup','result','report'];
     const storyTypeLabels={announcement:'Ankündigung',lineup:'Aufstellung',result:'Ergebnismeldung',report:'Spielbericht',post:'Beitrag',story:'Story',birthday:'Geburtstag'};
     function jobHtml(job,kind){const labels={pending:'geplant',rendering:'wird gerade erstellt',preview_ready:'Vorschau fertig',published:'veröffentlicht',failed:'Fehler',needs_input:'Freigabe erforderlich',skipped:'nicht mehr relevant'};const retry=job.status==='failed'?'<button class="ghost retry" data-kind="'+kind+'" data-id="'+esc(job.id)+'">Erneut versuchen</button>':'';const storyKey=kind==='post'?'post':kind==='independent-story'?'story':String(job.story_type||'birthday');const storyLabel=storyTypeLabels[storyKey]||storyKey;const approvalJob=storyKey==='report'||storyKey==='post';const approvalStatus=approvalJob&&job.status==='pending'?(job.last_error?'erneuter Versuch geplant':'Freigabe erteilt · wird erstellt'):approvalJob&&job.status==='rendering'?'Freigabe erteilt · wird erstellt':approvalJob&&job.status==='needs_input'?'Freigabe erforderlich':null;const statusLabel=approvalStatus||labels[job.status]||job.status;const error=job.last_error?'<small class="job-error">'+esc(new Date(job.updated_at||Date.now()).toLocaleString('de-DE',{dateStyle:'short',timeStyle:'short'}))+' · '+esc(job.last_error)+'</small>':'';const urls=Array.isArray(job.media_urls)&&job.media_urls.length?job.media_urls:(job.media_url?[job.media_url]:[]);if(urls.length){const previews=urls.map((url,index)=>'<a class="job-preview" href="'+esc(url)+'" target="_blank" rel="noreferrer"><img loading="lazy" decoding="async" src="'+esc(url)+'" alt="'+esc(storyLabel)+' Seite '+(index+1)+'"><span class="job-copy"><strong>'+esc(storyLabel)+(urls.length>1?' · Seite '+(index+1):'')+'</strong><small>Vorschau öffnen</small></span></a>').join('');return '<div class="job-pages">'+previews+(retry?retry:'')+error+'</div>';}return '<span class="job"><span class="tag '+esc(job.status)+'">'+esc(storyLabel)+' · '+esc(statusLabel)+'</span>'+(retry?retry:'')+error+'</span>'}
@@ -1903,7 +2662,7 @@ export function prepareSvgSource(source, parser, serializer) {
       const isAdmin=currentUserRole==='admin';
       document.querySelector('#teamMemberForm').closest('section')?.classList.toggle('hidden', !isAdmin);
       if(!isAdmin){list.innerHTML='<div class="empty">Nur Super-Admins können Benutzer und Bereichsrechte verwalten.</div>';return}
-      list.innerHTML = members.length ? members.map(member => {const self=String(member.user_id)===currentUserId;const areas=member.role==='admin'?allSuiteAreas:(member.access_areas||[]);const status='<span class="tag '+(member.is_active?'preview_ready':'needs_input')+'">'+(member.is_active?'aktiv':'gesperrt')+'</span>';const roleLabel=member.role==='admin'?'Super-Admin':areas.length===1&&areas[0]==='sponsoring'?'Sponsoren-Administrator':'Benutzer';const permissions=self?'<div class="small">Alle Bereiche · aktueller Zugang</div>':'<form class="memberPermissionForm member-permission-form" data-id="'+esc(member.user_id)+'"><div class="member-permission-actions"><label>Rolle<select name="role"><option value="sm-team" '+(member.role!=='admin'?'selected':'')+'>Benutzer</option><option value="admin" '+(member.role==='admin'?'selected':'')+'>Super-Admin</option></select></label><div class="permission-grid">'+['social_media','sponsoring','administration'].map(area=>'<label class="permission-option"><input name="accessAreas" type="checkbox" value="'+area+'" '+(areas.includes(area)?'checked':'')+'> '+esc(suiteAreaLabels[area])+'</label>').join('')+'</div><button type="submit" class="secondary">Rechte speichern</button></div></form>';const actions=self?status:status+'<button type="button" class="'+(member.is_active?'warning':'secondary')+' toggleMemberAccess" data-id="'+esc(member.user_id)+'" data-active="'+String(member.is_active)+'">'+(member.is_active?'Temporär sperren':'Entsperren')+'</button><button type="button" class="danger deleteMember" data-id="'+esc(member.user_id)+'" data-email="'+esc(member.email||'')+'">Löschen</button>';return '<article class="member-row"><div><strong>'+esc(member.display_name||member.email||'Unbekannt')+'</strong>'+(member.display_name?'<div>'+esc(member.email||'')+'</div>':'')+'<div class="small">'+esc(roleLabel)+' · '+esc(areas.map(area=>suiteAreaLabels[area]).filter(Boolean).join(', '))+' · angelegt '+esc(new Date(member.created_at).toLocaleDateString('de-DE'))+'</div>'+permissions+'</div><div class="member-actions">'+actions+'</div></article>'}).join('') : '<div class="empty">'+(query?'Keine Benutzer passen zum Filter.':'Noch keine Benutzer angelegt.')+'</div>';
+      list.innerHTML = members.length ? members.map(member => {const self=String(member.user_id)===currentUserId;const areas=member.role==='admin'?allSuiteAreas:(member.access_areas||[]);const status='<span class="tag '+(member.is_active?'preview_ready':'needs_input')+'">'+(member.is_active?'aktiv':'gesperrt')+'</span>';const roleLabel=member.role==='admin'?'Super-Admin':areas.length===1&&areas[0]==='sponsoring'?'Sponsoren-Administrator':'Benutzer';const permissions=self?'<div class="small">Alle Bereiche · aktueller Zugang</div>':'<form class="memberPermissionForm member-permission-form" data-id="'+esc(member.user_id)+'"><div class="member-permission-actions"><label>Rolle<select name="role"><option value="sm-team" '+(member.role!=='admin'?'selected':'')+'>Benutzer</option><option value="admin" '+(member.role==='admin'?'selected':'')+'>Super-Admin</option></select></label><div class="permission-grid">'+['social_media','sponsoring','editorial','administration'].map(area=>'<label class="permission-option"><input name="accessAreas" type="checkbox" value="'+area+'" '+(areas.includes(area)?'checked':'')+'> '+esc(suiteAreaLabels[area])+'</label>').join('')+'</div><button type="submit" class="secondary">Rechte speichern</button></div></form>';const actions=self?status:status+'<button type="button" class="'+(member.is_active?'warning':'secondary')+' toggleMemberAccess" data-id="'+esc(member.user_id)+'" data-active="'+String(member.is_active)+'">'+(member.is_active?'Temporär sperren':'Entsperren')+'</button><button type="button" class="danger deleteMember" data-id="'+esc(member.user_id)+'" data-email="'+esc(member.email||'')+'">Löschen</button>';return '<article class="member-row"><div><strong>'+esc(member.display_name||member.email||'Unbekannt')+'</strong>'+(member.display_name?'<div>'+esc(member.email||'')+'</div>':'')+'<div class="small">'+esc(roleLabel)+' · '+esc(areas.map(area=>suiteAreaLabels[area]).filter(Boolean).join(', '))+' · angelegt '+esc(new Date(member.created_at).toLocaleDateString('de-DE'))+'</div>'+permissions+'</div><div class="member-actions">'+actions+'</div></article>'}).join('') : '<div class="empty">'+(query?'Keine Benutzer passen zum Filter.':'Noch keine Benutzer angelegt.')+'</div>';
       document.querySelectorAll('.memberPermissionForm').forEach(form=>{const sync=()=>{const admin=form.elements.role.value==='admin';form.querySelectorAll('[name="accessAreas"]').forEach(input=>{input.disabled=admin;if(admin)input.checked=true})};form.elements.role.onchange=sync;sync();form.onsubmit=async event=>{event.preventDefault();const button=event.submitter||form.querySelector('button[type="submit"]');const accessAreas=[...form.querySelectorAll('[name="accessAreas"]:checked')].map(input=>input.value);await runBusy(button,{busyText:'Speichert …',pendingText:'Rolle und Bereichsrechte werden gespeichert …',successText:'Bereichsrechte gespeichert.',errorText:'Bereichsrechte konnten nicht gespeichert werden: '},async()=>{await api('POST',{action:'update_team_member_permissions',userId:form.dataset.id,role:form.elements.role.value,accessAreas});await load();switchSuiteArea('user_management')})}});
       document.querySelectorAll('.toggleMemberAccess').forEach(button=>button.onclick=async()=>{const currentlyActive=button.dataset.active==='true';const verb=currentlyActive?'temporär sperren':'entsperren';if(!window.confirm('Diesen Zugang wirklich '+verb+'?'))return;await runBusy(button,{busyText:currentlyActive?'Sperrt …':'Entsperrt …',pendingText:'Benutzerzugang wird '+(currentlyActive?'gesperrt':'entsperrt')+' …',successText:currentlyActive?'Zugang wurde gesperrt.':'Zugang wurde entsperrt.',errorText:'Zugang konnte nicht geändert werden: '},async()=>{await api('POST',{action:'set_team_member_access',userId:button.dataset.id,isActive:!currentlyActive});await load();switchTab('admin');switchAdminSection('members')})});
       document.querySelectorAll('.deleteMember').forEach(button=>button.onclick=async()=>{const email=button.dataset.email||'';const confirmation=window.prompt('Dieser Zugang wird einschließlich Anmeldung endgültig gelöscht. Zur Bestätigung die E-Mail-Adresse eingeben:\n\n'+email);if(confirmation!==email){if(confirmation!==null)show('Löschen abgebrochen: Die E-Mail-Adresse stimmt nicht überein.',true);return}await runBusy(button,{busyText:'Löscht …',pendingText:'Benutzerzugang wird endgültig gelöscht …',successText:'Benutzerzugang wurde endgültig gelöscht.',errorText:'Zugang konnte nicht gelöscht werden: '},async()=>{await api('POST',{action:'delete_team_member',userId:button.dataset.id});await load();switchTab('admin');switchAdminSection('members')})});
@@ -2013,7 +2772,7 @@ export function prepareSvgSource(source, parser, serializer) {
     function renderIndependentStories(){const query=searchTerms.stories;const filtered=appData.independentStories.filter(story=>matchesSearch(query,[story.title,story.motivation,story.activity,story.category?.label,story.audience?.label,storyScheduleText(story)]));const stories=filtered.filter(story=>!story.historical);const history=filtered.filter(story=>story.historical).sort((a,b)=>new Date(b.history_at)-new Date(a.history_at));document.querySelector('#storyCount').textContent=stories.length+' aktiv · '+history.length+' historisch'+(hideHistorical?' ausgeblendet':'');const currentHtml=stories.map(independentStoryHtml).join('');const historyHtml=historySection('Historische Stories',history,independentStoryHtml);document.querySelector('#independentStories').innerHTML=currentHtml+historyHtml||(query?'<div class="empty">Keine Stories passen zum Filter.</div>':'<div class="empty">Noch keine Stories angelegt.</div>');document.querySelectorAll('.editIndependentStory').forEach(button=>button.onclick=()=>hydrateIndependentStory(button.dataset.id,true));document.querySelectorAll('.retry[data-kind="independent-story"]').forEach(button=>button.onclick=async()=>{await api('POST',{action:'retry_job',kind:'independent-story',jobId:button.dataset.id});await load()});wireHistoryActions()}
     function renderBirthdays(){const query=searchTerms.birthdays;const birthdays=appData.birthdays.filter(item=>matchesSearch(query,[item.person_name,item.message,item.birth_date,item.publish_time,...(item.person?.roles||[])]));document.querySelector('#birthdayCount').textContent=birthdays.length+' '+(birthdays.length===1?'Geburtstag':'Geburtstage');document.querySelector('#birthdays').innerHTML=birthdays.length?birthdays.map(birthdayHtml).join(''):'<div class="empty">'+(query?'Keine Geburtstage passen zum Filter.':'Noch keine Geburtstage.')+'</div>';wireForms()}
     function switchTab(tab){const adminAreas=['sponsoring','administration','user_management'];if(tab==='admin'&&!adminAreas.some(hasSuiteArea))tab='games';if(tab!=='admin'&&!hasSuiteArea('social_media')){switchSuiteArea(currentAccessAreas[0]);return}activeTab=tab;const games=tab==='games';const posts=tab==='posts';const stories=tab==='stories';const birthdays=tab==='birthdays';const admin=tab==='admin';document.querySelector('#gamesTab').classList.toggle('hidden',!games);document.querySelector('#postsTab').classList.toggle('hidden',!posts);document.querySelector('#storiesTab').classList.toggle('hidden',!stories);document.querySelector('#birthdaysTab').classList.toggle('hidden',!birthdays);document.querySelector('#adminTab').classList.toggle('hidden',!admin);document.querySelector('#workspaceNav').classList.toggle('hidden',admin||activeSuiteArea!=='social_media');document.querySelector('.workspace-filters').classList.toggle('hidden',admin);document.querySelector('#teamFilterField').classList.toggle('hidden',!games);document.querySelector('#workspaceSearchField').classList.toggle('hidden',admin);document.querySelector('#historyFilterField').classList.toggle('hidden',birthdays||admin);for(const name of ['games','posts','stories','birthdays','admin']){const button=document.querySelector('#'+name+'TabButton');const selected=name===tab;button.classList.toggle('active',selected);button.setAttribute('aria-selected',String(selected))}const search=document.querySelector('#workspaceSearch');search.value=searchTerms[tab]||'';search.placeholder=games?'Spiele durchsuchen …':posts?'Beiträge nach Titel, Text oder Zielgruppe durchsuchen …':stories?'Stories nach Titel, Kategorie oder Zielgruppe durchsuchen …':'Geburtstage durchsuchen …';if(admin)switchAdminSection(activeAdminSection)}
-    function switchSuiteArea(area){if(!hasSuiteArea(area))return;activeSuiteArea=area;updateSuiteNavigation(area);if(area==='social_media'){document.querySelector('#workspaceNav').classList.remove('hidden');switchTab(['games','posts','stories','birthdays'].includes(activeTab)?activeTab:'games');return}const firstSection=area==='sponsoring'?'sponsors':area==='administration'?'teams':'members';activeAdminSection=firstSection;activeTab='admin';switchTab('admin');switchAdminSection(firstSection)}
+    function switchSuiteArea(area){if(!hasSuiteArea(area))return;if(activeSuiteArea==='editorial'&&area!=='editorial'&&!editorialWorkspace.canLeave())return;document.querySelector('#editorialArea').classList.toggle('hidden',area!=='editorial');if(area==='editorial'){activeSuiteArea=area;updateSuiteNavigation(area);for(const id of ['gamesTab','postsTab','storiesTab','birthdaysTab','adminTab','workspaceNav'])document.querySelector('#'+id).classList.add('hidden');editorialWorkspace.open();return;}activeSuiteArea=area;updateSuiteNavigation(area);if(area==='social_media'){document.querySelector('#workspaceNav').classList.remove('hidden');switchTab(['games','posts','stories','birthdays'].includes(activeTab)?activeTab:'games');return}const firstSection=area==='sponsoring'?'sponsors':area==='administration'?'teams':'members';activeAdminSection=firstSection;activeTab='admin';switchTab('admin');switchAdminSection(firstSection)}
     function setMemberAccessState(role,areas){const roleName=String(role||'sm-team').trim()||'sm-team';currentUserRole=roleName;currentAccessAreas=roleName==='admin'?[...allSuiteAreas]:(Array.isArray(areas)?areas.filter(area=>allSuiteAreas.includes(area)&&area!=='user_management'):['social_media']);document.querySelector('#adminTabButton').classList.add('hidden');document.querySelectorAll('[data-suite-area]').forEach(button=>{const hidden=!hasSuiteArea(button.dataset.suiteArea);button.classList.toggle('hidden',hidden);const group=button.closest('.suite-nav-group');if(group)group.classList.toggle('hidden',hidden)});document.querySelector('#suiteRoleCaption').textContent=roleName==='admin'?'Super-Admin · alle Bereiche':currentAccessAreas.map(area=>suiteAreaLabels[area]).join(' · ');if(!hasSuiteArea(activeSuiteArea))activeSuiteArea=currentAccessAreas[0]||'social_media';renderMembers()}
     function updateSuiteMode(){const mode=document.querySelector('#suiteMode');mode.classList.toggle('production',!globalTestMode);document.querySelector('#suiteModeLabel').textContent=globalTestMode?'Testmodus':'Produktionsmodus';document.querySelector('#suiteModeHint').textContent=globalTestMode?'Keine Veröffentlichung':'Veröffentlichung möglich';mode.title=globalTestMode?'Globaler Testmodus aktiv: Es wird nichts bei Instagram veröffentlicht.':'Produktionsmodus aktiv: Automatische Veröffentlichungen sind möglich.'}
     async function load(){try{const selectedPost=editingPostId;const selectedStory=editingStoryId;const data=await api();reportImageState.clear();currentUserId=String(data.user?.userId||'');globalTestMode=data.testMode!==false;updateSuiteMode();cleanupSettings=data.cleanupSettings||{retentionDays:30};cleanupOverview=data.cleanupSummary||{game:{historical:0,eligible:0},post:{historical:0,eligible:0},story:{historical:0,eligible:0}};instagramConfiguration=data.instagramConfiguration||{accountIdConfigured:false,accessTokenConfigured:false,graphApiVersion:'v26.0'};document.querySelector('#hideHistorical').checked=hideHistorical;appData={games:data.games||[],posts:data.posts||[],independentStories:data.independentStories||[],birthdays:data.birthdays||[],clubs:data.clubs||[],members:data.members||[],teamSettings:data.teamSettings||[],teamColorGroups:data.teamColorGroups||[],sponsors:data.sponsors||[],sponsorTypes:data.sponsorTypes||[],sponsorAssignments:data.sponsorAssignments||[],sponsorWebsiteAssignments:data.sponsorWebsiteAssignments||[]};loadCatalog(data);setMemberAccessState(data.user.role,data.user.accessAreas);document.querySelector('#profileIdentity').textContent=data.user.email;renderGames();renderPosts();renderIndependentStories();renderBirthdays();renderMembers();renderTeamSettings();renderCrests();renderSponsors();renderSponsorTypes();renderInstagramConfiguration();renderCleanupSettings();if(selectedPost&&appData.posts.some(post=>post.id===selectedPost&&!post.historical))hydratePost(selectedPost);else if(!editingPostId||appData.posts.some(post=>post.id===selectedPost&&post.historical))resetPostEditor();if(selectedStory&&appData.independentStories.some(story=>story.id===selectedStory&&!story.historical))hydrateIndependentStory(selectedStory);else if(!editingStoryId||appData.independentStories.some(story=>story.id===selectedStory&&story.historical))resetStoryEditor();switchSuiteArea(activeSuiteArea)}catch(error){if(error.payload&&error.payload.error==='not_authorized'){show('Konto noch nicht freigeschaltet. Benutzer-ID: '+error.payload.userId,true)}else if(error.payload&&error.payload.error==='area_forbidden'){show('Für den Bereich „'+(suiteAreaLabels[error.payload.area]||error.payload.area)+'“ fehlt die Berechtigung.',true)}else show(error.message,true)}}
