@@ -2,6 +2,16 @@
 
 Der neue Suite-Bereich **Redaktion** verwaltet Ausgaben und ihre Beiträge. Stadionhefte erhalten beim Anlegen feste Rubriken: Grußwort der Vorstandschaft, Grußwort der Jugendleitung sowie Trainerbegrüßung und Sportdaten für jede zu diesem Zeitpunkt aktive Mannschaft. Newsletter beginnen mit einem leeren Inhaltsplan. Weitere Beiträge lassen sich vereinsweit oder einer aktiven Abteilung zugeordnet anlegen.
 
+## Lokal ansehen
+
+```bash
+npm run preview
+```
+
+Öffnet eine lokale Vorschau unter <http://localhost:4173>, ohne Anmeldung oder Supabase-Einrichtung. Ein Stadionheft und ein Newsletter sind als Beispiele enthalten. Neue Ausgaben und Texte können angelegt und bearbeitet werden; Änderungen bleiben im lokalen Browserspeicher erhalten. KI-Überarbeitung und echte Sportdatenabrufe sind deaktiviert. Der Sportdaten-Button erzeugt ausdrücklich gekennzeichnete Beispieldaten.
+
+Der Vorschau-Server lauscht ausschließlich lokal und verändert weder den produktiven Build noch echte Vereinsdaten. Mit `PREVIEW_PORT=4174 npm run preview` lässt sich ein anderer Port verwenden. Zum Zurücksetzen die Website-Daten für localhost löschen. Mit Strg+C wird der Server beendet.
+
 ## Arbeitsablauf
 
 1. **Ausgabe anlegen**: Titel, Ausgabeart, Redaktionsstart, Redaktionsschluss und Erscheinungsdatum eingeben. Die Termine müssen in dieser Reihenfolge liegen; gleiche Tage sind möglich. Die Ausgabeart bleibt nach dem Anlegen unveränderlich.
