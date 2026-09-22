@@ -1,4 +1,5 @@
 import { decodeEditorialCover } from '../../../src/editorial-publication.mjs';
+import { fetchEditorialImage } from './editorial-image-fetch.ts';
 const bucket = 'editorial-portraits';
 export async function prepareEditorialTeamPhoto(db: any, issueId: string, photo: any, previous: any, fetchImpl = fetch) {
   const created: string[] = [];
@@ -9,7 +10,7 @@ export async function prepareEditorialTeamPhoto(db: any, issueId: string, photo:
   try {
     const url = new URL(photo.source_url);
     if (url.protocol !== 'https:' || !['bsvnordstern.de','www.bsvnordstern.de'].includes(url.hostname) || !url.pathname.startsWith('/images/')) throw new Error('Ungültige Mannschaftsbildquelle.');
-    const response = await fetchImpl(url, {redirect:'error',signal:AbortSignal.timeout(15000)});
+    const response = await fetchEditorialImage(url, fetchImpl);
     if (!response.ok) throw new Error(`Mannschaftsbild nicht erreichbar (HTTP ${response.status}).`);
     if (Number(response.headers.get('content-length')) > 5242880) throw new Error('Mannschaftsbild ist größer als 5 MB.');
     const bytes = new Uint8Array(await response.arrayBuffer());

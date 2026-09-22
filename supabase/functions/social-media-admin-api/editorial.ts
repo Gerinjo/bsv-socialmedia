@@ -93,7 +93,8 @@ export async function handleEditorial(db: any, userId: string, body: any) {
       issues: await Promise.all(
         issues.map((issue: any) => withEditorialCover(db, issue)),
       ),
-      teams,
+      // This flag is scoped to the editorial UI; social-media settings stay untouched.
+      teams: teams.map((team: any) => ({...team, active: team.active || /^(herren|frauen)-[12]$/.test(team.slug || '')})),
       departments: audiences,
       rewriteAvailable: Boolean(
         Deno.env.get("OPENAI_API_KEY") && Deno.env.get("EDITORIAL_AI_MODEL"),
@@ -139,15 +140,17 @@ export async function handleEditorial(db: any, userId: string, body: any) {
     const articles = await row(db.from('editorial_articles').select('*').eq('issue_id',body.issueId).order('position').order('created_at'));
     return {articles:await Promise.all(articles.map((article: any)=>withArticleGalleries(db,article)))};
   }
-  if (action === 'editorial_save_cover_settings') {
+  if (action === 'editorial_save_cover_settings' || action === 'editorial_save_cover_defaults') {
     const settings = normalizeEditorialCoverSettings(body.settings);
     const issue = await row(db.from('editorial_issues').select('*').eq('id', body.issueId).single());
     if (issue.kind !== 'stadium') fail('Ein Titelblatt ist nur für Stadionhefte verfügbar.');
     if (issue.version !== body.version) fail('Die Ausgabe wurde geändert. Bitte neu laden.');
     const entries = await row(db.from('editorial_articles').select('id,kind').eq('issue_id', issue.id));
-    const teams = await row(db.from('social_teams').select('slug').eq('active', true));
-    if (settings.articles.some((item: any) => !entries.some((article: any) => article.id === item.id && article.kind !== 'sports')) || settings.teamSlugs.some((slug: string) => !teams.some((team: any) => team.slug === slug))) fail('Die Auswahl enthält nicht verfügbare Beiträge oder Mannschaften. Bitte neu laden.');
-    const saved = await row(db.from('editorial_issues').update({cover_settings:settings}).eq('id',issue.id).eq('version',body.version).select().maybeSingle());
+    const teams = await row(db.from('social_teams').select('slug,active'));
+    if (settings.articles.some((item: any) => !entries.some((article: any) => article.id === item.id && article.kind !== 'sports')) || settings.teamSlugs.some((slug: string) => !teams.some((team: any) => team.slug === slug && (team.active !== false || /^(herren|frauen)-[12]$/.test(team.slug))))) fail('Die Auswahl enthält nicht verfügbare Beiträge oder Mannschaften. Bitte neu laden.');
+    const saved = action === 'editorial_save_cover_defaults'
+      ? await row(db.rpc('save_editorial_cover_defaults', {target:issue.id, expected_version:body.version, settings, actor:userId}))
+      : await row(db.from('editorial_issues').update({cover_settings:settings}).eq('id',issue.id).eq('version',body.version).select().maybeSingle());
     if (!saved) fail('Die Ausgabe wurde geändert. Bitte neu laden.');
     return {issue: await withEditorialCover(db, saved)};
   }

@@ -120,6 +120,23 @@ figcaption { font: 9px/1.6 var(--sans); color: var(--muted); margin-top: 8px; }
 .contents-row>div>span { display: block; font-size: 8px; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 6px; color: var(--muted); }
 .contents-row strong { display: block; font: 19px/1.16 var(--serif); letter-spacing: -.02em; }
 .contents-row>b { font: italic 30px var(--serif); color: #2e5737; }
+.contents-partners { margin-top: 28px; padding-top: 22px; border-top: 2px solid var(--green); }
+.contents-partners h2 { margin: 0 0 12px; font: italic 30px/1.15 var(--serif); color: var(--green); }
+.contents-partners>p { margin: 0 0 18px; font: 17px/1.6 var(--serif); }
+.advertising-contents>summary { cursor: pointer; font: 13px/1.5 var(--sans); }
+.advertising-contents>summary:focus-visible { outline: 2px solid var(--green); outline-offset: 4px; }
+.contents-partners .contents-row { gap: 16px; }
+.contents-partners .contents-row>div { min-width: 0; overflow-wrap: anywhere; }
+.contents-partners .contents-row strong { font-size: 17px; }
+.contents-partners .contents-row>b { flex: none; font-size: 26px; }
+.partner-names { flex: 1; }
+.partner-entry { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; align-items: center; }
+.partner-entry+.partner-entry { margin-top: 6px; }
+.partner-page-link { flex: none; font: italic 26px var(--serif); color: #2e5737; }
+.partner-website { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 1px solid var(--rule); border-radius: 50%; color: var(--green); }
+.partner-website:hover { background: #e6ede2; border-color: var(--green); }
+.partner-website:focus-visible,.partner-article-link:focus-visible,.partner-page-link:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
+@media(max-width:700px) { .partner-website { width: 44px; height: 44px; } }
 .edition-note { font-size: 9px; line-height: 1.7; color: var(--muted); margin: 24px 0 0; }
 .folio { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--ink); padding-top: 15px; gap: 20px; font-size: 8px; text-transform: uppercase; letter-spacing: .07em; margin-top: 30px; }
 .folio b { font: italic 25px var(--serif); line-height: 1; }
@@ -556,7 +573,8 @@ button.sponsor-image { cursor: pointer; }
 .editorial-person-portraits { float: left; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; width: 280px; max-width: 42%; margin: 0 20px 12px 0; }
 .editorial-person-portraits:has(figure:only-child) { width: 140px; grid-template-columns: minmax(0,1fr); }
 .article-columns .editorial-person-portraits figure { margin: 0; min-width: 0; overflow-wrap: anywhere; }
-.article-columns .editorial-person-portraits img { width: 100%; height: 145px; object-fit: contain; object-position: bottom; }
+.article-columns .editorial-person-portraits img { display: block; width: auto; max-width: 100%; height: 145px; object-fit: contain; object-position: bottom; }
+.editorial-person-photo { width: fit-content; max-width: 100%; margin: 0 auto 6px; }
 .editorial-person-portraits figcaption { font: 12px/1.4 var(--sans); text-align: center; }
 .editorial-person-portraits figcaption strong { display: block; }
 @media(max-width:700px) {
@@ -622,12 +640,13 @@ button.sponsor-image { cursor: pointer; }
 .coach-grid h2{font-size:2.4cqw}.coach-grid .prose-columns{columns:1;font-size:1.5cqw;line-height:1.55}.coach-grid .editorial-person-portraits{gap:12px}
 .editorial-gallery-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.5cqw;margin:1.5cqw 0;break-inside:avoid}
 .article-columns .editorial-gallery{margin:0;min-width:0;break-inside:avoid}
-.editorial-gallery button{display:block;width:100%;padding:clamp(5px,.7cqw,9px);border:1px solid #c9ccc6;background:white;box-shadow:0 2px 5px #0002;cursor:pointer}
+.editorial-gallery button,.editorial-person-photo{display:block;padding:clamp(5px,.7cqw,9px);border:1px solid #c9ccc6;background:white;box-shadow:0 2px 5px #0002}
+.editorial-gallery button{width:100%;cursor:pointer}
 .editorial-gallery-cover{display:block;position:relative}
 .article-columns .editorial-gallery img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;background:white}
 .editorial-gallery-icon{position:absolute;right:6px;bottom:6px;width:clamp(20px,3cqw,32px);height:auto;filter:drop-shadow(0 1px 2px #0009);pointer-events:none}
 .editorial-gallery button:focus-visible{outline:3px solid var(--green);outline-offset:3px}
-@media(max-width:700px){.editorial-gallery-row{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0}.editorial-gallery button{padding:5px}.editorial-gallery-icon{right:3px;bottom:3px;width:20px}}
+@media(max-width:700px){.editorial-gallery-row{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0}.editorial-gallery button,.editorial-person-photo{padding:5px}.editorial-gallery-icon{right:3px;bottom:3px;width:20px}}
 .editorial-gallery-dialog{width:min(1000px,94vw);max-height:94dvh;background:#101c24;color:white;border:0;padding:18px;border-radius:12px}.editorial-gallery-dialog::backdrop{background:#000c}
 .gallery-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px}.gallery-toolbar button{padding:10px 18px;cursor:pointer}.gallery-large{display:block;width:100%;height:65dvh;object-fit:contain;margin-top:12px}.gallery-caption{text-align:center;margin:8px}.gallery-count{font-variant-numeric:tabular-nums}
 @media(max-width:700px){.aligned-sports-grid,.coach-grid{grid-template-columns:1fr;gap:24px}.aligned-sports-grid>section{display:block;grid-row:auto}.coach-grid h2{font-size:23px}.coach-grid .prose-columns{font-size:16px}}

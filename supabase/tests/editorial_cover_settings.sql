@@ -16,6 +16,10 @@ begin
   frozen:=public.preview_editorial_issue(i.id,revision);
   if frozen->'cover_settings' is distinct from settings then raise exception 'Cover settings missing from preview'; end if;
   perform public.publish_editorial_issue(i.id,revision,'00000000-0000-0000-0000-000000000001');
+  update public.editorial_issues set cover_alt='Neue Bildbeschreibung',cover_credit='Foto: Verein' where id=i.id;
+  if (select cover_path from public.editorial_issues where id=i.id)<>'test/cover.jpg' then raise exception 'Metadata edit changed image'; end if;
+  if (select version<=revision or version=previewed_version from public.editorial_issues where id=i.id) then raise exception 'Metadata edit did not invalidate preview'; end if;
+  if (select snapshot->>'cover_alt' from public.editorial_publications where issue_id=i.id) is distinct from (frozen->>'cover_alt') then raise exception 'Published description changed'; end if;
   update public.editorial_issues set cover_settings=jsonb_set(settings,'{number}','"08"') where id=i.id;
   if (select version<=revision or version=previewed_version from public.editorial_issues where id=i.id) then raise exception 'Cover edit did not invalidate preview'; end if;
   if (select snapshot->'cover_settings' from public.editorial_publications where issue_id=i.id) is distinct from settings then raise exception 'Published cover mutated'; end if;

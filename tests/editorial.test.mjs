@@ -34,13 +34,13 @@ test("issue dates reject impossible dates and inverted deadlines", () => {
 });
 test("magazines receive all mandatory contributions, newsletters start freely", () => {
   const teams = [
-    { id: "first", name: "Erste" },
-    { id: "youth", name: "Jugend" },
+    { id: "first", slug:"herren-1", name: "Erste" },
+    { id: "youth", slug:"u15-junioren", name: "Jugend" },
     { id: "old", name: "Passiv", active: false },
   ];
   const seeds = editorialSeeds("stadium", teams);
-  assert.equal(seeds.length, 6);
-  assert.equal(new Set(seeds.map((a) => a.template_key)).size, 6);
+  assert.equal(seeds.length, 5);
+  assert.equal(new Set(seeds.map((a) => a.template_key)).size, 5);
   assert.deepEqual(
     seeds.filter((a) => a.kind === "sports").map((a) => a.team_id),
     ["first", "youth"],

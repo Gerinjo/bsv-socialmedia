@@ -10,6 +10,21 @@ export function editorialCoverDefaults(issue, articles = []) {
     ...issue.cover_settings,
   };
 }
+// Only fixed greetings have a counterpart in a newly created issue.
+export function editorialCoverTemplate(settings, articles) {
+  const normalized = normalizeEditorialCoverSettings(settings);
+  return {...normalized, articles: normalized.articles.flatMap(item => {
+    const article = articles.find(article => article.id === item.id);
+    return article?.template_key && ['board','youth','coach'].includes(article.kind)
+      ? [{template_key:article.template_key, alias:item.alias}] : [];
+  })};
+}
+export function applyEditorialCoverTemplate(template, articles, teams) {
+  return {...structuredClone(template), articles: template.articles.flatMap(item => {
+    const article = articles.find(article => article.template_key === item.template_key && ['board','youth','coach'].includes(article.kind));
+    return article ? [{id:article.id, alias:item.alias}] : [];
+  }), teamSlugs: template.teamSlugs.filter(slug => teams.some(team => team.slug === slug && (team.active !== false || /^(herren|frauen)-[12]$/.test(team.slug))))};
+}
 export function normalizeEditorialCoverSettings(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Bitte die Titelblatt-Auswahl prüfen.');
   const result = {};
@@ -59,7 +74,7 @@ export function editorialReleaseState(issue, articles) {
   };
 }
 export function editorialCoverMatches(issue, articles, teams) {
-  return teams.filter(team => team.active !== false && /^(herren|frauen)-[1-9][0-9]*$/.test(team.slug || ''))
+  return teams.filter(team => (team.active !== false || /^(herren|frauen)-[12]$/.test(team.slug || '')) && /^(herren|frauen)-[1-9][0-9]*$/.test(team.slug || ''))
     .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0) || a.slug.localeCompare(b.slug))
     .map(team => {
       const article = articles.find(article => article.kind === 'sports' && article.team_id === team.id);

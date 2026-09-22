@@ -1,5 +1,6 @@
 import { selectEditorialPeople } from '../../../src/editorial-people.mjs';
 import { decodeEditorialCover } from '../../../src/editorial-publication.mjs';
+import { fetchEditorialImage } from './editorial-image-fetch.ts';
 const bucket = 'editorial-portraits';
 export async function loadEditorialPeople(db: any) {
   const [people, memberships] = await Promise.all([
@@ -12,7 +13,7 @@ export async function loadEditorialPeople(db: any) {
     teams: memberships.data.filter((entry: any) => entry.person_id === person.id).map(({ team_id, role }: any) => ({ team_id, role })) }));
 }
 
-export async function prepareEditorialPeople(db: any, issueId: string, article: any, ids: unknown) {
+export async function prepareEditorialPeople(db: any, issueId: string, article: any, ids: unknown, fetchImpl = fetch) {
   const selected = selectEditorialPeople(article, await loadEditorialPeople(db), ids);
   const created: string[] = [], people: any[] = [];
   const cleanup = async () => { if (created.length) await db.storage.from(bucket).remove(created); };
@@ -23,7 +24,7 @@ export async function prepareEditorialPeople(db: any, issueId: string, article: 
       if (person.photo_url && !previous) {
         const url = new URL(person.photo_url);
         if (url.protocol !== 'https:' || !(url.hostname === 'gerinjo.github.io' && url.pathname.startsWith('/bsv-website/images/') || ['bsvnordstern.de', 'www.bsvnordstern.de'].includes(url.hostname) && url.pathname.startsWith('/images/'))) throw new Error('Das Personenbild muss aus dem Vereins-Bildbestand stammen.');
-        const response = await fetch(url, { redirect: 'error', signal: AbortSignal.timeout(15000) });
+        const response = await fetchEditorialImage(url, fetchImpl);
         if (!response.ok) throw new Error(`Das Bild von ${person.display_name} konnte nicht geladen werden.`);
         if (Number(response.headers.get('content-length')) > 5 * 1024 * 1024) throw new Error('Personenbild ist zu groß.');
         const data = new Uint8Array(await response.arrayBuffer());

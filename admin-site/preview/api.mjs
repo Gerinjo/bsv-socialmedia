@@ -8,6 +8,8 @@ import {
   decodeEditorialCover,
   normalizeEditorialGalleries,
   normalizeEditorialCoverSettings,
+  editorialCoverTemplate,
+  applyEditorialCoverTemplate,
 } from "/editorial-publication.mjs";
 import { previewSports } from '/preview-sports.mjs';
 import { editorialSportsBody } from '/editorial-sports-format.mjs';
@@ -139,10 +141,10 @@ function load() {
     if(photo){if(!saved.automatic_sports){saved.status='review';saved.approved_by=null;saved.approved_at=null;}saved.version++;revision(state,saved);}
     upgraded=true;
   }
-  const obsolete = state.articles.filter(saved => saved.kind === 'coach' && editorialTeamProfile(teams.find(team=>team.id===saved.team_id) || {}).group === 'A');
+  const obsolete = state.articles.filter(saved => saved.kind === 'coach' && !/^(herren|frauen)-[12]$/.test(teams.find(team=>team.id===saved.team_id)?.slug || ''));
   for (const saved of obsolete) {
     const hasText = saved.body.trim() || saved.original_body.trim() || state.revisions.some(revision=>revision.article_id===saved.id && (revision.snapshot.body?.trim() || revision.snapshot.original_body?.trim()));
-    if(hasText){saved.kind='free';saved.template_key=null;saved.position=1000;saved.version++;revision(state,saved);}
+    if(hasText){if(saved.status==='waived')saved.status='draft';saved.kind='free';saved.template_key=null;saved.position=1000;saved.version++;revision(state,saved);}
     else {state.articles=state.articles.filter(a=>a.id!==saved.id);state.revisions=state.revisions.filter(r=>r.article_id!==saved.id);touch(state,saved.issue_id);}
     upgraded=true;
   }
@@ -220,16 +222,19 @@ export async function editorialPreviewApi(method = "GET", body = {}) {
           state.articles.push(saved);
           revision(state, saved);
         }
+        if (issue.kind === "stadium" && state.coverDefaults) issue.cover_settings = applyEditorialCoverTemplate(state.coverDefaults, state.articles.filter(a => a.issue_id === issue.id), teams);
       }
       result = { issue };
       break;
     }
-    case 'editorial_save_cover_settings': {
+    case 'editorial_save_cover_settings':
+    case 'editorial_save_cover_defaults': {
       const issue = state.issues.find(issue => issue.id === body.issueId);
       if (!issue || issue.kind !== 'stadium' || issue.version !== body.version) throw new Error('Die Ausgabe wurde geändert. Bitte neu laden.');
       const settings = normalizeEditorialCoverSettings(body.settings);
       if (settings.articles.some(item => !state.articles.some(article => article.id === item.id && article.issue_id === issue.id && article.kind !== 'sports')) || settings.teamSlugs.some(slug => !teams.some(team => team.slug === slug && team.active !== false))) throw new Error('Die Auswahl enthält nicht verfügbare Beiträge oder Mannschaften.');
       issue.cover_settings = settings;
+      if (body.action === 'editorial_save_cover_defaults') state.coverDefaults = editorialCoverTemplate(settings, state.articles.filter(a => a.issue_id === issue.id));
       touch(state, issue.id);
       result = {issue};
       break;

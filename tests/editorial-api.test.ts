@@ -6,6 +6,10 @@ import { prepareEditorialPeople, withEditorialPeople } from '../supabase/functio
 function database(replies: any[]) {
   const calls: any[] = [];
   const db = {
+    rpc(name: string, args: any) {
+      calls.push({rpc:name,args});
+      return Promise.resolve({data:replies.shift(),error:null});
+    },
     from(table: string) {
       const call: any = { table, filters: [] };
       calls.push(call);
@@ -100,12 +104,12 @@ Deno.test('selected portraits are copied privately, reused on text edits and sig
     createSignedUrl:async(path:string)=>({data:{signedUrl:'https://example.org/signed/'+path},error:null}),
   };}};
   const previousFetch=globalThis.fetch;let fetches=0;
-  globalThis.fetch=async()=>{fetches++;return new Response(Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aG1kAAAAASUVORK5CYII='),c=>c.charCodeAt(0)),{headers:{'content-type':'image/png'}});};
+  globalThis.fetch=async(url,options)=>{fetches++;assert.equal(options?.redirect,'manual');if(String(url).startsWith('https://gerinjo.github.io/'))return new Response(null,{status:301,headers:{location:'https://bsvnordstern.de/images/portrait.png'}});return new Response(Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aG1kAAAAASUVORK5CYII='),c=>c.charCodeAt(0)),{headers:{'content-type':'image/png'}});};
   try {
     const first=await prepareEditorialPeople(db,'issue',{kind:'board'},['chair']);
     assert.equal(uploads.length,1);
     const second=await prepareEditorialPeople(db,'issue',{kind:'board',people_snapshot:first.people},['chair']);
-    assert.equal(fetches,1);assert.equal(uploads.length,1);
+    assert.equal(fetches,2);assert.equal(uploads.length,1);
     await second.cleanup();assert.equal(removed.length,0);
     const result=await withEditorialPeople(db,{articles:[{people:[{name:'Vorstand',role:'1. Vorstand',photo_path:first.people[0].photo_path}]}]});
     assert.ok(result.articles[0].people[0].photo_url);
@@ -335,6 +339,7 @@ Deno.test('existing cover metadata can be saved without uploading or replacing t
  const {db,calls}=database([original,saved]);
  Object.assign(db,{storage:{from:()=>({createSignedUrl:async(path:string)=>{assert.equal(path,original.cover_path);return {data:{signedUrl:'https://example.org/original.jpg'},error:null};}})}});
  const result=await handleEditorial(db,'user',request);
+ assert.ok(result && 'issue' in result && result.issue);
  assert.equal(result.issue.cover_path,original.cover_path);assert.equal(result.issue.cover_alt,request.alt);
  assert.deepEqual(calls[1].update,{cover_alt:request.alt,cover_credit:request.credit});assert.deepEqual(calls[1].filters,[['id',issue.id],['version',2]]);
  for (const value of [{...original,version:3},{...original,cover_path:null}]){
@@ -342,4 +347,37 @@ Deno.test('existing cover metadata can be saved without uploading or replacing t
  }
  const long=database([original]);await assert.rejects(handleEditorial(long.db,'user',{...request,alt:'x'.repeat(301)}),/300 Zeichen/);assert.ok(long.calls.every(call=>!call.update));
  const race=database([original,null]);await assert.rejects(handleEditorial(race.db,'user',request),/geändert/);
+});
+
+Deno.test('saving cover defaults validates selections and atomically saves with version and actor', async () => {
+ const settings={showNumber:true,number:'07',showNamePart1:true,namePart1:'VEREIN',showNamePart2:true,namePart2:'news.',showHeadline:true,headline:'Heimspiel',showDate:true,articles:[{id:'article',alias:'Vorstand'}],teamSlugs:['herren-1']};
+ const currentIssue={...issue,version:5};
+ const {db,calls}=database([currentIssue,[{id:'article',kind:'board'}],[{slug:'herren-1'}],{...currentIssue,version:6,cover_settings:settings}]);
+ const result=await handleEditorial(db,'actor',{action:'editorial_save_cover_defaults',issueId:'issue',version:5,settings});
+ assert.ok(result && 'issue' in result);
+ assert.equal(result.issue.version,6);
+ assert.deepEqual(calls[3],{rpc:'save_editorial_cover_defaults',args:{target:'issue',expected_version:5,settings,actor:'actor'}});
+ for(const invalid of [{...currentIssue,version:6},{...currentIssue,kind:'newsletter'}]) {
+  const fake=database([invalid]);
+  await assert.rejects(()=>handleEditorial(fake.db,'actor',{action:'editorial_save_cover_defaults',issueId:'issue',version:5,settings}));
+  assert.equal(fake.calls.length,1);
+ }
+ const foreign=database([currentIssue,[],[{slug:'herren-1'}]]);
+ await assert.rejects(()=>handleEditorial(foreign.db,'actor',{action:'editorial_save_cover_defaults',issueId:'issue',version:5,settings}));
+ assert.equal(foreign.calls.some(call=>call.rpc),false);
+});
+
+Deno.test('editorial list and issue creation include disabled second adult teams without youth greetings',async()=>{
+ const teams=[{id:'second-men',slug:'herren-2',name:'Zweite Herren',active:false},{id:'second-women',slug:'frauen-2',name:'Zweite Frauen',active:false},{id:'young',slug:'u15-junioren',name:'C-Jugend',active:false}];
+ const listing=database([[],teams,[],[],[]]);
+ const listed:any=await handleEditorial(listing.db,'actor',{action:'editorial_list'});
+ assert.equal(listed.teams[0].active,true);assert.equal(listed.teams[1].active,true);assert.equal(teams[0].active,false);
+ const creation=database([teams,{id:'new'}]);
+ await handleEditorial(creation.db,'actor',{action:'editorial_save_issue',kind:'stadium',title:'Neu',starts_on:'2026-09-22',closes_on:'2026-09-23',publishes_on:'2026-09-27'});
+ assert.deepEqual(creation.calls[1].args.articles.filter((a:any)=>a.kind==='coach').map((a:any)=>a.team_id),['second-men','second-women']);
+ assert.equal(creation.calls[1].args.articles.filter((a:any)=>a.kind==='sports').length,3);
+ const settings={showNumber:true,number:'01',showNamePart1:true,namePart1:'Verein',showNamePart2:true,namePart2:'News',showHeadline:true,headline:'Heft',showDate:true,articles:[],teamSlugs:['herren-2','frauen-2']};
+ const cover=database([{...issue,version:1},[],teams,{...issue,version:2}]);
+ await handleEditorial(cover.db,'actor',{action:'editorial_save_cover_settings',issueId:'issue',version:1,settings});
+ assert.deepEqual(cover.calls[3].update.cover_settings.teamSlugs,['herren-2','frauen-2']);
 });

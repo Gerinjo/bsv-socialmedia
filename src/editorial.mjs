@@ -44,7 +44,8 @@ export function editorialTeamProfile(team) {
   const letter = identity.match(/\b([a-g])(?:[1-9])?[- ](?:jugend|junior)/)?.[1];
   const group = age ? (Number(age) >= 18 ? 'A' : Number(age) >= 16 ? 'B' : Number(age) >= 14 ? 'C' : Number(age) >= 12 ? 'D' : 'younger') : letter ? letter.toUpperCase() : 'senior';
   const youth = ['A', 'B', 'C', 'D'].includes(group);
-  const included = youth || (group === 'senior' && team.active !== false && !/alte[- ]herren|\bü35\b/.test(identity));
+  // Editorial coverage is independent of the social-media activation switch.
+  const included = /^(herren|frauen)-[12]$/.test(team.slug || '') || youth || (group === 'senior' && team.active !== false && !/alte[- ]herren|\bü35\b/.test(identity));
   return {
     group,
     compact: youth,
@@ -68,7 +69,7 @@ export function editorialSeeds(kind, teams) {
     ...teams
       .filter((team) => editorialTeamProfile(team).included)
       .flatMap((team) => [
-        ...(editorialTeamProfile(team).group === 'A' ? [] : [{
+        ...(!/^(herren|frauen)-[12]$/.test(team.slug || '') ? [] : [{
           title: editorialCoachTitle(team),
           kind: "coach",
           template_key: `coach:${team.id}`,

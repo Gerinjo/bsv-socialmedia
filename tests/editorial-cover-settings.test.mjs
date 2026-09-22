@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {editorialCoverDefaults,normalizeEditorialCoverSettings,editorialPublicSnapshot} from '../src/editorial-publication.mjs';
+import {editorialCoverTemplate,applyEditorialCoverTemplate,editorialCoverDefaults,normalizeEditorialCoverSettings,editorialPublicSnapshot} from '../src/editorial-publication.mjs';
 import {renderEditorialMagazine} from '../src/stadium-reader.mjs';
 const issue={id:'issue',title:'Heimspiel',kind:'stadium',publishes_on:'2026-09-27'};
 const article={id:'report',title:'Unser Fest',kind:'free',body:'Bericht',status:'ready'};
@@ -32,4 +32,20 @@ test('public cover settings omit aliases for deleted, empty or waived articles a
  const config={...settings(),articles:[{id:'report',alias:'Public'},{id:'coach',alias:'Private waived teaser'},{id:'deleted',alias:'Removed'}]};
  const snapshot=editorialPublicSnapshot({...issue,cover_settings:config},[article,hidden]);
  assert.deepEqual(snapshot.cover_settings.articles,[{id:'report',alias:'Public'}]);config.articles[0].alias='Changed';assert.equal(snapshot.cover_settings.articles[0].alias,'Public');
+});
+
+test('saved cover template remaps greetings to fresh IDs and copies independent settings',()=>{
+ const old=[{id:'old-board',template_key:'board',kind:'board'},{id:'old-youth',template_key:'youth',kind:'youth'},article];
+ const input={...settings(),articles:[{id:'old-board',alias:'Unser Vorstand'},{id:'old-youth',alias:''},{id:'report',alias:'Nur in diesem Heft'}]};
+ const template=editorialCoverTemplate(input,old);
+ assert.deepEqual(template.articles,[{template_key:'board',alias:'Unser Vorstand'},{template_key:'youth',alias:''}]);
+ const next=applyEditorialCoverTemplate(template,[{id:'new-board',template_key:'board',kind:'board'}],[{slug:'herren-1',active:true}]);
+ assert.deepEqual(next.articles,[{id:'new-board',alias:'Unser Vorstand'}]);
+ assert.deepEqual(next.teamSlugs,['herren-1']);
+ assert.equal(next.headline,input.headline);
+ next.articles[0].alias='Geändert';next.teamSlugs.push('herren-2');
+ assert.equal(template.articles[0].alias,'Unser Vorstand');assert.deepEqual(template.teamSlugs,['herren-1']);
+ assert.deepEqual(applyEditorialCoverTemplate(template,[],[{slug:'herren-1',active:false}]).teamSlugs,['herren-1']);
+ assert.deepEqual(applyEditorialCoverTemplate(template,[],[]).teamSlugs,[]);
+ assert.equal(input.articles[0].id,'old-board');
 });

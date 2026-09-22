@@ -169,11 +169,11 @@ export function createEditorialWorkspace(
     const other = articles.filter(article => ['free','event'].includes(article.kind));
     const activeTeams = teams.filter(team => team.active !== false && /^(herren|frauen)-[1-9][0-9]*$/.test(team.slug || ''));
     return `<details class="ed-context-card ed-plan-group" id="edCoverCard" data-plan-group="edCoverHeading" aria-labelledby="edCoverHeading" ${expandedPlanGroups.has(`${selected.id}:edCoverHeading`) ? 'open' : ''}><summary><strong id="edCoverHeading">Titelblatt</strong></summary><p class="small">Wähle die Angaben und Verweise für das Cover. Beiträge und Spiele führen beim Anklicken direkt zur passenden Heftseite.</p>
-      <form id="edCoverSettingsForm"><div class="ed-cover-fields">${field('number','showNumber','Heft-/Ausgabenummer',20)}${field('headline','showHeadline','Überschrift auf dem Cover',180)}${field('namePart1','showNamePart1','Großer Name · Teil 1',40)}${field('namePart2','showNamePart2','Großer Name · Teil 2',40)}<div class="ed-cover-field"><label class="ed-cover-check"><input type="checkbox" name="showDate" ${settings.showDate ? 'checked' : ''}> Erscheinungsdatum</label><span>${dateLabel(selected.publishes_on)}</span><small>Änderbar unter „Planung & Termine“.</small></div></div>
-      <details class="ed-cover-selection"><summary>Beiträge auf dem Titelblatt</summary>${choices(other)}</details>
-      <details class="ed-cover-selection"><summary>Grußworte auf dem Titelblatt</summary>${choices(greetings)}</details>
-      <details class="ed-cover-selection"><summary>Spiele der aktiven Mannschaften</summary><p class="small">Je Mannschaft wird das nächste Spiel aus dem gespeicherten Sportdatenstand angekündigt.</p>${activeTeams.map(team => `<label class="ed-cover-check"><input type="checkbox" data-cover-team="${esc(team.slug)}" ${settings.teamSlugs === null || settings.teamSlugs.includes(team.slug) ? 'checked' : ''}>${esc(team.name)}</label>`).join('')}</details>
-      <p id="edCoverSettingsMessage" class="small" role="status"></p><div class="toolbar ed-card-actions"><button type="submit">Titelblatt speichern</button></div></form>
+      <form id="edCoverSettingsForm"><div class="ed-cover-fields">${field('namePart1','showNamePart1','Großer Name · Teil 1',40)}${field('namePart2','showNamePart2','Großer Name · Teil 2',40)}${field('number','showNumber','Heft-/Ausgabenummer',20)}${field('headline','showHeadline','Überschrift auf dem Cover',180)}<div class="ed-cover-field"><label class="ed-cover-check"><input type="checkbox" name="showDate" ${settings.showDate ? 'checked' : ''}> Erscheinungsdatum</label><span>${dateLabel(selected.publishes_on)}</span><small>Änderbar unter „Planung & Termine“.</small></div></div>
+      <details class="ed-cover-selection" data-plan-group="edCoverArticles" ${expandedPlanGroups.has(`${selected.id}:edCoverArticles`) ? 'open' : ''}><summary>Beiträge auf dem Titelblatt</summary>${choices(other)}</details>
+      <details class="ed-cover-selection" data-plan-group="edCoverGreetings" ${expandedPlanGroups.has(`${selected.id}:edCoverGreetings`) ? 'open' : ''}><summary>Grußworte auf dem Titelblatt</summary>${choices(greetings)}</details>
+      <details class="ed-cover-selection" data-plan-group="edCoverTeams" ${expandedPlanGroups.has(`${selected.id}:edCoverTeams`) ? 'open' : ''}><summary>Spiele der aktiven Mannschaften</summary><p class="small">Je Mannschaft wird das nächste Spiel aus dem gespeicherten Sportdatenstand angekündigt.</p>${activeTeams.map(team => `<label class="ed-cover-check"><input type="checkbox" data-cover-team="${esc(team.slug)}" ${settings.teamSlugs === null || settings.teamSlugs.includes(team.slug) ? 'checked' : ''}>${esc(team.name)}</label>`).join('')}</details>
+      <p class="small">„Als Standard speichern“ speichert diese Angaben auch für neue Stadionhefte: Texte, Schalter, Grußwort-Auswahl mit Alias und Mannschaften. Datum, Titelbild, freie Beiträge und Veranstaltungen gehören zur jeweiligen Ausgabe.</p><p id="edCoverSettingsMessage" class="small" role="status"></p><div class="toolbar ed-card-actions"><button type="submit">Titelblatt speichern</button><button type="submit" class="secondary" id="edSaveCoverDefaults">Als Standard speichern</button></div></form>
       <details class="ed-cover-settings" data-plan-group="edCoverImage" ${expandedPlanGroups.has(`${selected.id}:edCoverImage`) ? 'open' : ''}><summary>Titelbild & Bildnachweis</summary><form id="edCoverForm" class="fields">${selected.cover_url ? `<img class="ed-cover-thumb" src="${esc(selected.cover_url)}" alt="${esc(selected.cover_alt || 'Aktuelles Titelbild')}">` : ''}<label class="wide">Titelbild (JPG, PNG, WebP · bis 5 MB)<input id="edCoverFile" type="file" accept="image/jpeg,image/png,image/webp" ${selected.cover_path || selected.cover_url ? '' : 'required'}></label><label>Bildbeschreibung<input name="alt" maxlength="300" value="${esc(selected.cover_alt || selected.title)}" required></label><label>Bildnachweis<input name="credit" maxlength="300" value="${esc(selected.cover_credit || '')}" placeholder="Foto: …"></label><p class="wide small" id="edCoverMessage" role="status"></p><div class="wide toolbar ed-card-actions"><button type="submit" id="edSaveCoverImage">${selected.cover_path || selected.cover_url ? 'Bildangaben speichern' : 'Titelbild speichern'}</button></div></form></details></details>`;
   }
   function canLeaveCover() {
@@ -194,6 +194,7 @@ export function createEditorialWorkspace(
     form.onsubmit = async event => {
       event.preventDefault();
       if (busy) return;
+      const saveDefaults = event.submitter?.id === 'edSaveCoverDefaults';
       const settings = {};
       for (const name of ['number','headline','namePart1','namePart2']) settings[name] = form.elements[name].value;
       for (const name of ['showNumber','showHeadline','showNamePart1','showNamePart2','showDate']) settings[name] = form.elements[name].checked;
@@ -201,10 +202,10 @@ export function createEditorialWorkspace(
       settings.teamSlugs = [...form.querySelectorAll('[data-cover-team]:checked')].map(checkbox => checkbox.dataset.coverTeam);
       lock(form,true);
       try {
-        await call('save_cover_settings',{issueId:selected.id,version:selected.version,settings});
+        await call(saveDefaults ? 'save_cover_defaults' : 'save_cover_settings',{issueId:selected.id,version:selected.version,settings});
         coverDirty = false;
         await refresh();
-        $('#edCoverSettingsMessage').textContent = 'Titelblatt gespeichert. Bitte die aktualisierte Heftvorschau prüfen.';
+        $('#edCoverSettingsMessage').textContent = saveDefaults ? 'Titelblatt und Standard für neue Stadionhefte gespeichert.' : 'Titelblatt gespeichert. Bitte die aktualisierte Heftvorschau prüfen.';
       } catch (error) { $('#edCoverSettingsMessage').textContent = error.message; }
       finally { lock(form,false); syncFields(); }
     };
