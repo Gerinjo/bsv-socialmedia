@@ -116,10 +116,10 @@ function renderCover(edition, articles) {
     $('#cover-matches').classList.add('editorial-cover-matches');
     $('#cover-matches').hidden = Boolean(settings && !edition.coverMatches.length);
     $('#cover-matches').innerHTML = `<h2>Die nächsten Spiele der Aktiven</h2><div class="cover-fixtures">${edition.coverMatches.length ? edition.coverMatches.map(match => {
-      const content = `<span class="cover-fixture-team">${esc(match.team)}</span>${match.state === 'scheduled'
+      const content = `${match.state === 'scheduled'
         ? `<span class="cover-fixture-date">${esc(new Date(match.date + 'T12:00:00Z').toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit'}))} · ${esc(match.time || 'Uhrzeit offen')}${match.time ? ' Uhr' : ''}</span><strong>${esc(match.home)} <i>–</i> ${esc(match.away)}</strong>`
         : `<strong>${match.state === 'pending' ? 'Spielplan noch nicht geladen' : 'Kein nächster Termin im gespeicherten Spielplan'}</strong>`}`;
-      return match.articleId ? `<a class="cover-fixture" href="${issueLink(edition, 'artikel/' + match.articleId)}">${content}</a>` : `<div class="cover-fixture">${content}</div>`;
+      return `<div class="cover-fixture"><span class="cover-fixture-team">${match.articleId ? `<a href="${issueLink(edition, 'artikel/' + match.articleId)}">${esc(match.team)}</a>` : esc(match.team)}${clubWebsiteLink(match.websiteUrl,match.team)}</span>${match.articleId ? `<a class="cover-fixture-content" href="${issueLink(edition, 'artikel/' + match.articleId)}">${content}</a>` : content}</div>`;
     }).join('') : '<p class="cover-fixtures-empty">Sportdaten aktualisieren, um die nächsten Spiele der Aktiven zu übernehmen.</p>'}</div>`;
   }
   $('#cover-stories').hidden = !$('#cover-stories').children.length;
@@ -149,6 +149,7 @@ function renderContents(edition, articles) {
 function renderArticle(edition, articles, index) {
   const article = articles[index];
   $('#article').dataset.article = article.id;
+  $('#article').classList.toggle('contact-article', Boolean(article.contactPage));
   $('#article').classList.toggle('team-photo-article', Boolean(article.teamPhotoPage));
   $('#article').classList.toggle('season-article', Boolean(edition.demo));
   $('#article').classList.toggle('advertising-article', Boolean(article.advertising));
@@ -158,7 +159,7 @@ function renderArticle(edition, articles, index) {
   $('#article').classList.toggle('sports-compact-article', Boolean(article.blocks?.some(block => block.type === 'sports-overview' && block.compact)));
   $('#article').classList.toggle('youth-sports-article', Boolean(article.blocks?.some(block => block.type === 'youth-sports-grid')));
   $('#article-category').textContent = article.category;
-  $('#article-title').textContent = article.title;
+  $('#article-title').innerHTML = esc(article.title) + clubWebsiteLink(article.websiteUrl, article.title);
   $('#article-lead').textContent = article.lead;
   $('#article-meta').textContent = [article.author, edition.date || `Ausgabe ${edition.number} / ${edition.season}`, article.reading].filter(Boolean).join(' · ');
   $('#article-folio-category').textContent = article.category;
@@ -183,8 +184,8 @@ function sourcesMarkup(sources, asOf, hasLetter) {
 function sheetEditorialMarkup(page, edition) {
   if (page.teamPhotoPage) return `<div class="sheet-editorial team-photo-sheet">${articleBlocksMarkup(page.blocks, edition)}</div>`;
   const sections = page.segments || [page];
-  return `<div class="sheet-editorial"><div class="running-head"><span>NORDSTERN NEWS</span><span>${esc(edition.number)} / ${esc(edition.season)} · ${pad(page.folio || 0)}</span></div>${sections.map((section,index) => {
-    const heading = section.continuation ? `<p class="section-continuation">${esc(section.title)} · Fortsetzung</p>` : `<header class="article-heading ${index ? 'shared-section-heading' : ''}"><p class="eyebrow">${esc(section.category)}</p><h1>${esc(section.title)}</h1>${section.lead ? `<p class="article-lead">${esc(section.lead)}</p>` : ''}<p class="article-meta">${esc([section.author, edition.date].filter(Boolean).join(' · '))}</p></header>`;
+  return `<div class="sheet-editorial${page.contactPage ? ' contact-sheet' : ''}"><div class="running-head"><span>NORDSTERN NEWS</span><span>${esc(edition.number)} / ${esc(edition.season)} · ${pad(page.folio || 0)}</span></div>${sections.map((section,index) => {
+    const heading = section.continuation ? `<p class="section-continuation">${esc(section.title)} · Fortsetzung</p>` : `<header class="article-heading ${index ? 'shared-section-heading' : ''}"><p class="eyebrow">${esc(section.category)}</p><h1>${esc(section.title)}${clubWebsiteLink(section.websiteUrl, section.title)}</h1>${section.lead ? `<p class="article-lead">${esc(section.lead)}</p>` : ''}<p class="article-meta">${esc([section.author, edition.date].filter(Boolean).join(' · '))}</p></header>`;
     return `<section class="editorial-section" data-section-id="${esc(section.articleId || section.id)}">${heading}<div class="article-columns">${articleBlocksMarkup(section.blocks, edition)}</div></section>`;
   }).join('')}</div>`;
 }
@@ -267,7 +268,7 @@ function pairedSportsMarkup(block, compact) {
       parts[slot] += (parts[slot] ? '\n\n' : '') + section;
     }
     if(compact) parts[0]='';
-    return `<section class="${prefix}-sports-card"><h2>${esc(team.title)}</h2>${parts.map((text,index)=>`${index === 1 && hasPhotos ? `<div class="sports-photo-row">${sportsTeamPhotoMarkup(team.photo)}</div>` : ''}<div class="sports-part" data-sports-part="${index}">${text ? editorialSportsMarkup({text,compact,ownTeam}) : ''}</div>`).join('')}</section>`;
+    return `<section class="${prefix}-sports-card"><h2>${esc(team.title)}${clubWebsiteLink(team.websiteUrl, team.title)}</h2>${parts.map((text,index)=>`${index === 1 && hasPhotos ? `<div class="sports-photo-row">${sportsTeamPhotoMarkup(team.photo)}</div>` : ''}<div class="sports-part" data-sports-part="${index}">${text ? editorialSportsMarkup({text,compact,ownTeam}) : ''}</div>`).join('')}</section>`;
   }).join('')}</div>`;
 }
 
@@ -366,9 +367,10 @@ function fixturesMarkup(edition) {
 
 function blockMarkup(block, edition) {
   switch (block.type) {
+    case 'contact-directory': return contactDirectoryMarkup(block);
     case 'team-photo-spread': return `<figure class="team-photo-spread"><img src="${esc(block.photo.src)}" ${imageSize(block.photo.src)} alt="${esc(block.photo.alt)}"></figure>`;
-    case 'person-portraits': return `<div class="editorial-person-portraits">${block.people.map(person => `<figure>${person.photo_url ? `<span class="editorial-person-photo"><img src="${esc(person.photo_url)}" alt="${esc(person.name)}" width="120" height="145"></span>` : ''}<figcaption><strong>${esc(person.name)}</strong>${esc(person.role)}</figcaption></figure>`).join('')}</div>`;
-    case 'coach-grid': return `<div class="coach-grid">${block.teams.map(team => `<section><h2>${esc(team.title)}</h2>${team.author ? `<p class="coach-author">${esc(team.author)}</p>` : ''}${articleBlocksMarkup(team.blocks, edition)}</section>`).join('')}</div>`;
+    case 'person-portraits': return `<div class="editorial-person-portraits">${block.people.map(person => `<figure>${person.photo_url ? `<span class="editorial-person-photo"><img src="${esc(person.photo_url)}" alt="${esc(person.name)}" width="120" height="145"></span>` : ''}<figcaption><strong>${esc(person.name)}${clubWebsiteLink(person.websiteUrl, person.name)}</strong>${esc(person.role)}</figcaption></figure>`).join('')}</div>`;
+    case 'coach-grid': return `<div class="coach-grid">${block.teams.map(team => `<section><h2>${esc(team.title)}${clubWebsiteLink(team.websiteUrl, team.title)}</h2>${team.author ? `<p class="coach-author">${esc(team.author)}</p>` : ''}${articleBlocksMarkup(team.blocks, edition)}</section>`).join('')}</div>`;
     case 'editorial-gallery-row': return `<div class="editorial-gallery-row">${block.galleries.map(group=>blockMarkup(group,edition)).join('')}</div>`;
     case 'editorial-gallery': { const cover=block.images.find(img=>img.id===block.coverId)||block.images[0];const label=`${block.title || 'Bildergalerie'} · ${block.images.length} Bilder ansehen`;return `<figure class="editorial-gallery"><button type="button" data-gallery-id="${esc(block.id)}" aria-label="${esc(label)}" title="${esc(label)}"><span class="editorial-gallery-cover"><img src="${esc(cover.src)}" alt="${esc(cover.alt)}" loading="lazy"><svg class="editorial-gallery-icon" viewBox="0 0 32 32" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 23H3V3h22v2M9 27H7V7h22v2"/><rect x="11" y="11" width="20" height="20" rx="1"/><circle cx="25" cy="17" r="2"/><path d="m12 27 6-7 5 5 3-3 4 5"/></svg></span></button></figure>`; }
     case 'senior-sports-grid': return pairedSportsMarkup(block, false);
@@ -538,3 +540,12 @@ window.addEventListener('keydown', event => {
 });
 renderArchive();
 route();
+
+function clubWebsiteLink(url, label) {
+  if (!url) return '';
+  try { if (new URL(url).origin !== 'https://bsvnordstern.de') return ''; } catch { return ''; }
+  return `<a class="club-website-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(label)} auf der Homepage öffnen" title="${esc(label)} auf der Homepage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6L10 14M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5"/></svg></a>`;
+}
+function contactDirectoryMarkup(block) {
+  return `<div class="contact-directory">${block.groups.map(group => `<section class="contact-group"><h2>${esc(group.title)}${clubWebsiteLink(group.websiteUrl,group.title)}</h2>${group.people.map(person => `<div class="contact-person"><div><strong>${esc(person.name)}</strong><span>${esc(person.role)}</span></div>${clubWebsiteLink(person.websiteUrl,person.name)}</div>`).join('')}${group.description ? `<p>${esc(group.description)}</p>` : ''}${group.contactUrl ? `<div class="contact-person"><strong>Kontakt aufnehmen</strong>${clubWebsiteLink(group.contactUrl,group.title)}</div>` : ''}</section>`).join('')}</div><p class="contact-directory-note">Kontakte von bsvnordstern.de · Stand ${esc(block.verifiedAt.split('-').reverse().join('.'))} · Aktuelle Kontaktmöglichkeiten findet ihr auf der Homepage.</p>`;
+}

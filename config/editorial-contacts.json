@@ -1,0 +1,287 @@
+{
+  "sourceUrl": "https://bsvnordstern.de/",
+  "verifiedAt": "2026-09-22",
+  "teams": {
+    "herren-1": "https://bsvnordstern.de/fussball/herren/bezirksliga/",
+    "herren-2": "https://bsvnordstern.de/fussball/herren/kreisliga-2/",
+    "alte-herren": "https://bsvnordstern.de/fussball/alte-herren/",
+    "frauen-1": "https://bsvnordstern.de/fussball/frauen/bezirksliga/",
+    "frauen-2": "https://bsvnordstern.de/fussball/frauen/kreisliga/",
+    "u19-junioren": "https://bsvnordstern.de/jugend/u19/",
+    "u17-junioren": "https://bsvnordstern.de/jugend/u17/",
+    "u15-c1-junioren": "https://bsvnordstern.de/jugend/u15-c1/",
+    "u15-c2-junioren": "https://bsvnordstern.de/jugend/u15-c2/",
+    "u13-d1-junioren": "https://bsvnordstern.de/jugend/u13-d1/",
+    "u13-d2-junioren": "https://bsvnordstern.de/jugend/u13-d2/",
+    "u13-d3-junioren": "https://bsvnordstern.de/jugend/u13-d3/",
+    "u11-e1-junioren": "https://bsvnordstern.de/jugend/u11-e1/",
+    "u11-e2-junioren": "https://bsvnordstern.de/jugend/u11-e2/",
+    "u11-e3-junioren": "https://bsvnordstern.de/jugend/u11-e3/",
+    "u9-f-junioren": "https://bsvnordstern.de/jugend/u9-f/",
+    "u8-f-junioren": "https://bsvnordstern.de/jugend/u8-f/",
+    "u7-bambinis": "https://bsvnordstern.de/jugend/u7-g/",
+    "u6-spielgruppe": "https://bsvnordstern.de/jugend/u6-g/",
+    "u17-juniorinnen": "https://bsvnordstern.de/jugend/juniorinnen/u17/",
+    "u15-juniorinnen": "https://bsvnordstern.de/jugend/juniorinnen/u15/",
+    "u13-juniorinnen": "https://bsvnordstern.de/jugend/juniorinnen/u13/"
+  },
+  "groups": [
+    {
+      "title": "Geschäftsführender Vorstand",
+      "websiteUrl": "https://bsvnordstern.de/verein/vorstandschaft/",
+      "teamSlug": null,
+      "people": [
+        {
+          "name": "Sandra Fuchs",
+          "role": "1. Vorstand",
+          "websiteUrl": "https://bsvnordstern.de/verein/vorstandschaft/#:~:text=Sandra%20Fuchs"
+        },
+        {
+          "name": "Felix Schüle",
+          "role": "2. Vorstand · Sportlicher Leiter Herren",
+          "websiteUrl": "https://bsvnordstern.de/verein/vorstandschaft/#:~:text=Felix%20Sch%C3%BCle"
+        },
+        {
+          "name": "Claudia Gastaudo",
+          "role": "Kassiererin",
+          "websiteUrl": "https://bsvnordstern.de/verein/vorstandschaft/#:~:text=Claudia%20Gastaudo"
+        },
+        {
+          "name": "Michaela Auer",
+          "role": "Schriftführerin",
+          "websiteUrl": "https://bsvnordstern.de/verein/vorstandschaft/#:~:text=Michaela%20Auer"
+        }
+      ]
+    },
+    {
+      "title": "Vorstandschaft",
+      "websiteUrl": "https://bsvnordstern.de/verein/vorstandschaft/",
+      "teamSlug": null,
+      "people": [
+        {
+          "name": "Ann-Kathrin Sugg",
+          "role": "Sportliche Leitung Frauen",
+          "websiteUrl": "https://bsvnordstern.de/verein/vorstandschaft/#:~:text=Ann-Kathrin%20Sugg"
+        },
+        {
+          "name": "Karsten Grammel",
+          "role": "Sportliche Leitung Alte Herren",
+          "websiteUrl": "https://bsvnordstern.de/verein/vorstandschaft/#:~:text=Karsten%20Grammel"
+        },
+        {
+          "name": "Oliver Schillinger",
+          "role": "Spielbetrieb",
+          "websiteUrl": "https://bsvnordstern.de/verein/vorstandschaft/#:~:text=Oliver%20Schillinger"
+        },
+        {
+          "name": "Manuel Schellhammer",
+          "role": "Passwesen",
+          "websiteUrl": "https://bsvnordstern.de/verein/vorstandschaft/#:~:text=Manuel%20Schellhammer"
+        },
+        {
+          "name": "Jérôme Ernsberger",
+          "role": "IT & Administration",
+          "websiteUrl": "https://bsvnordstern.de/verein/vorstandschaft/#:~:text=J%C3%A9r%C3%B4me%20Ernsberger"
+        },
+        {
+          "name": "Stefan Gastaudo",
+          "role": "Datenschutzbeauftragter",
+          "websiteUrl": "https://bsvnordstern.de/verein/vorstandschaft/#:~:text=Stefan%20Gastaudo"
+        },
+        {
+          "name": "Markus Sawicki",
+          "role": "Einkauf Organisation",
+          "websiteUrl": "https://bsvnordstern.de/verein/vorstandschaft/#:~:text=Markus%20Sawicki"
+        },
+        {
+          "name": "Ole Schmal",
+          "role": "Marketing & Social Media",
+          "websiteUrl": "https://bsvnordstern.de/verein/vorstandschaft/#:~:text=Ole%20Schmal"
+        },
+        {
+          "name": "Julian Kemmer",
+          "role": "Presse",
+          "websiteUrl": "https://bsvnordstern.de/verein/vorstandschaft/#:~:text=Julian%20Kemmer"
+        },
+        {
+          "name": "Mario Jost",
+          "role": "Platzwart",
+          "websiteUrl": "https://bsvnordstern.de/verein/vorstandschaft/#:~:text=Mario%20Jost"
+        },
+        {
+          "name": "Eberhard Klinkenberg",
+          "role": "Hausmeister",
+          "websiteUrl": "https://bsvnordstern.de/verein/vorstandschaft/#:~:text=Eberhard%20Klinkenberg"
+        },
+        {
+          "name": "Markus Moßbrugger",
+          "role": "Schlüsselmanagement",
+          "websiteUrl": "https://bsvnordstern.de/verein/vorstandschaft/#:~:text=Markus%20Mo%C3%9Fbrugger"
+        }
+      ]
+    },
+    {
+      "title": "Jugendabteilung",
+      "websiteUrl": "https://bsvnordstern.de/jugend/vorstandschaft/",
+      "teamSlug": null,
+      "people": [
+        {
+          "name": "Jérôme Ernsberger",
+          "role": "Jugendleiter",
+          "websiteUrl": "https://bsvnordstern.de/jugend/vorstandschaft/#:~:text=J%C3%A9r%C3%B4me%20Ernsberger"
+        },
+        {
+          "name": "Ole Schmal",
+          "role": "Stellvertretender Jugendleiter",
+          "websiteUrl": "https://bsvnordstern.de/jugend/vorstandschaft/#:~:text=Ole%20Schmal"
+        },
+        {
+          "name": "Wiebke Baronner-Dieterle",
+          "role": "Jugendkassiererin · Organisation (Rechte Hand)",
+          "websiteUrl": "https://bsvnordstern.de/jugend/vorstandschaft/#:~:text=Wiebke%20Baronner-Dieterle"
+        },
+        {
+          "name": "Sarah Klumpp",
+          "role": "Elternvertretung",
+          "websiteUrl": "https://bsvnordstern.de/jugend/vorstandschaft/#:~:text=Sarah%20Klumpp"
+        },
+        {
+          "name": "Monika Peglau",
+          "role": "Jugendschutzbeauftragte",
+          "websiteUrl": "https://bsvnordstern.de/jugend/vorstandschaft/#:~:text=Monika%20Peglau"
+        },
+        {
+          "name": "Laila Goldhagen",
+          "role": "Jugendvertretung C–B-Juniorinnen",
+          "websiteUrl": "https://bsvnordstern.de/jugend/vorstandschaft/#:~:text=Laila%20Goldhagen"
+        },
+        {
+          "name": "Samuel Auer",
+          "role": "Jugendvertretung B–A-Junioren",
+          "websiteUrl": "https://bsvnordstern.de/jugend/vorstandschaft/#:~:text=Samuel%20Auer"
+        },
+        {
+          "name": "Ella Kramer",
+          "role": "Jugendvertretung G–D-Junioren & Juniorinnen",
+          "websiteUrl": "https://bsvnordstern.de/jugend/vorstandschaft/#:~:text=Ella%20Kramer"
+        },
+        {
+          "name": "Susi Eisner",
+          "role": "Organisation",
+          "websiteUrl": "https://bsvnordstern.de/jugend/vorstandschaft/#:~:text=Susi%20Eisner"
+        },
+        {
+          "name": "Tobias Messmer",
+          "role": "Sport Events",
+          "websiteUrl": "https://bsvnordstern.de/jugend/vorstandschaft/#:~:text=Tobias%20Messmer"
+        },
+        {
+          "name": "Manuel Schellhammer",
+          "role": "Passwesen",
+          "websiteUrl": "https://bsvnordstern.de/jugend/vorstandschaft/#:~:text=Manuel%20Schellhammer"
+        },
+        {
+          "name": "Oliver Schillinger",
+          "role": "Spielbetrieb",
+          "websiteUrl": "https://bsvnordstern.de/jugend/vorstandschaft/#:~:text=Oliver%20Schillinger"
+        }
+      ]
+    },
+    {
+      "title": "1. Herren",
+      "websiteUrl": "https://bsvnordstern.de/fussball/herren/bezirksliga/",
+      "teamSlug": "herren-1",
+      "people": [
+        {
+          "name": "Torsten Parzich",
+          "role": "Trainer",
+          "websiteUrl": "https://bsvnordstern.de/fussball/herren/bezirksliga/#:~:text=Torsten%20Parzich"
+        },
+        {
+          "name": "Torben Altenburg",
+          "role": "Co-Trainer",
+          "websiteUrl": "https://bsvnordstern.de/fussball/herren/bezirksliga/#:~:text=Torben%20Altenburg"
+        },
+        {
+          "name": "Eberhard Klinkenberg",
+          "role": "Betreuer",
+          "websiteUrl": "https://bsvnordstern.de/fussball/herren/bezirksliga/#:~:text=Eberhard%20Klinkenberg"
+        }
+      ]
+    },
+    {
+      "title": "2. Herren",
+      "websiteUrl": "https://bsvnordstern.de/fussball/herren/kreisliga-2/",
+      "teamSlug": "herren-2",
+      "people": [
+        {
+          "name": "Alexander Kaiser",
+          "role": "Trainer",
+          "websiteUrl": "https://bsvnordstern.de/fussball/herren/kreisliga-2/#:~:text=Alexander%20Kaiser"
+        }
+      ]
+    },
+    {
+      "title": "1. Frauen",
+      "websiteUrl": "https://bsvnordstern.de/fussball/frauen/bezirksliga/",
+      "teamSlug": "frauen-1",
+      "people": [
+        {
+          "name": "Mathias Becht",
+          "role": "Trainer",
+          "websiteUrl": "https://bsvnordstern.de/fussball/frauen/bezirksliga/#:~:text=Mathias%20Becht"
+        },
+        {
+          "name": "Max Menzel",
+          "role": "Co-Trainer",
+          "websiteUrl": "https://bsvnordstern.de/fussball/frauen/bezirksliga/#:~:text=Max%20Menzel"
+        }
+      ]
+    },
+    {
+      "title": "2. Frauen",
+      "websiteUrl": "https://bsvnordstern.de/fussball/frauen/kreisliga/",
+      "teamSlug": "frauen-2",
+      "people": [
+        {
+          "name": "Myriam Lipp",
+          "role": "Chef-Trainerin",
+          "websiteUrl": "https://bsvnordstern.de/fussball/frauen/kreisliga/#:~:text=Myriam%20Lipp"
+        },
+        {
+          "name": "Emel Bayram",
+          "role": "Co-Trainerin",
+          "websiteUrl": "https://bsvnordstern.de/fussball/frauen/kreisliga/#:~:text=Emel%20Bayram"
+        }
+      ]
+    },
+    {
+      "title": "Weitere Abteilungen",
+      "websiteUrl": "https://bsvnordstern.de/verein/vorstandschaft/",
+      "people": [
+        {
+          "name": "Konrad Mauz",
+          "role": "Abteilungsleiter Bogensport",
+          "websiteUrl": "https://bsvnordstern.de/verein/vorstandschaft/#:~:text=Konrad%20Mauz"
+        },
+        {
+          "name": "Sigrid Burkhardt",
+          "role": "Abteilungsleitung: Gymnastik · Mitgliederbestandspflege",
+          "websiteUrl": "https://bsvnordstern.de/verein/vorstandschaft/#:~:text=Sigrid%20Burkhardt"
+        },
+        {
+          "name": "Thomas Graf",
+          "role": "Abteilungsleiter Wandern",
+          "websiteUrl": "https://bsvnordstern.de/verein/vorstandschaft/#:~:text=Thomas%20Graf"
+        }
+      ]
+    },
+    {
+      "title": "Förderverein",
+      "websiteUrl": "https://bsvnordstern.de/foerderverein/",
+      "people": [],
+      "description": "Projekte unterstützen und gemeinsam mehr ermöglichen.",
+      "contactUrl": "https://bsvnordstern.de/kontakt?thema=foerderverein"
+    }
+  ]
+}
