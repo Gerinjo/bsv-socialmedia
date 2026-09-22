@@ -3,7 +3,16 @@ export {
   editorialMilestones,
 } from "./editorial-calendar.mjs";
 export const EDITORIAL_KINDS = ["stadium", "newsletter"];
-export const ARTICLE_STATUSES = ["draft", "review", "ready"];
+export const ARTICLE_STATUSES = ["draft", "review", "ready", "waived"];
+export function editorialCanDeleteArticle(article, team) {
+  if (!article || article.automatic_sports) return false;
+  return ['free', 'event'].includes(article.kind) ||
+    (article.kind === 'coach' && !/^(herren|frauen)-[12]$/.test(team?.slug || ''));
+}
+export function editorialCoachTitle(team) {
+  const match = /^(herren|frauen)-([12])$/.exec(team?.slug || '');
+  return match ? `Grußwort Trainer · ${match[2]}. ${match[1] === 'herren' ? 'Herrenmannschaft' : 'Frauenmannschaft'}` : `Begrüßung Trainer · ${team.name}`;
+}
 export function editorialDate(value) {
   const date = String(value ?? "");
   if (
@@ -29,6 +38,20 @@ export function normalizeEditorialIssue(input) {
     );
   return { title, kind: input.kind, starts_on, closes_on, publishes_on };
 }
+export function editorialTeamProfile(team) {
+  const identity = [team.slug, team.website_path, team.websitePath, team.name].filter(Boolean).join(' ').toLowerCase();
+  const age = identity.match(/\bu(19|18|17|16|15|14|13|12|11|10|9|8|7|6)\b/)?.[1];
+  const letter = identity.match(/\b([a-g])(?:[1-9])?[- ](?:jugend|junior)/)?.[1];
+  const group = age ? (Number(age) >= 18 ? 'A' : Number(age) >= 16 ? 'B' : Number(age) >= 14 ? 'C' : Number(age) >= 12 ? 'D' : 'younger') : letter ? letter.toUpperCase() : 'senior';
+  const youth = ['A', 'B', 'C', 'D'].includes(group);
+  const included = youth || (group === 'senior' && team.active !== false && !/alte[- ]herren|\bü35\b/.test(identity));
+  return {
+    group,
+    compact: youth,
+    automaticSports: included,
+    included,
+  };
+}
 export function editorialSeeds(kind, teams) {
   if (kind === "newsletter") return [];
   return [
@@ -43,17 +66,18 @@ export function editorialSeeds(kind, teams) {
       template_key: "youth",
     },
     ...teams
-      .filter((team) => team.active !== false)
+      .filter((team) => editorialTeamProfile(team).included)
       .flatMap((team) => [
-        {
-          title: `Begrüßung Trainer · ${team.name}`,
+        ...(editorialTeamProfile(team).group === 'A' ? [] : [{
+          title: editorialCoachTitle(team),
           kind: "coach",
           template_key: `coach:${team.id}`,
           team_id: team.id,
-        },
+        }]),
         {
-          title: `Tabelle & Ergebnisse · ${team.name}`,
+          title: `Sport${editorialTeamProfile(team).compact ? ' kompakt' : ''} · ${team.name}`,
           kind: "sports",
+          automatic_sports: editorialTeamProfile(team).automaticSports,
           template_key: `sports:${team.id}`,
           team_id: team.id,
         },

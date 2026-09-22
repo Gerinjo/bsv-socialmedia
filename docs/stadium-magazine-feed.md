@@ -7,3 +7,5 @@ GET `/functions/v1/stadium-magazine-feed?date=YYYY-MM-DD` liefert Version, Heftd
 Auswahl: Sponsor aktiv, Motivstatus `approved`, `logo_transparent_path` vorhanden, Laufzeit am angefragten Erscheinungstag gültig und mindestens eine Zuordnung vom Typ `stadionheft`. Ausgegeben werden nur ID, Slug, Name, Website, temporärer Motivlink, Aktualisierungsdatum sowie zugehörige Stadionheft-Formate und Zielgruppen. Vertragsdaten, Preise, Kontaktdaten, interne Notizen und andere Sponsorzuordnungen bleiben außerhalb der Antwort.
 
 Die Motivlinks sind 15 Minuten gültig. Der Heft-Build lädt sie sofort herunter und speichert feste Bildversionen. `verify_jwt` bleibt aktiviert; Tabellen-RLS und Storage-Zugriffsregeln werden nicht geändert.
+
+Die Auswahl wird auch von der Redaktionsvorschau verwendet (`_shared/magazine-sponsors.ts`). Der externe Feed behält sein Antwortformat; die Redaktion speichert zusätzlich unveränderliche Motivkopien für geprüfte und veröffentlichte Ausgaben.

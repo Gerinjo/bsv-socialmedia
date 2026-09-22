@@ -1,5 +1,5 @@
 import { build } from '../../bsv-website/node_modules/esbuild/lib/main.js';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 
 const websiteRoot = new URL('../../bsv-website/', import.meta.url);
@@ -135,13 +135,18 @@ for (const profile of Object.values(teamProfiles)) {
   }
 }
 
+const editorialRoles = JSON.parse(await readFile(new URL('../config/editorial-role-seed.json', import.meta.url), 'utf8'));
+for (const item of editorialRoles.people) {
+  const person = [...people.values()].find(person => person.slug === item.slug);
+  if (person) person.roles.add(item.role);
+}
 const memberships = [];
-for (const path of activeTeamPaths) {
+for (const [path] of websiteTeams) {
   const teamSlug = teamSlugs.get(path);
   const profile = teamProfiles[path];
   const entries = [
     ...(profile.coaches ?? []).map((coach) => ({ name: coach.name, role: coach.role })),
-    ...squadEntries(profile.squad),
+    ...(activeTeamPaths.has(path) ? squadEntries(profile.squad) : []),
   ];
   for (const entry of entries) {
     addPerson(entry.name, { role: entry.role });

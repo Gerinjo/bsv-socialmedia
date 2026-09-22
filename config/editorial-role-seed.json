@@ -1,0 +1,9 @@
+{
+  "source": "bsv-website/src/pages/[...slug].astro · Vorstandschaft und Organigramm, Stand 21.09.2026",
+  "people": [
+    { "slug": "sandra-fuchs", "role": "1. Vorstand" },
+    { "slug": "felix-schule", "role": "2. Vorstand" },
+    { "slug": "jerome-ernsberger", "role": "Jugendleiter" },
+    { "slug": "ole-schmal", "role": "Stellvertretender Jugendleiter" }
+  ]
+}

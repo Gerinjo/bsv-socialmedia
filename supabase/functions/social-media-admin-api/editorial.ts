@@ -1,11 +1,21 @@
+import { prepareEditorialTeamPhoto } from '../_shared/editorial-team-photo.ts';
+import { prepareEditorialGalleries, withArticleGalleries } from '../_shared/editorial-galleries.ts';
+import { loadEditorialPeople, prepareEditorialPeople } from '../_shared/editorial-people.ts';
+import {
+  handleEditorialPublication,
+  withEditorialCover,
+} from "./editorial-publication.ts";
 import opentype from "npm:opentype.js@1.3.4";
 import {
   ARTICLE_STATUSES,
+  editorialCanDeleteArticle,
   editorialSeeds,
+  editorialTeamProfile,
   normalizeEditorialIssue,
   rewriteEditorialText,
 } from "../../../src/editorial.mjs";
 import { editorialSportsSnapshot } from "../../../src/editorial-sports.mjs";
+import { normalizeEditorialCoverSettings } from '../../../src/editorial-publication.mjs';
 
 const fail = (message: string) => {
   throw new Error(message);
@@ -41,8 +51,21 @@ const departments = [
 
 export async function handleEditorial(db: any, userId: string, body: any) {
   const action = body.action;
+  if (
+    [
+      "editorial_approve_article",
+      "editorial_waive_article",
+      "editorial_cover",
+      "editorial_events",
+      "editorial_add_event",
+      "editorial_remove_event",
+      "editorial_preview_issue",
+      "editorial_publish_issue",
+    ].includes(action)
+  )
+    return handleEditorialPublication(db, userId, body);
   if (action === "editorial_list") {
-    const [issues, teams, audiences] = await Promise.all([
+    const [issues, teams, audiences, people] = await Promise.all([
       row(
         db
           .from("editorial_issues")
@@ -52,8 +75,7 @@ export async function handleEditorial(db: any, userId: string, body: any) {
       row(
         db
           .from("social_teams")
-          .select("id,name,active,sort_order")
-          .eq("active", true)
+          .select("id,name,slug,website_path,active,sort_order")
           .order("sort_order"),
       ),
       row(
@@ -64,9 +86,13 @@ export async function handleEditorial(db: any, userId: string, body: any) {
           .in("audience_group", departments)
           .order("sort_order"),
       ),
+      loadEditorialPeople(db),
     ]);
     return {
-      issues,
+      people,
+      issues: await Promise.all(
+        issues.map((issue: any) => withEditorialCover(db, issue)),
+      ),
       teams,
       departments: audiences,
       rewriteAvailable: Boolean(
@@ -80,8 +106,7 @@ export async function handleEditorial(db: any, userId: string, body: any) {
       const teams = await row(
         db
           .from("social_teams")
-          .select("id,name,active")
-          .eq("active", true)
+          .select("id,name,slug,website_path,active")
           .order("sort_order"),
       );
       const created = await row(
@@ -110,17 +135,36 @@ export async function handleEditorial(db: any, userId: string, body: any) {
     if (!saved) changed();
     return { issue: saved };
   }
-  if (action === "editorial_articles")
-    return {
-      articles: await row(
-        db
-          .from("editorial_articles")
-          .select("*")
-          .eq("issue_id", body.issueId)
-          .order("position")
-          .order("created_at"),
-      ),
-    };
+  if (action === "editorial_articles") {
+    const articles = await row(db.from('editorial_articles').select('*').eq('issue_id',body.issueId).order('position').order('created_at'));
+    return {articles:await Promise.all(articles.map((article: any)=>withArticleGalleries(db,article)))};
+  }
+  if (action === 'editorial_save_cover_settings') {
+    const settings = normalizeEditorialCoverSettings(body.settings);
+    const issue = await row(db.from('editorial_issues').select('*').eq('id', body.issueId).single());
+    if (issue.kind !== 'stadium') fail('Ein Titelblatt ist nur für Stadionhefte verfügbar.');
+    if (issue.version !== body.version) fail('Die Ausgabe wurde geändert. Bitte neu laden.');
+    const entries = await row(db.from('editorial_articles').select('id,kind').eq('issue_id', issue.id));
+    const teams = await row(db.from('social_teams').select('slug').eq('active', true));
+    if (settings.articles.some((item: any) => !entries.some((article: any) => article.id === item.id && article.kind !== 'sports')) || settings.teamSlugs.some((slug: string) => !teams.some((team: any) => team.slug === slug))) fail('Die Auswahl enthält nicht verfügbare Beiträge oder Mannschaften. Bitte neu laden.');
+    const saved = await row(db.from('editorial_issues').update({cover_settings:settings}).eq('id',issue.id).eq('version',body.version).select().maybeSingle());
+    if (!saved) fail('Die Ausgabe wurde geändert. Bitte neu laden.');
+    return {issue: await withEditorialCover(db, saved)};
+  }
+  if (action === 'editorial_delete_article') {
+    const article = await row(db.from('editorial_articles').select('*').eq('id', body.id).single());
+    if (article.version !== body.version) changed();
+    const team = article.kind === 'coach' && article.team_id
+      ? await row(db.from('social_teams').select('slug').eq('id', article.team_id).single()) : null;
+    if (!editorialCanDeleteArticle(article, team))
+      fail('Nur weitere Beiträge können gelöscht werden. Feste Grußworte und Sportdaten bleiben im Inhaltsplan.');
+    const removed = await row(db.from('editorial_articles').delete().eq('id', article.id)
+      .eq('version', body.version).eq('kind', article.kind).select('id').maybeSingle());
+    if (!removed) changed();
+    // The delete trigger invalidates the issue preview; revisions cascade.
+    // Keep immutable image files: published snapshots may still reference them.
+    return { removed: true };
+  }
   if (action === "editorial_save_article") {
     const issue = await row(
       db.from("editorial_issues").select("*").eq("id", body.issueId).single(),
@@ -136,6 +180,9 @@ export async function handleEditorial(db: any, userId: string, body: any) {
         )
       : null;
     if (current && current.version !== body.version) changed();
+    if (current?.status === 'waived') fail('Bitte zuerst den Verzicht aufheben, um den Beitrag zu bearbeiten.');
+    if (body.status === 'waived') fail('Bitte den Verzicht-Button verwenden.');
+    if (current?.automatic_sports) fail('Sportdaten werden automatisch erzeugt. Bitte über „Sportdaten aktualisieren“ neu laden.');
     if (body.department_id)
       await row(
         db
@@ -154,21 +201,53 @@ export async function handleEditorial(db: any, userId: string, body: any) {
     if (author.length > 180) fail("Der Autorenname ist zu lang.");
     if (status === "ready" && !content.trim())
       fail("Ein leerer Beitrag kann nicht als fertig markiert werden.");
+    const articleTitle = title(body.title);
+    const preparedPeople = body.person_ids !== undefined
+      ? await prepareEditorialPeople(db, issue.id, current || { kind: 'free' }, body.person_ids) : null;
+    let preparedGalleries;
+    try { preparedGalleries = body.gallery_groups !== undefined ? await prepareEditorialGalleries(db, issue.id, current || {kind:'free'}, body.gallery_groups) : null; }
+    catch(error) { await preparedPeople?.cleanup(); throw error; }
+    const galleryGroups = preparedGalleries?.galleries || current?.gallery_groups || [];
+    const peopleSnapshot = preparedPeople?.people || current?.people_snapshot || [];
+    const selectedAuthor = peopleSnapshot.length ? peopleSnapshot.map((person: any) => person.name).join(' & ') : author;
     const contentChanged = !current || content !== current.body;
+    const metadataChanged =
+      !current ||
+      articleTitle !== current.title ||
+      JSON.stringify(galleryGroups) !== JSON.stringify(current.gallery_groups || []) ||
+      selectedAuthor !== current.author ||
+      JSON.stringify(peopleSnapshot) !== JSON.stringify(current.people_snapshot || []) ||
+      (body.department_id || null) !== current.department_id;
+    if (
+      status === "ready" &&
+      (current?.status !== "ready" || contentChanged || metadataChanged)
+    ) {
+      await preparedPeople?.cleanup();
+      await preparedGalleries?.cleanup();
+      fail(
+        "Bitte den Beitrag speichern und anschließend über den Freigabe-Button freigeben.",
+      );
+    }
     const needsRewrite =
       (current?.kind ?? "free") !== "sports" &&
       (contentChanged || body.rewrite === true) &&
       Boolean(content.trim());
     const payload = {
-      title: title(body.title),
+      title: articleTitle,
       body: content,
       original_body: contentChanged ? content : current.original_body,
       department_id: body.department_id || null,
-      author,
-      status: needsRewrite ? "review" : status,
+      author: selectedAuthor,
+      people_snapshot: peopleSnapshot,
+      gallery_groups: galleryGroups,
+      status:
+        needsRewrite || ((contentChanged || metadataChanged) && content.trim())
+          ? "review"
+          : status,
       updated_by: userId,
     };
-    let article = await row(
+    let article;
+    try { article = await row(
       current
         ? db
             .from("editorial_articles")
@@ -189,6 +268,7 @@ export async function handleEditorial(db: any, userId: string, body: any) {
             .single(),
     );
     if (!article) changed();
+    } catch (error) { await preparedPeople?.cleanup(); await preparedGalleries?.cleanup(); throw error; }
     let warning = "";
     if (needsRewrite) {
       try {
@@ -223,7 +303,7 @@ export async function handleEditorial(db: any, userId: string, body: any) {
         warning = `Text gespeichert. ${error instanceof Error ? error.message : "Überarbeitung fehlgeschlagen."}`;
       }
     }
-    return { article, warning, rewritten: needsRewrite && !warning };
+    return { article: await withArticleGalleries(db, article), warning, rewritten: needsRewrite && !warning };
   }
   if (action === "editorial_revisions")
     return {
@@ -236,6 +316,17 @@ export async function handleEditorial(db: any, userId: string, body: any) {
           .limit(30),
       ),
     };
+  if (action === 'editorial_prepare_sports') {
+    const issue = await row(db.from('editorial_issues').select('id,kind').eq('id', body.issueId).single());
+    if (issue.kind !== 'stadium') fail('Sportübersichten sind für Stadionhefte vorgesehen.');
+    const teams = await row(db.from('social_teams').select('id,name,slug,website_path,active').order('sort_order'));
+    const existing = await row(db.from('editorial_articles').select('team_id,template_key').eq('issue_id', issue.id).eq('kind', 'sports'));
+    const missing = editorialSeeds('stadium', teams).filter((seed: any) => seed.kind === 'sports' && !existing.some((a: any) => a.team_id === seed.team_id));
+    if (missing.length) await row(db.from('editorial_articles').upsert(missing.map((seed: any) => ({ ...seed, issue_id: issue.id, updated_by: userId })), { onConflict: 'issue_id,template_key', ignoreDuplicates: true }));
+    const eligible = new Set(teams.filter((team: any) => editorialTeamProfile(team).included).map((team: any) => team.id));
+    const articles = await row(db.from('editorial_articles').select('*').eq('issue_id', issue.id).eq('kind', 'sports').order('position'));
+    return { articles: articles.filter((article: any) => eligible.has(article.team_id)) };
+  }
   if (action === "editorial_sports") {
     const article = await row(
       db
@@ -256,38 +347,36 @@ export async function handleEditorial(db: any, userId: string, body: any) {
     const team = await row(
       db.from("social_teams").select("*").eq("id", article.team_id).single(),
     );
-    const games = await row(
-      db
-        .from("social_games")
-        .select(
-          "team_id,status,kickoff_at,home_team,away_team,home_score,away_score",
-        )
-        .eq("team_id", team.id)
-        .eq("status", "finished")
-        .lte("kickoff_at", `${issue.publishes_on}T23:59:59Z`)
-        .order("kickoff_at", { ascending: false })
-        .limit(30),
-    );
+    const gameFields = 'id,source_match_id,team_id,status,kickoff_at,home_team,away_team,home_score,away_score,competition';
+    const [past, future] = await Promise.all([
+      row(db.from('social_games').select(gameFields).eq('team_id', team.id).eq('status', 'finished').lte('kickoff_at', `${issue.publishes_on}T23:59:59Z`).order('kickoff_at', { ascending: false }).limit(10)),
+      row(db.from('social_games').select(gameFields).eq('team_id', team.id).eq('status', 'scheduled').gte('kickoff_at', new Date(Date.parse(issue.publishes_on) - 86400000).toISOString()).order('kickoff_at').limit(30)),
+    ]);
     const { body: content, snapshot } = await editorialSportsSnapshot({
       team,
-      games,
+      games: [...past, ...future],
       cutoff: issue.publishes_on,
       parseFont: opentype.parse,
     });
     // Keep the last good source intact if the upstream table fails.
-    if (snapshot.warning && article.source_snapshot?.table)
+    if ((snapshot.failedSources.table && article.source_snapshot?.table) || (snapshot.failedSources.matches && (article.source_snapshot?.upcoming?.length || article.source_snapshot?.lastMatches?.length || article.source_snapshot?.results)))
       return {
         article,
         warning: `Sportdaten unverändert: ${snapshot.warning}`,
       };
-    const saved = await row(
+    const preparedPhoto = await prepareEditorialTeamPhoto(db, article.issue_id, snapshot.teamPhoto, article.source_snapshot?.teamPhoto);
+    snapshot.teamPhoto = preparedPhoto.photo;
+    if (preparedPhoto.warning) snapshot.warning = [snapshot.warning, preparedPhoto.warning].filter(Boolean).join(' ');
+    let saved;
+    try { saved = await row(
       db
         .from("editorial_articles")
         .update({
           body: content,
           original_body: content,
           source_snapshot: snapshot,
-          status: "review",
+          automatic_sports: editorialTeamProfile(team).automaticSports,
+          status: editorialTeamProfile(team).automaticSports ? (snapshot.autoApprovalEligible ? 'ready' : 'draft') : 'review',
           updated_by: userId,
         })
         .eq("id", article.id)
@@ -296,6 +385,7 @@ export async function handleEditorial(db: any, userId: string, body: any) {
         .maybeSingle(),
     );
     if (!saved) changed();
+    } catch(error) { await preparedPhoto.cleanup(); throw error; }
     return { article: saved, warning: snapshot.warning };
   }
   fail("Unbekannte Redaktionsaktion.");

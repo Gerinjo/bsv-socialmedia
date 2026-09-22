@@ -1,7 +1,7 @@
 {
   "source": "bsv-website",
   "sourceUrl": "https://gerinjo.github.io/bsv-website",
-  "generatedAt": "2026-08-17T16:17:00.065Z",
+  "generatedAt": "2026-09-21T06:00:24.058Z",
   "venues": [
     "Hauptplatz",
     "Nebenplatz",
@@ -413,6 +413,14 @@
       "photoUrl": null
     },
     {
+      "slug": "christian-stielow",
+      "displayName": "Christian Stielow",
+      "roles": [
+        "Ansprechperson Alte Herren"
+      ],
+      "photoUrl": null
+    },
+    {
       "slug": "christoph-luthje",
       "displayName": "Christoph Lüthje",
       "roles": [
@@ -532,6 +540,7 @@
       "slug": "felix-schule",
       "displayName": "Felix Schüle",
       "roles": [
+        "2. Vorstand",
         "Spieler:in",
         "Vereinsmitglied"
       ],
@@ -574,7 +583,7 @@
       "slug": "hieu-ho",
       "displayName": "Hieu Ho",
       "roles": [
-        "Trainerin"
+        "Co-Trainerin"
       ],
       "photoUrl": null
     },
@@ -606,6 +615,8 @@
       "slug": "jerome-ernsberger",
       "displayName": "Jérôme Ernsberger",
       "roles": [
+        "Jugendleiter",
+        "Trainer",
         "Vereinsmitglied"
       ],
       "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/jerome-ernsberger.jpg"
@@ -746,7 +757,6 @@
       "slug": "marco-eisner",
       "displayName": "Marco Eisner",
       "roles": [
-        "Co-Trainer",
         "Vereinsmitglied"
       ],
       "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/marco-eisner.jpg"
@@ -774,6 +784,15 @@
         "Vereinsmitglied"
       ],
       "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/marcus-peglau.jpg"
+    },
+    {
+      "slug": "marko-eisner",
+      "displayName": "Marko Eisner",
+      "roles": [
+        "Co-Trainer",
+        "Vereinsmitglied"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/marco-eisner.jpg"
     },
     {
       "slug": "markus-mader",
@@ -965,7 +984,8 @@
       "slug": "ole-schmal",
       "displayName": "Ole Schmal",
       "roles": [
-        "Co-Trainer"
+        "Co-Trainer",
+        "Stellvertretender Jugendleiter"
       ],
       "photoUrl": null
     },
@@ -978,17 +998,24 @@
       "photoUrl": null
     },
     {
+      "slug": "pascal-dieterle",
+      "displayName": "Pascal Dieterle",
+      "roles": [
+        "Trainer"
+      ],
+      "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/pascal-dieterle.jpg"
+    },
+    {
       "slug": "pascel-dieterle",
       "displayName": "Pascel Dieterle",
       "roles": [
-        "Trainer",
         "Vereinsmitglied"
       ],
       "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/pascal-dieterle.jpg"
     },
     {
-      "slug": "patrick-brunner",
-      "displayName": "Patrick Brunner",
+      "slug": "patrick-muller",
+      "displayName": "Patrick Müller",
       "roles": [
         "Co-Trainer"
       ],
@@ -1038,6 +1065,7 @@
       "slug": "sandra-fuchs",
       "displayName": "Sandra Fuchs",
       "roles": [
+        "1. Vorstand",
         "Vereinsmitglied"
       ],
       "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/sandra-fuchs.jpg"
@@ -1158,14 +1186,6 @@
         "Vereinsmitglied"
       ],
       "photoUrl": "https://gerinjo.github.io/bsv-website/images/verein/personen/torben-altenburg.jpg"
-    },
-    {
-      "slug": "torben-schmidt",
-      "displayName": "Torben Schmidt",
-      "roles": [
-        "Ansprechperson Alte Herren"
-      ],
-      "photoUrl": null
     },
     {
       "slug": "torsten-parzich",
@@ -1458,6 +1478,11 @@
       "role": "Spieler:in"
     },
     {
+      "teamSlug": "alte-herren",
+      "personSlug": "christian-stielow",
+      "role": "Ansprechperson Alte Herren"
+    },
+    {
       "teamSlug": "frauen-1",
       "personSlug": "mathias-becht",
       "role": "Trainer"
@@ -1476,6 +1501,196 @@
       "teamSlug": "frauen-2",
       "personSlug": "emel-bayram",
       "role": "Co-Trainerin"
+    },
+    {
+      "teamSlug": "u19-junioren",
+      "personSlug": "michael-jentsch",
+      "role": "Trainer"
+    },
+    {
+      "teamSlug": "u19-junioren",
+      "personSlug": "ole-schmal",
+      "role": "Co-Trainer"
+    },
+    {
+      "teamSlug": "u19-junioren",
+      "personSlug": "frieder-demmer",
+      "role": "Athletik- und Fitnesscoach"
+    },
+    {
+      "teamSlug": "u17-junioren",
+      "personSlug": "maximilian-geismann",
+      "role": "Trainer"
+    },
+    {
+      "teamSlug": "u17-junioren",
+      "personSlug": "andrea-basile",
+      "role": "Co-Trainer"
+    },
+    {
+      "teamSlug": "u15-c1-junioren",
+      "personSlug": "axel-schauble",
+      "role": "Cheftrainer"
+    },
+    {
+      "teamSlug": "u15-c1-junioren",
+      "personSlug": "simon-buhler",
+      "role": "Co-Trainer"
+    },
+    {
+      "teamSlug": "u15-c1-junioren",
+      "personSlug": "thomas-parthenschlager",
+      "role": "Co-Trainer"
+    },
+    {
+      "teamSlug": "u15-c2-junioren",
+      "personSlug": "sebastian-bauerle",
+      "role": "Cheftrainer"
+    },
+    {
+      "teamSlug": "u13-d1-junioren",
+      "personSlug": "stephan-hellmann",
+      "role": "Trainer"
+    },
+    {
+      "teamSlug": "u13-d1-junioren",
+      "personSlug": "hieu-ho",
+      "role": "Co-Trainerin"
+    },
+    {
+      "teamSlug": "u13-d2-junioren",
+      "personSlug": "jorg-boreatti",
+      "role": "Trainer"
+    },
+    {
+      "teamSlug": "u13-d2-junioren",
+      "personSlug": "marko-eisner",
+      "role": "Co-Trainer"
+    },
+    {
+      "teamSlug": "u13-d2-junioren",
+      "personSlug": "patrick-muller",
+      "role": "Co-Trainer"
+    },
+    {
+      "teamSlug": "u13-d3-junioren",
+      "personSlug": "jerome-ernsberger",
+      "role": "Trainer"
+    },
+    {
+      "teamSlug": "u11-e1-junioren",
+      "personSlug": "niku-pourheidari",
+      "role": "Trainer"
+    },
+    {
+      "teamSlug": "u11-e1-junioren",
+      "personSlug": "christoph-pabst",
+      "role": "Trainer"
+    },
+    {
+      "teamSlug": "u11-e2-junioren",
+      "personSlug": "marcelino-ruth",
+      "role": "Trainer"
+    },
+    {
+      "teamSlug": "u11-e2-junioren",
+      "personSlug": "mohamad-mahmoudi",
+      "role": "Trainer"
+    },
+    {
+      "teamSlug": "u11-e3-junioren",
+      "personSlug": "stefan-sulger",
+      "role": "Trainer"
+    },
+    {
+      "teamSlug": "u11-e3-junioren",
+      "personSlug": "michael-sick",
+      "role": "Trainer"
+    },
+    {
+      "teamSlug": "u9-f-junioren",
+      "personSlug": "andreas-wolfmuller",
+      "role": "Trainer"
+    },
+    {
+      "teamSlug": "u9-f-junioren",
+      "personSlug": "sina-rauch",
+      "role": "Trainerin"
+    },
+    {
+      "teamSlug": "u9-f-junioren",
+      "personSlug": "marcelino-ruth",
+      "role": "Trainer"
+    },
+    {
+      "teamSlug": "u8-f-junioren",
+      "personSlug": "pascal-dieterle",
+      "role": "Trainer"
+    },
+    {
+      "teamSlug": "u8-f-junioren",
+      "personSlug": "fabian-keller",
+      "role": "Trainer"
+    },
+    {
+      "teamSlug": "u8-f-junioren",
+      "personSlug": "humberto-vicente-agudo-torres",
+      "role": "Trainer"
+    },
+    {
+      "teamSlug": "u7-bambinis",
+      "personSlug": "michael-meiss",
+      "role": "Trainer"
+    },
+    {
+      "teamSlug": "u7-bambinis",
+      "personSlug": "luca-gastaudo",
+      "role": "Trainer"
+    },
+    {
+      "teamSlug": "u7-bambinis",
+      "personSlug": "marco-tassone",
+      "role": "Trainer"
+    },
+    {
+      "teamSlug": "u6-spielgruppe",
+      "personSlug": "elias-arfa",
+      "role": "Trainer"
+    },
+    {
+      "teamSlug": "u6-spielgruppe",
+      "personSlug": "noemi-sophie-friedrich",
+      "role": "Trainerin"
+    },
+    {
+      "teamSlug": "u6-spielgruppe",
+      "personSlug": "mila-ernsberger",
+      "role": "Trainerin"
+    },
+    {
+      "teamSlug": "u6-spielgruppe",
+      "personSlug": "marlia-burlander",
+      "role": "Trainerin"
+    },
+    {
+      "teamSlug": "u17-juniorinnen",
+      "personSlug": "sven-goldhagen",
+      "role": "Cheftrainer"
+    },
+    {
+      "teamSlug": "u17-juniorinnen",
+      "personSlug": "sonja-thomen",
+      "role": "Co-Trainerin"
+    },
+    {
+      "teamSlug": "u15-juniorinnen",
+      "personSlug": "alexander-kramer",
+      "role": "Trainer"
+    },
+    {
+      "teamSlug": "u13-juniorinnen",
+      "personSlug": "dana-bulander",
+      "role": "Trainerin"
     }
   ]
 }
