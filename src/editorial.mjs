@@ -144,38 +144,49 @@ export async function rewriteEditorialText({
     throw new Error(
       "Die automatische Textüberarbeitung ist noch nicht eingerichtet.",
     );
-  const response = await fetchImpl("https://api.openai.com/v1/responses", {
-    method: "POST",
-    signal: AbortSignal.timeout(90000),
-    headers: {
-      authorization: `Bearer ${apiKey}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      store: false,
-      max_output_tokens: Math.min(12000, Math.max(2000, Math.ceil(text.length / 2) + 512)),
-      instructions: EDITORIAL_REWRITE_INSTRUCTIONS,
-      input: JSON.stringify({ title, publication: kind, text }),
-    }),
-  });
+  let response;
+  try {
+    response = await fetchImpl("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      redirect: "error",
+      signal: AbortSignal.timeout(90000),
+      headers: {
+        authorization: `Bearer ${apiKey}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        stream: false,
+        temperature: 0.2,
+        max_completion_tokens: Math.min(20000, Math.max(4096, Math.ceil(text.length / 2) + 2048)),
+        ...(model.startsWith('openai/gpt-oss-') ? {reasoning_effort: 'low', include_reasoning: false} : {}),
+        messages: [
+          {role: 'system', content: EDITORIAL_REWRITE_INSTRUCTIONS},
+          {role: 'user', content: JSON.stringify({title, publication: kind, text})},
+        ],
+      }),
+    });
+  } catch (error) {
+    if (error?.name === 'TimeoutError' || error?.name === 'AbortError')
+      throw new Error('Groq hat nicht rechtzeitig geantwortet. Bitte „Erneut überarbeiten“ wählen.');
+    throw new Error('Groq ist momentan nicht erreichbar. Bitte später „Erneut überarbeiten“ wählen.');
+  }
   if (!response.ok) {
     const failure = await response.json().catch(() => null);
     if (response.status === 429 && (failure?.error?.type === 'insufficient_quota' || ['insufficient_quota', 'credit_balance_exhausted', 'billing_hard_limit_reached'].includes(failure?.error?.code)))
-      throw new Error('Die KI-Überarbeitung ist wegen fehlendem API-Guthaben oder erreichtem API-Ausgabenlimit nicht verfügbar. Bitte die OpenAI-Abrechnung prüfen.');
+      throw new Error('Die KI-Überarbeitung ist wegen fehlendem API-Guthaben oder erreichtem API-Ausgabenlimit nicht verfügbar. Bitte die Groq-Abrechnung prüfen.');
     if (response.status === 429)
-      throw new Error('Die KI-Überarbeitung ist momentan ausgelastet. Bitte in Kürze „Erneut überarbeiten“ wählen.');
-    throw new Error(`Textüberarbeitung derzeit nicht verfügbar (HTTP ${response.status}).`);
+      throw new Error('Das Groq-Anfragelimit ist momentan erreicht. Bitte in Kürze „Erneut überarbeiten“ wählen.');
+    if ([401, 403].includes(response.status))
+      throw new Error('Groq hat den Zugriff abgelehnt. Bitte API-Schlüssel und Modellberechtigung prüfen.');
+    if (response.status === 404)
+      throw new Error('Das konfigurierte Groq-Modell ist nicht verfügbar. Bitte die Modelleinstellung prüfen.');
+    throw new Error(`Textüberarbeitung mit Groq derzeit nicht verfügbar (HTTP ${response.status}).`);
   }
-  const payload = await response.json();
-  const result = (payload.output ?? [])
-    .filter((item) => item.type === "message")
-    .flatMap((item) => item.content ?? [])
-    .filter((item) => item.type === "output_text")
-    .map((item) => item.text)
-    .join("\n")
-    .trim();
-  if (payload.status !== "completed" || !result || result.length > 30000)
-    throw new Error("Keine vollständige Textüberarbeitung erhalten.");
+  const payload = await response.json().catch(() => null);
+  const choice = payload?.choices?.[0];
+  const result = typeof choice?.message?.content === 'string' ? choice.message.content.trim() : '';
+  if (choice?.finish_reason !== 'stop' || choice.message.refusal || choice.message.tool_calls?.length || !result || result.length > 30000)
+    throw new Error("Keine vollständige Textüberarbeitung von Groq erhalten.");
   return normalizeEditorialRewriteLayout(result);
 }

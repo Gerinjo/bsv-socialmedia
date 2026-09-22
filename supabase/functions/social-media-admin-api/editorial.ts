@@ -97,7 +97,7 @@ export async function handleEditorial(db: any, userId: string, body: any) {
       teams: teams.map((team: any) => ({...team, active: team.active || /^(herren|frauen)-[12]$/.test(team.slug || '')})),
       departments: audiences,
       rewriteAvailable: Boolean(
-        Deno.env.get("OPENAI_API_KEY") && Deno.env.get("EDITORIAL_AI_MODEL"),
+        Deno.env.get("GROQ_API_KEY") && Deno.env.get("EDITORIAL_GROQ_MODEL"),
       ),
     };
   }
@@ -279,8 +279,8 @@ export async function handleEditorial(db: any, userId: string, body: any) {
           text: content,
           title: article.title,
           kind: issue.kind,
-          apiKey: Deno.env.get("OPENAI_API_KEY"),
-          model: Deno.env.get("EDITORIAL_AI_MODEL"),
+          apiKey: Deno.env.get("GROQ_API_KEY"),
+          model: Deno.env.get("EDITORIAL_GROQ_MODEL"),
         });
         const updated = await row(
           db

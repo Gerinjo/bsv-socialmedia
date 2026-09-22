@@ -188,8 +188,8 @@ Deno.test("saving a stale article fails before any write", async () => {
 Deno.test(
   "AI outage retains the raw saved text and original, and reports a warning",
   async () => {
-    Deno.env.delete("OPENAI_API_KEY");
-    Deno.env.delete("EDITORIAL_AI_MODEL");
+    Deno.env.delete("GROQ_API_KEY");
+    Deno.env.delete("EDITORIAL_GROQ_MODEL");
     const saved = { ...current, version: 3, body: "Neu", original_body: "Neu" };
     const { db, calls } = database([issue, current, saved]);
     const result: any = await handleEditorial(db, "user", request);
@@ -259,18 +259,10 @@ Deno.test("a later author edit survives a slow AI response", async () => {
   const newer = { ...saved, version: 4, body: "Neuere redaktionelle Änderung" };
   const { db, calls } = database([issue, current, saved, null, newer]);
   const originalFetch = globalThis.fetch;
-  Deno.env.set("OPENAI_API_KEY", "test");
-  Deno.env.set("EDITORIAL_AI_MODEL", "test-model");
+  Deno.env.set("GROQ_API_KEY", "test");
+  Deno.env.set("EDITORIAL_GROQ_MODEL", "test-model");
   globalThis.fetch = async () =>
-    Response.json({
-      status: "completed",
-      output: [
-        {
-          type: "message",
-          content: [{ type: "output_text", text: "KI-Fassung" }],
-        },
-      ],
-    });
+    Response.json({choices:[{finish_reason:'stop',message:{content:'KI-Fassung'}}]});
   try {
     const result: any = await handleEditorial(db, "user", request);
     assert.equal(result.article.body, newer.body);
@@ -282,8 +274,8 @@ Deno.test("a later author edit survives a slow AI response", async () => {
     );
   } finally {
     globalThis.fetch = originalFetch;
-    Deno.env.delete("OPENAI_API_KEY");
-    Deno.env.delete("EDITORIAL_AI_MODEL");
+    Deno.env.delete("GROQ_API_KEY");
+    Deno.env.delete("EDITORIAL_GROQ_MODEL");
   }
 });
 Deno.test('gallery uploads are rolled back when the article version changes before saving', async()=>{
@@ -380,4 +372,34 @@ Deno.test('editorial list and issue creation include disabled second adult teams
  const cover=database([{...issue,version:1},[],teams,{...issue,version:2}]);
  await handleEditorial(cover.db,'actor',{action:'editorial_save_cover_settings',issueId:'issue',version:1,settings});
  assert.deepEqual(cover.calls[3].update.cover_settings.teamSlugs,['herren-2','frauen-2']);
+});
+
+Deno.test('Groq revision replaces only the saved version while retaining its original text',async()=>{
+ const saved={...current,version:3,body:'Neu',original_body:'Neu'};
+ const revised={...saved,version:4,body:'Neu formuliert.'};
+ const {db,calls}=database([issue,current,saved,revised]);
+ const oldFetch=globalThis.fetch;
+ Deno.env.set('GROQ_API_KEY','test');Deno.env.set('EDITORIAL_GROQ_MODEL','openai/gpt-oss-120b');
+ globalThis.fetch=async(url,options)=>{
+  assert.equal(String(url),'https://api.groq.com/openai/v1/chat/completions');
+  assert.equal(JSON.parse(JSON.parse(String(options?.body)).messages[1].content).text,'Neu');
+  return Response.json({choices:[{finish_reason:'stop',message:{content:'Neu formuliert.'}}]});
+ };
+ try{
+  const result:any=await handleEditorial(db,'user',request);
+  assert.equal(result.rewritten,true);assert.equal(result.warning,'');
+  assert.equal(result.article.body,'Neu formuliert.');assert.equal(result.article.original_body,'Neu');
+  assert.equal(calls[3].update.status,'review');assert.equal(calls[3].update.original_body,undefined);
+ }finally{globalThis.fetch=oldFetch;Deno.env.delete('GROQ_API_KEY');Deno.env.delete('EDITORIAL_GROQ_MODEL');}
+});
+Deno.test('a Groq rate limit leaves the saved input in place without a second write',async()=>{
+ const saved={...current,version:3,body:'Neu',original_body:'Neu'};
+ const {db,calls}=database([issue,current,saved]);const oldFetch=globalThis.fetch;
+ Deno.env.set('GROQ_API_KEY','test');Deno.env.set('EDITORIAL_GROQ_MODEL','model');
+ globalThis.fetch=async()=>Response.json({error:{code:'rate_limit_exceeded'}},{status:429});
+ try{
+  const result:any=await handleEditorial(db,'user',request);
+  assert.equal(result.rewritten,false);assert.equal(result.article.body,'Neu');assert.match(result.warning,/Text gespeichert.*Groq-Anfragelimit/);
+  assert.equal(calls.filter((call:any)=>call.update).length,1);
+ }finally{globalThis.fetch=oldFetch;Deno.env.delete('GROQ_API_KEY');Deno.env.delete('EDITORIAL_GROQ_MODEL');}
 });

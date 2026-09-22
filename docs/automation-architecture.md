@@ -37,7 +37,7 @@ Das separate Supabase-Projekt `maejihwjzxkmthjavgnx` ist eingerichtet. Dadurch b
 
 Der Zugriff liegt hinter einem eigenen Adapter. Das ist wichtig, weil die öffentlich sichtbare Website keine zugesagte allgemeine Spiel-API darstellt und HTML-Strukturen geändert werden können.
 
-Die Edge Function `fussball-de-sync` liest stündlich die Team-Matches-Widgets aus, die auf den vier aktiven Mannschaftsseiten der BSV-Webseite eingebettet sind. Die Widget- und Team-IDs liegen an `social_teams`; Spiele werden anhand der stabilen FUSSBALL.DE-Spiel-ID eingefügt oder aktualisiert. Ein wiederholter Abruf erzeugt deshalb keine Duplikate. Bereits manuell auf `finished`, `cancelled` oder `aborted` gesetzte Spiele werden durch einen späteren Abruf nicht wieder auf `scheduled` zurückgesetzt.
+Die Edge Function `fussball-de-sync` liest stündlich die Team-Matches-Widgets der für den Import aktivierten Mannschaften (`active=true`, `sync_enabled=true`). Der HTTP-Referer verweist auf die jeweilige Mannschaftsseite unter `https://bsvnordstern.de/`; die frühere GitHub-Pages-Domain wird von FUSSBALL.DE als ungültige Quelle abgelehnt. Die Widget- und Team-IDs liegen an `social_teams`; Spiele werden anhand der stabilen FUSSBALL.DE-Spiel-ID eingefügt oder aktualisiert. Ein wiederholter Abruf erzeugt deshalb keine Duplikate. Bereits manuell auf `finished`, `cancelled` oder `aborted` gesetzte Spiele werden durch einen späteren Abruf nicht wieder auf `scheduled` zurückgesetzt.
 
 Regeln:
 
@@ -156,3 +156,7 @@ Jede neue Freistellung erhält zunächst `needs_review`. Erst nach der Kontrolle
 Schachbrett-Hintergrund und der manuellen Freigabe verwendet der Story-Renderer die
 Datei. Quellenlink, Erkennungswerte und Freigabeinformationen bleiben am Vereinsdatensatz
 gespeichert.
+
+### Spielimport-Reparatur vom 22.09.2026
+
+Der stündliche Cron lief, die Quelle lehnte jedoch den alten GitHub-Pages-Referer ab (`invalidReferrer`). Mit der aktuellen Domain `bsvnordstern.de` lieferten beide aktiven Widgets wieder Daten. Die korrigierte `fussball-de-sync`-Funktion wurde live veröffentlicht und der Import nachgeholt: drei kommende Herren-1- und drei Frauen-1-Spiele mit sechs Ankündigungsvorschauen, `last_sync_error` jeweils leer. Die manuellen Veröffentlichungsmodi und deaktivierten zweiten Mannschaften blieben unverändert. Verifikation: Live-Vergleich beider Quelladressen, 209 erfolgreiche Projekttests und Prüfung der importierten Spiele/Vorschauen in der Datenbank.
