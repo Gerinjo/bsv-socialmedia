@@ -8,9 +8,16 @@ verify_jwt = false
 
 [functions.social-media-admin-api]
 verify_jwt = true
+static_files = [ "./functions/_shared/sponsor-artwork/*.svg" ]
 
 [functions.fussball-de-sync]
 verify_jwt = false
 
 [functions.website-sponsor-feed]
+verify_jwt = false
+
+[functions.stadium-magazine-feed]
+verify_jwt = true
+
+[functions.editorial-publications]
 verify_jwt = false

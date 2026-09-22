@@ -1,0 +1,21 @@
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {discoverEditorialTeamPhoto} from '../src/editorial-team-photo.mjs';
+import {decodeEditorialCover} from '../src/editorial-publication.mjs';
+const root=new URL('../',import.meta.url);
+const catalogue=JSON.parse(await readFile(new URL('config/bsv-catalog.json',root),'utf8'));
+await mkdir(new URL('admin-site/preview/team-photos/',root),{recursive:true});
+const entries=await Promise.all(catalogue.teams.filter(team=>team.websitePath).map(async team=>{
+ const pageUrl=new URL(team.websitePath.replace(/^\/+/, '')+'/', 'https://bsvnordstern.de/');
+ const page=await fetch(pageUrl,{redirect:'error',signal:AbortSignal.timeout(15000)});
+ if(!page.ok)throw new Error(`${team.slug}: ${page.status}`);
+ const photo=discoverEditorialTeamPhoto(await page.text(),pageUrl);
+ if(!photo)return [team.slug,null];
+ const response=await fetch(photo.source_url,{redirect:'error',signal:AbortSignal.timeout(15000)});
+ if(!response.ok)throw new Error(`${team.slug}: image ${response.status}`);
+ const image=decodeEditorialCover(`data:${response.headers.get('content-type')?.split(';')[0]};base64,${Buffer.from(await response.arrayBuffer()).toString('base64')}`);
+ const name=`${team.slug}.${image.extension}`;
+ await writeFile(new URL('admin-site/preview/team-photos/'+name,root),image.bytes);
+ return [team.slug,{...photo,photo_url:'/preview-team-photos/'+name}];
+}));
+await writeFile(new URL('admin-site/preview/team-photos.mjs',root),`// Team hero images checked on ${new Date().toISOString().slice(0,10)}; null means no team photograph.\nexport const previewTeamPhotos=${JSON.stringify(Object.fromEntries(entries),null,2)};\n`);
+console.log(`${entries.filter(([,photo])=>photo).length} Mannschaftsbilder für ${entries.length} Teams.`);

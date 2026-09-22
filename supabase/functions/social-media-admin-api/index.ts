@@ -1,3 +1,4 @@
+import { handleEditorial } from './editorial.ts';
 import { DOMParser, XMLSerializer } from 'npm:@xmldom/xmldom@0.9.12';
 import { prepareSvgSource } from '../../../src/svg-upload.mjs';
 import { normalizeSponsorPageSize } from '../../../src/sponsor-assignments.mjs';
@@ -23,7 +24,7 @@ const homeVenues = new Set(['Hauptplatz', 'Nebenplatz', 'Kunstrasenplatz 1', 'Ku
 const crestStatuses = new Set(['missing', 'needs_review', 'approved', 'rejected']);
 const sponsorStatuses = new Set(['missing', 'needs_review', 'approved', 'rejected']);
 const sponsorContexts = new Set(['announcement', 'lineup', 'result', 'report', 'birthday', 'post', 'story']);
-const suiteAreas = ['social_media', 'sponsoring', 'administration', 'user_management'] as const;
+const suiteAreas = ['social_media', 'sponsoring', 'editorial', 'administration', 'user_management'] as const;
 type SuiteArea = typeof suiteAreas[number];
 const actionAreas: Record<string, SuiteArea> = {
   test_instagram_connection: 'administration', save_cleanup_settings: 'administration', purge_historical_data: 'administration',
@@ -791,6 +792,11 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     const action = required(body.action, 'Aktion');
     const requiredArea = actionAreas[action];
     if (requiredArea && !hasArea(requiredArea)) return json({ error: 'area_forbidden', area: requiredArea }, 403);
+
+    if (action.startsWith('editorial_')) {
+      if (!hasArea('editorial')) return json({ error: 'area_forbidden', area: 'editorial' }, 403);
+      return json(await handleEditorial(context.supabaseAdmin, userId, body));
+    }
 
     if (action === 'test_instagram_connection') {
       if (!runtimeConfig.instagramAccountId || !runtimeConfig.instagramAccessToken) {

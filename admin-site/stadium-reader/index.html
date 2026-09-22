@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#092f20">
+  <title>Nordstern News — Das Stadionheft</title>
+  <link rel="stylesheet" href="style.css?v=95007cedd772">
+  <script src="editions.js?v=95007cedd772" defer></script>
+  <script src="historical.js?v=95007cedd772" defer></script>
+  <script src="season-opener.js?v=95007cedd772" defer></script>
+  <script src="sponsors.js?v=95007cedd772" defer></script>
+  <script src="app.js?v=95007cedd772" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Zum Heft</a>
+  <header class="reader-header">
+    <a id="home-link" class="reader-brand"><img src="assets/wappen.svg" alt="BSV Nordstern"><span>Nordstern News<small>Das digitale Stadionheft</small></span></a>
+    <nav class="reader-tools" aria-label="Ausgaben">
+      <label class="sr-only" for="edition-select">Ausgabe wechseln</label>
+      <select id="edition-select"></select>
+      <a href="#archiv" id="archive-link">Heftarchiv <span aria-hidden="true">▤</span></a>
+    </nav>
+  </header>
+  <main id="main" tabindex="-1">
+    <p class="reader-context" id="reader-context"></p>
+    <section id="cover" class="cover paper" tabindex="-1" aria-labelledby="cover-title">
+      <div class="cover-topline"><span>BSV Nordstern Radolfzell</span><span id="cover-season"></span></div>
+      <div class="masthead"><div><span id="cover-name-part1">NORDSTERN</span><strong id="cover-name-part2">news.</strong></div><img src="assets/wappen.svg" alt="Vereinswappen"></div>
+      <div class="cover-meta"><span id="cover-matchday"></span><span id="cover-date"></span></div>
+      <div class="cover-photo-wrap"><img id="cover-photo" alt=""><div class="photo-shade"></div><span class="cover-edition"><small>AUSGABE</small><b id="cover-number"></b></span><div class="cover-headline"><p id="cover-kicker"></p><h1 id="cover-title" tabindex="-1"></h1></div></div>
+      <div class="cover-stories" id="cover-stories"></div>
+      <section id="cover-matches" class="cover-matches" aria-label="Die nächsten Spiele der Aktiven"></section>
+      <div class="cover-bottom"><span>#aufgehtsgrün</span><span>Seit 1956. Für immer Nordstern.</span><span aria-hidden="true">✦</span></div>
+    </section>
+    <section id="contents" class="contents paper" hidden aria-labelledby="contents-title">
+      <div class="running-head"><span>NORDSTERN NEWS</span><span class="issue-reference"></span></div>
+      <div class="contents-layout">
+        <div class="contents-editorial"><p class="eyebrow">IN DIESER AUSGABE</p><h1 id="contents-title" tabindex="-1">Auf dem Platz.<br><em>Und mittendrin.</em></h1><figure id="contents-photo"></figure><p id="contents-intro"></p><aside id="contents-partners" class="contents-partners" hidden aria-labelledby="contents-partners-title"><h2 id="contents-partners-title">Unsere Werbepartner</h2><p>Vielen Dank an unsere Werbepartner! Mit eurer Unterstützung macht ihr dieses Stadionheft und unser Vereinsleben möglich.</p><div id="contents-partner-links"></div></aside><a class="original-reference" id="contents-original" target="_blank" rel="noopener">Das gedruckte Original ansehen ↗</a></div>
+        <div class="contents-index"><div class="contents-index-title"><span>Inhalt</span><span>Seite</span></div><nav id="contents-list" aria-label="Inhaltsverzeichnis"></nav><p class="edition-note" id="edition-note"></p></div>
+      </div>
+      <div class="folio"><span>BSV Nordstern Radolfzell</span><span>INHALT</span><b>01</b></div>
+    </section>
+    <article id="article" tabindex="-1" class="article paper" hidden aria-labelledby="article-title">
+      <div class="running-head"><span>NORDSTERN NEWS</span><span class="issue-reference"></span></div>
+      <header class="article-heading"><p id="article-category" class="eyebrow"></p><h1 id="article-title" tabindex="-1"></h1><p id="article-lead" class="article-lead"></p><p id="article-meta" class="article-meta"></p></header>
+      <div id="article-body" class="article-columns"></div>
+      <p id="article-source" class="article-source"></p>
+      <div class="folio"><span>BSV Nordstern Radolfzell</span><span id="article-folio-category"></span><b id="article-folio"></b></div>
+    </article>
+    <section id="archive" class="archive paper" hidden aria-labelledby="archive-title">
+      <div class="running-head"><span>NORDSTERN NEWS</span><span>DAS HEFTARCHIV</span></div>
+      <div class="archive-heading"><div><p class="eyebrow">AUS UNSEREM VEREINSLEBEN</p><h1 id="archive-title" tabindex="-1">Heft für Heft.<br><em>Geschichte für Geschichte.</em></h1></div><label for="season-filter">Spielzeit<select id="season-filter"><option value="all">Alle Spielzeiten</option><option value="2025/26">2025/26 · Originalinhalt</option><option value="2026/27">2026/27 · Beispielhefte</option></select></label></div>
+      <p class="archive-note">Ausgabe 1 der Saison 2026/27 und die importierte Originalausgabe aus dem Vereinsarchiv.</p>
+      <div id="archive-grid" class="archive-grid"></div>
+    </section>
+    <section id="not-found" class="paper not-found" hidden><p class="eyebrow">NORDSTERN NEWS</p><h1>Diese Seite fehlt.</h1><p>Das Heft oder den Beitrag gibt es in dieser Vorschau noch nicht.</p><a href="#archiv">Zum Heftarchiv →</a></section>
+    <nav class="reader-pagination" id="reader-pagination" aria-label="Im Heft blättern">
+      <a id="page-prev" class="page-arrow" aria-label="Vorherige Seite">←</a>
+      <div class="page-navigation"><a id="cover-link">Titelseite</a><span aria-hidden="true">/</span><a id="contents-link">Inhalt</a></div>
+      <span id="page-status" aria-live="polite"></span>
+      <a id="page-next" class="page-next">Heft öffnen <span aria-hidden="true">→</span></a>
+    </nav>
+    <div class="reader-footnote"><span id="reader-footnote"></span><a id="source-link" target="_blank" rel="noopener">Original-PDF ↗</a></div>
+  </main>
+  <dialog id="sponsor-dialog" class="sponsor-dialog" aria-labelledby="sponsor-dialog-title">
+    <div class="sponsor-dialog-heading">
+      <h2 id="sponsor-dialog-title"></h2>
+      <button type="button" id="sponsor-dialog-close" class="sponsor-dialog-close" aria-label="Dialog schließen" autofocus><span aria-hidden="true">×</span></button>
+    </div>
+    <img id="sponsor-dialog-image" class="sponsor-dialog-image" alt="">
+    <a id="sponsor-dialog-link" class="sponsor-dialog-link" target="_blank" rel="noopener noreferrer sponsored">Sponsorenseite öffnen <span aria-hidden="true">↗</span><span class="sr-only"> (in einem neuen Tab)</span></a>
+  </dialog>
+</body>
+</html>
