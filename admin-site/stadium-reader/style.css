@@ -668,11 +668,11 @@ button.sponsor-image { cursor: pointer; }
  .article:not(.editorial-measure) .sports-team-photo img{height:auto;max-height:none}
 }
 
-/* A landscape opener uses the photograph itself as the entire page. */
-.article.paged-article.team-photo-article{aspect-ratio:auto;padding:0;min-height:0;background:transparent}
+/* A4 landscape: maximize the complete photograph without cropping team members. */
+.article.paged-article.team-photo-article{aspect-ratio:297/210;padding:0;min-height:0;background:#fff}
 .sheet-editorial.team-photo-sheet{position:static;padding:0!important}
-.team-photo-spread,.article-columns .team-photo-spread{margin:0}
-.team-photo-spread img{display:block;width:100%;height:auto}
+.team-photo-spread,.article-columns .team-photo-spread{position:relative;width:100%;aspect-ratio:297/210;margin:0}
+.team-photo-spread img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain;object-position:center}
 .editorial-paged:has(.senior-sports-grid) .article-heading{padding:.65cqw 0;margin:.65cqw 0}
 .editorial-paged:has(.senior-sports-grid) .article-heading h1{margin-bottom:.8cqw;font-size:3.1cqw}
 .editorial-paged:has(.senior-sports-grid) .article-heading>.eyebrow{margin-bottom:.8cqw}

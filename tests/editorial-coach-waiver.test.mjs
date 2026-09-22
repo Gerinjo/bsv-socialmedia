@@ -42,3 +42,14 @@ test('only approved nonempty coach words enter snapshots and the reader, without
  const ready=edition({...issue,articles:coaches.toReversed()});
  assert.deepEqual(ready.editorialPages.map(p=>p.articleIds),[['herren-1','herren-2'],['frauen-1','frauen-2']]);
 });
+
+test('all four adult teams stay in the editorial plan when social media is disabled; youth has sports only',()=>{
+ const adult=teams.map(t=>({...t,active:false,content_enabled:false}));
+ const youth=['u19-junioren','u17-junioren','u15-c1-junioren','u13-d1-junioren','u17-juniorinnen','u15-juniorinnen','u13-juniorinnen'].map(slug=>({id:slug,slug,name:slug,active:false}));
+ const seeds=editorialSeeds('stadium',[...adult,...youth]);
+ assert.deepEqual(seeds.filter(a=>a.kind==='coach').map(a=>a.team_id),adult.map(t=>t.id));
+ assert.equal(seeds.filter(a=>a.kind==='sports').length,adult.length+youth.length);
+ assert.equal(seeds.filter(a=>a.kind==='youth').length,1);
+ const snapshot=editorialPublicSnapshot(issue,[],adult);
+ assert.deepEqual(snapshot.coverMatches.map(m=>m.team),['Frauen I','Frauen II','Herren I','Herren II']);
+});

@@ -45,6 +45,7 @@ test('saved cover template remaps greetings to fresh IDs and copies independent 
  assert.equal(next.headline,input.headline);
  next.articles[0].alias='Geändert';next.teamSlugs.push('herren-2');
  assert.equal(template.articles[0].alias,'Unser Vorstand');assert.deepEqual(template.teamSlugs,['herren-1']);
- assert.deepEqual(applyEditorialCoverTemplate(template,[],[{slug:'herren-1',active:false}]).teamSlugs,[]);
+ assert.deepEqual(applyEditorialCoverTemplate(template,[],[{slug:'herren-1',active:false}]).teamSlugs,['herren-1']);
+ assert.deepEqual(applyEditorialCoverTemplate(template,[],[]).teamSlugs,[]);
  assert.equal(input.articles[0].id,'old-board');
 });

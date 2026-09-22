@@ -141,10 +141,10 @@ function load() {
     if(photo){if(!saved.automatic_sports){saved.status='review';saved.approved_by=null;saved.approved_at=null;}saved.version++;revision(state,saved);}
     upgraded=true;
   }
-  const obsolete = state.articles.filter(saved => saved.kind === 'coach' && editorialTeamProfile(teams.find(team=>team.id===saved.team_id) || {}).group === 'A');
+  const obsolete = state.articles.filter(saved => saved.kind === 'coach' && !/^(herren|frauen)-[12]$/.test(teams.find(team=>team.id===saved.team_id)?.slug || ''));
   for (const saved of obsolete) {
     const hasText = saved.body.trim() || saved.original_body.trim() || state.revisions.some(revision=>revision.article_id===saved.id && (revision.snapshot.body?.trim() || revision.snapshot.original_body?.trim()));
-    if(hasText){saved.kind='free';saved.template_key=null;saved.position=1000;saved.version++;revision(state,saved);}
+    if(hasText){if(saved.status==='waived')saved.status='draft';saved.kind='free';saved.template_key=null;saved.position=1000;saved.version++;revision(state,saved);}
     else {state.articles=state.articles.filter(a=>a.id!==saved.id);state.revisions=state.revisions.filter(r=>r.article_id!==saved.id);touch(state,saved.issue_id);}
     upgraded=true;
   }

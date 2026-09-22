@@ -34,13 +34,13 @@ test("issue dates reject impossible dates and inverted deadlines", () => {
 });
 test("magazines receive all mandatory contributions, newsletters start freely", () => {
   const teams = [
-    { id: "first", name: "Erste" },
-    { id: "youth", name: "Jugend" },
+    { id: "first", slug:"herren-1", name: "Erste" },
+    { id: "youth", slug:"u15-junioren", name: "Jugend" },
     { id: "old", name: "Passiv", active: false },
   ];
   const seeds = editorialSeeds("stadium", teams);
-  assert.equal(seeds.length, 6);
-  assert.equal(new Set(seeds.map((a) => a.template_key)).size, 6);
+  assert.equal(seeds.length, 5);
+  assert.equal(new Set(seeds.map((a) => a.template_key)).size, 5);
   assert.deepEqual(
     seeds.filter((a) => a.kind === "sports").map((a) => a.team_id),
     ["first", "youth"],
@@ -192,4 +192,22 @@ test("missing or unsafe table sources remain explicit and cannot cause arbitrary
   assert.match(result.snapshot.warning, /Ungültige/);
   assert.equal(result.snapshot.table, null);
   assert.match(result.body, /Keine abgeschlossenen Ergebnisse/);
+});
+
+test('rewriting retains raw input but returns paragraphs without hard wrapping',async()=>{
+ const original='wir freuen uns das ihr\r\nheute da seit\n\n\nund danke';
+ let sent;
+ const result=await rewriteEditorialText({text:original,title:'Grußwort',kind:'stadium',apiKey:'test',model:'configured-model',fetchImpl:async(_url,options)=>{
+  sent=JSON.parse(options.body);
+  return Response.json({status:'completed',output:[{type:'message',content:[{type:'output_text',text:'Wir freuen uns, dass ihr\r\nheute da seid.\r\n\r\n \r\nVielen   Dank!'}]}]});
+ }});
+ assert.equal(JSON.parse(sent.input).text,original);
+ assert.equal(result,'Wir freuen uns, dass ihr heute da seid.\n\nVielen Dank!');
+ assert.match(sent.instructions,/vollständig neu/);assert.match(sent.instructions,/sinnvolle Absätze/);
+});
+
+test('rewrite distinguishes exhausted API quota from temporary throttling',async()=>{
+ for(const [code,expected]of [['insufficient_quota',/API-Guthaben/],['credit_balance_exhausted',/API-Guthaben/],['rate_limit_exceeded',/in Kürze/]]){
+  await assert.rejects(()=>rewriteEditorialText({text:'Test',apiKey:'test',model:'configured-model',fetchImpl:async()=>Response.json({error:{code,message:'Provider detail is not exposed'}},{status:429})}),expected);
+ }
 });
