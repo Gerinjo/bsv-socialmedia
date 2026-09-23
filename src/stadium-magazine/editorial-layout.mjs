@@ -106,3 +106,27 @@ export function paginateEditorial(articles, ads, measure) {
   pages.forEach((page, i) => { page.folio = i + 2; });
   return pages;
 }
+
+// The directory always closes the issue, after all advertisement placements.
+// Measure complete groups so names and roles never split across sheets.
+export function paginateEditorialContacts(directory, measure, firstFolio = 2) {
+  const pages = [], limit = 1040 * 841.89 / 595.276 - 24;
+  const make = groups => ({id: pages.length ? `kontakte-${pages.length + 1}` : 'kontakte',
+    title: pages.length ? 'Kontakte · Fortsetzung' : 'Wir sind für euch da.',
+    category: 'Kontakte & Ansprechpersonen', lead: 'Menschen, die unseren Verein bewegen. Der Pfeil führt zur jeweiligen Person auf unserer Homepage.',
+    approved: true, fullPage: true, contactPage: true, paged: true, editorialPaged: true,
+    folio: firstFolio + pages.length, blocks: [{type:'contact-directory', wide:true, groups, verifiedAt:directory.verifiedAt}], adSlots: []});
+  let groups = [];
+  const finish = () => {
+    if (!groups.length) return;
+    const page = make(groups), fits = measure(page) <= limit;
+    pages.push({...page,paged:fits,editorialPaged:fits});
+    groups = [];
+  };
+  for (const group of directory?.groups || []) {
+    if (groups.length && measure(make([...groups,group])) > limit) finish();
+    groups.push(group);
+  }
+  finish();
+  return pages;
+}

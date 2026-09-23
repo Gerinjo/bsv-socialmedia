@@ -113,13 +113,13 @@ async function ensureClub(admin: any, teamName: string, source: ClubSource) {
 async function readWidget(team: Team) {
   const widgetUrl = `https://next.fussball.de/widget/team-matches/${team.fussball_de_widget_id}`;
   const sourcePage = team.website_path
-    ? `https://gerinjo.github.io/bsv-website/${team.website_path.replace(/^\/+|\/+$/g, '')}/`
-    : 'https://gerinjo.github.io/bsv-website/';
+    ? `https://bsvnordstern.de/${team.website_path.replace(/^\/+|\/+$/g, '')}/`
+    : 'https://bsvnordstern.de/';
   const response = await fetch(widgetUrl, {
     headers: {
       accept: 'text/html,application/xhtml+xml',
       referer: sourcePage,
-      'user-agent': 'BSV-Nordstern-Social-Media-Builder/1.0 (+https://gerinjo.github.io/bsv-website/)',
+      'user-agent': 'BSV-Nordstern-Social-Media-Builder/1.0 (+https://bsvnordstern.de/)',
     },
   });
   if (!response.ok) throw new Error(`Widget antwortet mit HTTP ${response.status}.`);

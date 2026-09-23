@@ -5,6 +5,7 @@ const read = (name) =>
 let [template, css, script, crest] = await Promise.all(
   ["index.html", "style.css", "app.js", "wappen.svg"].map(read),
 );
+const contacts = JSON.parse(await readFile(new URL('config/editorial-contacts.json', root), 'utf8'));
 const advertisingScript = (await readFile(new URL('src/stadium-magazine/platform-sponsors.mjs', root), 'utf8')).replaceAll('export ', '') + '\n' +
   (await readFile(new URL('src/stadium-magazine/ad-layout.mjs', root), 'utf8')).replace(/^import .*;\n/, '').replaceAll('export ', '') + '\n' +
   (await readFile(new URL('src/stadium-magazine/editorial-layout.mjs', root), 'utf8')).replace(/^import .*;\n/, '').replaceAll('export ', '') + `
@@ -46,6 +47,7 @@ const advertisingScript = (await readFile(new URL('src/stadium-magazine/platform
         },0);
       };
       editions[0].pages = paginateEditorial(editions[0].editorialPages, editions[0].magazineAds, measurePage);
+      editions[0].pages.push(...paginateEditorialContacts(editions[0].contacts, measurePage, editions[0].pages.length + 2));
     } finally { measure.remove(); }
   }
 `;
@@ -72,5 +74,5 @@ script += `\nfunction editorialLabels(){
 window.addEventListener('hashchange',editorialLabels);window.addEventListener('editorialnavigate',editorialLabels);\n`;
 await writeFile(
   new URL("src/stadium-reader-assets.mjs", root),
-  `// Generated from the existing bsv-stadionheft reader by scripts/build-stadium-reader.mjs.\nexport const stadiumReaderAssets=${JSON.stringify({ template, css, script, advertisingScript }).replaceAll("<", "\\u003c")};\n`,
+  `// Generated from the existing bsv-stadionheft reader by scripts/build-stadium-reader.mjs.\nexport const stadiumReaderAssets=${JSON.stringify({ template, css, script, advertisingScript, contacts }).replaceAll("<", "\\u003c")};\n`,
 );

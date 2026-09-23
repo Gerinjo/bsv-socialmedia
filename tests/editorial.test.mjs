@@ -84,7 +84,7 @@ test("results preserve zero scores, exclude unplayed games and future results", 
   assert.match(result, /BSV – Gast 0:0/);
   assert.equal(result.split("\n").length, 1);
 });
-test("rewrite sends private text as data, disables storage and handles non-text outputs", async () => {
+test("Groq rewrite sends raw text as data and accepts only the finished answer", async () => {
   let request;
   const result = await rewriteEditorialText({
     text: "wir haben 0:0 gespielt",
@@ -94,36 +94,27 @@ test("rewrite sends private text as data, disables storage and handles non-text 
     model: "configured-model",
     fetchImpl: async (url, options) => {
       request = JSON.parse(options.body);
-      assert.equal(url, "https://api.openai.com/v1/responses");
-      return Response.json({
-        status: "completed",
-        output: [
-          { type: "reasoning" },
-          {
-            type: "message",
-            content: [{ type: "output_text", text: "Wir haben 0:0 gespielt." }],
-          },
-        ],
-      });
+      assert.equal(url, "https://api.groq.com/openai/v1/chat/completions");
+      assert.equal(options.redirect, 'error');
+      assert.equal(options.headers.authorization, 'Bearer test');
+      return Response.json({choices:[{finish_reason:'stop',message:{role:'assistant',content:'Wir haben 0:0 gespielt.',reasoning:'PRIVATE REASONING'}}]});
     },
   });
   assert.equal(result, "Wir haben 0:0 gespielt.");
-  assert.equal(request.store, false);
-  assert.equal(JSON.parse(request.input).text, "wir haben 0:0 gespielt");
-  assert.match(request.instructions, /Erfinde niemals/);
+  assert.equal(request.stream, false);
+  assert.equal(request.store, undefined);
+  assert.ok(request.max_completion_tokens >= 4096);
+  assert.equal(JSON.parse(request.messages[1].content).text, "wir haben 0:0 gespielt");
+  assert.match(request.messages[0].content, /Erfinde niemals/);
 });
 test("incomplete or failed AI output never becomes a saved replacement", async () => {
   for (const payload of [
-    {
-      status: "incomplete",
-      output: [
-        {
-          type: "message",
-          content: [{ type: "output_text", text: "Abgeschnitten" }],
-        },
-      ],
-    },
-    { status: "completed", output: [] },
+    {choices:[{finish_reason:'length',message:{content:'Abgeschnitten'}}]},
+    {choices:[{finish_reason:'stop',message:{content:''}}]},
+    {choices:[{finish_reason:'stop',message:{content:'Ablehnung',refusal:'refused'}}]},
+    {choices:[{finish_reason:'tool_calls',message:{content:'Keine Fassung',tool_calls:[{}]}}]},
+    {choices:[{finish_reason:'stop',message:{content:'x'.repeat(30001)}}]},
+    {choices:[]}, null,
   ]) {
     await assert.rejects(
       rewriteEditorialText({
@@ -192,4 +183,39 @@ test("missing or unsafe table sources remain explicit and cannot cause arbitrary
   assert.match(result.snapshot.warning, /Ungültige/);
   assert.equal(result.snapshot.table, null);
   assert.match(result.body, /Keine abgeschlossenen Ergebnisse/);
+});
+
+test('rewriting retains raw input but returns paragraphs without hard wrapping',async()=>{
+ const original='wir freuen uns das ihr\r\nheute da seit\n\n\nund danke';
+ let sent;
+ const result=await rewriteEditorialText({text:original,title:'Grußwort',kind:'stadium',apiKey:'test',model:'configured-model',fetchImpl:async(_url,options)=>{
+  sent=JSON.parse(options.body);
+  return Response.json({choices:[{finish_reason:'stop',message:{content:'Wir freuen uns, dass ihr\r\nheute da seid.\r\n\r\n \r\nVielen   Dank!'}}]});
+ }});
+ assert.equal(JSON.parse(sent.messages[1].content).text,original);
+ assert.equal(result,'Wir freuen uns, dass ihr heute da seid.\n\nVielen Dank!');
+ assert.match(sent.messages[0].content,/vollständig neu/);assert.match(sent.messages[0].content,/sinnvolle Absätze/);
+});
+
+test('rewrite distinguishes exhausted API quota from temporary throttling',async()=>{
+ for(const [code,expected]of [['insufficient_quota',/API-Guthaben/],['credit_balance_exhausted',/API-Guthaben/],['rate_limit_exceeded',/in Kürze/]]){
+  await assert.rejects(()=>rewriteEditorialText({text:'Test',apiKey:'test',model:'configured-model',fetchImpl:async()=>Response.json({error:{code,message:'Provider detail is not exposed'}},{status:429})}),expected);
+ }
+});
+
+test('Groq transport and authentication failures are actionable and never expose provider details',async()=>{
+ for(const [status,pattern] of [[401,/API-Schlüssel/],[403,/Modellberechtigung/],[404,/Modelleinstellung/],[500,/HTTP 500/]]){
+  await assert.rejects(rewriteEditorialText({text:'Privater Beitrag',apiKey:'PRIVATE KEY',model:'model',fetchImpl:async()=>Response.json({error:{message:'PRIVATE DETAIL'}},{status})}),error=>pattern.test(error.message)&&!/PRIVATE/.test(error.message));
+ }
+ for(const [name,pattern]of [['TimeoutError',/nicht rechtzeitig/],['TypeError',/nicht erreichbar/]]){
+  await assert.rejects(rewriteEditorialText({text:'Text',apiKey:'test',model:'model',fetchImpl:async()=>{const error=new Error('PRIVATE DETAIL');error.name=name;throw error;}}),pattern);
+ }
+ await assert.rejects(rewriteEditorialText({text:'Text',apiKey:'test',model:'model',fetchImpl:async()=>new Response('not json')}),/vollständige/);
+});
+test('Groq GPT OSS requests keep reasoning out of the returned article and limit generation',async()=>{
+ let request;
+ await rewriteEditorialText({text:'Ein Text',apiKey:'test',model:'openai/gpt-oss-120b',fetchImpl:async(_url,options)=>{request=JSON.parse(options.body);return Response.json({choices:[{finish_reason:'stop',message:{content:'Ein Text.',reasoning:'Never publish this'}}]});}});
+ assert.equal(request.reasoning_effort,'low');assert.equal(request.include_reasoning,false);
+ assert.ok(request.max_completion_tokens>=4096&&request.max_completion_tokens<=20000);
+ assert.equal(request.messages[0].role,'system');assert.equal(request.messages[1].role,'user');
 });

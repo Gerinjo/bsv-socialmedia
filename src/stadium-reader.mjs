@@ -6,6 +6,13 @@ export function renderEditorialMagazine(snapshot, preview = true) {
       .replaceAll("<", "\\u003c")
       .replaceAll("\u2028", "\\u2028")
       .replaceAll("\u2029", "\\u2029");
+  const contacts = stadiumReaderAssets.contacts;
+  const teamWebsite = slug => contacts.teams[slug] || null;
+  const personWebsite = (name, slug) => {
+    const groups = contacts.groups;
+    const match = (slug ? groups.filter(group => group.teamSlug === slug) : groups).flatMap(group => group.people).find(person => person.name === name);
+    return (match || groups.flatMap(group => group.people).find(person => person.name === name))?.websiteUrl || null;
+  };
   const image = String(snapshot.cover_url || "");
   const validImage =
     /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(image) ||
@@ -31,6 +38,7 @@ export function renderEditorialMagazine(snapshot, preview = true) {
     id: article.id,
     kind: article.kind,
     teamSlug: article.team_slug || null,
+    websiteUrl: teamWebsite(article.team_slug),
     category: article.event
       ? [
           new Date(`${article.event.date}T12:00:00Z`).toLocaleDateString(
@@ -63,7 +71,7 @@ export function renderEditorialMagazine(snapshot, preview = true) {
   }
   const articleTitle = index => articles[index].title;
   for (let index = 0; index < articles.length; index++) {
-    const people = (snapshot.articles[index].people || []).map(person => ({ name: person.name, role: person.role,
+    const people = (snapshot.articles[index].people || []).map(person => ({ name: person.name, role: person.role, websiteUrl: personWebsite(person.name, articles[index].teamSlug),
       photo_url: /^https:\/\//.test(person.photo_url || '') || snapshot.demo && /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(person.photo_url || '') ? person.photo_url : null }));
     const galleries = [];
     for (const group of snapshot.articles[index].galleries || []) {
@@ -95,7 +103,7 @@ export function renderEditorialMagazine(snapshot, preview = true) {
     const first = pair.find(Boolean);
     return { id: first.id, articleIds: pair.filter(Boolean).map(article => article.id), category: 'Aktive · Tabellen & Ergebnisse', title: `${group} · 1. und 2. Mannschaft`, lead: '', fullPage: true,
       approved: pair.filter(Boolean).every(article => article.approved),
-      blocks: [{type:'senior-sports-grid',wide:true,teams:pair.map((article,index)=>({title:`${index+1}. Mannschaft`,photo:article?.blocks.find(block=>block.type==='sports-overview')?.photo,text:article?.blocks.find(block=>block.type==='sports-overview')?.text || 'Noch keine Sportdaten abgerufen.',compact:false}))}] };
+      blocks: [{type:'senior-sports-grid',wide:true,teams:pair.map((article,index)=>({title:`${index+1}. Mannschaft`,websiteUrl:teamWebsite(`${group.toLowerCase()}-${index+1}`),photo:article?.blocks.find(block=>block.type==='sports-overview')?.photo,text:article?.blocks.find(block=>block.type==='sports-overview')?.text || 'Noch keine Sportdaten abgerufen.',compact:false}))}] };
   }).filter(Boolean);
   const coachGroups = ['herren', 'frauen'].map(group => {
     const pair = [1, 2].map(number => articles.find(article => article.kind === 'coach' && article.teamSlug === `${group}-${number}` && article.hasContent));
@@ -103,7 +111,7 @@ export function renderEditorialMagazine(snapshot, preview = true) {
     return { id: pair.find(Boolean).id, articleIds: pair.filter(Boolean).map(article => article.id), keepTogether: true,
       category: 'Aktive · Trainerteam', title: `Grußworte · ${group === 'herren' ? 'Herren' : 'Frauen'}`, lead: '',
       approved: pair.filter(Boolean).every(article => article.approved),
-      blocks: [{type:'coach-grid',wide:true,teams:pair.flatMap((article,index)=>article ? [{title:`${index+1}. Mannschaft`,author:article.author || '',blocks:article.blocks}] : [])}] };
+      blocks: [{type:'coach-grid',wide:true,teams:pair.flatMap((article,index)=>article ? [{title:`${index+1}. Mannschaft`,websiteUrl:article.websiteUrl,author:article.author || '',blocks:article.blocks}] : [])}] };
   }).filter(Boolean);
   const groupedIds = new Set([...activeGroups, ...coachGroups].flatMap(group => group.articleIds));
   const editorialPages = [];
@@ -124,7 +132,7 @@ export function renderEditorialMagazine(snapshot, preview = true) {
     const shortTitle = article => article.title.replace(/^Sport(?: kompakt)?\s*·\s*/i, '').replace(/^BSV Nordstern Radolfzell\s*·\s*/i, '');
     editorialPages.push({ id: pair[0].id, articleIds: pair.map(article => article.id), category: 'Jugend · Tabellen & Ergebnisse',
       title: pair.map(shortTitle).join(' / '), lead: '', automaticSports: pair.every(article => article.automaticSports), approved: pair.every(article => article.approved),
-      blocks: [{ type: 'youth-sports-grid', wide: true, teams: pair.map(article => ({ title: shortTitle(article), ...article.blocks[0] })) }] });
+      blocks: [{ type: 'youth-sports-grid', wide: true, teams: pair.map(article => ({ title: shortTitle(article), websiteUrl:article.websiteUrl, ...article.blocks[0] })) }] });
   }
   const events = snapshot.articles.filter(
     (article) => article.kind === "event",
@@ -156,13 +164,14 @@ export function renderEditorialMagazine(snapshot, preview = true) {
     photo: validImage ? image : null,
     photoAlt: snapshot.cover_alt || snapshot.title,
     photoCaption: snapshot.cover_credit || "Titelbild der Ausgabe",
-    coverMatches: (snapshot.coverMatches || []).filter(match => !coverSettings?.teamSlugs || coverSettings.teamSlugs.includes(matchSlug(match))),
+    coverMatches: (snapshot.coverMatches || []).filter(match => !coverSettings?.teamSlugs || coverSettings.teamSlugs.includes(matchSlug(match))).map(match => ({...match,websiteUrl:teamWebsite(matchSlug(match))})),
     editorialCover: true,
     teaserIds: selectedTeasers.map(item => item.id),
     teaserAliases: Object.fromEntries(selectedTeasers.map(item => [item.id,item.alias])),
     articles,
     editorialPages,
     magazineAds,
+    contacts,
     note: snapshot.demo
       ? "Lokale Heftvorschau · keine öffentliche Veröffentlichung."
       : preview
