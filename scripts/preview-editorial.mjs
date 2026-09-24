@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { renderNewsletterUnsubscribePage } from "../src/newsletter-unsubscribe.mjs";
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 
@@ -30,6 +31,8 @@ async function previewHtml() {
   return html;
 }
 const files = new Map([
+  ["/newsletter-unsubscribe.mjs", "src/newsletter-unsubscribe.mjs"],
+  ["/newsletter.mjs", "src/newsletter.mjs"],
   ["/preview-team-photos.mjs", "admin-site/preview/team-photos.mjs"],
   ["/preview-people.mjs", "admin-site/preview/people.mjs"],
   ["/editorial-people.mjs", "src/editorial-people.mjs"],
@@ -48,7 +51,7 @@ const server = createServer(async (request, response) => {
   response.setHeader("X-Content-Type-Options", "nosniff");
   response.setHeader(
     "Content-Security-Policy",
-    `default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data: http://localhost:${port} http://127.0.0.1:${port}; connect-src 'none'; frame-src blob:; base-uri 'none'; frame-ancestors 'none'; form-action 'none'`,
+    `default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data: http://localhost:${port} http://127.0.0.1:${port} https://bsvnordstern.de https://gerinjo.github.io; connect-src 'none'; frame-src blob:; base-uri 'none'; frame-ancestors 'none'; form-action 'none'`,
   );
   if (request.method !== "GET") {
     response.writeHead(405);
@@ -57,6 +60,13 @@ const server = createServer(async (request, response) => {
   }
   const path = new URL(request.url, "http://localhost").pathname;
   try {
+    if (path === '/newsletter/abmelden') {
+      response.setHeader('Content-Type','text/html; charset=utf-8');
+      response.setHeader('Referrer-Policy','no-referrer');
+      response.setHeader('Content-Security-Policy',"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; frame-src about:; base-uri 'none'; frame-ancestors 'none'; form-action 'none'");
+      response.end(renderNewsletterUnsubscribePage());
+      return;
+    }
     if (/^\/preview-team-photos\/[a-z0-9-]+\.(png|jpe?g|webp)$/.test(path)) {
       const extension=path.split('.').pop();
       response.setHeader('Content-Type',extension==='jpg'||extension==='jpeg'?'image/jpeg':'image/'+extension);
@@ -82,7 +92,7 @@ const server = createServer(async (request, response) => {
     if (/^\/stadionheft\/[a-z0-9-]+$/.test(path)) {
       response.setHeader("Content-Type", "text/html; charset=utf-8");
       response.end(
-        `<!doctype html><html lang="de"><meta charset="utf-8"><title>Stadionheft</title><body><p id="message">Ausgabe wird geladen …</p><script type="module">import {editorialPreviewPublication} from '/preview-api.mjs';import {renderEditorialMagazine} from '/stadium-reader.mjs';try{const html=renderEditorialMagazine(await editorialPreviewPublication(location.pathname.split('/').pop()),false);document.open();document.write(html);document.close();}catch(error){document.querySelector('#message').textContent=error.message;}</script></body></html>`,
+        `<!doctype html><html lang="de"><meta charset="utf-8"><title>Stadionheft</title><body><p id="message">Ausgabe wird geladen …</p><script type="module">import {editorialPreviewPublication} from '/preview-api.mjs';import {renderEditorialMagazine} from '/stadium-reader.mjs';try{const html=renderEditorialMagazine(await editorialPreviewPublication(location.pathname.split('/').pop(),new URLSearchParams(location.search).get('version')),false);document.open();document.write(html);document.close();}catch(error){document.querySelector('#message').textContent=error.message;}</script></body></html>`,
       );
       return;
     }

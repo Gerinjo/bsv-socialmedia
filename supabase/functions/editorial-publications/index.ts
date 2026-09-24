@@ -19,10 +19,14 @@ const handler = withSupabase(
     const id = new URL(request.url).searchParams.get("id") || "";
     if (!/^[0-9a-f-]{36}$/i.test(id))
       return Response.json({ error: "not_found" }, { status: 404, headers });
-    const { data, error } = await context.supabaseAdmin
+    const version = new URL(request.url).searchParams.get('version');
+    if (version !== null && (!/^[1-9][0-9]{0,9}$/.test(version) || Number(version) > 2147483647)) return Response.json({error:'not_found'},{status:404,headers});
+    let query = context.supabaseAdmin
       .from("editorial_publications")
       .select("snapshot")
-      .eq("issue_id", id)
+      .eq("issue_id", id);
+    if (version !== null) query = query.eq("issue_version", Number(version));
+    const {data,error} = await query
       .order("issue_version", { ascending: false })
       .limit(1)
       .maybeSingle();

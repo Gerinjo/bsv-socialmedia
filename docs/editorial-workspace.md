@@ -1,6 +1,6 @@
 # Redaktion für Stadionheft und Newsletter
 
-Der neue Suite-Bereich **Redaktion** verwaltet Ausgaben und ihre Beiträge. Stadionhefte erhalten beim Anlegen feste Rubriken: Grußwort der Vorstandschaft, Grußwort der Jugendleitung sowie Trainerbegrüßungen und Sportdaten für die aktiven Erwachsenenmannschaften und die A- bis D-Jugend einschließlich Juniorinnen. Für die A-Jugend entfällt die Trainerbegrüßung. Die Social-Media-Aktivierung der Jugendteams beeinflusst diese Heftauswahl nicht. Newsletter beginnen mit einem leeren Inhaltsplan. Weitere Beiträge lassen sich vereinsweit oder einer aktiven Abteilung zugeordnet anlegen.
+Der neue Suite-Bereich **Redaktion** verwaltet Ausgaben und ihre Beiträge. Stadionhefte erhalten beim Anlegen feste Rubriken: Grußwort der Vorstandschaft, Grußwort der Jugendleitung sowie Trainerbegrüßungen und Sportdaten für die aktiven Erwachsenenmannschaften und die A- bis D-Jugend einschließlich Juniorinnen. Für die A-Jugend entfällt die Trainerbegrüßung. Die Social-Media-Aktivierung der Jugendteams beeinflusst diese Heftauswahl nicht. Newsletter beginnen mit einem leeren Inhaltsplan und werden als Nordstern-Post-E-Mail angezeigt und exportiert. Über **Aus dem Stadionheft übernehmen** lassen sich veröffentlichte Hefte und einzelne Artikel auswählen. Im Newsletter erscheinen gekürzte Auszüge mit Links zu den vollständigen Heftartikeln. Details: [Newsletter in der Club Suite](newsletter.md). Weitere Beiträge lassen sich vereinsweit oder einer aktiven Abteilung zugeordnet anlegen.
 
 ## Lokal ansehen
 

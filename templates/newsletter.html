@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="de" xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <meta name="color-scheme" content="light" />
+    <title>{{TITLE}}</title>
+    <style>
+      body { margin: 0; padding: 0; }
+      table { border-collapse: collapse; }
+      a { text-underline-offset: 3px; }
+      .newsletter-shell { overflow-wrap:anywhere; }
+      @media screen and (max-width: 620px) {
+        .outer { padding: 12px 8px !important; }
+        .section { padding: 28px 24px !important; }
+        .magazine-column { display:block !important; width:100% !important; }
+        .magazine-gap { display:block !important; width:100% !important; height:16px !important; }
+        .newsletter-sponsor-cell { display:block !important; width:100% !important; box-sizing:border-box !important; }
+        .newsletter-header { background-position:center top,right 32px top !important; background-size:100% 100%,auto 320px !important; }
+        .newsletter-brand { font-size:18px !important; line-height:24px !important; letter-spacing:0 !important; }
+        .newsletter-crest-cell { width:64px !important; }
+        .newsletter-crest { width:64px !important; height:auto !important; }
+        .headline { font-size: 38px !important; line-height: 42px !important; }
+      }
+    </style>
+  </head>
+  <body
+    style="margin:0;padding:0;background-color:#edf0e9;color:#193c2c;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;"
+  >
+    <div
+      style="display:none;font-size:1px;color:#edf0e9;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;"
+    >
+      {{PREHEADER}}
+    </div>
+    <table role="presentation" width="100%" style="width:100%;background-color:#edf0e9;">
+      <tr>
+        <td class="outer" align="center" style="padding:32px 12px;">
+          <!--[if mso]><table role="presentation" width="720" align="center"><tr><td><![endif]-->
+          <table class="newsletter-shell" role="presentation" width="100%" style="width:100%;max-width:720px;background-color:#ffffff;border:4px solid #17613a;">
+            <tr>
+              <td class="newsletter-header" background="https://bsvnordstern.de/images/fussball/teams-schuss.webp" bgcolor="#092f20" style="border-top:6px solid #f4d638;background-color:#092f20;background-image:url('https://bsvnordstern.de/images/fussball/teams-schuss.webp');background-repeat:no-repeat;background-position:right 64px top;background-size:auto 400px;background-image:linear-gradient(90deg,#092f20 0%,#092f20 50%,rgba(9,47,32,0) 78%,#092f20 92%),url('https://bsvnordstern.de/images/fussball/teams-schuss.webp');background-position:center top,right 64px top;background-size:100% 100%,auto 400px;">
+                <table role="presentation" width="100%" style="width:100%;">
+                  <tr>
+                    <td class="section newsletter-masthead" style="padding:24px 40px;background-color:rgba(9,47,32,0.62);">
+                      <table role="presentation" width="100%" style="width:100%;table-layout:fixed;">
+                        <tr>
+                          <td valign="middle" style="padding-right:16px;vertical-align:middle;">
+                            {{BRAND}}
+                            <p style="margin:0;color:#d7e5dc;font-size:12px;line-height:20px;">{{EDITION}}</p>
+                          </td>
+                          <td class="newsletter-crest-cell" width="88" align="right" valign="middle" style="width:88px;text-align:right;vertical-align:middle;">
+                            <a href="https://bsvnordstern.de/" style="display:inline-block;text-decoration:none;"><img class="newsletter-crest" src="https://bsvnordstern.de/images/verein/wappen/bsv-nordstern.png" alt="Wappen des BSV Nordstern Radolfzell" width="88" height="83" style="display:block;width:88px;height:auto;border:0;" /></a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="section newsletter-hero" style="padding:32px 40px 40px;background-color:rgba(9,47,32,0.62);">
+                      {{KICKER}}
+                      {{HEADLINE}}
+                      {{INTRO}}
+              </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+{{CONTENT}}
+            <tr>
+              <td class="section" style="padding:28px 40px;background-color:#092f20;">
+                <p style="margin:0 0 16px;color:#ffffff;font-size:13px;line-height:21px;">
+                  <strong>BSV Nordstern e.V. Radolfzell</strong><br />Schlesierstraße 43 · 78315 Radolfzell<br /><a
+                    href="mailto:info@bsvnordstern.de"
+                    style="color:#ffffff;"
+                    >info@bsvnordstern.de</a
+                  >
+                </p>
+                <p style="margin:0 0 16px;font-size:13px;line-height:23px;">
+                  <a href="https://bsvnordstern.de/impressum" style="color:#c1d2c6;">Impressum</a> &nbsp;·&nbsp;
+                  <a href="https://bsvnordstern.de/datenschutz" style="color:#c1d2c6;">Datenschutz</a>
+                </p>
+                <p style="margin:0;color:#c1d2c6;font-size:12px;line-height:20px;">
+                  Du möchtest diesen Newsletter nicht mehr erhalten?<br /><a
+                    href="{{UNSUBSCRIBE_URL}}" target="_blank" rel="noopener noreferrer"
+                    style="color:#f4d638;"
+                    >Newsletter abmelden</a
+                  ><br />Auf der nächsten Seite bestätigst du deine Abmeldung.
+                </p>
+              </td>
+            </tr>
+          </table>
+          <!--[if mso]></td></tr></table><![endif]-->
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

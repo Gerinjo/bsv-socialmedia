@@ -1,0 +1,101 @@
+{
+  "selected_at": "2026-09-18T13:23:58.952Z",
+  "selection": {
+    "general": [
+      {
+        "id": "bc1cdc30-64f0-47c1-bd40-25676f8fb636",
+        "name": "BKK Linde",
+        "logo": "https://bsvnordstern.de/images/sponsors/synced/bkk-linde.png",
+        "alt": "Logo von BKK Linde",
+        "website": "https://bkk-linde.de/",
+        "width": 112,
+        "height": 36
+      },
+      {
+        "id": "eb24aa2a-332a-4ca7-93ff-41ad61431902",
+        "name": "BGV",
+        "logo": "https://bsvnordstern.de/images/sponsors/synced/bgv.png",
+        "alt": "Logo von BGV",
+        "website": "https://www.bgv.de/agenturen/carmenmartin.xhtml",
+        "width": 112,
+        "height": 42
+      },
+      {
+        "id": "f381d73e-7d3a-4e19-993e-67d48500172e",
+        "name": "Allianz - Helmut Heitz Generalvertretung",
+        "logo": "https://bsvnordstern.de/images/sponsors/synced/allianz-helmut-heitz-generalvertretung.png",
+        "alt": "Logo von Allianz - Helmut Heitz Generalvertretung",
+        "website": "https://vertretung.allianz.de/helmut.heitz/",
+        "width": 112,
+        "height": 28
+      }
+    ],
+    "youth": [
+      {
+        "id": "956f9db0-c5e7-41f0-9265-bd32a4df5b85",
+        "name": "Kinder- und Jugendfussball Akademie des SC Freiburg",
+        "logo": "https://bsvnordstern.de/images/sponsors/synced/kinder-und-jugendfussball-akademie-des-sc-freiburg.png",
+        "alt": "Logo von Kinder- und Jugendfussball Akademie des SC Freiburg",
+        "website": "https://www.scfreiburg.com/fussballschule/",
+        "width": 112,
+        "height": 54
+      },
+      {
+        "id": "eb24aa2a-332a-4ca7-93ff-41ad61431902",
+        "name": "BGV",
+        "logo": "https://bsvnordstern.de/images/sponsors/synced/bgv.png",
+        "alt": "Logo von BGV",
+        "website": "https://www.bgv.de/agenturen/carmenmartin.xhtml",
+        "width": 112,
+        "height": 42
+      },
+      {
+        "id": "04a2bb2f-222d-4c26-95a8-bc1a9bf9fc76",
+        "name": "Allfinanz Deutsche Vermögensberatung - Rainer Hoier",
+        "logo": "https://bsvnordstern.de/images/sponsors/synced/generali-rainer-hoier.png",
+        "alt": "Logo von Allfinanz Deutsche Vermögensberatung - Rainer Hoier",
+        "website": "https://www.allfinanz.ag/rainer.hoier",
+        "width": 112,
+        "height": 62
+      }
+    ],
+    "stadium": [
+      {
+        "id": "d81d247b-d07e-474c-a0cf-34600f0939b2",
+        "name": "A. Iwan · Maschinen- und Apparatebau",
+        "logo": "https://bsvnordstern.de/images/sponsors/synced/a-iwan-maschinen-und-apparatebau.png",
+        "alt": "Logo von A. Iwan · Maschinen- und Apparatebau",
+        "website": "http://www.hegaustahl.de/",
+        "width": 83,
+        "height": 64
+      },
+      {
+        "id": "d7849191-2316-405c-afe1-abae0ba42eaf",
+        "name": "Fliesen Ruf",
+        "logo": "https://bsvnordstern.de/images/sponsors/synced/fliesen-ruf.png",
+        "alt": "Logo von Fliesen Ruf",
+        "website": "https://www.fliesen-ruf.de/",
+        "width": 44,
+        "height": 64
+      },
+      {
+        "id": "75b7cfbf-54ea-4e8d-90c5-5e6ef490492d",
+        "name": "ENGMATEC GmbH",
+        "logo": "https://bsvnordstern.de/images/sponsors/synced/engmatec-gmbh.png",
+        "alt": "Logo von ENGMATEC GmbH",
+        "website": "https://www.engmatec.de/",
+        "width": 74,
+        "height": 64
+      },
+      {
+        "id": "37827a61-3584-43e6-8d62-c71c51e88d8f",
+        "name": "SAUTER GmbH Putz & Farbe - Gerüstbau - Hebebühnen",
+        "logo": "https://bsvnordstern.de/images/sponsors/synced/sauter-gmbh-putz-farbe-gerustbau-hebebuhnen.png",
+        "alt": "Logo von SAUTER GmbH Putz & Farbe - Gerüstbau - Hebebühnen",
+        "website": "https://www.sauter-putz-farbe.de/",
+        "width": 97,
+        "height": 64
+      }
+    ]
+  }
+}

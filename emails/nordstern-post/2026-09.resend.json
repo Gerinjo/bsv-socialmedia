@@ -1,0 +1,72 @@
+{
+  "id": "508062c7-3552-4209-a8ec-c6c208461f53",
+  "name": "NordsternPost",
+  "status": "sent",
+  "from": "BSV Nordstern Radolfzell <info@bsvnordstern.de>",
+  "subject": "Nordstern Post: Dein Verein. Dein September. ✦",
+  "segment_id": "76a53fca-4c76-40a7-8c56-404806f88364",
+  "segment_name": "Nordstern Post",
+  "created_at": "2026-09-18 13:15:18.198175+00",
+  "sent_at": "2026-09-18 13:51:21.699725+00",
+  "scheduled_at": null,
+  "last_verified_at": "2026-09-18T13:52:02.360Z",
+  "stadium_magazine_url": "https://gerinjo.github.io/bsv-stadionheft-pages/",
+  "stadium_magazine_images": [
+    "https://gerinjo.github.io/bsv-stadionheft-pages/assets/saison-2627/herren-eins.jpeg",
+    "https://gerinjo.github.io/bsv-stadionheft-pages/assets/saison-2627/frauen.jpg"
+  ],
+  "sponsors_selected_at": "2026-09-18T13:23:58.952Z",
+  "sponsors": {
+    "general": [
+      {
+        "id": "bc1cdc30-64f0-47c1-bd40-25676f8fb636",
+        "name": "BKK Linde"
+      },
+      {
+        "id": "eb24aa2a-332a-4ca7-93ff-41ad61431902",
+        "name": "BGV"
+      },
+      {
+        "id": "f381d73e-7d3a-4e19-993e-67d48500172e",
+        "name": "Allianz - Helmut Heitz Generalvertretung"
+      }
+    ],
+    "youth": [
+      {
+        "id": "956f9db0-c5e7-41f0-9265-bd32a4df5b85",
+        "name": "Kinder- und Jugendfussball Akademie des SC Freiburg"
+      },
+      {
+        "id": "eb24aa2a-332a-4ca7-93ff-41ad61431902",
+        "name": "BGV"
+      },
+      {
+        "id": "04a2bb2f-222d-4c26-95a8-bc1a9bf9fc76",
+        "name": "Allfinanz Deutsche Vermögensberatung - Rainer Hoier"
+      }
+    ],
+    "stadium": [
+      {
+        "id": "d81d247b-d07e-474c-a0cf-34600f0939b2",
+        "name": "A. Iwan · Maschinen- und Apparatebau"
+      },
+      {
+        "id": "d7849191-2316-405c-afe1-abae0ba42eaf",
+        "name": "Fliesen Ruf"
+      },
+      {
+        "id": "75b7cfbf-54ea-4e8d-90c5-5e6ef490492d",
+        "name": "ENGMATEC GmbH"
+      },
+      {
+        "id": "37827a61-3584-43e6-8d62-c71c51e88d8f",
+        "name": "SAUTER GmbH Putz & Farbe - Gerüstbau - Hebebühnen"
+      }
+    ]
+  },
+  "header": {
+    "crest": "https://bsvnordstern.de/images/verein/wappen/bsv-nordstern.png",
+    "background": "https://bsvnordstern.de/images/fussball/teams-schuss.webp"
+  },
+  "recipient_count_at_send": 4
+}

@@ -15,6 +15,7 @@ import {
   rewriteEditorialText,
 } from "../../../src/editorial.mjs";
 import { editorialSportsSnapshot } from "../../../src/editorial-sports.mjs";
+import { normalizeNewsletterSettings, newsletterSource, newsletterSelection } from '../../../src/newsletter.mjs';
 import { normalizeEditorialCoverSettings } from '../../../src/editorial-publication.mjs';
 
 const fail = (message: string) => {
@@ -48,6 +49,14 @@ const departments = [
   "youth_department",
   "department",
 ];
+
+async function loadNewsletterSource(db: any, sourceIssueId: unknown, sourceVersion?: unknown) {
+  if (typeof sourceIssueId !== 'string' || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(sourceIssueId)) fail('Bitte ein veröffentlichtes Stadionheft auswählen.');
+  if (sourceVersion != null && (!Number.isInteger(sourceVersion) || Number(sourceVersion) < 1)) fail('Ungültige Heftfassung.');
+  let query = db.from('editorial_publications').select('issue_id,issue_version,published_at,snapshot').eq('issue_id', sourceIssueId);
+  if (sourceVersion != null) query = query.eq('issue_version', sourceVersion);
+  return newsletterSource(await row(query.order('issue_version',{ascending:false}).limit(1).maybeSingle()));
+}
 
 export async function handleEditorial(db: any, userId: string, body: any) {
   const action = body.action;
@@ -139,6 +148,33 @@ export async function handleEditorial(db: any, userId: string, body: any) {
   if (action === "editorial_articles") {
     const articles = await row(db.from('editorial_articles').select('*').eq('issue_id',body.issueId).order('position').order('created_at'));
     return {articles:await Promise.all(articles.map((article: any)=>withArticleGalleries(db,article)))};
+  }
+  if (action === 'editorial_newsletter_source') {
+    return {source:await loadNewsletterSource(db, body.sourceIssueId, body.sourceVersion)};
+  }
+  if (action === 'editorial_save_newsletter_selection') {
+    const issue = await row(db.from('editorial_issues').select('*').eq('id', body.issueId).single());
+    if (issue.kind !== 'newsletter') fail('Die Artikelauswahl ist nur für Newsletter verfügbar.');
+    if (issue.version !== body.version) fail('Die Ausgabe wurde geändert. Bitte neu laden.');
+    let selection = null;
+    if (body.sourceIssueId != null) {
+      if (!Number.isInteger(body.sourceVersion) || body.sourceVersion < 1) fail('Bitte das Heft erneut laden.');
+      selection = newsletterSelection(await loadNewsletterSource(db, body.sourceIssueId, body.sourceVersion), body.articleIds);
+    } else if (!Array.isArray(body.articleIds) || body.articleIds.length) fail('Bitte die Artikelauswahl prüfen.');
+    const saved = await row(db.from('editorial_issues').update({newsletter_selection:selection})
+      .eq('id', issue.id).eq('version', body.version).select().maybeSingle());
+    if (!saved) fail('Die Ausgabe wurde geändert. Bitte neu laden.');
+    return {issue:saved};
+  }
+  if (action === 'editorial_save_newsletter_settings') {
+    const settings = normalizeNewsletterSettings(body.settings);
+    const issue = await row(db.from('editorial_issues').select('*').eq('id', body.issueId).single());
+    if (issue.kind !== 'newsletter') fail('Diese Angaben sind nur für Newsletter verfügbar.');
+    if (issue.version !== body.version) fail('Die Ausgabe wurde geändert. Bitte neu laden.');
+    const saved = await row(db.from('editorial_issues')
+      .update({newsletter_settings: settings}).eq('id', issue.id).eq('version', body.version).select().maybeSingle());
+    if (!saved) fail('Die Ausgabe wurde geändert. Bitte neu laden.');
+    return {issue:saved};
   }
   if (action === 'editorial_save_cover_settings' || action === 'editorial_save_cover_defaults') {
     const settings = normalizeEditorialCoverSettings(body.settings);

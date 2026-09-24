@@ -71,3 +71,17 @@ test('active teams share a full page with first team left, second right; empty d
  assert.deepEqual(edition.editorialPages[0].articleIds,['first','second']);
  assert.deepEqual(edition.editorialPages[0].blocks[0].teams.map(team=>team.text),['First table','Second table']);
 });
+
+test('saved magazine excerpts count as newsletter content and remain frozen in the preview snapshot',()=>{
+  const selection={issue_id:'source',issue_version:3,title:'Heft',articles:[{id:'article',title:'Beitrag',excerpt:'Auszug'}]};
+  const newsletter={...issue,kind:'newsletter',newsletter_selection:selection};
+  assert.equal(editorialReleaseState(newsletter,[]).ready,true);
+  assert.equal(editorialReleaseState(newsletter,[]).reviewed,false);
+  assert.equal(editorialReleaseState({...newsletter,previewed_version:5},[]).reviewed,true);
+  assert.equal(editorialReleaseState({...newsletter,newsletter_selection:null},[]).ready,false);
+  assert.equal(editorialReleaseState(newsletter,[{...article,status:'draft'}]).ready,false);
+  assert.equal(editorialReleaseState(newsletter,[]).canPublish,false);
+  const snapshot=editorialPublicSnapshot(newsletter,[]);
+  selection.articles[0].excerpt='Spätere Änderung';
+  assert.equal(snapshot.newsletter_selection.articles[0].excerpt,'Auszug');
+});

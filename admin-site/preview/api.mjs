@@ -1,3 +1,4 @@
+import { normalizeNewsletterSettings, newsletterSource, newsletterSelection } from '/newsletter.mjs';
 import { previewTeamPhotos } from '/preview-team-photos.mjs';
 import { previewPeople } from '/preview-people.mjs';
 import { selectEditorialPeople } from '/editorial-people.mjs';
@@ -148,6 +149,18 @@ function load() {
     else {state.articles=state.articles.filter(a=>a.id!==saved.id);state.revisions=state.revisions.filter(r=>r.article_id!==saved.id);touch(state,saved.issue_id);}
     upgraded=true;
   }
+  if (!state.newsletterSourceExampleAdded) {
+    const issue = {id:'10000000-0000-4000-8000-000000000001',title:'Nordstern · Vereinsleben (Beispiel)',kind:'stadium',starts_on:day(-14),closes_on:day(-10),publishes_on:day(-7),version:1,published_version:1,published_at:new Date().toISOString(),cover_url:new URL('/preview-team-photos/herren-1.jpg',location.origin).href};
+    const examples = [
+      ['Gemeinsam auf und neben dem Platz', 'Vorstandschaft (Beispiel)', 'Ein Verein lebt von den Menschen, die ihn jeden Tag mitgestalten. Beim BSV Nordstern treffen auf dem Sportplatz viele Generationen zusammen. Ob beim Training, am Spielfeldrand oder bei der Vorbereitung eines Heimspiels: Überall bringen Mitglieder ihre Zeit und ihre Ideen ein. Besonders freuen wir uns über die vielen helfenden Hände, die unsere Jugendmannschaften begleiten und Veranstaltungen möglich machen. Dieser Zusammenhalt ist die Grundlage für alles, was wir gemeinsam erreichen. Im kommenden Monat wollen wir weitere Gelegenheiten schaffen, bei denen sich neue und langjährige Mitglieder kennenlernen. Alle sind herzlich eingeladen, sich einzubringen und das Vereinsleben aktiv mitzugestalten.'],
+      ['Ein Tag für unsere Jugend', 'Jugendabteilung (Beispiel)', 'Unsere Jugendmannschaften haben einen gemeinsamen Trainingstag erlebt. Kleine Spiele, neue Übungen und viele Begegnungen sorgten für einen abwechslungsreichen Nachmittag. Die älteren Spielerinnen und Spieler unterstützten die Jüngeren an den verschiedenen Stationen. Neben dem sportlichen Programm blieb viel Zeit, um miteinander zu sprechen und neue Freundschaften zu schließen. Beim gemeinsamen Abschluss waren sich alle einig: Diesen Tag möchten wir wiederholen. Ein herzliches Dankeschön geht an die Trainerteams und die Familien, die bei der Organisation, Verpflegung und Betreuung geholfen haben. Die nächsten Termine und weitere Berichte findet ihr in unserem Stadionheft.'],
+    ].map(([title,author,body],index)=>({...article({title,kind:'free',position:index},issue.id),id:`10000000-0000-4000-8000-00000000000${index+2}`,author,body,original_body:body,status:'ready'}));
+    state.issues.push(issue);
+    state.articles.push(...examples);
+    state.publications.push({...editorialPublicSnapshot(issue,examples),published_at:issue.published_at,demo:true});
+    state.newsletterSourceExampleAdded = true;
+    upgraded = true;
+  }
   if (upgraded) localStorage.setItem(storageKey, JSON.stringify(state));
   return state;
 }
@@ -225,6 +238,32 @@ export async function editorialPreviewApi(method = "GET", body = {}) {
         if (issue.kind === "stadium" && state.coverDefaults) issue.cover_settings = applyEditorialCoverTemplate(state.coverDefaults, state.articles.filter(a => a.issue_id === issue.id), teams);
       }
       result = { issue };
+      break;
+    }
+    case 'editorial_newsletter_source': {
+      result = {source:localNewsletterSource(state, body.sourceIssueId, body.sourceVersion)};
+      break;
+    }
+    case 'editorial_save_newsletter_selection': {
+      const issue = state.issues.find(issue => issue.id === body.issueId);
+      if (!issue || issue.kind !== 'newsletter' || issue.version !== body.version) throw new Error('Die Ausgabe wurde geändert. Bitte neu laden.');
+      if (body.sourceIssueId !== null) {
+        if (!Number.isInteger(body.sourceVersion) || body.sourceVersion < 1) throw new Error('Bitte die Heftfassung neu auswählen.');
+        issue.newsletter_selection = newsletterSelection(localNewsletterSource(state,body.sourceIssueId,body.sourceVersion),body.articleIds);
+      } else {
+        if (!Array.isArray(body.articleIds) || body.articleIds.length) throw new Error('Bitte ein Stadionheft auswählen.');
+        issue.newsletter_selection = null;
+      }
+      touch(state,issue.id);
+      result = {issue};
+      break;
+    }
+    case 'editorial_save_newsletter_settings': {
+      const issue = state.issues.find(issue => issue.id === body.issueId);
+      if (!issue || issue.kind !== 'newsletter' || issue.version !== body.version) throw new Error('Die Ausgabe wurde geändert. Bitte neu laden.');
+      issue.newsletter_settings = normalizeNewsletterSettings(body.settings);
+      touch(state, issue.id);
+      result = {issue};
       break;
     }
     case 'editorial_save_cover_settings':
@@ -539,9 +578,15 @@ export function createClient() {
   };
 }
 
-export async function editorialPreviewPublication(id) {
+function localNewsletterSource(state, id, version) {
+  if (version !== undefined && (!Number.isInteger(version) || version < 1)) throw new Error('Ungültige Heftfassung.');
+  const snapshot = state.publications.filter(p => p.id === id && (version === undefined || p.version === version)).at(-1);
+  return newsletterSource(snapshot && {issue_id:snapshot.id,issue_version:snapshot.version,published_at:snapshot.published_at,snapshot});
+}
+export async function editorialPreviewPublication(id, version = null) {
+  if (version !== null && (!/^[1-9][0-9]{0,9}$/.test(version) || Number(version)>2147483647)) throw new Error('Diese Heftfassung ist nicht verfügbar.');
   const snapshot = load()
-    .publications.filter((p) => p.id === id)
+    .publications.filter((p) => p.id === id && (version === null || p.version === Number(version)))
     .at(-1);
   if (!snapshot)
     throw new Error("Diese Ausgabe ist noch nicht veröffentlicht.");

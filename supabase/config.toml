@@ -21,3 +21,7 @@ verify_jwt = true
 
 [functions.editorial-publications]
 verify_jwt = false
+
+# Resend uses a Svix signature; the function validates the raw body before access.
+[functions.newsletter-unsubscribe-webhook]
+verify_jwt = false

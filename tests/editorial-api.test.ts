@@ -1,3 +1,4 @@
+import { newsletterDefaults } from '../src/newsletter.mjs';
 import assert from "node:assert/strict";
 import { handleEditorial } from "../supabase/functions/social-media-admin-api/editorial.ts";
 import { prepareEditorialPeople, withEditorialPeople } from '../supabase/functions/_shared/editorial-people.ts';
@@ -402,4 +403,63 @@ Deno.test('a Groq rate limit leaves the saved input in place without a second wr
   assert.equal(result.rewritten,false);assert.equal(result.article.body,'Neu');assert.match(result.warning,/Text gespeichert.*Groq-Anfragelimit/);
   assert.equal(calls.filter((call:any)=>call.update).length,1);
  }finally{globalThis.fetch=oldFetch;Deno.env.delete('GROQ_API_KEY');Deno.env.delete('EDITORIAL_GROQ_MODEL');}
+});
+
+Deno.test('newsletter settings are kind-checked, validated and saved with optimistic concurrency', async () => {
+  const issue={id:'newsletter',kind:'newsletter',version:5,title:'Herbstpost'};
+  const settings={...newsletterDefaults(issue),name:'Sternenpost',number:'02'};
+  const request={action:'editorial_save_newsletter_settings',issueId:issue.id,version:5,settings};
+  const saved={...issue,version:6,newsletter_settings:settings};
+  const result=database([issue,saved]);
+  assert.deepEqual(await handleEditorial(result.db,'actor',request),{issue:saved});
+  assert.deepEqual(result.calls[1].update,{newsletter_settings:settings});
+  assert.ok(result.calls[1].filters.some(([key,value]:any[])=>key==='id' && value===issue.id));
+  assert.ok(result.calls[1].filters.some(([key,value]:any[])=>key==='version' && value===5));
+  for(const invalid of [{...issue,kind:'stadium'},{...issue,version:6}]) {
+    const denied=database([invalid]);
+    await assert.rejects(handleEditorial(denied.db,'actor',request));
+    assert.ok(denied.calls.every(call=>!call.update));
+  }
+  const malformed=database([]);
+  await assert.rejects(handleEditorial(malformed.db,'actor',{...request,settings:{...settings,name:'x'.repeat(81)}}));
+  assert.equal(malformed.calls.length,0);
+  const race=database([issue,null]);
+  await assert.rejects(handleEditorial(race.db,'actor',request),/geändert/);
+});
+
+const sourcePublication={issue_id:'10000000-0000-4000-8000-000000000001',issue_version:7,published_at:'2026-09-24T12:00:00Z',snapshot:{kind:'stadium',title:'Veröffentlichtes Heft',articles:[{id:'published-article',title:'Öffentlicher Beitrag',status:'ready',body:'Veröffentlichter Text. '.repeat(40)},{id:'draft',title:'Entwurf',status:'draft',body:'Nicht freigegeben'}]}};
+const newsletterIssue={id:'newsletter',kind:'newsletter',version:3};
+Deno.test('newsletter source reads only the pinned publication and returns shortened public articles',async()=>{
+  const {db,calls}=database([sourcePublication]);
+  const result=await handleEditorial(db,'user',{action:'editorial_newsletter_source',sourceIssueId:sourcePublication.issue_id,sourceVersion:7});
+  assert.equal(calls.length,1);
+  assert.equal(calls[0].table,'editorial_publications');
+  assert.ok(calls[0].filters.some(([k,v]:any[])=>k==='issue_version'&&v===7));
+  assert.deepEqual(result.source.articles.map((a:any)=>a.id),['published-article']);
+  assert.ok(result.source.articles[0].excerpt.length<=420);
+  assert.ok(!('body' in result.source.articles[0]));
+});
+Deno.test('saving newsletter selection resolves text server-side and guards the target version',async()=>{
+  const {db,calls}=database([newsletterIssue,sourcePublication,{...newsletterIssue,version:4}]);
+  await handleEditorial(db,'user',{action:'editorial_save_newsletter_selection',issueId:'newsletter',version:3,sourceIssueId:sourcePublication.issue_id,sourceVersion:7,articleIds:['published-article'],newsletter_selection:{articles:[{excerpt:'INJECTED'}]}});
+  assert.equal(calls[2].table,'editorial_issues');
+  assert.deepEqual(calls[2].filters,[['id','newsletter'],['version',3]]);
+  assert.equal(calls[2].update.newsletter_selection.issue_version,7);
+  assert.match(calls[2].update.newsletter_selection.articles[0].excerpt,/Veröffentlichter Text/);
+  assert.doesNotMatch(JSON.stringify(calls[2].update),/INJECTED/);
+});
+Deno.test('newsletter selection rejects unavailable publications, invalid articles, wrong kinds and conflicting writes',async()=>{
+  const request={action:'editorial_save_newsletter_selection',issueId:'newsletter',version:3,sourceIssueId:sourcePublication.issue_id,sourceVersion:7,articleIds:['published-article']};
+  for(const [replies,patch] of [
+    [[{...newsletterIssue,kind:'stadium'}],{}],
+    [[{...newsletterIssue,version:4}],{}],
+    [[newsletterIssue],{sourceVersion:undefined}],
+    [[newsletterIssue,null],{}],
+    [[newsletterIssue,sourcePublication],{articleIds:['draft']}],
+    [[newsletterIssue,sourcePublication],{articleIds:['published-article','published-article']}],
+    [[newsletterIssue,sourcePublication,null],{}],
+  ] as any[]) await assert.rejects(()=>handleEditorial(database(replies).db,'user',{...request,...patch}));
+  const {db,calls}=database([newsletterIssue,{...newsletterIssue,version:4}]);
+  await handleEditorial(db,'user',{...request,sourceIssueId:null,articleIds:[]});
+  assert.equal(calls[1].update.newsletter_selection,null);
 });

@@ -1,0 +1,1553 @@
+{
+  "source": "bsv-website/src/data/advertisingPartners.generated.json",
+  "imported_on": "2026-09-24",
+  "partners": [
+    {
+      "sourceId": "32ae5fba-c614-46e7-9a7f-d88a8890b34b",
+      "slug": "sparkasse-hegau-bodensee",
+      "name": "Sparkasse Hegau-Bodensee",
+      "logoSrc": "/images/sponsors/synced/sparkasse-hegau-bodensee.png",
+      "logoAlt": "Logo von Sparkasse Hegau-Bodensee",
+      "website": "https://www.sparkasse-hegau-bodensee.de/",
+      "teamAudienceSlugs": [
+        "herren-1",
+        "herren-2"
+      ],
+      "teamAssignments": [
+        {
+          "audienceSlug": "herren-1",
+          "sourceAudienceSlug": "herren-1",
+          "sponsorType": {
+            "slug": "teamsponsor",
+            "label": "Teamsponsor",
+            "sortOrder": 40,
+            "displayWeight": 1
+          },
+          "description": ""
+        },
+        {
+          "audienceSlug": "herren-2",
+          "sourceAudienceSlug": "herren-2",
+          "sponsorType": {
+            "slug": "teamsponsor",
+            "label": "Teamsponsor",
+            "sortOrder": 40,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "herren-1",
+          "audienceLabel": "1. Herren",
+          "audienceGroup": "mens_team",
+          "sponsorType": {
+            "slug": "teamsponsor",
+            "label": "Teamsponsor",
+            "sortOrder": 40,
+            "displayWeight": 1
+          },
+          "description": ""
+        },
+        {
+          "audienceSlug": "herren-2",
+          "audienceLabel": "2. Herren",
+          "audienceGroup": "mens_team",
+          "sponsorType": {
+            "slug": "teamsponsor",
+            "label": "Teamsponsor",
+            "sortOrder": 40,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 10,
+      "sourceUpdatedAt": "2026-09-04T12:55:02.971483+00:00",
+      "logoWidth": 1200,
+      "logoHeight": 431
+    },
+    {
+      "sourceId": "d81d247b-d07e-474c-a0cf-34600f0939b2",
+      "slug": "a-iwan-maschinen-und-apparatebau",
+      "name": "A. Iwan · Maschinen- und Apparatebau",
+      "logoSrc": "/images/sponsors/synced/a-iwan-maschinen-und-apparatebau.png",
+      "logoAlt": "Logo von A. Iwan · Maschinen- und Apparatebau",
+      "website": "http://www.hegaustahl.de/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T14:44:29.001736+00:00",
+      "logoWidth": 264,
+      "logoHeight": 203
+    },
+    {
+      "sourceId": "04a2bb2f-222d-4c26-95a8-bc1a9bf9fc76",
+      "slug": "generali-rainer-hoier",
+      "name": "Allfinanz Deutsche Vermögensberatung - Rainer Hoier",
+      "logoSrc": "/images/sponsors/synced/generali-rainer-hoier.png",
+      "logoAlt": "Logo von Allfinanz Deutsche Vermögensberatung - Rainer Hoier",
+      "website": "https://www.allfinanz.ag/rainer.hoier",
+      "teamAudienceSlugs": [
+        "u13-juniorinnen"
+      ],
+      "teamAssignments": [
+        {
+          "audienceSlug": "u13-juniorinnen",
+          "sourceAudienceSlug": "u13-juniorinnen",
+          "sponsorType": {
+            "slug": "aufwaermshirt-sponsor",
+            "label": "Aufwärmshirt-Sponsor",
+            "sortOrder": 30,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "u13-juniorinnen",
+          "audienceLabel": "U13 · D-Juniorinnen",
+          "audienceGroup": "youth_team",
+          "sponsorType": {
+            "slug": "aufwaermshirt-sponsor",
+            "label": "Aufwärmshirt-Sponsor",
+            "sortOrder": 30,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-04T13:12:15.325738+00:00",
+      "logoWidth": 350,
+      "logoHeight": 193
+    },
+    {
+      "sourceId": "f381d73e-7d3a-4e19-993e-67d48500172e",
+      "slug": "allianz-helmut-heitz-generalvertretung",
+      "name": "Allianz - Helmut Heitz Generalvertretung",
+      "logoSrc": "/images/sponsors/synced/allianz-helmut-heitz-generalvertretung.png",
+      "logoAlt": "Logo von Allianz - Helmut Heitz Generalvertretung",
+      "website": "https://vertretung.allianz.de/helmut.heitz/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "bandensponsor",
+            "label": "Bandensponsor",
+            "sortOrder": 60,
+            "displayWeight": 1
+          },
+          "description": ""
+        },
+        {
+          "audienceSlug": "jugendabteilung",
+          "audienceLabel": "Jugendabteilung",
+          "audienceGroup": "youth_department",
+          "sponsorType": {
+            "slug": "eventsponsor",
+            "label": "Eventsponsor",
+            "sortOrder": 25,
+            "displayWeight": 3
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-04T14:13:23.879791+00:00",
+      "logoWidth": 450,
+      "logoHeight": 112
+    },
+    {
+      "sourceId": "05ee8f21-9344-4b33-804f-d0fdbde725cb",
+      "slug": "allianz-helmut-heitz-generalvertretung-stadionheft",
+      "name": "Allianz - Helmut Heitz Generalvertretung / Stadionheft",
+      "logoSrc": "/images/sponsors/synced/allianz-helmut-heitz-generalvertretung-stadionheft.png",
+      "logoAlt": "Logo von Allianz - Helmut Heitz Generalvertretung / Stadionheft",
+      "website": "https://vertretung.allianz.de/helmut.heitz/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T12:48:47.33454+00:00",
+      "logoWidth": 540,
+      "logoHeight": 386
+    },
+    {
+      "sourceId": "c44c3aa2-0a27-4587-a27a-a1d247f7e3e0",
+      "slug": "bauunternehmen-feuerstein",
+      "name": "Bauunternehmen Feuerstein",
+      "logoSrc": "/images/sponsors/synced/bauunternehmen-feuerstein.png",
+      "logoAlt": "Logo von Bauunternehmen Feuerstein",
+      "website": "https://feuerstein-bau-gipsergeschaeft.de/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T14:29:54.714159+00:00",
+      "logoWidth": 455,
+      "logoHeight": 399
+    },
+    {
+      "sourceId": "eb24aa2a-332a-4ca7-93ff-41ad61431902",
+      "slug": "bgv",
+      "name": "BGV",
+      "logoSrc": "/images/sponsors/synced/bgv.png",
+      "logoAlt": "Logo von BGV",
+      "website": "https://www.bgv.de/agenturen/carmenmartin.xhtml",
+      "teamAudienceSlugs": [
+        "u11-e2-junioren",
+        "u11-e3-junioren",
+        "u15-c1-junioren",
+        "u6-spielgruppe",
+        "u7-bambinis"
+      ],
+      "teamAssignments": [
+        {
+          "audienceSlug": "u11-e2-junioren",
+          "sourceAudienceSlug": "u11-e2-junioren",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        },
+        {
+          "audienceSlug": "u11-e3-junioren",
+          "sourceAudienceSlug": "u11-e3-junioren",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        },
+        {
+          "audienceSlug": "u15-c1-junioren",
+          "sourceAudienceSlug": "u15-c1-junioren",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        },
+        {
+          "audienceSlug": "u6-spielgruppe",
+          "sourceAudienceSlug": "u6-spielgruppe",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        },
+        {
+          "audienceSlug": "u7-bambinis",
+          "sourceAudienceSlug": "u7-bambinis",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        }
+      ],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "u11-e2-junioren",
+          "audienceLabel": "U11 · E2-Junioren",
+          "audienceGroup": "youth_team",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        },
+        {
+          "audienceSlug": "u11-e3-junioren",
+          "audienceLabel": "U11 · E3-Junioren",
+          "audienceGroup": "youth_team",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        },
+        {
+          "audienceSlug": "u15-c1-junioren",
+          "audienceLabel": "U15 · C1-Junioren",
+          "audienceGroup": "youth_team",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        },
+        {
+          "audienceSlug": "u6-spielgruppe",
+          "audienceLabel": "U6 · Spielgruppe",
+          "audienceGroup": "youth_team",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        },
+        {
+          "audienceSlug": "u7-bambinis",
+          "audienceLabel": "U7 · Bambinis",
+          "audienceGroup": "youth_team",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-08-15T16:04:52.96596+00:00",
+      "logoWidth": 213,
+      "logoHeight": 80
+    },
+    {
+      "sourceId": "bc1cdc30-64f0-47c1-bd40-25676f8fb636",
+      "slug": "bkk-linde",
+      "name": "BKK Linde",
+      "logoSrc": "/images/sponsors/synced/bkk-linde.png",
+      "logoAlt": "Logo von BKK Linde",
+      "website": "https://bkk-linde.de/",
+      "teamAudienceSlugs": [
+        "u19-junioren"
+      ],
+      "teamAssignments": [
+        {
+          "audienceSlug": "u19-junioren",
+          "sourceAudienceSlug": "u19-junioren",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        }
+      ],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "u19-junioren",
+          "audienceLabel": "U19 · A-Junioren",
+          "audienceGroup": "youth_team",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-04T13:12:22.247826+00:00",
+      "logoWidth": 300,
+      "logoHeight": 97
+    },
+    {
+      "sourceId": "71f85b71-4a62-477a-bd28-547a16465590",
+      "slug": "bkk-linde-stadionheft",
+      "name": "BKK Linde / Stadionheft",
+      "logoSrc": "/images/sponsors/synced/bkk-linde-stadionheft.png",
+      "logoAlt": "Logo von BKK Linde / Stadionheft",
+      "website": "https://bkk-linde.de/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T14:44:45.571689+00:00",
+      "logoWidth": 540,
+      "logoHeight": 198
+    },
+    {
+      "sourceId": "b2f47930-7815-4af1-8da1-ac7498e136a1",
+      "slug": "bohl-gartenbau",
+      "name": "Bohl Gartenbau",
+      "logoSrc": "/images/sponsors/synced/bohl-gartenbau.png",
+      "logoAlt": "Logo von Bohl Gartenbau",
+      "website": "https://bohl-gartenbau.de/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T14:31:12.515608+00:00",
+      "logoWidth": 540,
+      "logoHeight": 365
+    },
+    {
+      "sourceId": "1482b8f5-73c5-4e09-8599-3f5383a4c8fa",
+      "slug": "bufee-radolfzell",
+      "name": "Büfee Radolfzell",
+      "logoSrc": "/images/sponsors/synced/bufee-radolfzell.png",
+      "logoAlt": "Logo von Büfee Radolfzell",
+      "website": "https://www.instagram.com/bufee.radolfzell/",
+      "teamAudienceSlugs": [
+        "herren-1",
+        "herren-2"
+      ],
+      "teamAssignments": [
+        {
+          "audienceSlug": "herren-1",
+          "sourceAudienceSlug": "herren-1",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        },
+        {
+          "audienceSlug": "herren-2",
+          "sourceAudienceSlug": "herren-2",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        }
+      ],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "herren-1",
+          "audienceLabel": "1. Herren",
+          "audienceGroup": "mens_team",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        },
+        {
+          "audienceSlug": "herren-2",
+          "audienceLabel": "2. Herren",
+          "audienceGroup": "mens_team",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-08-15T17:05:29.548437+00:00",
+      "logoWidth": 1434,
+      "logoHeight": 1097
+    },
+    {
+      "sourceId": "3c7dc8cd-0787-4334-97a2-c48ca19f29ab",
+      "slug": "burgerstiftung-radolfzell",
+      "name": "Bürgerstiftung Radolfzell",
+      "logoSrc": "/images/sponsors/synced/burgerstiftung-radolfzell.png",
+      "logoAlt": "Logo von Bürgerstiftung Radolfzell",
+      "website": "https://buergerstiftung-radolfzell.de/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "jugendabteilung",
+          "audienceLabel": "Jugendabteilung",
+          "audienceGroup": "youth_department",
+          "sponsorType": {
+            "slug": "eventsponsor",
+            "label": "Eventsponsor",
+            "sortOrder": 25,
+            "displayWeight": 3
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-04T14:18:32.965281+00:00",
+      "logoWidth": 400,
+      "logoHeight": 224
+    },
+    {
+      "sourceId": "ef883f3d-2ad9-452b-9667-04f552855a14",
+      "slug": "e-i-industrieboden-gmbh",
+      "name": "E + I Industrieboden GmbH",
+      "logoSrc": "/images/sponsors/synced/e-i-industrieboden-gmbh.png",
+      "logoAlt": "Logo von E + I Industrieboden GmbH",
+      "website": "https://estrich-industrieboden.de/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T12:50:21.379876+00:00",
+      "logoWidth": 263,
+      "logoHeight": 374
+    },
+    {
+      "sourceId": "75b7cfbf-54ea-4e8d-90c5-5e6ef490492d",
+      "slug": "engmatec-gmbh",
+      "name": "ENGMATEC GmbH",
+      "logoSrc": "/images/sponsors/synced/engmatec-gmbh.png",
+      "logoAlt": "Logo von ENGMATEC GmbH",
+      "website": "https://www.engmatec.de/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T12:50:45.363746+00:00",
+      "logoWidth": 396,
+      "logoHeight": 341
+    },
+    {
+      "sourceId": "01e4d471-83a6-4783-8bed-f21f070ead31",
+      "slug": "fahrschule-mario-gallus",
+      "name": "Fahrschule Mario Gallus",
+      "logoSrc": "/images/sponsors/synced/fahrschule-mario-gallus.png",
+      "logoAlt": "Logo von Fahrschule Mario Gallus",
+      "website": "https://www.fahrschule-gallus.de/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T12:51:04.187285+00:00",
+      "logoWidth": 264,
+      "logoHeight": 207
+    },
+    {
+      "sourceId": "bc4f968f-1665-46c7-b696-3230b55cf570",
+      "slug": "firma-koschnik",
+      "name": "Firma Koschnik",
+      "logoSrc": "/images/sponsors/synced/firma-koschnik.png",
+      "logoAlt": "Logo von Firma Koschnik",
+      "website": "https://www.firma-koschnik.de/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T12:19:08.126545+00:00",
+      "logoWidth": 595,
+      "logoHeight": 842
+    },
+    {
+      "sourceId": "d7849191-2316-405c-afe1-abae0ba42eaf",
+      "slug": "fliesen-ruf",
+      "name": "Fliesen Ruf",
+      "logoSrc": "/images/sponsors/synced/fliesen-ruf.png",
+      "logoAlt": "Logo von Fliesen Ruf",
+      "website": "https://www.fliesen-ruf.de/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T12:39:52.212385+00:00",
+      "logoWidth": 541,
+      "logoHeight": 787
+    },
+    {
+      "sourceId": "9ccba025-28e5-42dc-8564-0933c0151302",
+      "slug": "freibad-steisslinger-see",
+      "name": "Freibad Steisslinger See",
+      "logoSrc": "/images/sponsors/synced/freibad-steisslinger-see.png",
+      "logoAlt": "Logo von Freibad Steisslinger See",
+      "website": null,
+      "teamAudienceSlugs": [
+        "frauen-1",
+        "frauen-2"
+      ],
+      "teamAssignments": [
+        {
+          "audienceSlug": "frauen-1",
+          "sourceAudienceSlug": "frauen-1",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        },
+        {
+          "audienceSlug": "frauen-2",
+          "sourceAudienceSlug": "frauen-2",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        }
+      ],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "frauen-1",
+          "audienceLabel": "1. Frauen",
+          "audienceGroup": "womens_team",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        },
+        {
+          "audienceSlug": "frauen-2",
+          "audienceLabel": "2. Frauen",
+          "audienceGroup": "womens_team",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-08-15T17:17:24.818431+00:00",
+      "logoWidth": 2172,
+      "logoHeight": 724
+    },
+    {
+      "sourceId": "9399469f-ea4c-4981-b60d-c600934a7b65",
+      "slug": "garten-graf",
+      "name": "Garten Graf",
+      "logoSrc": "/images/sponsors/synced/garten-graf.png",
+      "logoAlt": "Logo von Garten Graf",
+      "website": "https://www.garten-graf.de/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T14:45:11.853786+00:00",
+      "logoWidth": 541,
+      "logoHeight": 183
+    },
+    {
+      "sourceId": "0fdd728c-ab58-4832-be05-ac7f17a40925",
+      "slug": "geissmann",
+      "name": "Geissmann",
+      "logoSrc": "/images/sponsors/synced/geissmann.png",
+      "logoAlt": "Logo von Geissmann",
+      "website": "https://geissmann-elektrotechnik.com/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T14:45:40.808837+00:00",
+      "logoWidth": 798,
+      "logoHeight": 345
+    },
+    {
+      "sourceId": "554bf08d-912c-46fc-a8e4-4f2f62c12aec",
+      "slug": "geissmann-elektrotechnik",
+      "name": "Geissmann Elektrotechnik",
+      "logoSrc": "/images/sponsors/synced/geissmann-elektrotechnik.png",
+      "logoAlt": "Logo von Geissmann Elektrotechnik",
+      "website": "https://geissmann-elektrotechnik.com/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T12:42:07.008549+00:00",
+      "logoWidth": 798,
+      "logoHeight": 345
+    },
+    {
+      "sourceId": "4f9ccd75-568a-4223-931d-afb998d6944b",
+      "slug": "hirsch-brauerei",
+      "name": "Hirsch-Brauerei",
+      "logoSrc": "/images/sponsors/synced/hirsch-brauerei.png",
+      "logoAlt": "Logo von Hirsch-Brauerei",
+      "website": "https://hirschbrauerei.de/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T14:46:05.263606+00:00",
+      "logoWidth": 540,
+      "logoHeight": 387
+    },
+    {
+      "sourceId": "0d880308-a41b-4079-837a-42956c7bd479",
+      "slug": "immobilien-manz",
+      "name": "Immobilien Manz",
+      "logoSrc": "/images/sponsors/synced/immobilien-manz.png",
+      "logoAlt": "Logo von Immobilien Manz",
+      "website": "https://www.manz-immo.com/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T10:54:13.785111+00:00",
+      "logoWidth": 540,
+      "logoHeight": 277
+    },
+    {
+      "sourceId": "e34b384c-4c6b-450a-912f-1ec663148557",
+      "slug": "joos-holzbau",
+      "name": "Joos Holzbau",
+      "logoSrc": "/images/sponsors/synced/joos-holzbau.png",
+      "logoAlt": "Logo von Joos Holzbau",
+      "website": "https://www.joos-holzbau.de/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T14:46:28.900929+00:00",
+      "logoWidth": 540,
+      "logoHeight": 169
+    },
+    {
+      "sourceId": "0ef4a0d8-eb5d-4873-b9a8-f0860262762a",
+      "slug": "kaffee-werkstatt",
+      "name": "Kaffee-Werkstatt",
+      "logoSrc": "/images/sponsors/synced/kaffee-werkstatt.png",
+      "logoAlt": "Logo von Kaffee-Werkstatt",
+      "website": "https://espresso-pino.de/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T14:46:57.484459+00:00",
+      "logoWidth": 540,
+      "logoHeight": 370
+    },
+    {
+      "sourceId": "956f9db0-c5e7-41f0-9265-bd32a4df5b85",
+      "slug": "kinder-und-jugendfussball-akademie-des-sc-freiburg",
+      "name": "Kinder- und Jugendfussball Akademie des SC Freiburg",
+      "logoSrc": "/images/sponsors/synced/kinder-und-jugendfussball-akademie-des-sc-freiburg.png",
+      "logoAlt": "Logo von Kinder- und Jugendfussball Akademie des SC Freiburg",
+      "website": "https://www.scfreiburg.com/fussballschule/",
+      "teamAudienceSlugs": [
+        "u13-d2-junioren"
+      ],
+      "teamAssignments": [
+        {
+          "audienceSlug": "u13-d2-junioren",
+          "sourceAudienceSlug": "u13-d2-junioren",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        }
+      ],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "u13-d2-junioren",
+          "audienceLabel": "U13 · D2-Junioren",
+          "audienceGroup": "youth_team",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-04T22:17:47.581657+00:00",
+      "logoWidth": 1200,
+      "logoHeight": 577
+    },
+    {
+      "sourceId": "968d2319-2a70-4e24-a8f9-23c9af27e70c",
+      "slug": "malerei-utz",
+      "name": "Malerei Utz",
+      "logoSrc": "/images/sponsors/synced/malerei-utz.png",
+      "logoAlt": "Logo von Malerei Utz",
+      "website": "https://www.malerei-utz.de/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T12:34:04.323538+00:00",
+      "logoWidth": 540,
+      "logoHeight": 348
+    },
+    {
+      "sourceId": "7ece112b-9eda-44d5-985e-ebd60498f5a5",
+      "slug": "oki",
+      "name": "OKI",
+      "logoSrc": "/images/sponsors/synced/oki.png",
+      "logoAlt": "Logo von OKI",
+      "website": "https://www.oki.com/de",
+      "teamAudienceSlugs": [
+        "u13-d3-junioren",
+        "u15-c2-junioren"
+      ],
+      "teamAssignments": [
+        {
+          "audienceSlug": "u13-d3-junioren",
+          "sourceAudienceSlug": "u13-d3-junioren",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        },
+        {
+          "audienceSlug": "u15-c2-junioren",
+          "sourceAudienceSlug": "u15-c2-junioren",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        }
+      ],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "u13-d3-junioren",
+          "audienceLabel": "U13 · D3-Junioren",
+          "audienceGroup": "youth_team",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        },
+        {
+          "audienceSlug": "u15-c2-junioren",
+          "audienceLabel": "U15 · C2-Junioren",
+          "audienceGroup": "youth_team",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-04T12:27:27.923222+00:00",
+      "logoWidth": 537,
+      "logoHeight": 104
+    },
+    {
+      "sourceId": "30cfb816-d024-4191-aac1-1ae73a80d215",
+      "slug": "ralf-schuhmacher-gmbh",
+      "name": "Ralf Schuhmacher GmbH",
+      "logoSrc": "/images/sponsors/synced/ralf-schuhmacher-gmbh.png",
+      "logoAlt": "Logo von Ralf Schuhmacher GmbH",
+      "website": "https://www.schuhmacher-tuning.de/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T14:33:33.065283+00:00",
+      "logoWidth": 541,
+      "logoHeight": 235
+    },
+    {
+      "sourceId": "37827a61-3584-43e6-8d62-c71c51e88d8f",
+      "slug": "sauter-gmbh-putz-farbe-gerustbau-hebebuhnen",
+      "name": "SAUTER GmbH Putz & Farbe - Gerüstbau - Hebebühnen",
+      "logoSrc": "/images/sponsors/synced/sauter-gmbh-putz-farbe-gerustbau-hebebuhnen.png",
+      "logoAlt": "Logo von SAUTER GmbH Putz & Farbe - Gerüstbau - Hebebühnen",
+      "website": "https://www.sauter-putz-farbe.de/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T12:34:25.374688+00:00",
+      "logoWidth": 264,
+      "logoHeight": 175
+    },
+    {
+      "sourceId": "c9b0f628-5b3c-49dc-b788-51945e5ab6b9",
+      "slug": "scaleauth",
+      "name": "ScaleAuth",
+      "logoSrc": "/images/sponsors/synced/scaleauth.png",
+      "logoAlt": "Logo von ScaleAuth",
+      "website": "https://www.scaleauth.com/",
+      "teamAudienceSlugs": [
+        "u17-junioren",
+        "u6-spielgruppe",
+        "u7-bambinis",
+        "u8-f-junioren",
+        "u9-f-junioren"
+      ],
+      "teamAssignments": [
+        {
+          "audienceSlug": "u17-junioren",
+          "sourceAudienceSlug": "u17-junioren",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        },
+        {
+          "audienceSlug": "u6-spielgruppe",
+          "sourceAudienceSlug": "u6-spielgruppe",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        },
+        {
+          "audienceSlug": "u7-bambinis",
+          "sourceAudienceSlug": "u7-bambinis",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        },
+        {
+          "audienceSlug": "u8-f-junioren",
+          "sourceAudienceSlug": "u8-f-junioren",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        },
+        {
+          "audienceSlug": "u9-f-junioren",
+          "sourceAudienceSlug": "u9-f-junioren",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        }
+      ],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "u17-junioren",
+          "audienceLabel": "U17 · B-Junioren",
+          "audienceGroup": "youth_team",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        },
+        {
+          "audienceSlug": "u6-spielgruppe",
+          "audienceLabel": "U6 · Spielgruppe",
+          "audienceGroup": "youth_team",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        },
+        {
+          "audienceSlug": "u7-bambinis",
+          "audienceLabel": "U7 · Bambinis",
+          "audienceGroup": "youth_team",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        },
+        {
+          "audienceSlug": "u8-f-junioren",
+          "audienceLabel": "U8 · F-Junioren",
+          "audienceGroup": "youth_team",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        },
+        {
+          "audienceSlug": "u9-f-junioren",
+          "audienceLabel": "U9 · F-Junioren",
+          "audienceGroup": "youth_team",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-04T09:36:48.762215+00:00",
+      "logoWidth": 1199,
+      "logoHeight": 1200
+    },
+    {
+      "sourceId": "1aade2f6-3597-4ad8-a3a7-c0fda24c4620",
+      "slug": "schottle-fensterbau-gmbh",
+      "name": "Schöttle Fensterbau GmbH",
+      "logoSrc": "/images/sponsors/synced/schottle-fensterbau-gmbh.png",
+      "logoAlt": "Logo von Schöttle Fensterbau GmbH",
+      "website": "https://www.schoettle-fenster.de/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T12:34:42.85341+00:00",
+      "logoWidth": 553,
+      "logoHeight": 407
+    },
+    {
+      "sourceId": "2aca241e-7a9b-410c-9135-0c3993582855",
+      "slug": "sparkasse-hegau-bodensee-stadionheft",
+      "name": "Sparkasse Hegau-Bodensee / Stadionheft",
+      "logoSrc": "/images/sponsors/synced/sparkasse-hegau-bodensee-stadionheft.png",
+      "logoAlt": "Logo von Sparkasse Hegau-Bodensee / Stadionheft",
+      "website": "https://www.sparkasse-hegau-bodensee.de/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T12:35:04.599482+00:00",
+      "logoWidth": 595,
+      "logoHeight": 842
+    },
+    {
+      "sourceId": "b906fffa-b1da-4cfb-9834-9aee95ac365c",
+      "slug": "steuerberatungskanzlei-langanki",
+      "name": "Steuerberatungskanzlei Langanki",
+      "logoSrc": "/images/sponsors/synced/steuerberatungskanzlei-langanki.png",
+      "logoAlt": "Logo von Steuerberatungskanzlei Langanki",
+      "website": "https://www.stb-langanki.de/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T12:35:29.863033+00:00",
+      "logoWidth": 540,
+      "logoHeight": 373
+    },
+    {
+      "sourceId": "31b3e018-f816-4841-9290-94c44f3fc623",
+      "slug": "vermessungsburo-markus-kaiser",
+      "name": "Vermessungsbüro Markus Kaiser",
+      "logoSrc": "/images/sponsors/synced/vermessungsburo-markus-kaiser.png",
+      "logoAlt": "Logo von Vermessungsbüro Markus Kaiser",
+      "website": "https://www.vb-kaiser.de/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T12:51:24.075368+00:00",
+      "logoWidth": 264,
+      "logoHeight": 194
+    },
+    {
+      "sourceId": "da9566cd-6aa2-4159-b7af-7ccaaf9f6cc0",
+      "slug": "vhs",
+      "name": "VHS",
+      "logoSrc": "/images/sponsors/synced/vhs.png",
+      "logoAlt": "Logo von VHS",
+      "website": "https://www.vhs-landkreis-konstanz.de/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T12:35:45.244878+00:00",
+      "logoWidth": 540,
+      "logoHeight": 371
+    },
+    {
+      "sourceId": "4c3c857f-67f7-4921-abaa-f855b9aa1fe3",
+      "slug": "vulcano-restaurant-und-pizzeria",
+      "name": "Vulcano - Restaurant und Pizzeria",
+      "logoSrc": "/images/sponsors/synced/vulcano-restaurant-und-pizzeria.png",
+      "logoAlt": "Logo von Vulcano - Restaurant und Pizzeria",
+      "website": "https://restaurant-vulcano.de/",
+      "teamAudienceSlugs": [
+        "herren-1"
+      ],
+      "teamAssignments": [
+        {
+          "audienceSlug": "herren-1",
+          "sourceAudienceSlug": "herren-1",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        }
+      ],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "herren-1",
+          "audienceLabel": "1. Herren",
+          "audienceGroup": "mens_team",
+          "sponsorType": {
+            "slug": "trikotsponsor",
+            "label": "Trikotsponsor",
+            "sortOrder": 10,
+            "displayWeight": 2
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-01T21:54:17.643979+00:00",
+      "logoWidth": 278,
+      "logoHeight": 142
+    },
+    {
+      "sourceId": "6fa5a3fa-d3cd-472f-94a5-8ec09cf1e67e",
+      "slug": "weschenfelder-sanitarbau-gmbh",
+      "name": "Weschenfelder Sanitärbau GmbH",
+      "logoSrc": "/images/sponsors/synced/weschenfelder-sanitarbau-gmbh.png",
+      "logoAlt": "Logo von Weschenfelder Sanitärbau GmbH",
+      "website": "https://www.weschenfelder-sanitaer.de/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T12:36:04.751067+00:00",
+      "logoWidth": 540,
+      "logoHeight": 383
+    },
+    {
+      "sourceId": "4276e4c2-6545-4278-81eb-5d81b3666bfe",
+      "slug": "zabeldruck-gmbh",
+      "name": "ZABELDruck GmbH",
+      "logoSrc": "/images/sponsors/synced/zabeldruck-gmbh.png",
+      "logoAlt": "Logo von ZABELDruck GmbH",
+      "website": "https://www.zabeldruck.de/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T12:38:14.31733+00:00",
+      "logoWidth": 540,
+      "logoHeight": 385
+    },
+    {
+      "sourceId": "23145ec1-8ca8-46f5-84b9-b77b9be4a26f",
+      "slug": "zweirad-mees",
+      "name": "Zweirad Mees",
+      "logoSrc": "/images/sponsors/synced/zweirad-mees.png",
+      "logoAlt": "Logo von Zweirad Mees",
+      "website": "https://www.zweirad-mees.de/",
+      "teamAudienceSlugs": [],
+      "teamAssignments": [],
+      "audienceAssignments": [
+        {
+          "audienceSlug": "gesamtverein",
+          "audienceLabel": "Gesamtverein",
+          "audienceGroup": "club",
+          "sponsorType": {
+            "slug": "stadionheft",
+            "label": "Stadionheft",
+            "sortOrder": 70,
+            "displayWeight": 1
+          },
+          "description": ""
+        }
+      ],
+      "sortOrder": 100,
+      "sourceUpdatedAt": "2026-09-09T12:37:02.203262+00:00",
+      "logoWidth": 540,
+      "logoHeight": 151
+    }
+  ]
+}

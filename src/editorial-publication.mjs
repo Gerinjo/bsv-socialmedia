@@ -62,7 +62,7 @@ export function editorialReleaseState(issue, articles) {
     missingCover,
     reviewed,
     currentPublication,
-    ready: articles.length > 0 && !pending.length && !automaticPending && !missingCover,
+    ready: (articles.length > 0 || issue.kind === 'newsletter' && issue.newsletter_selection?.articles?.length > 0) && !pending.length && !automaticPending && !missingCover,
     canPublish:
       issue.kind === "stadium" &&
       articles.length > 0 &&
@@ -104,6 +104,8 @@ export function editorialPublicSnapshot(issue, articles, teams = []) {
     cover_alt: issue.cover_alt || "",
     cover_credit: issue.cover_credit || "",
     cover_settings: settings,
+    newsletter_selection: issue.newsletter_selection ? structuredClone(issue.newsletter_selection) : null,
+    newsletter_settings: issue.newsletter_settings ? structuredClone(issue.newsletter_settings) : null,
     advertising: issue.advertising || null,
     coverMatches: editorialCoverMatches(issue, articles, teams),
     articles: visible.map(

@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'supabase/functions/**'
+      - 'supabase/config.toml'
       - 'templates/**'
       - 'brand/fonts/**'
       - 'src/**'
@@ -55,6 +56,14 @@ jobs:
       - name: Deploy admin API
         if: steps.secret.outputs.available == 'true'
         run: npx --yes supabase@latest functions deploy social-media-admin-api --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Deploy editorial publications
+        if: steps.secret.outputs.available == 'true'
+        run: npx --yes supabase@latest functions deploy editorial-publications --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Deploy newsletter unsubscribe webhook
+        if: steps.secret.outputs.available == 'true'
+        run: npx --yes supabase@latest functions deploy newsletter-unsubscribe-webhook --project-ref "$SUPABASE_PROJECT_REF"
 
       - name: Deploy social media worker
         if: steps.secret.outputs.available == 'true'

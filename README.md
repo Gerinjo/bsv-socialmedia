@@ -89,7 +89,7 @@ tests/                  automatisierte Tests
 
 ## Redaktion für Stadionheft und Newsletter
 
-Der neue Bereich **Redaktion** bietet Ausgabenplanung mit Kalender, feste Heftbeiträge, freie Abteilungstexte, Texteditor mit automatischer sprachlicher Überarbeitung und erhaltenem Original sowie Tabellen- und Ergebnisbeiträge je Mannschaft. Newsletter starten mit einem freien Inhaltsplan. Datenbankmigration, Betriebsanforderungen und Grenzen sind in [docs/editorial-workspace.md](docs/editorial-workspace.md) beschrieben.
+Der neue Bereich **Redaktion** bietet Ausgabenplanung mit Kalender, feste Heftbeiträge, freie Abteilungstexte, Texteditor mit automatischer sprachlicher Überarbeitung und erhaltenem Original sowie Tabellen- und Ergebnisbeiträge je Mannschaft. Newsletter starten mit einem freien Inhaltsplan und haben eine eigene Nordstern-Post-E-Mail-Vorschau mit HTML-/Text-Export. Aus veröffentlichten Stadionheften lassen sich Artikel als kurze Auszüge mit Weiterlesen-Link auswählen. Die vollständige Website-Vorlage, das Versandarchiv und die Sponsoren-Auswahl liegen als Dateien in der Suite; siehe [Newsletter](docs/newsletter.md). Datenbankmigration, Betriebsanforderungen und Grenzen sind in [docs/editorial-workspace.md](docs/editorial-workspace.md) beschrieben.
 
 ## Nächste Betriebs-Schritte
 

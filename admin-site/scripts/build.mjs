@@ -1,4 +1,5 @@
 import '../../scripts/build-stadium-reader.mjs';
+import { renderNewsletterUnsubscribePage, NEWSLETTER_UNSUBSCRIBE_LINK } from '../../src/newsletter-unsubscribe.mjs';
 import { editorialCanDeleteArticle } from '../../src/editorial.mjs';
 const { renderEditorialMagazine } = await import('../../src/stadium-reader.mjs');
 const { stadiumReaderAssets } = await import('../../src/stadium-reader-assets.mjs');
@@ -30,6 +31,10 @@ for (const [placeholder, source] of [
   ['__EDITORIAL_PEOPLE_SCRIPT__', await readFile(resolve(repoDir, 'src/editorial-people.mjs'), 'utf8')],
   ['__STADIUM_READER_ASSETS__', (await readFile(resolve(repoDir, 'src/stadium-reader-assets.mjs'), 'utf8')).replaceAll('</script', '<\\/script')],
   ['__STADIUM_READER_SCRIPT__', (await readFile(resolve(repoDir, 'src/stadium-reader.mjs'), 'utf8')).replace(/^import .*;\n/, '').replaceAll('</script', '<\\/script')],
+  ['__NEWSLETTER_SCRIPT__',
+    'const NEWSLETTER_UNSUBSCRIBE_LINK = ' + JSON.stringify(NEWSLETTER_UNSUBSCRIBE_LINK) + ';\n' + (await readFile(resolve(repoDir, 'src/newsletter.mjs'), 'utf8')).replace(/^import .*;\n/, '') + '\nconst newsletterAssets = ' + JSON.stringify({
+      template: await readFile(resolve(repoDir, 'templates/newsletter.html'), 'utf8'),
+    }).replaceAll('<', '\\u003c') + ';'],
   ['__EDITORIAL_DICTATION_SCRIPT__', await readFile(resolve(adminDir, 'editorial-dictation.mjs'), 'utf8')],
   ['__EDITORIAL_SCRIPT__', editorialCanDeleteArticle.toString() + '\n' + await readFile(resolve(adminDir, 'editorial.mjs'), 'utf8')],
   ['__EDITORIAL_CSS__', await readFile(resolve(adminDir, 'editorial.css'), 'utf8')],
@@ -44,17 +49,21 @@ for (const [placeholder, source] of [
 if ((html.match(/<!doctype html>/gi) ?? []).length !== 1 || /__[A-Z0-9_]+__/.test(html)) {
   throw new Error('Die Admin-Oberfläche wurde nicht korrekt eingebettet.');
 }
-const worker = `const html = ${JSON.stringify(html)};
+const unsubscribeHtml = renderNewsletterUnsubscribePage();
+const worker = `const unsubscribeHtml = ${JSON.stringify(unsubscribeHtml)};
+const html = ${JSON.stringify(html)};
 const stadiumReaderAssets = ${JSON.stringify(stadiumReaderAssets)};
 const renderEditorialMagazine = ${renderEditorialMagazine.toString()};
 
 export default {
   async fetch(request) {
     if (request.method !== 'GET') return new Response('Method not allowed', { status: 405 });
+    if (new URL(request.url).pathname === '/newsletter/abmelden') return new Response(unsubscribeHtml,{headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-store','referrer-policy':'no-referrer','x-robots-tag':'noindex, nofollow','x-content-type-options':'nosniff','content-security-policy':"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; frame-src about:; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"}});
     const match = new URL(request.url).pathname.match(/^\\/stadionheft\\/([0-9a-f-]{36})$/i);
     if (match) {
       try {
-        const feed = await fetch('https://maejihwjzxkmthjavgnx.supabase.co/functions/v1/editorial-publications?id=' + match[1], {headers:{apikey:'sb_publishable_a3DnmtbBycRR4mWV4Jmz-w_RJobGli9'}});
+        const version = new URL(request.url).searchParams.get('version');
+        const feed = await fetch('https://maejihwjzxkmthjavgnx.supabase.co/functions/v1/editorial-publications?id=' + match[1] + (version === null ? '' : '&version=' + encodeURIComponent(version)), {headers:{apikey:'sb_publishable_a3DnmtbBycRR4mWV4Jmz-w_RJobGli9'}});
         if (!feed.ok) return new Response(feed.status === 404 ? 'Diese Ausgabe ist noch nicht veröffentlicht.' : 'Die Ausgabe ist vorübergehend nicht verfügbar.', {status:feed.status,headers:{'cache-control':'no-store'}});
         return new Response(renderEditorialMagazine(await feed.json(),false),{headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff','content-security-policy':\"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: https://maejihwjzxkmthjavgnx.supabase.co; base-uri 'none'; frame-ancestors 'none'\"}});
       } catch { return new Response('Die Ausgabe ist vorübergehend nicht verfügbar.',{status:503}); }
@@ -62,7 +71,7 @@ export default {
     return new Response(html, {
       headers: {
         'content-type': 'text/html; charset=utf-8',
-        'content-security-policy': "default-src 'self'; script-src 'unsafe-inline' 'wasm-unsafe-eval' https://esm.sh https://cdn.jsdelivr.net; connect-src 'self' https://maejihwjzxkmthjavgnx.supabase.co https://cdn.jsdelivr.net; worker-src blob:; frame-src blob:; img-src 'self' data: https://maejihwjzxkmthjavgnx.supabase.co https://gerinjo.github.io; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'",
+        'content-security-policy': "default-src 'self'; script-src 'unsafe-inline' 'wasm-unsafe-eval' https://esm.sh https://cdn.jsdelivr.net; connect-src 'self' https://maejihwjzxkmthjavgnx.supabase.co https://cdn.jsdelivr.net; worker-src blob:; frame-src blob:; img-src 'self' data: https://maejihwjzxkmthjavgnx.supabase.co https://gerinjo.github.io https://bsvnordstern.de; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'",
         'x-content-type-options': 'nosniff',
         'referrer-policy': 'no-referrer',
       },
