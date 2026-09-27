@@ -57,6 +57,10 @@ jobs:
         if: steps.secret.outputs.available == 'true'
         run: npx --yes supabase@latest functions deploy social-media-admin-api --project-ref "$SUPABASE_PROJECT_REF"
 
+      - name: Deploy referee coach API
+        if: steps.secret.outputs.available == 'true'
+        run: npx --yes supabase@latest functions deploy referee-coach-api --project-ref "$SUPABASE_PROJECT_REF"
+
       - name: Deploy editorial publications
         if: steps.secret.outputs.available == 'true'
         run: npx --yes supabase@latest functions deploy editorial-publications --project-ref "$SUPABASE_PROJECT_REF"

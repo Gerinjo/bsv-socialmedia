@@ -1,3 +1,4 @@
+import { refereePreviewApi } from '/preview-referees.mjs';
 import { normalizeNewsletterSettings, newsletterSource, newsletterSelection } from '/newsletter.mjs';
 import { previewTeamPhotos } from '/preview-team-photos.mjs';
 import { previewPeople } from '/preview-people.mjs';
@@ -194,10 +195,11 @@ export async function editorialPreviewApi(method = "GET", body = {}) {
         userId: "local-preview",
         email: "Lokale Vorschau",
         role: "sm-team",
-        accessAreas: ["editorial"],
+        accessAreas: ["editorial", "referees"],
       },
       testMode: true,
     };
+  if (body.action?.startsWith('referee_')) return refereePreviewApi(body);
   const state = load();
   let result;
   switch (body.action) {

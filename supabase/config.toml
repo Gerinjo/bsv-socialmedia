@@ -25,3 +25,7 @@ verify_jwt = false
 # Resend uses a Svix signature; the function validates the raw body before access.
 [functions.newsletter-unsubscribe-webhook]
 verify_jwt = false
+
+# Trainer identity is checked by the service-only birthday/team RPC.
+[functions.referee-coach-api]
+verify_jwt = false

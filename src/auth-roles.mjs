@@ -1,4 +1,4 @@
-export const TEAM_ROLES = ['admin', 'sm-team'];
+export const TEAM_ROLES = ['admin', 'sm-team', 'referee-admin'];
 
 export function normalizeTeamRole(value) {
   const normalized = String(value ?? '')
@@ -8,6 +8,7 @@ export function normalizeTeamRole(value) {
     .replace(/_+/g, '-');
 
   if (normalized === 'sm-team' || normalized === 'smteam') return 'sm-team';
+  if (normalized === 'referee-admin' || normalized === 'schiedsrichteradmin') return 'referee-admin';
   if (normalized === 'admin') return 'admin';
   return '';
 }

@@ -21,6 +21,7 @@ const richTextEditor = await readFile(resolve(adminDir, 'rich-text-editor.mjs'),
 const svgUpload = await readFile(resolve(repoDir, 'src/svg-upload.mjs'), 'utf8');
 const visionOcr = await readFile(resolve(adminDir, 'vision-ocr.mjs'), 'utf8');
 const tesseract = await readFile(resolve(repoDir, 'node_modules/tesseract.js/dist/tesseract.min.js'), 'utf8');
+let coachHtml = await readFile(resolve(adminDir, 'referee-coach.html'), 'utf8');
 let html = await readFile(resolve(adminDir, 'admin-page.html'), 'utf8');
 for (const [placeholder, source] of [
   ['__BSV_LOGO_DATA_URL__', `data:image/png;base64,${logo.toString('base64')}`],
@@ -37,6 +38,12 @@ for (const [placeholder, source] of [
     }).replaceAll('<', '\\u003c') + ';'],
   ['__EDITORIAL_DICTATION_SCRIPT__', await readFile(resolve(adminDir, 'editorial-dictation.mjs'), 'utf8')],
   ['__EDITORIAL_SCRIPT__', editorialCanDeleteArticle.toString() + '\n' + await readFile(resolve(adminDir, 'editorial.mjs'), 'utf8')],
+  ['__EXPENSE_MODEL__', await readFile(resolve(repoDir, 'src/referee-expenses.mjs'), 'utf8')],
+  ['__RECEIPT_OCR__', await readFile(resolve(adminDir, 'receipt-ocr.mjs'), 'utf8')],
+  ['__EXPENSE_SCRIPT__', await readFile(resolve(adminDir, 'referee-expenses.mjs'), 'utf8')],
+  ['__REFEREE_MODEL__', await readFile(resolve(repoDir, 'src/referees.mjs'), 'utf8')],
+  ['__REFEREE_SCRIPT__', await readFile(resolve(adminDir, 'referees.mjs'), 'utf8')],
+  ['__REFEREE_CSS__', await readFile(resolve(adminDir, 'referees.css'), 'utf8')],
   ['__EDITORIAL_CSS__', await readFile(resolve(adminDir, 'editorial.css'), 'utf8')],
   ['__CREST_CUTOUT_SCRIPT__', crestCutout],
   ['__RICH_TEXT_EDITOR_SCRIPT__', richTextEditor],
@@ -45,13 +52,16 @@ for (const [placeholder, source] of [
   ['__TESSERACT_SCRIPT__', tesseract.replaceAll('</script', '<\\/script')],
 ]) {
   html = html.replaceAll(placeholder, () => source);
+  coachHtml = coachHtml.replaceAll(placeholder, () => source);
 }
 if ((html.match(/<!doctype html>/gi) ?? []).length !== 1 || /__[A-Z0-9_]+__/.test(html)) {
   throw new Error('Die Admin-Oberfläche wurde nicht korrekt eingebettet.');
 }
+if (/__[A-Z0-9_]+__/.test(coachHtml)) throw new Error('Die Traineransicht wurde nicht korrekt eingebettet.');
 const unsubscribeHtml = renderNewsletterUnsubscribePage();
 const worker = `const unsubscribeHtml = ${JSON.stringify(unsubscribeHtml)};
 const html = ${JSON.stringify(html)};
+const coachHtml = ${JSON.stringify(coachHtml)};
 const stadiumReaderAssets = ${JSON.stringify(stadiumReaderAssets)};
 const renderEditorialMagazine = ${renderEditorialMagazine.toString()};
 
@@ -68,9 +78,10 @@ export default {
         return new Response(renderEditorialMagazine(await feed.json(),false),{headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff','content-security-policy':\"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: https://maejihwjzxkmthjavgnx.supabase.co; base-uri 'none'; frame-ancestors 'none'\"}});
       } catch { return new Response('Die Ausgabe ist vorübergehend nicht verfügbar.',{status:503}); }
     }
-    return new Response(html, {
+    return new Response(/^\\/schiedsrichter\\/?$/.test(new URL(request.url).pathname) ? coachHtml : html, {
       headers: {
         'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
         'content-security-policy': "default-src 'self'; script-src 'unsafe-inline' 'wasm-unsafe-eval' https://esm.sh https://cdn.jsdelivr.net; connect-src 'self' https://maejihwjzxkmthjavgnx.supabase.co https://cdn.jsdelivr.net; worker-src blob:; frame-src blob:; img-src 'self' data: https://maejihwjzxkmthjavgnx.supabase.co https://gerinjo.github.io https://bsvnordstern.de; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'",
         'x-content-type-options': 'nosniff',
         'referrer-policy': 'no-referrer',
@@ -85,5 +96,6 @@ await mkdir(previewDir, { recursive: true });
 await mkdir(resolve(distDir, 'server'), { recursive: true });
 await mkdir(resolve(distDir, '.openai'), { recursive: true });
 await writeFile(resolve(previewDir, 'index.html'), html, 'utf8');
+await writeFile(resolve(previewDir, 'schiedsrichter.html'), coachHtml, 'utf8');
 await writeFile(resolve(distDir, 'server/index.js'), worker, 'utf8');
 await cp(resolve(adminDir, '.openai/hosting.json'), resolve(distDir, '.openai/hosting.json')); 

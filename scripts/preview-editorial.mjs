@@ -31,6 +31,10 @@ async function previewHtml() {
   return html;
 }
 const files = new Map([
+  ["/preview-referee-expenses.mjs", "admin-site/preview/referee-expenses.mjs"],
+  ["/referee-expense-model.mjs", "src/referee-expenses.mjs"],
+  ["/referee-model.mjs", "src/referees.mjs"],
+  ["/preview-referees.mjs", "admin-site/preview/referees.mjs"],
   ["/newsletter-unsubscribe.mjs", "src/newsletter-unsubscribe.mjs"],
   ["/newsletter.mjs", "src/newsletter.mjs"],
   ["/preview-team-photos.mjs", "admin-site/preview/team-photos.mjs"],
@@ -51,7 +55,7 @@ const server = createServer(async (request, response) => {
   response.setHeader("X-Content-Type-Options", "nosniff");
   response.setHeader(
     "Content-Security-Policy",
-    `default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data: http://localhost:${port} http://127.0.0.1:${port} https://bsvnordstern.de https://gerinjo.github.io; connect-src 'none'; frame-src blob:; base-uri 'none'; frame-ancestors 'none'; form-action 'none'`,
+    `default-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; worker-src blob:; style-src 'unsafe-inline'; img-src 'self' data: http://localhost:${port} http://127.0.0.1:${port} https://bsvnordstern.de https://gerinjo.github.io; connect-src https://cdn.jsdelivr.net; frame-src blob:; base-uri 'none'; frame-ancestors 'none'; form-action 'none'`,
   );
   if (request.method !== "GET") {
     response.writeHead(405);
@@ -94,6 +98,17 @@ const server = createServer(async (request, response) => {
       response.end(
         `<!doctype html><html lang="de"><meta charset="utf-8"><title>Stadionheft</title><body><p id="message">Ausgabe wird geladen …</p><script type="module">import {editorialPreviewPublication} from '/preview-api.mjs';import {renderEditorialMagazine} from '/stadium-reader.mjs';try{const html=renderEditorialMagazine(await editorialPreviewPublication(location.pathname.split('/').pop(),new URLSearchParams(location.search).get('version')),false);document.open();document.write(html);document.close();}catch(error){document.querySelector('#message').textContent=error.message;}</script></body></html>`,
       );
+      return;
+    }
+    if (path === '/preview-referee-receipt.png') {
+      response.setHeader('Content-Type','image/png');response.end(await readFile(new URL('admin-site/preview/receipt-example.png',root)));return;
+    }
+    if (/^\/schiedsrichter\/?$/.test(path)) {
+      let html = await readFile(new URL('.preview/schiedsrichter.html', root), 'utf8');
+      html = html.replace(/async function coachApi\(body\) \{[\s\S]*?\n\}/, "import { refereePreviewApi as coachApi } from '/preview-referees.mjs';");
+      html = html.replace('<main>', '<main><p role="note"><strong>Lokale Vorschau mit Beispieldaten</strong> · Alex Beispiel · Geburtsdatum 01.01.1980 · <a href="/preview-referee-receipt.png" download="demo-quittung.png">Beispielquittung herunterladen</a></p>');
+      response.setHeader('Content-Type', 'text/html; charset=utf-8');
+      response.end(html);
       return;
     }
     if (path === "/") {

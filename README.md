@@ -91,6 +91,12 @@ tests/                  automatisierte Tests
 
 Der neue Bereich **Redaktion** bietet Ausgabenplanung mit Kalender, feste Heftbeiträge, freie Abteilungstexte, Texteditor mit automatischer sprachlicher Überarbeitung und erhaltenem Original sowie Tabellen- und Ergebnisbeiträge je Mannschaft. Newsletter starten mit einem freien Inhaltsplan und haben eine eigene Nordstern-Post-E-Mail-Vorschau mit HTML-/Text-Export. Aus veröffentlichten Stadionheften lassen sich Artikel als kurze Auszüge mit Weiterlesen-Link auswählen. Die vollständige Website-Vorlage, das Versandarchiv und die Sponsoren-Auswahl liegen als Dateien in der Suite; siehe [Newsletter](docs/newsletter.md). Datenbankmigration, Betriebsanforderungen und Grenzen sind in [docs/editorial-workspace.md](docs/editorial-workspace.md) beschrieben.
 
+## Schiedsrichter
+
+Trainer können unter `/schiedsrichter` nach Prüfung ihres Geburtsdatums einen Schiri und die Spielfeldgröße (7er/9er) für aufgenommene Spiele ihrer Mannschaft eintragen. Die Rolle **Schiedsrichteradmin** verwaltet diese Spiele und bestätigt erfolgte Auszahlungen. Einrichtung, Anbindung der Spiele und lokale Vorschau sind in [docs/referees.md](docs/referees.md) beschrieben.
+
+Für offiziell angesetzte Jugend-Schiedsrichter gibt es zusätzlich **Erstattungen an Trainer**: Ansetzungen abgleichen, Quittung hochladen, Betrag im Browser erkennen und korrigieren, Beleg prüfen und eine Auszahlungsliste vorbereiten. Der Zahlungsanbieter ist noch offen; Freigaben lösen keine Überweisung aus. Sichere Kontodatenablage, Bereitstellung und Grenzen: [docs/referee-expenses.md](docs/referee-expenses.md).
+
 ## Nächste Betriebs-Schritte
 
 1. Admin-URL in Supabase Auth erlauben, einmal anmelden und den Benutzer freischalten.

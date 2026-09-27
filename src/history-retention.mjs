@@ -63,12 +63,13 @@ export function historyState(record, kind, retentionDays = DEFAULT_RETENTION_DAY
 
   const days = normalizeRetentionDays(retentionDays);
   const deleteAfter = historyAt + days * 24 * 60 * 60 * 1000;
+  const refereeRecord = kind === 'game' && record?.referee_assignments?.length > 0;
   return {
     historical: true,
     historical_reason: reason,
     history_at: new Date(historyAt).toISOString(),
-    delete_after: new Date(deleteAfter).toISOString(),
-    cleanup_eligible: deleteAfter <= now,
+    delete_after: refereeRecord ? null : new Date(deleteAfter).toISOString(),
+    cleanup_eligible: !refereeRecord && deleteAfter <= now,
   };
 }
 

@@ -1,3 +1,4 @@
+import { syncRefereeFees } from '../_shared/referee-fee-sync.ts';
 import { withSupabase } from 'npm:@supabase/server@1.4.1';
 import opentype from 'npm:opentype.js@1.3.4';
 import { runtimeConfig } from '../_shared/config.ts';
@@ -286,7 +287,11 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
     results.push({ team: 'Vorschauen', ok: false, error: error instanceof Error ? error.message : 'Vorschauen konnten nicht erstellt werden.' });
   }
 
+  let refereeFees;
+  try { refereeFees = await syncRefereeFees(context.supabaseAdmin); }
+  catch { refereeFees = { issues: ['Schiriabgleich fehlgeschlagen.'] }; failed += 1; }
   return Response.json({
+    refereeFees,
     ok: failed === 0,
     syncedAt: new Date().toISOString(),
     teams: results,

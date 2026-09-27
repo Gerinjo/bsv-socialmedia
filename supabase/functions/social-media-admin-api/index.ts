@@ -1,3 +1,4 @@
+import { handleReferees } from './referees.ts';
 import { handleEditorial } from './editorial.ts';
 import { DOMParser, XMLSerializer } from 'npm:@xmldom/xmldom@0.9.12';
 import { prepareSvgSource } from '../../../src/svg-upload.mjs';
@@ -24,7 +25,7 @@ const homeVenues = new Set(['Hauptplatz', 'Nebenplatz', 'Kunstrasenplatz 1', 'Ku
 const crestStatuses = new Set(['missing', 'needs_review', 'approved', 'rejected']);
 const sponsorStatuses = new Set(['missing', 'needs_review', 'approved', 'rejected']);
 const sponsorContexts = new Set(['announcement', 'lineup', 'result', 'report', 'birthday', 'post', 'story']);
-const suiteAreas = ['social_media', 'sponsoring', 'editorial', 'administration', 'user_management'] as const;
+const suiteAreas = ['social_media', 'sponsoring', 'editorial', 'referees', 'administration', 'user_management'] as const;
 type SuiteArea = typeof suiteAreas[number];
 const actionAreas: Record<string, SuiteArea> = {
   test_instagram_connection: 'administration', save_cleanup_settings: 'administration', purge_historical_data: 'administration',
@@ -632,12 +633,13 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     return json({ error: 'not_authorized', userId, email, reason: 'account_inactive' }, 403);
   }
   const normalizedRole = String(membership.role ?? '').trim().toLowerCase().replace(/\s+/g, '-');
-  const allowedRoles = new Set(['admin', 'sm-team']);
+  const allowedRoles = new Set(['admin', 'sm-team', 'referee-admin']);
   if (!allowedRoles.has(normalizedRole)) {
     return json({ error: 'not_authorized', userId, email, reason: 'role_missing', role: membership.role }, 403);
   }
   const accessAreas: SuiteArea[] = normalizedRole === 'admin'
     ? [...suiteAreas]
+    : normalizedRole === 'referee-admin' ? ['referees']
     : [...new Set((Array.isArray(membership.access_areas) ? membership.access_areas : ['social_media'])
       .map((area: unknown) => String(area))
       .filter((area: string): area is SuiteArea => suiteAreas.includes(area as SuiteArea)))];
@@ -667,7 +669,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     ] = await Promise.all([
       context.supabaseAdmin
         .from('social_games')
-        .select('*, jobs:social_story_jobs(*)')
+        .select('*, jobs:social_story_jobs(*), referee_assignments(id)')
         .order('kickoff_at', { ascending: true }),
       context.supabaseAdmin
         .from('social_birthdays')
@@ -793,6 +795,11 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     const requiredArea = actionAreas[action];
     if (requiredArea && !hasArea(requiredArea)) return json({ error: 'area_forbidden', area: requiredArea }, 403);
 
+    if (action.startsWith('referee_')) {
+      if (!hasArea('referees')) return json({ error: 'area_forbidden', area: 'referees' }, 403);
+      return json(await handleReferees(context.supabaseAdmin, userId, body));
+    }
+
     if (action.startsWith('editorial_')) {
       if (!hasArea('editorial')) return json({ error: 'area_forbidden', area: 'editorial' }, 403);
       return json(await handleEditorial(context.supabaseAdmin, userId, body));
@@ -864,7 +871,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       if (body.confirm !== 'DELETE_ELIGIBLE_HISTORY') throw new Error('Die endgültige Löschung wurde nicht bestätigt.');
       const [settingsResult, gamesResult, postsResult, storiesResult] = await Promise.all([
         context.supabaseAdmin.from('social_cleanup_settings').select('retention_days').eq('id', 1).maybeSingle(),
-        context.supabaseAdmin.from('social_games').select('id, kickoff_at, archived_at, action_image_path, report_image_paths, jobs:social_story_jobs(status, published_at, storage_path, storage_paths)'),
+        context.supabaseAdmin.from('social_games').select('id, kickoff_at, archived_at, action_image_path, report_image_paths, jobs:social_story_jobs(status, published_at, storage_path, storage_paths), referee_assignments(id)'),
         context.supabaseAdmin.from('social_posts').select('id, archived_at, image_paths, job:social_post_jobs(status, published_at, storage_path, storage_paths)'),
         context.supabaseAdmin.from('social_independent_stories').select('id, schedule_kind, archived_at, image_path, jobs:social_independent_story_jobs(status, published_at, storage_path)'),
       ]);
@@ -873,7 +880,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       const retentionDays = normalizeRetentionDays(settingsResult.data?.retention_days);
       const now = Date.now();
       const candidates = {
-        game: (gamesResult.data ?? []).filter((record: any) => historyState(record, 'game', retentionDays, now).cleanup_eligible),
+        game: (gamesResult.data ?? []).filter((record: any) => !record.referee_assignments?.length && historyState(record, 'game', retentionDays, now).cleanup_eligible),
         post: (postsResult.data ?? []).filter((record: any) => historyState(record, 'post', retentionDays, now).cleanup_eligible),
         story: (storiesResult.data ?? []).filter((record: any) => historyState(record, 'story', retentionDays, now).cleanup_eligible),
       };
@@ -950,10 +957,11 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       const targetUserId = required(body.userId, 'Benutzer-ID');
       if (targetUserId === userId) throw new Error('Die eigene Super-Admin-Rolle kann hier nicht geändert werden.');
       const role = String(body.role ?? 'sm-team').trim();
-      if (!['admin', 'sm-team'].includes(role)) throw new Error('Die Rolle ist ungültig.');
+      if (!['admin', 'sm-team', 'referee-admin'].includes(role)) throw new Error('Die Rolle ist ungültig.');
       const requestedAreas = Array.isArray(body.accessAreas) ? body.accessAreas.map((area: unknown) => String(area)) : [];
       const nextAccessAreas: SuiteArea[] = role === 'admin'
         ? [...suiteAreas]
+        : role === 'referee-admin' ? ['referees']
         : [...new Set(requestedAreas.filter((area: string): area is SuiteArea => suiteAreas.includes(area as SuiteArea) && area !== 'user_management'))];
       if (!nextAccessAreas.length) throw new Error('Für einen Benutzer muss mindestens ein Bereich freigegeben sein.');
       const { data: target, error: targetError } = await context.supabaseAdmin
@@ -1031,11 +1039,12 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       const requestedAreas = Array.isArray(body.accessAreas) ? body.accessAreas.map((area: unknown) => String(area)) : [];
       const nextAccessAreas: SuiteArea[] = role === 'admin'
         ? [...suiteAreas]
+        : role === 'referee-admin' ? ['referees']
         : [...new Set(requestedAreas.filter((area: string): area is SuiteArea => suiteAreas.includes(area as SuiteArea) && area !== 'user_management'))];
       const isActive = body.is_active !== false;
       if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Bitte eine gültige E-Mail-Adresse eingeben.');
       if (password.length < 10) throw new Error('Das Passwort muss mindestens 10 Zeichen lang sein.');
-      if (!['admin', 'sm-team'].includes(role)) throw new Error('Die Rolle ist ungültig.');
+      if (!['admin', 'sm-team', 'referee-admin'].includes(role)) throw new Error('Die Rolle ist ungültig.');
       if (!nextAccessAreas.length) throw new Error('Für einen Benutzer muss mindestens ein Bereich freigegeben sein.');
       const { data: createdUser, error: createUserError } = await context.supabaseAdmin.auth.admin.createUser({
         email,
