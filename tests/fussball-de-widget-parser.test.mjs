@@ -23,6 +23,11 @@ test('extracts the Next.js widget payload', () => {
   assert.deepEqual(props.nextMatches, []);
 });
 
+test('decodes the asterisk used to mark youth teams without dropping their fixture', () => {
+  assert.equal(decodeWidgetText('SG Kluftern 2 \uf399', () => 'asterisk'), 'SG Kluftern 2 *');
+  assert.throws(() => decodeWidgetText('\uf399', () => '.notdef'), /Unbekanntes Zeichen/);
+});
+
 test('converts German summer and winter kickoffs to UTC', () => {
   assert.equal(parseGermanKickoff('Sonntag, 23.08.2026', '16:30'), '2026-08-23T14:30:00.000Z');
   assert.equal(parseGermanKickoff('Donnerstag, 31.12.2026', '12:11'), '2026-12-31T11:11:00.000Z');
