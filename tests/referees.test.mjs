@@ -48,11 +48,11 @@ test('public coach selector requests no birthdays, emails or unrelated personal 
   const query = {
     select(value) { fields = value; return this; },
     ilike() { return this; }, eq() { return this; },
-    then(resolve) { return Promise.resolve({ data: [{ person_id: id, person: { display_name: 'Test Trainer' } }] }).then(resolve); },
+    then(resolve) { return Promise.resolve({ data: [{ person_id: id, display_name: 'Test Trainer', team_id: id, team_name: 'Test', role: 'Trainer', is_club_role: false }] }).then(resolve); },
   };
-  const response = await handleRefereeCoach(new Request('https://example.org'), { from: () => query });
+  const response = await handleRefereeCoach(new Request('https://example.org'), { from: table => { assert.equal(table, 'referee_portal_people'); return query; } });
   assert.equal(response.status, 200);
-  assert.doesNotMatch(fields, /birth_date|email|\*/);
+  assert.doesNotMatch(fields, /birth|email|\*/);
   assert.equal((await response.json()).coaches[0].person.display_name, 'Test Trainer');
 });
 

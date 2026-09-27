@@ -1,4 +1,5 @@
 import { coachExpenses } from './expenses.mjs';
+import { loadRefereePortalPeople } from '../_shared/referee-portal.mjs';
 import { validateRefereeInput } from '../../../src/referees.mjs';
 
 const headers = {
@@ -14,11 +15,7 @@ export async function handleRefereeCoach(request, db) {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
   try {
     if (request.method === 'GET') {
-      const { data, error } = await db.from('social_team_people')
-        .select('team_id,person_id,role,team:social_teams!inner(id,name,referee_enabled),person:social_people!inner(id,display_name,active)')
-        .ilike('role', '%trainer%').eq('team.referee_enabled', true).eq('person.active', true);
-      if (error) throw error;
-      return reply({ coaches: data ?? [] });
+      return reply({ coaches: await loadRefereePortalPeople(db) });
     }
     if (request.method !== 'POST') return reply({ error: 'Diese Methode wird nicht unterstützt.' }, 405);
     const raw = await request.text();

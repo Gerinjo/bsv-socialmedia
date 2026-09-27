@@ -26,6 +26,8 @@ Nur die beschriftete Zeile „Schiedsrichter“ auf einer passenden Spielseite z
 
 Die Fälle stehen unabhängig von Social-Media-Spielen in `referee_fee_cases`. Der Abgleich erzeugt keine Social-Media-Jobs. Nicht mehr im Widget enthaltene Fälle bleiben erhalten, werden aber ohne frischen Abgleich nicht zur Einreichung oder Freigabe zugelassen. Ein fehlgeschlagener Abgleich bestätigt keine Ansetzung erneut.
 
+Jugendleitung und Kasse können sich ebenfalls für jede Mannschaft auswählen; ihre Erstattungen bleiben der tatsächlich angemeldeten Person zugeordnet. Die [Vereinsfunktionen](referees.md#jugendleitung-und-kasse) werden auch bei der Kontodatenzuordnung und Geburtsdatumspflege berücksichtigt.
+
 ## Kontodaten aus dem Trainer-Onboarding
 
 In den Onboarding-Nachrichten des angegebenen Gmail-Postfachs sind die Felder **Kontoinhaber**, **IBAN** und **BIC** vorhanden. Es wurden keine echten Bankdaten in Repository, Demo oder Live-Datenbank übernommen und keine Nachrichten verändert. Die Zuordnung erfolgt nach der Veröffentlichung durch den Schiedsrichteradmin.

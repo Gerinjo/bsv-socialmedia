@@ -1,6 +1,7 @@
 import { parseTrainerBankDetails } from '../../../src/referee-expenses.mjs';
 import { encryptTrainerBankDetails, RECEIPT_BUCKET } from '../_shared/referee-receipts.mjs';
 import { syncRefereeFees } from '../_shared/referee-fee-sync.ts';
+import { loadRefereePortalPeople } from '../_shared/referee-portal.mjs';
 
 export async function handleRefereeExpenses(db: any, actor: string, body: Record<string, any>) {
   if (body.action === 'referee_sync_fees') return syncRefereeFees(db);
@@ -25,9 +26,8 @@ export async function handleRefereeExpenses(db: any, actor: string, body: Record
   if (error) throw error;
   if (data.error) throw new Error(data.error);
   if (body.action === 'referee_expense_load') {
-    const coaches = await db.from('social_team_people').select('person_id,person:social_people!inner(display_name,active)').ilike('role', '%trainer%').eq('person.active', true);
-    if (coaches.error) throw coaches.error;
-    data.coaches = [...new Map((coaches.data || []).map((row: any) => [row.person_id, { id: row.person_id, name: row.person.display_name }])).values()];
+    const coaches = await loadRefereePortalPeople(db);
+    data.coaches = [...new Map(coaches.map((row: any) => [row.person_id, { id: row.person_id, name: row.person.display_name + (row.is_club_role ? ' · ' + row.role : '') }])).values()];
   }
   return data;
 }

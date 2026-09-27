@@ -18,6 +18,14 @@ Trainer benötigen keinen Supabase-Auth-Benutzer. Fehlende Geburtsdaten können 
 
 Der Trainerzugang hält die Zugangsdaten ausschließlich im Arbeitsspeicher der geöffneten Seite. Nach 15 Minuten, Abmeldung oder Verlassen der Seite wird die Anmeldung verworfen. Fünf fehlgeschlagene Prüfungen pro Person sperren weitere Versuche für den Rest des 15-Minuten-Fensters. Dieser Zähler liegt in der Datenbank und gilt auch bei parallelen Anfragen und mehreren Edge-Instanzen.
 
+## Jugendleitung und Kasse
+
+Jérôme Ernsberger und Ole Schmal sind als **Jugendleitung**, Wiebke Baronner-Dieterle als **Kassiererin** für jede freigeschaltete Mannschaft auswählbar. Die Auswahl heißt **Person** und zeigt die jeweilige Vereinsfunktion an. Auch neue Mannschaften erhalten diese Auswahl automatisch. Bestehende Trainerzuordnungen werden nicht verändert, Personen mit beiden Funktionen erscheinen je Mannschaft nur einmal.
+
+Die gesonderten Berechtigungen liegen in `private.referee_club_roles`. Die nur für den Server lesbare Sicht `referee_portal_people` verbindet diese mit den Trainerzuordnungen. Auswahl, Geburtsdatumsprüfung, Kontodatenzuordnung und die Pflege fehlender Geburtsdaten nutzen denselben Personenkreis. Deaktivierte Personen, Rollen oder Mannschaften werden bei jedem Zugriff erneut ausgeschlossen. Die Anmeldung verlangt weiterhin das persönliche Geburtsdatum; sie erteilt keine Schiedsrichteradmin-Rechte. Erstattungen werden der jeweils angemeldeten Person zugeordnet.
+
+Für diese Erweiterung nach den beiden Basismigrationen `20260927214316_referee_club_roles.sql` anwenden und beide APIs sowie die Oberfläche bereitstellen. `supabase/tests/referee_club_roles.sql` prüft Zugriff auf mehrere und neue Mannschaften, ausgeschlossene Personen, Rollenentzug, unveränderte Trainerrechte, Geburtsdatum, Erstattungen sowie fehlende Adminrechte.
+
 ## Anbindung der identifizierten Spiele
 
 Im vorliegenden Repository und im geprüften Datenbankschema gab es zum Implementierungszeitpunkt noch keine Kennzeichnung für Spiele ohne Schirieinteilung. Daher werden Spiele ausdrücklich aufgenommen; ein leeres oder unbekanntes Schirifeld gilt nicht automatisch als fehlende Einteilung.
