@@ -657,10 +657,27 @@
     button.secondary,.cashbook button.secondary{background:#fff;color:var(--accent-text);border:1px solid var(--outline)}
     button.secondary:hover:not(:disabled),.cashbook button.secondary:hover:not(:disabled){background:var(--accent-subtle);border-color:var(--accent-border)}
     ::selection{background:#cbe8d5;color:var(--ink)}
+    #suiteMobileMenuButton{display:none;flex:none}#suiteMobileMenuButton[hidden]{display:none}
+    #suiteMobileMenu{position:fixed;inset:0 auto 0 0;margin:0;width:min(350px,calc(100vw - 32px));height:100dvh;max-height:100dvh;padding:0;border:0;border-right:1px solid var(--outline);border-radius:0 20px 20px 0;box-shadow:12px 0 48px rgba(16,37,26,.2);overscroll-behavior:contain}
+    .suite-mobile-menu-heading{position:sticky;top:0;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 16px;background:#fff;border-bottom:1px solid var(--outline)}.suite-mobile-menu-heading h2{margin:0;font-size:18px}.suite-mobile-menu-heading button{width:44px;height:44px}
+    .suite-menu-open,.suite-menu-open body{overflow:hidden}
+    #suiteMobileMenu .suite-sidebar{position:static;display:grid;grid-template-rows:auto auto auto auto auto;gap:8px;min-height:0;margin:0;padding:12px;border:0;border-radius:0;box-shadow:none;overflow:visible}
+    #suiteMobileMenu .suite-sidebar-top,#suiteMobileMenu .suite-sidebar-title,#suiteMobileMenu .suite-sidebar-spacer{display:none}
+    #suiteMobileMenu .suite-main-nav{display:grid;align-items:stretch;gap:4px;width:100%}
+    #suiteMobileMenu .suite-nav-item{width:100%;height:auto;min-height:48px;margin:0;justify-content:flex-start;padding:12px;white-space:normal;text-align:left}
+    #suiteMobileMenu .suite-nav-label,#suiteMobileMenu .suite-nav-caption{display:block}
+    #suiteMobileMenu .suite-nav-item[aria-controls]::after{content:'⌄';margin-left:auto;font-size:20px;line-height:1;transition:transform .16s ease}#suiteMobileMenu .suite-nav-item[aria-expanded="true"]::after{transform:rotate(180deg)}
+    #suiteMobileMenu .suite-subnav{display:none;margin:2px 8px 8px 25px;padding:2px 0 2px 12px;border-left:2px solid var(--accent-border)}
+    #suiteMobileMenu .suite-nav-item.active+.suite-subnav{display:grid}
+    #suiteMobileMenu .suite-subnav-item{width:100%;min-height:44px;padding:10px;white-space:normal}
+    #suiteMobileMenu .suite-mode{display:flex;margin:0 8px 12px}
+    @media(max-width:980px){#suiteMobileMenuButton:not([hidden]){display:inline-flex}body>header{position:sticky;top:0;z-index:12;background:var(--paper);padding:12px 0;gap:8px}.workspace-nav{top:80px}}
+    @media(max-width:620px){body>header .suite-product-brand{gap:6px;min-width:0}body>header .suite-product-logo{width:34px;height:34px}body>header .suite-product-wordmark{width:clamp(104px,33vw,165px)}body>header .suite-header-icon{width:38px;height:44px}body>header .suite-header-actions{gap:2px}.workspace-nav{top:68px}}
 </style>
 </head>
 <body>
   <header>
+    <button id="suiteMobileMenuButton" class="suite-header-icon" type="button" aria-label="Menü öffnen" aria-controls="suiteMobileMenu" aria-expanded="false" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
     <div class="suite-product-brand">
       <img class="suite-product-logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2IiByb2xlPSJpbWciIGFyaWEtbGFiZWxsZWRieT0idGl0bGUgZGVzYyI+CiAgPHRpdGxlIGlkPSJ0aXRsZSI+QlNWIE5vcmRzdGVybiBDbHViIFN1aXRlPC90aXRsZT4KICA8ZGVzYyBpZD0iZGVzYyI+RWluIGhlbGxlciBOb3Jkc3Rlcm4gdW5kIGRyZWkgYWJnZXJ1bmRldGUgS2FjaGVsbiBhdWYgZHVua2VsZ3LDvG5lbSBHcnVuZCB2ZXJiaW5kZW4gZGVuIFZlcmVpbiBtaXQgZGVuIEJlcmVpY2hlbiBkZXIgU3VpdGUuPC9kZXNjPgogIDxyZWN0IHdpZHRoPSIyNTYiIGhlaWdodD0iMjU2IiByeD0iNTYiIGZpbGw9IiMxNjVjM2QiLz4KICA8cGF0aCBkPSJNOTAgNTQgMTAwIDgwIDEyNiA5MCAxMDAgMTAwIDkwIDEyNiA4MCAxMDAgNTQgOTAgODAgODBaIiBmaWxsPSIjZjhmYmY5Ii8+CiAgPHJlY3QgeD0iMTQyIiB5PSI2NSIgd2lkdGg9IjQ5IiBoZWlnaHQ9IjQ5IiByeD0iMTQiIGZpbGw9IiNiOWRkYzUiLz4KICA8cmVjdCB4PSI2NSIgeT0iMTQyIiB3aWR0aD0iNDkiIGhlaWdodD0iNDkiIHJ4PSIxNCIgZmlsbD0iI2I5ZGRjNSIvPgogIDxyZWN0IHg9IjE0MiIgeT0iMTQyIiB3aWR0aD0iNDkiIGhlaWdodD0iNDkiIHJ4PSIxNCIgZmlsbD0iI2Y4ZmJmOSIvPgo8L3N2Zz4K" alt="">
       <div class="suite-product-copy">
@@ -950,6 +967,56 @@
     </dialog>
   </main>
   <div id="status" class="status-toast hidden" role="status" aria-live="polite"></div>
+  <dialog id="suiteMobileMenu" aria-labelledby="suiteMobileMenuTitle">
+    <div class="suite-mobile-menu-heading"><h2 id="suiteMobileMenuTitle">Menü</h2><button id="closeSuiteMobileMenu" class="suite-header-icon" type="button" aria-label="Menü schließen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+    <div id="suiteMobileMenuContent"></div>
+  </dialog>
+  <script>function createSuiteMobileNavigation({window: win, document: doc}) {
+  const app = doc.querySelector('#app');
+  const sidebar = doc.querySelector('.suite-sidebar');
+  const trigger = doc.querySelector('#suiteMobileMenuButton');
+  const dialog = doc.querySelector('#suiteMobileMenu');
+  const mount = doc.querySelector('#suiteMobileMenuContent');
+  const media = win.matchMedia('(max-width: 980px)');
+
+  function close() { if (dialog.open) dialog.close(); }
+  function sync() {
+    const loggedIn = !app.classList.contains('hidden');
+    trigger.hidden = !loggedIn;
+    if (!media.matches || !loggedIn) close();
+    if (media.matches) mount.append(sidebar);
+    else if (sidebar.parentElement !== app) app.prepend(sidebar);
+  }
+  trigger.addEventListener('click', () => {
+    if (!media.matches || trigger.hidden) return;
+    dialog.showModal();
+    trigger.setAttribute('aria-expanded', 'true');
+    doc.documentElement.classList.add('suite-menu-open');
+  });
+  doc.querySelector('#closeSuiteMobileMenu').addEventListener('click', close);
+  dialog.addEventListener('close', () => {
+    trigger.setAttribute('aria-expanded', 'false');
+    doc.documentElement.classList.remove('suite-menu-open');
+  });
+  // Close before the action runs, so profile/install dialogs receive focus normally.
+  dialog.addEventListener('click', event => {
+    const button = event.target.closest('button');
+    if (!button || !sidebar.contains(button)) return;
+    if (button.matches('[data-suite-area][aria-controls]')) return;
+    close();
+  }, true);
+  dialog.addEventListener('click', event => {
+    if (event.target !== dialog) return;
+    const bounds = dialog.getBoundingClientRect();
+    if (event.clientX < bounds.left || event.clientX > bounds.right ||
+        event.clientY < bounds.top || event.clientY > bounds.bottom) close();
+  });
+  media.addEventListener('change', sync);
+  new win.MutationObserver(sync).observe(app, {attributes:true, attributeFilter:['class']});
+  sync();
+}
+
+createSuiteMobileNavigation({window,document});</script>
   <script>function suiteInstallInstructions(navigator, secureContext) {
   if (!secureContext) return {
     intro: 'Öffne die Suite über ihre HTTPS-Adresse, um sie als App zu installieren.',

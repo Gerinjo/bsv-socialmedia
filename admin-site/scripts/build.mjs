@@ -53,6 +53,7 @@ for (const [placeholder, source] of [
   ['__CASHBOOK_MODEL__', await readFile(resolve(repoDir, 'src/cashbook.mjs'), 'utf8')],
   ['__CASHBOOK_SCRIPT__', await readFile(resolve(adminDir, 'cashbook.mjs'), 'utf8')],
   ['__SUITE_INSTALL_SCRIPT__', (await readFile(resolve(adminDir, 'suite-install.mjs'), 'utf8')).replace(/^export /gm, '')],
+  ['__SUITE_MOBILE_NAVIGATION_SCRIPT__', (await readFile(resolve(adminDir, 'suite-mobile-navigation.mjs'), 'utf8')).replace(/^export /gm, '')],
   ['__CASHBOOK_CSS__', await readFile(resolve(adminDir, 'cashbook.css'), 'utf8')],
   ['__REFEREE_SCRIPT__', await readFile(resolve(adminDir, 'referees.mjs'), 'utf8')],
   ['__REFEREE_CSS__', await readFile(resolve(adminDir, 'referees.css'), 'utf8')],
