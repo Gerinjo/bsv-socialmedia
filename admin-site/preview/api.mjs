@@ -1,5 +1,5 @@
 import { refereePreviewApi } from '/preview-referees.mjs';
-import { cashbookPreviewApi,cashbookPreviewAdmin } from '/preview-cashbook.mjs';
+import { cashbookPreviewApi,cashbookPreviewAdmin,cashbookPreviewMembers } from '/preview-cashbook.mjs';
 import { normalizeNewsletterSettings, newsletterSource, newsletterSelection } from '/newsletter.mjs';
 import { previewTeamPhotos } from '/preview-team-photos.mjs';
 import { previewPeople } from '/preview-people.mjs';
@@ -212,6 +212,7 @@ export async function editorialPreviewApi(method = "GET", body = {}) {
         accessAreas: previewAreas(),
       },
       testMode: true,
+      members: previewPersona==='admin'?cashbookPreviewMembers():[],
     };
   if (body.action?.startsWith('cashbook_')) {
     if(!previewAreas().includes('cashbook'))throw new Error('Kein Recht für das Kassenbuch der Jugendabteilung.');

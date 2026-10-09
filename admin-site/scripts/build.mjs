@@ -51,6 +51,7 @@ for (const [placeholder, source] of [
   ['__EXPENSE_SCRIPT__', await readFile(resolve(adminDir, 'referee-expenses.mjs'), 'utf8')],
   ['__REFEREE_MODEL__', await readFile(resolve(repoDir, 'src/referees.mjs'), 'utf8')],
   ['__CASHBOOK_MODEL__', await readFile(resolve(repoDir, 'src/cashbook.mjs'), 'utf8')],
+  ['__SUITE_MEMBER_MODEL__', await readFile(resolve(repoDir, 'src/suite-members.mjs'), 'utf8')],
   ['__CASHBOOK_SCRIPT__', await readFile(resolve(adminDir, 'cashbook.mjs'), 'utf8')],
   ['__SUITE_INSTALL_SCRIPT__', (await readFile(resolve(adminDir, 'suite-install.mjs'), 'utf8')).replace(/^export /gm, '')],
   ['__SUITE_MOBILE_NAVIGATION_SCRIPT__', (await readFile(resolve(adminDir, 'suite-mobile-navigation.mjs'), 'utf8')).replace(/^export /gm, '')],

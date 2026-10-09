@@ -35,6 +35,7 @@ async function previewHtml() {
 const files = new Map([
   ['/preview-cashbook.mjs','admin-site/preview/cashbook.mjs'],
   ['/cashbook-model.mjs','src/cashbook.mjs'],
+  ['/suite-members.mjs','src/suite-members.mjs'],
   ["/preview-referee-expenses.mjs", "admin-site/preview/referee-expenses.mjs"],
   ["/referee-expense-model.mjs", "src/referee-expenses.mjs"],
   ["/referee-model.mjs", "src/referees.mjs"],

@@ -1,5 +1,6 @@
 // Deliberately synthetic data, isolated from the real safe and mail delivery.
 import {validateCashbookChange} from '/cashbook-model.mjs';
+import {enrichSuiteMembers} from '/suite-members.mjs';
 const KEY='bsv-cashbook-preview-v4';
 const team={id:'10000000-0000-4000-8000-000000000001',name:'U15 C1-Junioren (Beispiel)'};
 const dTeam={id:'10000000-0000-4000-8000-000000000002',name:'U13 D1-Junioren (Beispiel)'};
@@ -13,6 +14,10 @@ const balance=()=>state.entries.at(-1)?.balanceAfterCents||0;
 const save=()=>localStorage.setItem(KEY,JSON.stringify(state));
 const page=before=>[...state.entries].reverse().filter(e=>!before||e.sequence<before).slice(0,31);
 const superseded=entry=>state.entries.some(e=>e.supersedesEntryId===entry.id);
+export function cashbookPreviewMembers() {
+  const members=people.map(person=>({user_id:person.id,email:`cashbook-${person.id}@suite.bsvnordstern.invalid`,role:'sm-team',is_active:true,access_areas:['cashbook'],created_at:'2026-10-09T14:16:00Z'}));
+  return [...enrichSuiteMembers(members,state.accounts),{user_id:'local-preview-admin',email:'admin@example.test',display_name:'Super-Admin (Vorschau)',role:'admin',is_active:true,access_areas:['social_media','user_management'],created_at:'2026-10-08T08:00:00Z'}];
+}
 const snapshot=(person,body={})=>({user:person,canBook:person.role!=='observer',canExport:['cashier','observer'].includes(person.role),teams:allowedTeams(person),entries:page(body.before).map(e=>({...e,entryType:e.entryType||'booking',recordAmountCents:e.recordAmountCents??e.amountCents,superseded:superseded(e),canManage:person.role==='trainer'&&e.accountId===person.id&&e.entryType!=='cancellation'&&!superseded(e),canViewEvidence:!!e.evidence&&(['cashier','observer'].includes(person.role)||e.accountId===person.id)})),balanceCents:balance(),thresholdCents:5000,instructions:state.settings.instructions});
 export async function cashbookPreviewApi(body,persona) {
   const person=people.find(p=>p.username===persona)||{id:'local-preview-admin',name:'Super-Admin (Vorschau)',role:'observer'};

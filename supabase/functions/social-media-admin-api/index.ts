@@ -2,6 +2,7 @@ import { handleReferees } from './referees.ts';
 import { handleCashbookWorkspace } from '../_shared/cashbook-evidence.mjs';
 import { handleCashbookAdmin } from './cashbook.mjs';
 import { SUITE_INITIAL_PASSWORD } from '../_shared/suite-accounts.mjs';
+import { suiteMemberDirectory } from '../_shared/suite-member-directory.mjs';
 import { handleEditorial } from './editorial.ts';
 import { DOMParser, XMLSerializer } from 'npm:@xmldom/xmldom@0.9.12';
 import { prepareSvgSource } from '../../../src/svg-upload.mjs';
@@ -762,7 +763,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     };
     return json({
       user: { userId, email, role: String(membership.role ?? '').trim() || 'sm-team', accessAreas },
-      members: hasArea('user_management') ? members ?? [] : [],
+      members: hasArea('user_management') ? await suiteMemberDirectory(context.supabaseAdmin,userId,members ?? []) : [],
       testMode: runtimeConfig.testMode,
       venues: hasArea('social_media') ? [...homeVenues] : [],
       teams: hasAnyArea('social_media', 'administration') ? (teamSettings ?? []).filter((team: any) => team.active) : [],
