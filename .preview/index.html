@@ -60,7 +60,7 @@
     .report-image-card{background:#fff;border-color:var(--outline)}.game-actions button.warning{background:#fef3c7;color:#713f12;border:1px solid #d6ad45}
     .sponsor-create-actions{display:flex;justify-content:flex-end;margin:16px 0}.sponsor-dialog-actions{display:flex;justify-content:flex-end;gap:10px}.sponsor-picker{position:relative;min-width:0}.sponsor-options{position:absolute;top:100%;left:0;right:0;z-index:20;max-height:300px;overflow:auto;margin-top:5px;padding:5px;background:#fff;color:var(--ink);border:1px solid #b8c9bf;border-radius:12px;box-shadow:0 6px 20px #233c2926}.sponsor-option{padding:11px 12px;border-radius:7px;cursor:pointer;overflow-wrap:anywhere}.sponsor-option[aria-selected="true"]{font-weight:700}.sponsor-option:hover,.sponsor-option.highlighted{background:var(--accent-soft);color:var(--accent-text)}.sponsor-search-empty{padding:12px;color:var(--mint)}.selected-sponsor{display:flex;align-items:center;gap:18px;margin:0 0 20px;padding:14px;border:1px solid var(--outline);border-radius:14px;background:var(--paper);overflow-wrap:anywhere}.selected-sponsor-logo{display:flex;align-items:center;justify-content:center;flex:none;width:160px;height:90px;padding:8px;background:#fff;border:1px solid var(--outline);border-radius:8px;color:var(--mint);font-size:12px;text-align:center}.selected-sponsor-logo.dark{background:#173d2c}.selected-sponsor-logo img{display:block;max-width:100%;max-height:100%;object-fit:contain}.assignment-context-label{display:block;margin-bottom:6px;color:#536c5b;font-size:10px;line-height:1.3;font-weight:600;overflow-wrap:anywhere}.assignment-grid .assignment-slot-cell{vertical-align:bottom}.assignment-slot{color:#536c5b}.assignment-slot.occupied input{opacity:1}.assignment-grid input[type=checkbox]{accent-color:var(--accent)}@media(max-width:620px){.selected-sponsor-logo{width:110px;height:76px}.selected-sponsor{gap:12px}.assignment-tools{gap:10px}}
     .sponsor-card>summary{color:var(--ink)}.sponsor-card>summary::after,.sponsor-group-count{background:#f1f6f2;color:var(--mint)}.sponsor-card[open]>summary{background:var(--paper)}.sponsor-card-body{border-color:var(--outline)}
-    .suite-sidebar{grid-template-rows:auto auto max-content auto 1fr auto;align-content:stretch}.suite-main-nav{display:grid;gap:3px;align-content:start}.suite-nav-group{display:grid;gap:2px}.suite-nav-item{min-height:44px;padding:8px 14px}.suite-subnav{display:none;gap:2px;margin:0 8px 4px 44px;padding:2px 0 2px 10px;border-left:2px solid var(--accent-soft)}.suite-nav-item.active+.suite-subnav{display:grid}.suite-subnav-item{justify-content:flex-start;min-height:32px;padding:6px 10px;border-radius:9px;background:transparent;color:var(--mint);font-size:12px;font-weight:600;text-align:left}.suite-subnav-item:hover{background:#f1f6f2;color:var(--ink)}.suite-subnav-item.active{background:var(--accent-soft);color:var(--accent-hover)}.suite-sidebar-spacer{min-height:12px}.suite-mode{margin-top:0}.sidebar-collapsed .suite-main-nav{justify-items:center}.sidebar-collapsed .suite-subnav{display:none!important}.status-toast{position:fixed;z-index:30;right:24px;bottom:24px;width:min(460px,calc(100% - 32px));padding:13px 16px;border:1px solid #81c995;border-radius:14px;background:#e6f4ea;color:#137333;box-shadow:0 8px 28px rgba(35,60,41,.2)}.status-toast.error{border-color:#f2b8b5;background:#fce8e6;color:#b3261e}
+    .suite-sidebar{grid-template-rows:auto auto max-content auto 1fr auto auto;align-content:stretch}.suite-main-nav{display:grid;gap:3px;align-content:start}.suite-nav-group{display:grid;gap:2px}.suite-nav-item{min-height:44px;padding:8px 14px}.suite-subnav{display:none;gap:2px;margin:0 8px 4px 44px;padding:2px 0 2px 10px;border-left:2px solid var(--accent-soft)}.suite-nav-item.active+.suite-subnav{display:grid}.suite-subnav-item{justify-content:flex-start;min-height:32px;padding:6px 10px;border-radius:9px;background:transparent;color:var(--mint);font-size:12px;font-weight:600;text-align:left}.suite-subnav-item:hover{background:#f1f6f2;color:var(--ink)}.suite-subnav-item.active{background:var(--accent-soft);color:var(--accent-hover)}.suite-sidebar-spacer{min-height:12px}.suite-mode{margin-top:0}.sidebar-collapsed .suite-main-nav{justify-items:center}.sidebar-collapsed .suite-subnav{display:none!important}.status-toast{position:fixed;z-index:30;right:24px;bottom:24px;width:min(460px,calc(100% - 32px));padding:13px 16px;border:1px solid #81c995;border-radius:14px;background:#e6f4ea;color:#137333;box-shadow:0 8px 28px rgba(35,60,41,.2)}.status-toast.error{border-color:#f2b8b5;background:#fce8e6;color:#b3261e}
     @media(max-width:980px){#app,#app.sidebar-collapsed{grid-template-columns:1fr}.suite-sidebar{grid-column:1;grid-row:auto;position:sticky;top:0;z-index:9;display:block;min-height:0;overflow:auto;border-radius:0;margin:0 -16px;padding:8px 16px}.suite-sidebar-top,.suite-sidebar-title,.suite-nav-caption,.suite-sidebar-spacer,.suite-mode{display:none}.suite-main-nav{display:flex;align-items:flex-start;gap:4px;width:max-content}.suite-nav-group{display:grid;flex:0 0 auto}.suite-nav-item,.sidebar-collapsed .suite-nav-item{width:auto;height:auto;justify-content:center;margin:0;padding:9px 13px}.sidebar-collapsed .suite-nav-label{display:inline}.suite-nav-item.active+.suite-subnav,.sidebar-collapsed .suite-nav-item.active+.suite-subnav{display:flex;margin:2px 0 0;padding:2px;border:0}.suite-subnav-item{min-height:30px;padding:5px 8px;white-space:nowrap}#app>:not(.suite-sidebar){grid-column:1}.workspace-nav{top:68px}.member-permission-actions{grid-template-columns:1fr}.permission-grid{grid-template-columns:1fr}}
     .suite-product-brand{display:flex;align-items:center;gap:18px}.suite-product-logo{display:block!important;width:88px;height:88px;object-fit:contain}.suite-product-wordmark{display:block;width:min(520px,60vw);height:auto}.suite-product-copy p{margin-top:2px}.suite-header-actions{display:flex;align-items:center;gap:10px;margin-left:auto}.suite-header-icon{width:48px;height:48px;padding:0;border:1px solid var(--outline);background:#fff;color:#42584a;box-shadow:0 1px 3px rgba(35,60,41,.12)}.suite-header-icon:hover{background:#f1f6f2}.suite-header-icon[aria-busy="true"] svg{animation:spin .7s linear infinite}.suite-header-icon svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
     @media(max-width:620px){header,main{width:min(100% - 20px,1680px)}header{gap:8px}.suite-product-brand{gap:8px}.suite-product-logo{width:52px;height:52px}.suite-product-wordmark{width:min(260px,45vw)}.suite-product-copy p{display:none}.suite-header-actions{gap:4px}.suite-header-icon{width:38px;height:38px}.suite-sidebar{margin:0 -10px;padding:8px 10px}.suite-nav-item,.sidebar-collapsed .suite-nav-item{padding:10px 12px}.suite-nav-icon{display:grid}}
@@ -651,7 +651,12 @@
   .cashbook .cb-row .cb-amount { text-align: left; }
 }
 
-    .suite-install-card{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-top:20px;padding:16px;border:1px solid var(--outline);border-radius:14px;background:var(--paper)}.suite-install-card>div{flex:1;min-width:180px}.suite-install-card p{margin:6px 0 0}.suite-install-card button{min-height:44px;white-space:nowrap}.suite-install-message:empty{display:none}.suite-install-steps{padding-left:24px;line-height:1.6}.suite-install-steps li{margin:12px 0}#suiteInstallDialog{width:min(560px,calc(100% - 24px))}@media(max-width:620px){.suite-install-card button{width:100%}}
+    .suite-app-install{display:flex;align-items:center;justify-content:flex-start;gap:10px;flex-shrink:0;width:100%;margin-top:18px;padding:12px 10px;border:1px solid #dce8de;border-radius:8px;background:#f1f7f2;color:#246140;text-align:left;white-space:normal;font-weight:600}
+    .suite-app-install:hover:not(:disabled){background:#e6f1e8}.suite-app-install>svg{width:20px;height:20px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.suite-app-install-copy{min-width:0}.suite-app-install strong{display:block;font-size:12px}.suite-app-install small{display:block;margin-top:4px;font-size:10px;font-weight:400;line-height:1.5;color:#617867}.suite-app-install:focus-visible,.suite-install-guides summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+    .sidebar-collapsed .suite-app-install{width:52px;height:52px;justify-content:center;margin-inline:auto;padding:0}.sidebar-collapsed .suite-app-install-copy{display:none}
+    .suite-install-preview{display:flex;gap:16px;align-items:center;margin:20px 0}.suite-install-preview img{width:64px;height:64px;flex-shrink:0;border-radius:15px}.suite-install-preview strong{display:block;font-size:15px}.suite-install-preview p{margin:7px 0 0;color:#617867;font-size:13px;line-height:1.6}#suiteInstallAction{width:100%;min-height:44px}#suiteInstallAction svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .suite-install-message{margin:16px 0;color:#536c5b;font-size:13px;line-height:1.7}.suite-install-guides{display:grid;gap:10px}.suite-install-guides details{margin:0;border:1px solid #dce8de;border-radius:8px;padding:0 14px}.suite-install-guides summary{cursor:pointer;padding:14px 0;color:#28543a;font-size:14px;font-weight:650}.suite-install-guides ol{padding-left:20px;margin:0 0 16px}.suite-install-guides li+li{margin-top:10px}.suite-install-guides li,.suite-install-guides p{font-size:13px;line-height:1.7;color:#536c5b}.suite-install-guides p{margin:0 0 16px}.suite-install-online{display:flex;gap:9px;margin:20px 0 0;font-size:12px;line-height:1.6;color:#617867}.suite-install-online svg{width:17px;height:17px;flex-shrink:0;margin-top:2px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}#suiteInstallDialog{width:min(560px,calc(100% - 24px))}#suiteInstallDialog .dialog-header{align-items:flex-start}#suiteInstallTitle{font-size:22px;line-height:1.4}#closeSuiteInstall{width:36px;min-width:36px;height:36px;flex-shrink:0;padding:0}#closeSuiteInstall svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+
 
     button:not(:disabled){transition:background .16s ease,box-shadow .16s ease}
     a{color:var(--accent)}a:hover{color:var(--accent-hover)}input[type=checkbox],input[type=radio]{accent-color:var(--accent)}
@@ -673,7 +678,8 @@
     #suiteMobileMenu .suite-subnav{display:none;margin:2px 8px 8px 25px;padding:2px 0 2px 12px;border-left:2px solid var(--accent-border)}
     #suiteMobileMenu .suite-nav-item.active+.suite-subnav{display:grid}
     #suiteMobileMenu .suite-subnav-item{width:100%;min-height:44px;padding:10px;white-space:normal}
-    #suiteMobileMenu .suite-mode{display:flex;margin:0 8px 12px}
+    #suiteMobileMenu .suite-mode{display:flex;margin:0 8px 0}
+    #suiteMobileMenu .suite-app-install{width:calc(100% - 16px);height:auto;min-height:72px;justify-content:flex-start;margin:10px 8px 12px;padding:12px 10px}#suiteMobileMenu .suite-app-install-copy{display:block}
     @media(max-width:980px){#suiteMobileMenuButton:not([hidden]){display:inline-flex}body>header{position:sticky;top:0;z-index:12;background:var(--paper);padding:12px 0;gap:8px}.workspace-nav{top:80px}}
     @media(max-width:620px){body>header .suite-product-brand{gap:6px;min-width:0}body>header .suite-product-logo{width:34px;height:34px}body>header .suite-product-wordmark{width:clamp(104px,33vw,165px)}body>header .suite-header-icon{width:38px;height:44px}body>header .suite-header-actions{gap:2px}.workspace-nav{top:68px}}
 </style>
@@ -718,7 +724,7 @@
       </form>
       <div id="authMessage" class="auth-message hidden" role="status"></div>
       <p class="login-note">Keine öffentliche Registrierung. Zugang nur nach Aktivierung durch einen Super-Admin.</p>
-      <div data-suite-install-entry><button type="button" class="secondary" data-suite-install>App installieren</button></div>
+      <button type="button" class="suite-app-install" data-suite-install data-suite-install-entry aria-label="App installieren" title="App installieren" aria-haspopup="dialog" aria-controls="suiteInstallDialog"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg><span class="suite-app-install-copy"><strong data-suite-install-title>App installieren</strong><small>Direkt vom Startbildschirm öffnen</small></span></button>
     </section>
     <section id="suiteLoading" class="panel login hidden" role="status" aria-live="polite" aria-busy="true">
       <p><span class="spinner" aria-hidden="true" style="display:inline-block;vertical-align:middle;margin-right:8px"></span>Deine Suite wird geladen …</p>
@@ -765,7 +771,6 @@
           <button class="suite-nav-item" type="button" data-suite-area="referees" title="Schiedsrichter"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h14v17H5zM9 2v4M15 2v4M8 11l3 3 5-6M8 18h8"/></svg></span><span class="suite-nav-label">Schiedsrichter</span></button>
           <button class="suite-nav-item" type="button" data-suite-area="editorial" title="Redaktion"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 4h16v17H4zM8 2v4M16 2v4M4 9h16M8 13h3M8 17h8"/></svg></span><span class="suite-nav-label">Redaktion</span></button>
           <button type="button" class="suite-nav-item" data-suite-area="cashbook" title="Kassenbuch der Jugendabteilung" style="text-decoration:none"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 5h18v15H3zM3 9h18M16 13h3M7 13h3M7 16h3"/></svg></span><span class="suite-nav-label">Kassenbuch</span></button>
-          <button class="suite-nav-item" type="button" data-suite-install title="App installieren"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3M7 18h6M15 2v11M11 9l4 4 4-4"/></svg></span><span class="suite-nav-label">App installieren</span></button>
           <button id="profile" class="suite-nav-item" type="button" title="Profil"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><span class="suite-nav-label">Profil</span></button>
           <button class="suite-nav-item" type="button" data-suite-area="user_management" title="Benutzerverwaltung"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20a6 6 0 0 1 12 0M14 15.5a5 5 0 0 1 7 4.5"/></svg></span><span class="suite-nav-label">Benutzerverwaltung</span></button>
           <button id="adminTabButton" class="hidden" type="button" aria-controls="adminTab" tabindex="-1">Admin</button>
@@ -776,6 +781,7 @@
           <span class="suite-mode-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v5l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M8 15h8"/></svg></span>
           <span class="suite-mode-label"><strong id="suiteModeLabel">Testmodus</strong><span id="suiteModeHint">Keine Veröffentlichung</span></span>
         </div>
+        <button type="button" class="suite-app-install" data-suite-install data-suite-install-entry aria-label="App installieren" title="App installieren" aria-haspopup="dialog" aria-controls="suiteInstallDialog"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg><span class="suite-app-install-copy"><strong data-suite-install-title>App installieren</strong><small>Direkt vom Startbildschirm öffnen</small></span></button>
       </aside>
       <div id="workspaceNav" class="workspace-nav">
         <div class="workspace-filters">
@@ -874,7 +880,7 @@
         <section class="panel"><div class="list-heading"><h2>Geburtstage</h2><span id="birthdayCount" class="count"></span></div><div id="birthdays"></div></section>
       </div>
       <div id="editorialArea" class="hidden"></div>
-      <section id="cashbookArea" class="panel hidden cashbook"><h2>Kassenbuch der Jugendabteilung</h2><div id="cashbookWorkspace"></div><div class="suite-install-card" data-suite-install-entry><div><strong>Suite als App nutzen</strong><p class="small">Installiere sie auf deinem Handy oder Computer.</p><p class="small suite-install-message" role="status" data-suite-install-status></p></div><button type="button" class="secondary" data-suite-install>App installieren</button></div></section>
+      <section id="cashbookArea" class="panel hidden cashbook"><h2>Kassenbuch der Jugendabteilung</h2><div id="cashbookWorkspace"></div></section>
           <div id="refereeArea" class="hidden"><nav class="referee-modes" aria-label="Schiedsrichterbereich"><button type="button" data-referee-mode="assignment" aria-pressed="true">Vereinsschiris</button><button type="button" data-referee-mode="expense" aria-pressed="false">Erstattungen an Trainer</button></nav><div id="refereeAssignmentArea"></div><div id="refereeExpenseArea" class="hidden"></div></div>
       <div id="adminTab" class="tab-panel hidden" role="tabpanel" aria-labelledby="adminTabButton">
         <section class="panel">
@@ -934,11 +940,16 @@
       </div>
     </section>
     <dialog id="suiteInstallDialog" aria-labelledby="suiteInstallTitle">
-      <div class="dialog-header"><h2 id="suiteInstallTitle">BSV Suite installieren</h2><button id="closeSuiteInstall" type="button" class="ghost dialog-close" aria-label="Installationshinweis schließen">Schließen</button></div>
-      <p id="suiteInstallIntro" class="dialog-intro"></p>
-      <ol id="suiteInstallSteps" class="suite-install-steps"></ol>
-      <p class="small">Nach der Installation öffnest du die Suite direkt über ihr App-Symbol. Du nutzt weiterhin deinen gemeinsamen Suite-Login.</p>
-      <p class="small suite-install-message" role="status" data-suite-install-status></p>
+      <div class="dialog-header"><h2 id="suiteInstallTitle">BSV Suite als App installieren</h2><button id="closeSuiteInstall" type="button" class="ghost dialog-close" aria-label="Dialog schließen" title="Dialog schließen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+      <div class="suite-install-preview"><img src="/kassenbuch/icon-192.png" width="64" height="64" alt="BSV Suite App-Symbol"><div><strong>Dein Verein. Einen Tipp entfernt.</strong><p>Die Club Suite direkt vom Startbildschirm öffnen – kostenlos und ohne App-Store.</p></div></div>
+      <button id="suiteInstallAction" type="button" class="hidden" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 16v4h16v-4"/></svg><span id="suiteInstallActionLabel">Jetzt installieren</span></button>
+      <p id="suiteInstallIntro" class="suite-install-message" role="status" data-suite-install-status></p>
+      <div id="suiteInstallGuides" class="suite-install-guides">
+        <details data-suite-install-guide="apple"><summary>iPhone &amp; iPad</summary><ol><li>Öffne die Suite in <strong>Safari</strong>.</li><li>Tippe auf <strong>Teilen</strong> – das Quadrat mit dem Pfeil nach oben, gegebenenfalls im Browser-Menü.</li><li>Wähle <strong>„Zum Home-Bildschirm“</strong> und aktiviere <strong>„Als Web-App öffnen“</strong>, falls angeboten.</li><li>Bestätige mit <strong>„Hinzufügen“</strong>.</li></ol></details>
+        <details data-suite-install-guide="android"><summary>Android</summary><ol><li>Öffne die Suite in <strong>Chrome</strong>.</li><li>Tippe auf <strong>„Jetzt installieren“</strong>, sobald der Knopf oben erscheint.</li><li>Alternativ: Wähle im <strong>Drei-Punkte-Menü</strong> „App installieren“ oder „Zum Startbildschirm hinzufügen“.</li><li>Bestätige die Installation und öffne die Suite über ihr App-Symbol.</li></ol></details>
+        <details data-suite-install-guide="desktop"><summary>Am Computer</summary><p>In Chrome oder Edge kannst du oben „Jetzt installieren“ wählen oder das Installationssymbol in der Adressleiste beziehungsweise das Browser-Menü verwenden. In Safari auf dem Mac wählst du „Ablage“ → „Zum Dock hinzufügen“.</p></details>
+      </div>
+      <p class="suite-install-online"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 8a16 16 0 0 1 20 0M5 12a11 11 0 0 1 14 0M8 16a6 6 0 0 1 8 0"/><circle cx="12" cy="20" r="1"/></svg>Für aktuelle Daten und Kassenbuchungen brauchst du Internet. Du nutzt weiterhin deinen gemeinsamen Suite-Login.</p>
     </dialog>
     <dialog id="profileDialog">
       <div class="dialog-header"><h2>Profil</h2><button id="closeProfile" type="button" class="ghost dialog-close" aria-label="Profil schließen">Schließen</button></div>
@@ -1047,26 +1058,40 @@ createSuiteMobileNavigation({window,document});</script>
 // Independent of login: capture the browser's one-use prompt before the SDK loads.
 function createSuiteInstaller({ window: target, document: doc }) {
   const buttons = [...doc.querySelectorAll('[data-suite-install]')];
-  const entries = [...doc.querySelectorAll('[data-suite-install-entry]')];
+  const labels = [...doc.querySelectorAll('[data-suite-install-title]')];
   const statusNodes = [...doc.querySelectorAll('[data-suite-install-status]')];
   const dialog = doc.querySelector('#suiteInstallDialog');
+  const action = doc.querySelector('#suiteInstallAction');
+  const actionLabel = doc.querySelector('#suiteInstallActionLabel');
+  const guides = doc.querySelector('#suiteInstallGuides');
   const displayMode = target.matchMedia('(display-mode: standalone)');
-  let deferredPrompt = null, busy = false, installed = false;
+  const appleMobile = /iPad|iPhone|iPod/i.test(target.navigator.userAgent || '') || (target.navigator.platform === 'MacIntel' && target.navigator.maxTouchPoints > 1);
+  const platform = appleMobile ? 'apple' : /Android/i.test(target.navigator.userAgent || '') ? 'android' : 'desktop';
+  for (const guide of doc.querySelectorAll('[data-suite-install-guide]')) guide.open = guide.dataset.suiteInstallGuide === platform;
+  let deferredPrompt = null, busy = false, installed = false, message = '';
   const standalone = () => installed || displayMode.matches || target.navigator.standalone === true;
   const update = () => {
-    for (const node of [...buttons, ...entries]) {
-      node.hidden = standalone();
-      node.classList.toggle('hidden', node.hidden);
+    const ready = standalone();
+    for (const label of labels) label.textContent = ready ? 'App installiert' : 'App installieren';
+    for (const button of buttons) {
+      button.disabled = busy;
+      button.setAttribute('aria-label', ready ? 'Installierte App' : 'App installieren');
+      button.setAttribute('title', ready ? 'Installierte App' : 'App installieren');
     }
-    for (const button of buttons) button.disabled = busy;
+    action.hidden = ready || !deferredPrompt;
+    action.classList.toggle('hidden', action.hidden);
+    action.disabled = busy;
+    action.setAttribute('aria-busy', String(busy));
+    actionLabel.textContent = busy ? 'Installation läuft …' : 'Jetzt installieren';
+    guides.hidden = ready;
+    guides.classList.toggle('hidden', ready);
+    doc.querySelector('#suiteInstallTitle').textContent = ready ? 'Deine BSV Suite' : 'BSV Suite als App installieren';
+    const text = ready ? 'Die BSV Suite ist bereit. Öffne sie über das grüne BSV-Symbol auf deinem Startbildschirm oder in deiner App-Liste.' : message || (!target.isSecureContext ? suiteInstallInstructions(target.navigator, false).intro : 'Wähle die Anleitung für dein Gerät. Öffne diese Seite dafür direkt im Browser, zum Beispiel außerhalb von WhatsApp oder Instagram.');
+    statusNodes.forEach(node => { node.textContent = text; });
   };
-  const status = message => statusNodes.forEach(node => { node.textContent = message; });
-  function showInstructions(message = '') {
-    const instructions = suiteInstallInstructions(target.navigator, target.isSecureContext);
-    doc.querySelector('#suiteInstallIntro').textContent = instructions.intro;
-    const steps = doc.querySelector('#suiteInstallSteps');
-    steps.replaceChildren(...instructions.steps.map(text => { const li = doc.createElement('li'); li.textContent = text; return li; }));
-    status(message);
+  const status = text => { message = text; update(); };
+  function showInstructions() {
+    update();
     if (!dialog.open) dialog.showModal();
   }
   async function install() {
@@ -1077,25 +1102,26 @@ function createSuiteInstaller({ window: target, document: doc }) {
     deferredPrompt = null;
     busy = true; update();
     try {
-      if (dialog.open) dialog.close();
       await prompt.prompt();
       const choice = await prompt.userChoice;
-      status(choice?.outcome === 'accepted' ? 'Installation bestätigt. Öffne die Suite anschließend über ihr App-Symbol.' : 'Installation abgebrochen. Du kannst sie später erneut starten.');
+      status(choice?.outcome === 'accepted' ? 'Die Installation wurde gestartet. Öffne die Suite anschließend über ihr App-Symbol.' : 'Installation abgebrochen. Du kannst die App jederzeit über das Browser-Menü installieren. Die Anleitung findest du unten.');
     } catch {
-      showInstructions('Das Installationsfenster konnte nicht geöffnet werden. Nutze das Browsermenü.');
+      status('Das Installationsfenster konnte nicht geöffnet werden. Nutze die Anleitung für dein Gerät oder das Browsermenü.');
+      showInstructions();
     } finally { busy = false; update(); }
   }
-  const onPrompt = event => { event.preventDefault(); deferredPrompt = event; update(); };
-  const onInstalled = () => { installed = true; deferredPrompt = null; status('Die Suite wurde als App installiert.'); if (dialog.open) dialog.close(); update(); };
+  const onPrompt = event => { if (standalone()) return; event.preventDefault(); deferredPrompt = event; message = ''; update(); };
+  const onInstalled = () => { installed = true; deferredPrompt = null; update(); };
   target.addEventListener('beforeinstallprompt', onPrompt);
   target.addEventListener('appinstalled', onInstalled);
   displayMode.addEventListener('change', update);
-  buttons.forEach(button => button.addEventListener('click', install));
+  buttons.forEach(button => button.addEventListener('click', showInstructions));
+  action.addEventListener('click', install);
   doc.querySelector('#closeSuiteInstall').addEventListener('click', () => dialog.close());
   dialog.addEventListener('click', event => { if (event.target === dialog) { const rect = dialog.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close(); } });
   if (target.isSecureContext && 'serviceWorker' in target.navigator) target.navigator.serviceWorker.register('/suite-sw.js', { scope: '/' }).catch(() => {});
   update();
-  return { install };
+  return { install, showInstructions };
 }
 
 createSuiteInstaller({window,document});</script>

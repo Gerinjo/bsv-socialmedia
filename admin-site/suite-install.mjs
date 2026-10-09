@@ -21,26 +21,40 @@ export function suiteInstallInstructions(navigator, secureContext) {
 // Independent of login: capture the browser's one-use prompt before the SDK loads.
 export function createSuiteInstaller({ window: target, document: doc }) {
   const buttons = [...doc.querySelectorAll('[data-suite-install]')];
-  const entries = [...doc.querySelectorAll('[data-suite-install-entry]')];
+  const labels = [...doc.querySelectorAll('[data-suite-install-title]')];
   const statusNodes = [...doc.querySelectorAll('[data-suite-install-status]')];
   const dialog = doc.querySelector('#suiteInstallDialog');
+  const action = doc.querySelector('#suiteInstallAction');
+  const actionLabel = doc.querySelector('#suiteInstallActionLabel');
+  const guides = doc.querySelector('#suiteInstallGuides');
   const displayMode = target.matchMedia('(display-mode: standalone)');
-  let deferredPrompt = null, busy = false, installed = false;
+  const appleMobile = /iPad|iPhone|iPod/i.test(target.navigator.userAgent || '') || (target.navigator.platform === 'MacIntel' && target.navigator.maxTouchPoints > 1);
+  const platform = appleMobile ? 'apple' : /Android/i.test(target.navigator.userAgent || '') ? 'android' : 'desktop';
+  for (const guide of doc.querySelectorAll('[data-suite-install-guide]')) guide.open = guide.dataset.suiteInstallGuide === platform;
+  let deferredPrompt = null, busy = false, installed = false, message = '';
   const standalone = () => installed || displayMode.matches || target.navigator.standalone === true;
   const update = () => {
-    for (const node of [...buttons, ...entries]) {
-      node.hidden = standalone();
-      node.classList.toggle('hidden', node.hidden);
+    const ready = standalone();
+    for (const label of labels) label.textContent = ready ? 'App installiert' : 'App installieren';
+    for (const button of buttons) {
+      button.disabled = busy;
+      button.setAttribute('aria-label', ready ? 'Installierte App' : 'App installieren');
+      button.setAttribute('title', ready ? 'Installierte App' : 'App installieren');
     }
-    for (const button of buttons) button.disabled = busy;
+    action.hidden = ready || !deferredPrompt;
+    action.classList.toggle('hidden', action.hidden);
+    action.disabled = busy;
+    action.setAttribute('aria-busy', String(busy));
+    actionLabel.textContent = busy ? 'Installation läuft …' : 'Jetzt installieren';
+    guides.hidden = ready;
+    guides.classList.toggle('hidden', ready);
+    doc.querySelector('#suiteInstallTitle').textContent = ready ? 'Deine BSV Suite' : 'BSV Suite als App installieren';
+    const text = ready ? 'Die BSV Suite ist bereit. Öffne sie über das grüne BSV-Symbol auf deinem Startbildschirm oder in deiner App-Liste.' : message || (!target.isSecureContext ? suiteInstallInstructions(target.navigator, false).intro : 'Wähle die Anleitung für dein Gerät. Öffne diese Seite dafür direkt im Browser, zum Beispiel außerhalb von WhatsApp oder Instagram.');
+    statusNodes.forEach(node => { node.textContent = text; });
   };
-  const status = message => statusNodes.forEach(node => { node.textContent = message; });
-  function showInstructions(message = '') {
-    const instructions = suiteInstallInstructions(target.navigator, target.isSecureContext);
-    doc.querySelector('#suiteInstallIntro').textContent = instructions.intro;
-    const steps = doc.querySelector('#suiteInstallSteps');
-    steps.replaceChildren(...instructions.steps.map(text => { const li = doc.createElement('li'); li.textContent = text; return li; }));
-    status(message);
+  const status = text => { message = text; update(); };
+  function showInstructions() {
+    update();
     if (!dialog.open) dialog.showModal();
   }
   async function install() {
@@ -51,23 +65,24 @@ export function createSuiteInstaller({ window: target, document: doc }) {
     deferredPrompt = null;
     busy = true; update();
     try {
-      if (dialog.open) dialog.close();
       await prompt.prompt();
       const choice = await prompt.userChoice;
-      status(choice?.outcome === 'accepted' ? 'Installation bestätigt. Öffne die Suite anschließend über ihr App-Symbol.' : 'Installation abgebrochen. Du kannst sie später erneut starten.');
+      status(choice?.outcome === 'accepted' ? 'Die Installation wurde gestartet. Öffne die Suite anschließend über ihr App-Symbol.' : 'Installation abgebrochen. Du kannst die App jederzeit über das Browser-Menü installieren. Die Anleitung findest du unten.');
     } catch {
-      showInstructions('Das Installationsfenster konnte nicht geöffnet werden. Nutze das Browsermenü.');
+      status('Das Installationsfenster konnte nicht geöffnet werden. Nutze die Anleitung für dein Gerät oder das Browsermenü.');
+      showInstructions();
     } finally { busy = false; update(); }
   }
-  const onPrompt = event => { event.preventDefault(); deferredPrompt = event; update(); };
-  const onInstalled = () => { installed = true; deferredPrompt = null; status('Die Suite wurde als App installiert.'); if (dialog.open) dialog.close(); update(); };
+  const onPrompt = event => { if (standalone()) return; event.preventDefault(); deferredPrompt = event; message = ''; update(); };
+  const onInstalled = () => { installed = true; deferredPrompt = null; update(); };
   target.addEventListener('beforeinstallprompt', onPrompt);
   target.addEventListener('appinstalled', onInstalled);
   displayMode.addEventListener('change', update);
-  buttons.forEach(button => button.addEventListener('click', install));
+  buttons.forEach(button => button.addEventListener('click', showInstructions));
+  action.addEventListener('click', install);
   doc.querySelector('#closeSuiteInstall').addEventListener('click', () => dialog.close());
   dialog.addEventListener('click', event => { if (event.target === dialog) { const rect = dialog.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close(); } });
   if (target.isSecureContext && 'serviceWorker' in target.navigator) target.navigator.serviceWorker.register('/suite-sw.js', { scope: '/' }).catch(() => {});
   update();
-  return { install };
+  return { install, showInstructions };
 }
