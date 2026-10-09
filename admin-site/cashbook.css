@@ -24,6 +24,9 @@
   cursor: pointer;
 }
 .cashbook button.secondary { background: var(--accent-soft); color: var(--accent-text); }
+.cashbook button.danger { background: #b3261e; color: #fff; }
+.cashbook button.danger:hover:not(:disabled) { background: #8c1d18; }
+.cashbook .cb-row .cb-actions { justify-content: flex-start; gap: 8px; margin-bottom: 0; }
 .cashbook button:hover:not(:disabled) { background: var(--accent-hover); }
 .cashbook button.secondary:hover:not(:disabled) { background: #dceee2; }
 .cashbook button:disabled { background: #e8eaed; color: var(--mint); cursor: default; }

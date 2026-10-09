@@ -28,3 +28,16 @@ export function validateCashbookBooking(body) {
 }
 
 export const cashbookMoney = cents => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(cents / 100);
+
+export function validateCashbookChange(body) {
+  if (!['edit','cancel'].includes(body.action) || !cashbookUuid(body.id) || !cashbookUuid(body.requestId)) throw new Error('Bitte den Eintrag erneut öffnen.');
+  if (body.confirmed !== true) throw new Error('Bitte die Änderung und den tatsächlichen Geldbestand bestätigen.');
+  const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
+  if (!reason || reason.length > 500) throw new Error('Bitte einen Änderungsgrund mit höchstens 500 Zeichen eingeben.');
+  const result = {action:body.action,id:body.id,requestId:body.requestId,reason,confirmed:true};
+  if (body.action === 'edit') {
+    const booking = validateCashbookBooking({...body,direction:'withdrawal'});
+    Object.assign(result,{amountCents:booking.amountCents,teamId:booking.teamId,note:booking.note});
+  }
+  return result;
+}

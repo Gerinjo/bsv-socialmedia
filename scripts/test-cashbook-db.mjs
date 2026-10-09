@@ -33,11 +33,13 @@ try {
   await sql("insert into private.referee_club_roles(person_id,role) select id,'youth_leadership' from public.social_people where slug in ('jerome-ernsberger','ole-schmal');");
   await sql(await readFile(new URL('supabase/migrations/20261009110737_cashbook.sql',root),'utf8'));
   await sql(await readFile(new URL('supabase/migrations/20261009141432_cashbook_suite_identity_lookup.sql',root),'utf8'));
+  await sql(await readFile(new URL('supabase/migrations/20261009182055_cashbook_own_entry_changes.sql',root),'utf8'));
   await sql(`insert into auth.users(id,email) select person_id,username||'@example.test' from private.cashbook_accounts;
     update private.cashbook_accounts set suite_user_id=person_id;
     insert into public.social_admins(user_id,email,role,is_active,access_areas) select suite_user_id,username||'@example.test','sm-team',true,array['cashbook']::text[] from private.cashbook_accounts;`);
   console.log('Migration auf PostgreSQL 17 angewendet; Vereinsverzeichnis importiert.');
   await sql(await readFile(new URL('supabase/tests/cashbook.sql',root),'utf8'));
+  await sql(await readFile(new URL('supabase/tests/cashbook-changes.sql',root),'utf8'));
   console.log('D–A-Trainer, Jugendleitung, Zugriffe, gemeinsamer Suite-Login, Buchungen, Belege, Schwelle, Wiederholungen und unveränderliches Logbuch geprüft.');
   const {cashbookUsername}=await import('../src/cashbook.mjs');
   for(const person of catalog.people){const actual=await sql(`select private.cashbook_username(${quote(person.displayName)})`);if(actual!==cashbookUsername(person.displayName))throw new Error(`Login-Normalisierung weicht ab: ${person.displayName}`);}
@@ -52,6 +54,12 @@ try {
   const results=await Promise.all([concurrent('1'),concurrent('2')]);
   if(results.filter(r=>!r.error).length!==1||results.filter(r=>r.status===409).length!==1||await sql('select private.cashbook_balance()')!=='1000')throw new Error('Parallele Auszahlungen haben den Bestand verletzt.');
   console.log('Zwei gleichzeitige Auszahlungen: eine bestätigt, eine abgelehnt; Bestand korrekt 10,00 EUR.');
+  const winningEntry=results.find(r=>!r.error).entryId;
+  const concurrentEdit=amount=>sql(`set role service_role; with params as (select gen_random_uuid() request_id,e.id entry_id,e.account_id,a.suite_user_id actor,e.team_id,e.evidence_path,e.evidence_hash from private.cashbook_entries e join private.cashbook_accounts a on a.id=e.account_id where e.id=${quote(winningEntry)})
+    select public.cashbook_request(actor,jsonb_build_object('action','edit','id',entry_id,'requestId',request_id,'amountCents',${amount},'confirmed',true,'teamId',team_id,'note','Parallel test','reason','Betrag korrigiert','evidencePath',evidence_path,'evidenceHash',evidence_hash,'signatureHash',repeat('7',64),'signaturePath',account_id::text||'/'||request_id::text||'/signature')) from params;`).then(JSON.parse);
+  const edits=await Promise.all([concurrentEdit(3000),concurrentEdit(2000)]);
+  if(edits.filter(r=>!r.error).length!==1||edits.filter(r=>r.status===409).length!==1||!['2000','3000'].includes(await sql('select private.cashbook_balance()')))throw new Error('Parallele Änderungen haben dieselbe Buchung mehrfach korrigiert.');
+  console.log('Zwei gleichzeitige Änderungen: genau eine neue Fassung; andere Änderung als veraltet abgelehnt.');
   // The delivery lease prevents two workers from sending the same item.
   const claims=await Promise.all([sql("select public.cashbook_alert_request('{\"action\":\"claim\"}')"),sql("select public.cashbook_alert_request('{\"action\":\"claim\"}')")]);
   if(claims.filter(Boolean).length!==1)throw new Error('Eine Erinnerung wurde mehrfach reserviert.');

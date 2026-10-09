@@ -1,6 +1,6 @@
 # Kassenbuch der Jugendabteilung in der Club Suite
 
-Das Kassenbuch der Jugendabteilung ist ein eigener Arbeitsbereich mit dem gemeinsamen Suite-Login. Benutzer sehen ausschließlich freigegebene Bereiche; für reine Kassennutzer genügt das Recht **Kassenbuch der Jugendabteilung** (`cashbook`). Der frühere Pfad `/kassenbuch/` leitet zu `/?area=cashbook` weiter. Der Super-Admin verwaltet Personen und Safe unter **Administration → Kassenbuch der Jugendabteilung verwalten**.
+Das Kassenbuch der Jugendabteilung ist ein eigener Arbeitsbereich mit dem gemeinsamen Suite-Login. Benutzer sehen ausschließlich freigegebene Bereiche; für reine Kassennutzer genügt das Recht **Kassenbuch der Jugendabteilung** (`cashbook`). Der frühere Pfad `/kassenbuch/` leitet zu `/?area=cashbook` weiter. Der Super-Admin verwaltet Personen und Safe unter **Administration → Kassenbuch verwalten**.
 
 ## Geldbewegungen
 
@@ -11,7 +11,11 @@ Das Kassenbuch der Jugendabteilung ist ein eigener Arbeitsbereich mit dem gemein
 
 Der Safe wird mechanisch geöffnet. Die App steuert kein Schloss. Der Hinweis zum Safe kann in der Verwaltung geändert werden und ist für alle Kassenbuchzugänge sichtbar.
 
-Der Anfangsbestand ist **0 €**. Bereits vorhandenes Bargeld muss beim Start gezählt und als erste Einzahlung mit Foto erfasst werden. Bestätigte Buchungen können weder geändert noch gelöscht werden. Die Benutzeroberfläche bietet keine nachträglichen Korrekturbuchungen; die Angaben deshalb vor der Bestätigung prüfen.
+Der Anfangsbestand ist **0 €**. Bereits vorhandenes Bargeld muss beim Start gezählt und als erste Einzahlung mit Foto erfasst werden.
+
+Trainer und Jugendleiter können ihre eigenen aktuellen Einträge **bearbeiten** oder **löschen**. Bearbeiten erlaubt Betrag, eigene Mannschaft, Verwendungszweck und optional ein neues Quittungsfoto. Ein Grund, eine neue Unterschrift und die Bestätigung des tatsächlichen Bargeldbestands sind erforderlich. Nur die Differenz zum bisherigen Auszahlungsbetrag wird gebucht. Bei einer Verringerung muss bereits entnommenes Geld zurück in den Safe; bei einer Erhöhung wird die Differenz zusätzlich entnommen.
+
+**Löschen** storniert die zuletzt gültige Entnahme vollständig. Bereits entnommenes Geld muss zurückgelegt werden; irrtümlich erfasste, gar nicht ausgeführte Entnahmen können ebenfalls storniert werden. Originale, frühere Korrekturen, Belege, Gründe und Zeitpunkte bleiben unveränderlich im Logbuch und im CSV-Export. Nach einer Änderung ist nur die neueste Fassung bearbeitbar; nach einem Storno keine. Fremde Einträge und Einzahlungen sind von diesen Traineraktionen ausgeschlossen. Der serverseitig gespeicherte Suite-Benutzer schützt die Urheberschaft auch bei einer späteren Profil-Neuzuordnung. Unsichere Netzwerkantworten lassen sich mit denselben Angaben erneut prüfen, ohne doppelte Geldbewegung.
 
 ## Zugänge und Import
 
@@ -45,7 +49,7 @@ Das Web-App-Manifest enthält separate PNG-Icons, den gemeinsamen Suite-Scope `/
 
 ## Bereitstellung
 
-1. Migrationen `20261009110737_cashbook.sql` und `20261009141432_cashbook_suite_identity_lookup.sql` auf die bestehende Datenbank anwenden. Die zweite Migration vermeidet direkte Auth-Tabellenzugriffe durch `service_role`; Kontoexistenz wird durch den Fremdschlüssel und die zugehörige Auth-API geprüft. Die bisherigen Vereinsverzeichnis-Migrationen sowie `20260927214316_referee_club_roles.sql` müssen vorhanden sein; Cron, `pg_net` und der Vault-Eintrag `social_worker_cron_secret` stammen aus der vorhandenen Automatik.
+1. Migrationen `20261009110737_cashbook.sql`, `20261009141432_cashbook_suite_identity_lookup.sql` und `20261009182055_cashbook_own_entry_changes.sql` auf die bestehende Datenbank anwenden. Die zweite Migration vermeidet direkte Auth-Tabellenzugriffe durch `service_role`; die dritte ergänzt nachvollziehbare Trainerkorrekturen und Stornos. Kontoexistenz wird durch den Fremdschlüssel und die zugehörige Auth-API geprüft. Die bisherigen Vereinsverzeichnis-Migrationen sowie `20260927214316_referee_club_roles.sql` müssen vorhanden sein; Cron, `pg_net` und der Vault-Eintrag `social_worker_cron_secret` stammen aus der vorhandenen Automatik.
 2. Edge Functions `suite-auth`, `cashbook-alerts` und `social-media-admin-api` bereitstellen. Konfiguration und bestehender GitHub-Deployment-Workflow sind erweitert.
 3. Supabase-Secrets prüfen: `RESEND_API_KEY`, `SOCIAL_WORKER_CRON_SECRET` passend zum Vault-Eintrag und ein verifizierter Resend-Absender in `CASHBOOK_FROM` oder `NEWSLETTER_FROM`.
 4. `npm run build` ausführen und die neue Version der bestehenden Suite bereitstellen. Der Worker liefert die gemeinsame Suite, Manifest, Icons und `/suite-sw.js` aus. Es gibt keine separate Kassen-Loginseite.

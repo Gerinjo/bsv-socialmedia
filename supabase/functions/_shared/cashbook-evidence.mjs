@@ -1,4 +1,4 @@
-import { CASHBOOK_BUCKET, cashbookUuid, validateCashbookBooking } from '../../../src/cashbook.mjs';
+import { CASHBOOK_BUCKET, cashbookUuid, validateCashbookBooking, validateCashbookChange } from '../../../src/cashbook.mjs';
 import { decodeRefereeReceipt, receiptHash } from './referee-receipts.mjs';
 
 export async function cashbookRpc(db, actor, payload) {
@@ -37,10 +37,23 @@ export async function cashbookMedia(db, result) {
 }
 export async function handleCashbookWorkspace(db, actor, body) {
   const action = String(body.action).replace(/^cashbook_/, '');
-  if (!['list','book','media'].includes(action)) throw new Error('Unbekannte Kassenaktion.');
+  if (!['list','book','media','edit','cancel'].includes(action)) throw new Error('Unbekannte Kassenaktion.');
   if (body.before !== undefined && (!Number.isSafeInteger(body.before) || body.before < 1)) throw new Error('Ungültige Logbuchseite.');
   if (action === 'media' && !cashbookUuid(body.id)) throw new Error('Ungültiger Beleg.');
   let payload = { action, before: body.before, id: body.id };
+  if (action === 'edit' || action === 'cancel') {
+    const change = validateCashbookChange({...body,action});
+    if (body.signatureDrawn !== true) throw new Error('Bitte die Änderung unterschreiben.');
+    const signature = photo(body.signature, true);
+    const evidence = action === 'edit' && body.evidence ? photo(body.evidence) : null;
+    const identity = await cashbookRpc(db, actor, {action:'authorize_change',id:change.id,requestId:change.requestId,changeAction:action});
+    if (!identity.canBook || identity.user.role !== 'trainer') throw Object.assign(new Error('Du darfst nur eigene Entnahmen ändern.'), {status:403});
+    if (action === 'edit' && !identity.teams.some(team => team.id === change.teamId)) throw Object.assign(new Error('Bitte eine berechtigte Mannschaft auswählen.'), {status:403});
+    const prefix = `${identity.user.id}/${change.requestId}`;
+    const uploaded = evidence ? await upload(db,prefix,'evidence',evidence) : {path:identity.entry.evidencePath,hash:identity.entry.evidenceHash};
+    const signed = await upload(db,prefix,'signature',signature);
+    payload = {...change,evidencePath:uploaded.path,evidenceHash:uploaded.hash,signaturePath:signed.path,signatureHash:signed.hash};
+  }
   if (action === 'book') {
     const booking = validateCashbookBooking(body);
     const evidence = photo(body.evidence);

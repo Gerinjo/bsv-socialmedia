@@ -802,7 +802,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
 
     if (action.startsWith('cashbook_')) {
       if (raw.length > 11600000) return json({error:'Die Anfrage ist zu groß.'},413);
-      if (['cashbook_list','cashbook_book','cashbook_media'].includes(action)) {
+      if (['cashbook_list','cashbook_book','cashbook_media','cashbook_edit','cashbook_cancel'].includes(action)) {
         if (!hasArea('cashbook')) return json({error:'area_forbidden',area:'cashbook'},403);
         return json(await handleCashbookWorkspace(context.supabaseAdmin,userId,body));
       }

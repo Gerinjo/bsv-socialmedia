@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cashbookAmount, cashbookUsername, validateCashbookBooking } from '../src/cashbook.mjs';
+import { cashbookAmount, cashbookUsername, validateCashbookBooking, validateCashbookChange } from '../src/cashbook.mjs';
 import { handleCashbookWorkspace } from '../supabase/functions/_shared/cashbook-evidence.mjs';
 import { handleSuiteLogin } from '../supabase/functions/suite-auth/handler.mjs';
 import { provisionCashbookAccounts } from '../supabase/functions/social-media-admin-api/cashbook.mjs';
@@ -27,6 +27,27 @@ test('club login names include compound surnames and normalized umlauts',()=>{
 test('booking needs integer cents, own-team reference, confirmation and stable request id',()=>{
   assert.equal(validateCashbookBooking(booking).amountCents,3425);
   for(const change of [{confirmed:false},{amountCents:1.5},{amountCents:0},{teamId:null},{requestId:'bad'},{direction:'edit'},{note:'a'.repeat(501)}])assert.throws(()=>validateCashbookBooking({...booking,...change}));
+});
+test('own-entry edits and cancellations require a target, confirmation and reason',()=>{
+  const edit={...booking,action:'edit',id,reason:'Falscher Betrag'};
+  assert.equal(validateCashbookChange(edit).amountCents,3425);
+  assert.equal(validateCashbookChange({...edit,action:'cancel',amountCents:null}).amountCents,undefined);
+  for(const change of [{id:'wrong'},{requestId:null},{confirmed:false},{reason:''},{reason:'x'.repeat(501)},{amountCents:0},{amountCents:1.5},{teamId:null}])assert.throws(()=>validateCashbookChange({...edit,...change}));
+});
+test('change ownership is checked before uploads, and retained evidence comes from the server',async()=>{
+  let uploads=0;const calls=[];
+  const change={...booking,action:'edit',id,reason:'Betrag korrigiert',evidence:undefined,evidencePath:'spoofed/path'};
+  const db={rpc:async(name,{actor,payload})=>{assert.equal(actor,id);calls.push(payload);return {data:payload.action==='authorize_change'?{canBook:true,user:{id,role:'trainer'},teams:[{id}],entry:{evidencePath:'trusted/photo',evidenceHash:'b'.repeat(64)}}:{entries:[]}};},storage:{from:()=>({upload:async()=>{uploads++;return {};}})}};
+  assert.equal((await handleCashbook(request(change),db)).status,200);assert.equal(uploads,1);
+  assert.equal(calls.at(-1).evidencePath,'trusted/photo');assert.equal(calls.at(-1).evidenceHash,'b'.repeat(64));
+  uploads=0;assert.equal((await handleCashbook(request({...change,evidence:png}),db)).status,200);assert.equal(uploads,2);
+  assert.ok(calls.at(-1).evidencePath.startsWith(`${id}/${id}/evidence-`));
+  uploads=0;assert.equal((await handleCashbook(request({...change,action:'cancel',amountCents:99999999,evidencePath:'spoofed',evidence:png}),db)).status,200);assert.equal(uploads,1);
+  assert.equal(calls.at(-1).amountCents,undefined);assert.equal(calls.at(-1).evidencePath,'trusted/photo');
+  uploads=0;
+  assert.equal((await handleCashbook(request({...change,actor:'spoofed'}),{...db,rpc:async()=>({data:{error:'Not your entry',status:403}})})).status,403);assert.equal(uploads,0);
+  assert.equal((await handleCashbook(request({...change,teamId:'22222222-2222-4222-8222-222222222222'}),db)).status,403);assert.equal(uploads,0);
+  assert.equal((await handleCashbook(request({...change,signatureDrawn:false}),db)).status,400);assert.equal(uploads,0);
 });
 test('username aliases sign into the same Supabase Auth session and never check birthday fields',async()=>{
   const calls=[];

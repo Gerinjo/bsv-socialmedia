@@ -215,7 +215,7 @@ export async function editorialPreviewApi(method = "GET", body = {}) {
     };
   if (body.action?.startsWith('cashbook_')) {
     if(!previewAreas().includes('cashbook'))throw new Error('Kein Recht für das Kassenbuch der Jugendabteilung.');
-    if(['cashbook_list','cashbook_book','cashbook_media'].includes(body.action))return cashbookPreviewApi({...body,action:body.action.replace('cashbook_','')},previewPersona);
+    if(['cashbook_list','cashbook_book','cashbook_media','cashbook_edit','cashbook_cancel'].includes(body.action))return cashbookPreviewApi({...body,action:body.action.replace('cashbook_','')},previewPersona);
     if(previewPersona!=='admin')throw new Error('Nur der Super-Admin darf die Kasse verwalten.');
     return cashbookPreviewAdmin(body);
   }
