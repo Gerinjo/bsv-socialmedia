@@ -127,7 +127,8 @@ __CASHBOOK_CSS__
       <h2>Geschützter Bereich</h2>
       <p>Nur für freigeschaltete Benutzer. Neue Zugänge und Bereichsrechte werden ausschließlich durch Super-Admins vergeben.</p>
       <form id="passwordLoginForm" class="fields">
-        <label class="wide">E-Mail oder Benutzername<input id="loginEmail" type="text" autocomplete="username" placeholder="name@beispiel.de oder Benutzername" required></label>
+        <label class="wide">Benutzername<input id="loginUsername" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" aria-describedby="loginUsernameHint" placeholder="z. B. jentm" required></label>
+        <p id="loginUsernameHint" class="wide small">Dein Login-Kürzel: die ersten 4 Buchstaben des Nachnamens + der erste Buchstabe des Vornamens. Beispiel: Michael Jentsch → <strong>jentm</strong>. Alternativ kannst du deine hinterlegte E-Mail-Adresse verwenden.</p>
         <label class="wide">Passwort<input id="loginPassword" type="password" autocomplete="current-password" required></label>
         <div class="wide"><button id="passwordLoginButton">Einloggen</button></div>
       </form>
@@ -420,7 +421,7 @@ createSuiteInstaller({window,document});</script>
     let statusTimer;function show(message,error=false){clearTimeout(statusTimer);status.textContent=message;status.className='status-toast '+(error?'error':'');if(!error)statusTimer=setTimeout(()=>status.classList.add('hidden'),4200)}
     async function runBusy(button,{busyText,pendingText,successText,errorText},task){const original=button.innerHTML;button.disabled=true;button.setAttribute('aria-busy','true');button.innerHTML='<span class="spinner" aria-hidden="true"></span><span>'+esc(busyText)+'</span>';show(pendingText);try{const result=await task();show(typeof successText==='function'?successText(result):successText)}catch(error){show(errorText+error.message,true)}finally{button.disabled=false;button.removeAttribute('aria-busy');button.innerHTML=original}}
     function showAuth(message, error=false){authMessage.textContent=message;authMessage.className='auth-message '+(error?'error':'')}
-    function authError(error){if(error?.code==='over_email_send_rate_limit'||/email rate limit/i.test(error?.message||''))return 'Das E-Mail-Limit ist noch aktiv. Bitte später nur einmal erneut versuchen.';if(/invalid login credentials/i.test(error?.message||''))return 'E-Mail oder Passwort ist nicht korrekt. Falls noch kein Passwort existiert, nutze einmalig den Anmeldelink.';return error?.message||'Anmeldung fehlgeschlagen.'}
+    function authError(error){if(error?.code==='over_email_send_rate_limit'||/email rate limit/i.test(error?.message||''))return 'Das E-Mail-Limit ist noch aktiv. Bitte später nur einmal erneut versuchen.';if(/invalid login credentials/i.test(error?.message||''))return 'Benutzername oder Passwort stimmen nicht. Bitte prüfe dein Login-Kürzel oder deine hinterlegte E-Mail-Adresse.';return error?.message||'Anmeldung fehlgeschlagen.'}
     async function openApp(){login.classList.add('hidden');app.classList.remove('hidden');suiteHeaderActions.classList.remove('hidden');await load()}
     function option(value,label){const node=document.createElement('option');node.value=value;node.textContent=label;return node}
     function selectedPerson(){const name=document.querySelector('#personSearch').value.trim();return catalog.people.find(person=>person.display_name===name)}
@@ -732,7 +733,7 @@ createSuiteInstaller({window,document});</script>
     }
     document.querySelector('#passwordLoginForm').onsubmit=async event=>{
       event.preventDefault();const button=document.querySelector('#passwordLoginButton');button.disabled=true;showAuth('Anmeldung läuft …');
-      const identity=document.querySelector('#loginEmail').value.trim(),password=document.querySelector('#loginPassword').value;
+      const identity=document.querySelector('#loginUsername').value.trim(),password=document.querySelector('#loginPassword').value;
       try {
         let result;
         if(identity.includes('@'))result=await supabase.auth.signInWithPassword({email:identity,password});
