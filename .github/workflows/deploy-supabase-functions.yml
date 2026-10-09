@@ -61,6 +61,12 @@ jobs:
         if: steps.secret.outputs.available == 'true'
         run: npx --yes supabase@latest functions deploy referee-coach-api --project-ref "$SUPABASE_PROJECT_REF"
 
+      - name: Deploy cashbook API and alert delivery
+        if: steps.secret.outputs.available == 'true'
+        run: |
+          npx --yes supabase@latest functions deploy suite-auth --project-ref "$SUPABASE_PROJECT_REF"
+          npx --yes supabase@latest functions deploy cashbook-alerts --project-ref "$SUPABASE_PROJECT_REF"
+
       - name: Deploy editorial publications
         if: steps.secret.outputs.available == 'true'
         run: npx --yes supabase@latest functions deploy editorial-publications --project-ref "$SUPABASE_PROJECT_REF"

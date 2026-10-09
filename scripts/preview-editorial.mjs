@@ -18,7 +18,7 @@ async function previewHtml() {
   html = html
     .replace(
       sdkImport,
-      "import { createClient, editorialPreviewApi } from '/preview-api.mjs';",
+      "import { createClient, editorialPreviewApi, suitePreviewLogin } from '/preview-api.mjs';",
     )
     .replace(
       apiFunction,
@@ -28,9 +28,12 @@ async function previewHtml() {
       "<main>",
       '<div style="margin:0 auto 16px;padding:12px 18px;max-width:1648px;background:#fef3d5;color:#6b4400;border-radius:12px;font-size:14px" role="note"><strong>Lokale Vorschau mit Beispieldaten</strong> · Änderungen bleiben in diesem Browser gespeichert. KI und Live-Sportdaten sind hier deaktiviert.</div><main>',
     );
+  html=html.replace(/const response=await fetch\(apiUrl\.replace\('social-media-admin-api','suite-auth'\),[\s\S]*?result=await supabase\.auth\.setSession\(tokens\);/, "const tokens=await suitePreviewLogin(identity,password);result=await supabase.auth.setSession(tokens);");
+  html=html.replace('<main>', '<main><p role="note">Lokale Suite-Vorschau · <a href="/?previewUser=trainer">Trainer (nur Kasse)</a> · <a href="/?previewUser=kasse">Kasse</a> · <a href="/?previewUser=jugend">Jugendleitung</a> · <a href="/?previewUser=admin">Super-Admin</a> · <a href="/?previewUser=login">Login testen</a><br>Login: mustm / kassw / beisj / admin · Startpasswort: bsv1956 · Nur Beispieldaten, keine E-Mails.</p>');
   return html;
 }
 const files = new Map([
+  ['/preview-cashbook.mjs','admin-site/preview/cashbook.mjs'],
   ["/preview-referee-expenses.mjs", "admin-site/preview/referee-expenses.mjs"],
   ["/referee-expense-model.mjs", "src/referee-expenses.mjs"],
   ["/referee-model.mjs", "src/referees.mjs"],
@@ -55,7 +58,7 @@ const server = createServer(async (request, response) => {
   response.setHeader("X-Content-Type-Options", "nosniff");
   response.setHeader(
     "Content-Security-Policy",
-    `default-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; worker-src blob:; style-src 'unsafe-inline'; img-src 'self' data: http://localhost:${port} http://127.0.0.1:${port} https://bsvnordstern.de https://gerinjo.github.io; connect-src https://cdn.jsdelivr.net; frame-src blob:; base-uri 'none'; frame-ancestors 'none'; form-action 'none'`,
+    `default-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; worker-src 'self' blob:; manifest-src 'self'; style-src 'unsafe-inline'; img-src 'self' data: http://localhost:${port} http://127.0.0.1:${port} https://bsvnordstern.de https://gerinjo.github.io; connect-src 'self' https://cdn.jsdelivr.net; frame-src blob:; base-uri 'none'; frame-ancestors 'none'; form-action 'none'`,
   );
   if (request.method !== "GET") {
     response.writeHead(405);
@@ -103,6 +106,12 @@ const server = createServer(async (request, response) => {
     if (path === '/preview-referee-receipt.png') {
       response.setHeader('Content-Type','image/png');response.end(await readFile(new URL('admin-site/preview/receipt-example.png',root)));return;
     }
+    if (path === '/kassenbuch' || path === '/kassenbuch/') {response.writeHead(302,{Location:'/?area=cashbook&previewUser=trainer'});response.end();return;}
+    if (path.startsWith('/kassenbuch/') || path === '/suite-sw.js') {
+      const assets=JSON.parse(await readFile(new URL('.preview/cashbook-assets.json',root),'utf8'));
+      const asset=assets[path];if(asset){response.setHeader('Content-Type',asset.type);response.end(asset.base64?Buffer.from(asset.body,'base64'):asset.body);return;}
+    }
+
     if (/^\/schiedsrichter\/?$/.test(path)) {
       let html = await readFile(new URL('.preview/schiedsrichter.html', root), 'utf8');
       html = html.replace(/async function coachApi\(body\) \{[\s\S]*?\n\}/, "import { refereePreviewApi as coachApi } from '/preview-referees.mjs';");

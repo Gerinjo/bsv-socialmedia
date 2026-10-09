@@ -59,7 +59,7 @@ Vor dem ersten Login muss die URL einmal in Supabase unter **Authentication → 
 
 ## Benutzerverwaltung für das Social-Media-Team
 
-- Jeder Teamzugang bekommt in Supabase Auth einen eigenen Benutzer mit E-Mail und Passwort.
+- Jeder Teamzugang bekommt in Supabase Auth einen eigenen Benutzer. Neue Benutzer erhalten das Startpasswort `bsv1956` und können es anschließend unter **Profil** ändern. Bereits vorhandene Passwörter bleiben erhalten.
 - Eine öffentliche Selbstregistrierung bleibt deaktiviert; neue Konten werden ausschließlich durch den Administrator angelegt.
 - In der Tabelle `public.social_admins` wird der Benutzer anschließend mit `role` (`admin` oder `sm-team`) und `is_active = true` freigeschaltet.
 - Der Administrator ist der Nutzer mit `role = 'admin'`; aktuell ist das Jérôme.
@@ -96,6 +96,10 @@ Der neue Bereich **Redaktion** bietet Ausgabenplanung mit Kalender, feste Heftbe
 Trainer können unter `/schiedsrichter` nach Prüfung ihres Geburtsdatums einen Schiri und die Spielfeldgröße (7er/9er) für aufgenommene Spiele ihrer Mannschaft eintragen. Die Rolle **Schiedsrichteradmin** verwaltet diese Spiele und bestätigt erfolgte Auszahlungen. Einrichtung, Anbindung der Spiele und lokale Vorschau sind in [docs/referees.md](docs/referees.md) beschrieben.
 
 Für offiziell angesetzte Jugend-Schiedsrichter gibt es zusätzlich **Erstattungen an Trainer**: Ansetzungen abgleichen, Quittung hochladen, Betrag im Browser erkennen und korrigieren, Beleg prüfen und eine Auszahlungsliste vorbereiten. Der Zahlungsanbieter ist noch offen; Freigaben lösen keine Überweisung aus. Sichere Kontodatenablage, Bereitstellung und Grenzen: [docs/referee-expenses.md](docs/referee-expenses.md).
+
+## Kassenbuch der Jugendabteilung
+
+Das **Kassenbuch der Jugendabteilung** ist ein eigener Bereich der Suite mit gemeinsamem Login und Benutzerrecht `cashbook`. Der bisherige Pfad `/kassenbuch/` führt in diesen Bereich. Es dokumentiert den Schiedsrichter-Safe mit Einzahlungen, Belegfotos, unterschriebenen Trainerentnahmen, aktuellem Bestand und einer Auffüll-Mail an die Jugendkasse unter 50 €. Es lässt sich auf dem Handy installieren. Einrichtung, Zugänge und Bereitstellung: [docs/cashbook.md](docs/cashbook.md).
 
 ## Nächste Betriebs-Schritte
 

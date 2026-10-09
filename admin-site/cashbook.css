@@ -1,0 +1,175 @@
+/* Use the Club Suite's shared palette and typography for every cashbook view. */
+.cashbook {
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1.45;
+  color-scheme: light;
+}
+.cashbook * { box-sizing: border-box; }
+.cashbook [hidden] { display: none !important; }
+.cashbook a { color: var(--lime); }
+.cashbook button,
+.cashbook input,
+.cashbook select,
+.cashbook textarea { font: inherit; }
+.cashbook button {
+  min-height: 46px;
+  padding: 11px 20px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--lime);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+.cashbook button.secondary { background: var(--accent-soft); color: var(--accent-text); }
+.cashbook button:hover:not(:disabled) { background: var(--accent-hover); }
+.cashbook button.secondary:hover:not(:disabled) { background: #dceee2; }
+.cashbook button:disabled { background: #e8eaed; color: var(--mint); cursor: default; }
+.cashbook :focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+.cashbook .cb-actions,
+.cashbook .cb-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.cashbook h2 { font-size: 24px; font-weight: 600; }
+.cashbook h3 { font-size: 18px; font-weight: 600; }
+.cashbook h2,
+.cashbook h3 { line-height: 1.3; margin: 0 0 14px; }
+.cashbook .cb-heading h2,
+.cashbook .cb-heading h3 { margin-bottom: 0; }
+.cashbook .cb-card {
+  background: var(--panel);
+  border: 1px solid var(--outline);
+  border-radius: 16px;
+  padding: 22px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(35, 60, 41, .08);
+}
+.cashbook .cb-balance {
+  background: var(--soft);
+  color: var(--accent-text);
+  padding: 28px;
+  border: 1px solid var(--accent-border);
+  border-radius: 18px;
+  margin-bottom: 20px;
+}
+.cashbook .cb-balance small { display: block; font-size: 14px; }
+.cashbook .cb-balance output {
+  display: block;
+  font-size: clamp(44px, 8vw, 72px);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.04em;
+  line-height: 1.25;
+  margin: 8px 0;
+}
+.cashbook .cb-low {
+  background: #fef7e0;
+  color: #7a4f01;
+  border: 1px solid #fdd663;
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin: 16px 0 0;
+}
+.cashbook .cb-muted { color: var(--mint); font-size: 14px; }
+.cashbook .cb-form { display: grid; gap: 18px; }
+.cashbook .cb-form label,
+.cashbook .cb-team-setting {
+  color: var(--mint);
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.cashbook .cb-form label { display: grid; gap: 7px; }
+.cashbook .cb-form input:not([type=checkbox]),
+.cashbook .cb-form select,
+.cashbook .cb-form textarea {
+  width: 100%;
+  min-height: 46px;
+  padding: 12px;
+  border: 1px solid #b8c9bf;
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--ink);
+}
+.cashbook .cb-form .cb-check { display: flex; align-items: flex-start; gap: 10px; font-weight: 500; }
+.cashbook input[type=checkbox] { accent-color: var(--lime); }
+.cashbook .cb-check input,
+.cashbook .cb-team-setting input { width: 20px; height: 20px; flex-shrink: 0; }
+.cashbook .cb-photo {
+  max-width: 100%;
+  max-height: 250px;
+  border-radius: 8px;
+  object-fit: contain;
+  display: block;
+  background: var(--paper);
+}
+.cashbook canvas {
+  width: 100%;
+  height: 160px;
+  border: 1px dashed #b8c9bf;
+  border-radius: 8px;
+  background: var(--panel);
+  touch-action: none;
+  display: block;
+}
+.cashbook .cb-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 18px 0;
+  border-top: 1px solid var(--outline);
+}
+.cashbook .cb-row > div { min-width: 0; }
+.cashbook .cb-row strong,
+.cashbook .cb-row small { display: block; }
+.cashbook .cb-row strong { overflow-wrap: anywhere; }
+.cashbook .cb-row .cb-amount { text-align: right; font-size: 20px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.cashbook .cb-deposit { color: #137333; }
+.cashbook .cb-row button { min-height: 36px; font-size: 13px; padding: 6px 14px; margin-top: 8px; }
+.cashbook .cb-status { padding: 12px 0; margin-bottom: 12px; white-space: pre-line; }
+.cashbook .cb-status:empty { display: none; }
+.cashbook .cb-status.error { padding: 12px; border-radius: 10px; background: #fce8e6; color: var(--error); }
+.cashbook dialog {
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--outline);
+  border-radius: 20px;
+  padding: 24px;
+  width: min(580px, calc(100% - 24px));
+  max-height: calc(100dvh - 30px);
+  box-shadow: 0 8px 28px rgba(35, 60, 41, .2);
+}
+.cashbook dialog::backdrop { background: rgba(32, 33, 36, .5); }
+.cashbook .cb-review-amount { color: var(--lime); font-size: 40px; font-weight: 600; font-variant-numeric: tabular-nums; margin: 10px 0; }
+.cashbook .cb-review-facts { background: var(--paper); border: 1px solid var(--outline); border-radius: 12px; padding: 16px; margin: 18px 0; }
+.cashbook .cb-admin-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.cashbook .cb-admin-grid .cb-card { margin-bottom: 0; }
+.cashbook details { margin: 16px 0; }
+.cashbook summary { cursor: pointer; font-weight: 600; }
+.cashbook .cb-team-setting { display: flex; align-items: center; gap: 8px; padding: 8px 0; }
+.cashbook .cb-media img { max-width: 100%; max-height: 60vh; display: block; margin: 12px auto; }
+.cashbook .cb-account-edit { border-top: 1px solid var(--outline); padding: 14px 0; }
+.cashbook .cb-account-edit summary small { font-weight: 400; }
+.cashbook .cb-account-edit form { margin-top: 15px; }
+@media (max-width: 620px) {
+  .cashbook .cb-card { padding: 18px; }
+  .cashbook .cb-admin-grid { grid-template-columns: 1fr; }
+  .cashbook .cb-row { gap: 8px; }
+  .cashbook .cb-row .cb-amount { font-size: 18px; }
+  .cashbook .cb-actions button { flex: 1 1 140px; padding-inline: 16px; }
+  .cashbook dialog { padding: 20px; }
+}
+@media (max-width: 390px) {
+  .cashbook.panel { padding: 14px; }
+  .cashbook .cb-balance { padding: 22px; }
+  .cashbook .cb-row { grid-template-columns: 1fr; }
+  .cashbook .cb-row .cb-amount { text-align: left; }
+}

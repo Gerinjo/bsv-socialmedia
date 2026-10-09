@@ -1,4 +1,7 @@
 import { handleReferees } from './referees.ts';
+import { handleCashbookWorkspace } from '../_shared/cashbook-evidence.mjs';
+import { handleCashbookAdmin } from './cashbook.mjs';
+import { SUITE_INITIAL_PASSWORD } from '../_shared/suite-accounts.mjs';
 import { handleEditorial } from './editorial.ts';
 import { DOMParser, XMLSerializer } from 'npm:@xmldom/xmldom@0.9.12';
 import { prepareSvgSource } from '../../../src/svg-upload.mjs';
@@ -25,7 +28,7 @@ const homeVenues = new Set(['Hauptplatz', 'Nebenplatz', 'Kunstrasenplatz 1', 'Ku
 const crestStatuses = new Set(['missing', 'needs_review', 'approved', 'rejected']);
 const sponsorStatuses = new Set(['missing', 'needs_review', 'approved', 'rejected']);
 const sponsorContexts = new Set(['announcement', 'lineup', 'result', 'report', 'birthday', 'post', 'story']);
-const suiteAreas = ['social_media', 'sponsoring', 'editorial', 'referees', 'administration', 'user_management'] as const;
+const suiteAreas = ['social_media', 'sponsoring', 'editorial', 'referees', 'administration', 'user_management', 'cashbook'] as const;
 type SuiteArea = typeof suiteAreas[number];
 const actionAreas: Record<string, SuiteArea> = {
   test_instagram_connection: 'administration', save_cleanup_settings: 'administration', purge_historical_data: 'administration',
@@ -647,6 +650,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
   const hasAnyArea = (...areas: SuiteArea[]) => areas.some(hasArea);
 
   if (request.method === 'GET') {
+    if (accessAreas.every(area => area === 'cashbook')) return json({user:{userId,email,role:normalizedRole,accessAreas},testMode:runtimeConfig.testMode});
     await ensureSeedClubAssets(context.supabaseAdmin);
     const [
       { data: games, error: gamesError },
@@ -790,10 +794,21 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
   if (request.method !== 'POST') return json({ error: 'method_not_allowed' }, 405);
 
   try {
-    const body = await request.json() as Record<string, any>;
+    const raw = await request.text();
+    const body = JSON.parse(raw) as Record<string, any>;
     const action = required(body.action, 'Aktion');
     const requiredArea = actionAreas[action];
     if (requiredArea && !hasArea(requiredArea)) return json({ error: 'area_forbidden', area: requiredArea }, 403);
+
+    if (action.startsWith('cashbook_')) {
+      if (raw.length > 11600000) return json({error:'Die Anfrage ist zu groß.'},413);
+      if (['cashbook_list','cashbook_book','cashbook_media'].includes(action)) {
+        if (!hasArea('cashbook')) return json({error:'area_forbidden',area:'cashbook'},403);
+        return json(await handleCashbookWorkspace(context.supabaseAdmin,userId,body));
+      }
+      if (normalizedRole !== 'admin') return json({ error: 'area_forbidden', area: 'user_management' }, 403);
+      return json(await handleCashbookAdmin(context.supabaseAdmin, userId, body));
+    }
 
     if (action.startsWith('referee_')) {
       if (!hasArea('referees')) return json({ error: 'area_forbidden', area: 'referees' }, 403);
@@ -1034,7 +1049,6 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         return json({ error: 'admin_only' }, 403);
       }
       const email = String(body.email ?? '').trim().toLowerCase();
-      const password = String(body.password ?? '');
       const role = String(body.role ?? 'sm-team').trim();
       const requestedAreas = Array.isArray(body.accessAreas) ? body.accessAreas.map((area: unknown) => String(area)) : [];
       const nextAccessAreas: SuiteArea[] = role === 'admin'
@@ -1043,12 +1057,11 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         : [...new Set(requestedAreas.filter((area: string): area is SuiteArea => suiteAreas.includes(area as SuiteArea) && area !== 'user_management'))];
       const isActive = body.is_active !== false;
       if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Bitte eine gültige E-Mail-Adresse eingeben.');
-      if (password.length < 10) throw new Error('Das Passwort muss mindestens 10 Zeichen lang sein.');
       if (!['admin', 'sm-team', 'referee-admin'].includes(role)) throw new Error('Die Rolle ist ungültig.');
       if (!nextAccessAreas.length) throw new Error('Für einen Benutzer muss mindestens ein Bereich freigegeben sein.');
       const { data: createdUser, error: createUserError } = await context.supabaseAdmin.auth.admin.createUser({
         email,
-        password,
+        password: SUITE_INITIAL_PASSWORD,
         email_confirm: true,
         app_metadata: { social_role: role, social_access_areas: nextAccessAreas },
       });
@@ -2369,7 +2382,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     return json({ error: 'unknown_action' }, 400);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
-    return json({ error: message }, 400);
+    return json({ error: message }, Number((error as {status?:number})?.status)||400);
   }
 });
 

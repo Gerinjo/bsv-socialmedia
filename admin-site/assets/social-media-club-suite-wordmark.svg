@@ -1,12 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 142" role="img" aria-labelledby="title desc">
-  <title id="title">Social Media &amp; Club Suite</title>
-  <desc id="desc">Wortmarke der Social Media &amp; Club Suite</desc>
-  <g font-family="Roboto, Inter, 'Noto Sans', Arial, sans-serif">
-    <text x="4" y="39" fill="#1a73e8" font-size="28" font-weight="700" letter-spacing="4.2">SOCIAL MEDIA</text>
-    <text x="0" y="105" fill="#00a89d" font-size="60" font-weight="500">&amp;</text>
-    <text x="52" y="105" fill="#202124" font-size="60" font-weight="700" letter-spacing="-1.8">Club Suite</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 126" role="img" aria-labelledby="title desc">
+  <title id="title">BSV Nordstern Club Suite</title>
+  <desc id="desc">Wortmarke der BSV Nordstern Club Suite in Dunkelgrün.</desc>
+  <g font-family="Inter, Arial, sans-serif">
+    <text x="2" y="32" fill="#165c3d" font-size="22" font-weight="700" letter-spacing="3.2">BSV NORDSTERN</text>
+    <text x="0" y="99" fill="#29332f" font-size="66" font-weight="700" letter-spacing="-2">Club Suite</text>
   </g>
-  <rect x="4" y="124" width="182" height="7" rx="3.5" fill="#1a73e8"/>
-  <rect x="194" y="124" width="44" height="7" rx="3.5" fill="#00a89d"/>
-  <circle cx="252" cy="127.5" r="7" fill="#f9ab00"/>
 </svg>

@@ -29,3 +29,11 @@ verify_jwt = false
 # Trainer identity is checked by the service-only birthday/team RPC.
 [functions.referee-coach-api]
 verify_jwt = false
+
+# Shared Suite authentication; username lookup is checked and rate-limited by a service-only RPC.
+[functions.suite-auth]
+verify_jwt = false
+
+# Independent outbox delivery, secured with SOCIAL_WORKER_CRON_SECRET.
+[functions.cashbook-alerts]
+verify_jwt = false

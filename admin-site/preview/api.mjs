@@ -1,4 +1,5 @@
 import { refereePreviewApi } from '/preview-referees.mjs';
+import { cashbookPreviewApi,cashbookPreviewAdmin } from '/preview-cashbook.mjs';
 import { normalizeNewsletterSettings, newsletterSource, newsletterSelection } from '/newsletter.mjs';
 import { previewTeamPhotos } from '/preview-team-photos.mjs';
 import { previewPeople } from '/preview-people.mjs';
@@ -188,17 +189,36 @@ function findArticle(state, id, version) {
     );
   return saved;
 }
+const previewNames={trainer:'mustm',kasse:'kassw',jugend:'beisj',admin:'admin',editorial:'editorial'};
+const previewPasswordKey='bsv-suite-preview-passwords-v1';
+function previewPasswords() {
+  try { return JSON.parse(sessionStorage.getItem(previewPasswordKey)||'{}'); } catch { return {}; }
+}
+const requestedPersona=new URLSearchParams(location.search).get('previewUser');
+let previewPersona=requestedPersona==='login'?null:(previewNames[requestedPersona]||sessionStorage.getItem('bsv-suite-preview-user')||'editorial');
+const previewAreas=()=>previewPersona==='admin'?['social_media','sponsoring','editorial','referees','cashbook','administration','user_management']:previewPersona==='editorial'?['editorial','referees']:['cashbook'];
+export async function suitePreviewLogin(identity,password) {
+  if(password!==(previewPasswords()[identity]||'bsv1956')||!Object.values(previewNames).includes(identity))throw new Error('Vorschau: Benutzername oder Passwort stimmt nicht. Das Startpasswort ist bsv1956, sofern du es unter Profil noch nicht geändert hast.');
+  previewPersona=identity;sessionStorage.setItem('bsv-suite-preview-user',identity);if(requestedPersona==='login')history.replaceState(null,'','/?area=cashbook');
+  return {access_token:'local-preview',refresh_token:'local-preview'};
+}
 export async function editorialPreviewApi(method = "GET", body = {}) {
   if (method === "GET")
     return {
       user: {
-        userId: "local-preview",
-        email: "Lokale Vorschau",
-        role: "sm-team",
-        accessAreas: ["editorial", "referees"],
+        userId: "local-preview-"+previewPersona,
+        email: "Lokale Vorschau · "+previewPersona,
+        role: previewPersona==='admin'?'admin':'sm-team',
+        accessAreas: previewAreas(),
       },
       testMode: true,
     };
+  if (body.action?.startsWith('cashbook_')) {
+    if(!previewAreas().includes('cashbook'))throw new Error('Kein Recht für das Kassenbuch der Jugendabteilung.');
+    if(['cashbook_list','cashbook_book','cashbook_media'].includes(body.action))return cashbookPreviewApi({...body,action:body.action.replace('cashbook_','')},previewPersona);
+    if(previewPersona!=='admin')throw new Error('Nur der Super-Admin darf die Kasse verwalten.');
+    return cashbookPreviewAdmin(body);
+  }
   if (body.action?.startsWith('referee_')) return refereePreviewApi(body);
   const state = load();
   let result;
@@ -573,9 +593,17 @@ export function createClient() {
   return {
     auth: {
       getSession: async () => ({
-        data: { session: { access_token: "local-preview" } },
+        data: { session: previewPersona?{ access_token: "local-preview" }:null },
       }),
-      signOut: async () => ({ error: null }),
+      signOut: async () => {previewPersona=null;sessionStorage.removeItem('bsv-suite-preview-user');history.replaceState(null,'','/?previewUser=login');return {error:null}},
+      signInWithPassword:async({email,password})=>{try{await suitePreviewLogin(email,password);return {data:{session:{access_token:'local-preview'}},error:null}}catch(error){return {data:{},error}}},
+      setSession:async()=>({data:{session:{access_token:'local-preview'}},error:null}),
+      updateUser:async({password})=>{
+        if(!previewPersona)return {error:new Error('Bitte zuerst anmelden.')};
+        if(typeof password!=='string'||password.length<10)return {error:new Error('Bitte mindestens 10 Zeichen verwenden.')};
+        sessionStorage.setItem(previewPasswordKey,JSON.stringify({...previewPasswords(),[previewPersona]:password}));
+        return {error:null};
+      },
     },
   };
 }

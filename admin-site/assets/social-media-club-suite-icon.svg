@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">BSV Nordstern Club Suite</title>
+  <desc id="desc">Ein heller Nordstern und drei abgerundete Kacheln auf dunkelgrünem Grund verbinden den Verein mit den Bereichen der Suite.</desc>
+  <rect width="256" height="256" rx="56" fill="#165c3d"/>
+  <path d="M90 54 100 80 126 90 100 100 90 126 80 100 54 90 80 80Z" fill="#f8fbf9"/>
+  <rect x="142" y="65" width="49" height="49" rx="14" fill="#b9ddc5"/>
+  <rect x="65" y="142" width="49" height="49" rx="14" fill="#b9ddc5"/>
+  <rect x="142" y="142" width="49" height="49" rx="14" fill="#f8fbf9"/>
+</svg>
