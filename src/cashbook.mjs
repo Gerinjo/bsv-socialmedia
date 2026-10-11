@@ -18,13 +18,14 @@ export function cashbookAmount(value) {
 
 export function validateCashbookBooking(body) {
   if (!cashbookUuid(body.requestId)) throw new Error('Bitte die Buchung erneut öffnen.');
-  if (!['deposit', 'withdrawal'].includes(body.direction)) throw new Error('Ungültige Buchungsart.');
+  if (!['deposit', 'withdrawal', 'advance'].includes(body.direction)) throw new Error('Ungültige Buchungsart.');
   if (!Number.isSafeInteger(body.amountCents) || body.amountCents < 1 || body.amountCents > 99999999) throw new Error('Bitte einen gültigen Betrag angeben.');
   if (body.confirmed !== true) throw new Error('Bitte den Geldbetrag und die Buchung bestätigen.');
-  if (body.direction === 'withdrawal' && !cashbookUuid(body.teamId)) throw new Error('Bitte deine Mannschaft auswählen.');
+  if (body.direction !== 'deposit' && !cashbookUuid(body.teamId)) throw new Error('Bitte deine Mannschaft auswählen.');
   const note = typeof body.note === 'string' ? body.note.trim() : '';
   if (note.length > 500) throw new Error('Der Verwendungszweck darf höchstens 500 Zeichen lang sein.');
-  return { requestId: body.requestId, direction: body.direction, amountCents: body.amountCents, teamId: body.direction === 'withdrawal' ? body.teamId : null, note, confirmed: true };
+  const notificationEmail = body.direction === 'advance' ? cashbookEmail(body.notificationEmail) : undefined;
+  return { ...(notificationEmail ? {notificationEmail} : {}), requestId: body.requestId, direction: body.direction, amountCents: body.amountCents, teamId: body.direction !== 'deposit' ? body.teamId : null, note, confirmed: true };
 }
 
 export const cashbookMoney = cents => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(cents / 100);
@@ -40,4 +41,15 @@ export function validateCashbookChange(body) {
     Object.assign(result,{amountCents:booking.amountCents,teamId:booking.teamId,note:booking.note});
   }
   return result;
+}
+
+export function cashbookEmail(value) {
+  const email = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.endsWith('.invalid')) throw new Error('Bitte eine erreichbare E-Mail-Adresse für die Erstattungsbenachrichtigung angeben.');
+  return email;
+}
+export function validateCashbookSettlement(body) {
+  if (!['mark_transferred','confirm_received'].includes(body.action) || !cashbookUuid(body.id) || !cashbookUuid(body.requestId)) throw new Error('Bitte den Eintrag erneut öffnen.');
+  if (body.confirmed !== true) throw new Error('Bitte die Überweisung beziehungsweise den Geldeingang bestätigen.');
+  return {action:body.action,id:body.id,requestId:body.requestId,confirmed:true};
 }

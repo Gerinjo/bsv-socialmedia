@@ -1,4 +1,4 @@
-import { CASHBOOK_BUCKET, cashbookUuid, validateCashbookBooking, validateCashbookChange } from '../../../src/cashbook.mjs';
+import { CASHBOOK_BUCKET, cashbookUuid, validateCashbookBooking, validateCashbookChange, validateCashbookSettlement } from '../../../src/cashbook.mjs';
 import { decodeRefereeReceipt, receiptHash } from './referee-receipts.mjs';
 
 export async function cashbookRpc(db, actor, payload) {
@@ -37,10 +37,11 @@ export async function cashbookMedia(db, result) {
 }
 export async function handleCashbookWorkspace(db, actor, body) {
   const action = String(body.action).replace(/^cashbook_/, '');
-  if (!['list','book','media','edit','cancel'].includes(action)) throw new Error('Unbekannte Kassenaktion.');
+  if (!['list','book','media','edit','cancel','mark_transferred','confirm_received'].includes(action)) throw new Error('Unbekannte Kassenaktion.');
   if (body.before !== undefined && (!Number.isSafeInteger(body.before) || body.before < 1)) throw new Error('Ungültige Logbuchseite.');
   if (action === 'media' && !cashbookUuid(body.id)) throw new Error('Ungültiger Beleg.');
   let payload = { action, before: body.before, id: body.id };
+  if (action === 'mark_transferred' || action === 'confirm_received') payload = validateCashbookSettlement({...body,action});
   if (action === 'edit' || action === 'cancel') {
     const change = validateCashbookChange({...body,action});
     if (body.signatureDrawn !== true) throw new Error('Bitte die Änderung unterschreiben.');
@@ -58,13 +59,13 @@ export async function handleCashbookWorkspace(db, actor, body) {
     const booking = validateCashbookBooking(body);
     const evidence = photo(body.evidence);
     let signature;
-    if (booking.direction === 'withdrawal') {
-      if (body.signatureDrawn !== true) throw new Error('Bitte die Entnahme unterschreiben.');
+    if (booking.direction !== 'deposit') {
+      if (body.signatureDrawn !== true) throw new Error('Bitte die Zahlung unterschreiben.');
       signature = photo(body.signature, true);
     }
     const identity = await cashbookRpc(db, actor, { action: 'authorize' });
     if (!identity.canBook || (booking.direction === 'deposit' && identity.canDeposit !== true)) throw Object.assign(new Error('Nur die Kasse und die Jugendleitung dürfen Einzahlungen erfassen.'), { status: 403 });
-    if (booking.direction === 'withdrawal' && (identity.user.role !== 'trainer' || !identity.teams.some(team => team.id === booking.teamId))) throw Object.assign(new Error('Bitte eine berechtigte Mannschaft auswählen.'), { status: 403 });
+    if (booking.direction !== 'deposit' && (identity.user.role !== 'trainer' || !identity.teams.some(team => team.id === booking.teamId))) throw Object.assign(new Error('Bitte eine berechtigte Mannschaft auswählen.'), { status: 403 });
     const prefix = `${identity.user.id}/${booking.requestId}`;
     const uploaded = await upload(db, prefix, 'evidence', evidence);
     const signed = signature ? await upload(db, prefix, 'signature', signature) : null;

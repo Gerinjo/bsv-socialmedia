@@ -17,6 +17,22 @@ Trainer und Jugendleiter können ihre eigenen aktuellen Einträge **bearbeiten**
 
 **Löschen** storniert die zuletzt gültige Entnahme vollständig. Bereits entnommenes Geld muss zurückgelegt werden; irrtümlich erfasste, gar nicht ausgeführte Entnahmen können ebenfalls storniert werden. Originale, frühere Korrekturen, Belege, Gründe und Zeitpunkte bleiben unveränderlich im Logbuch und im CSV-Export. Nach einer Änderung ist nur die neueste Fassung bearbeitbar; nach einem Storno keine. Fremde Einträge und Einzahlungen sind von diesen Traineraktionen ausgeschlossen. Der serverseitig gespeicherte Suite-Benutzer schützt die Urheberschaft auch bei einer späteren Profil-Neuzuordnung. Unsichere Netzwerkantworten lassen sich mit denselben Angaben erneut prüfen, ohne doppelte Geldbewegung.
 
+## Vorgestreckte Schiedsrichterkosten
+
+**Vorstrecken** ist für Trainer und Jugendleitung zusätzlich zur normalen Entnahme verfügbar. Es wird verwendet, wenn der Safe nicht genug Bargeld enthält oder ein Spiel auf dem Kunstrasen privat bezahlt werden muss. Mannschaft, tatsächlich privat bezahlter Betrag, Quittungsfoto, Unterschrift und Bestätigung sind erforderlich. Die Originalquittung gehört in den vorgesehenen Umschlag.
+
+Die E-Mail-Adresse für die Erstattungsbenachrichtigung wird in diesem Formular angegeben. Eine zuvor verwendete Adresse wird vorbelegt; sonst die reale Suite-E-Mail, sofern vorhanden. Interne Auth-Adressen unter `suite.bsvnordstern.invalid` sind ausgeschlossen. Der gemeinsame Login bleibt unverändert. Die Adresse gehört zum unveränderlichen Eintrag und wird nur dem Eigentümer und den Belegberechtigten angezeigt.
+
+Der Ablauf lautet:
+
+1. **Vorgestreckt:** Die Erstattungsforderung ist offen. Eigene Angaben lassen sich vor der Überweisung mit Grund und neuer Unterschrift korrigieren oder stornieren.
+2. **Überwiesen · Bestätigung offen:** Eine aktive Kasse bestätigt **Geld überwiesen**, nachdem sie die Überweisung außerhalb der App ausgeführt hat. Die App führt keine Banküberweisung aus. Dieser Schritt wird mit Person und serverseitigem Zeitpunkt gespeichert und legt eine E-Mail an den Trainer in die Versandwarteschlange. Betrag und Beleg können danach nicht mehr geändert oder gelöscht werden.
+3. **Abgeschlossen:** Ausschließlich der ursprüngliche Trainer bestätigt **Geld erhalten**, nachdem die vollständige Erstattung auf seinem Konto angekommen ist. Erst dann verschwindet die Forderung aus der offenen Übersicht. Der gesamte Verlauf bleibt im Logbuch sichtbar.
+
+Normale Einzahlungen und Safe-Entnahmen sind unmittelbar nach dem Buchen abgeschlossen. Vorstrecken, Korrektur einer Erstattungsforderung, Überweisung und Geldeingangsbestätigung beeinflussen niemals den Bargeldbestand oder die Auffüllschwelle. Die CSV-Ausgabe trennt Bargeldbewegung, vorgestreckten Betrag und Erstattungsstatus und enthält beide Bestätigungszeitpunkte und Personen.
+
+**Offene Erstattungen** werden unabhängig von der Seitennavigation des Logbuchs geladen: Trainer sehen ihre eigenen offenen Forderungen, Kasse und Super-Admin alle. Super-Admins ohne Kassenprofil können lesen und prüfen, aber keine Überweisung im Namen der Kasse bestätigen. Geld- und Statusänderungen verwenden dieselbe Transaktionssperre; stabile Anfrage-IDs schützen Wiederholungen vor doppelten Forderungen, Bestätigungen und E-Mails. Die Quittungsprüfung verhindert auch eine doppelte Erfassung desselben Fotos als Entnahme und als vorgestreckte Zahlung.
+
 ## Zugänge und Import
 
 Die Migration übernimmt die Trainerfunktionen aus `social_team_people`, einschließlich Co-Trainern und Fitnesscoaches. Standardmäßig freigeschaltet sind die männlichen Mannschaften **U19 A, U17 B, U15 C1, U15 C2, U13 D1, U13 D2 und U13 D3**. Die Einstellung ist unabhängig von der Social-Media-Veröffentlichung. Weitere Mannschaften können ausdrücklich freigeschaltet und anschließend importiert werden.
@@ -35,9 +51,11 @@ Die Benutzerverwaltung zeigt für verknüpfte Kassenbuchzugänge Personenname, L
 
 Das Suite-Bereichsrecht bestimmt den Zugriff, das zugeordnete Kassenprofil die Buchungsrolle. Benutzer mit Bereichsrecht, aber ohne Kassenprofil, können nur den Bestand und die Bewegungen lesen; sie können weder buchen noch fremde Belegbilder öffnen. Super-Admins ohne Kassenprofil können zusätzlich Belege prüfen und exportieren. Bereichsentzug, Suite-Sperre, Kassenprofil-Sperre, Personenstatus und aktuelle Mannschaftszuordnung werden bei jedem Zugriff serverseitig neu geprüft. Das Löschen eines Suite-Benutzers löst seine Profilzuordnung; bestehende Geldbewegungen bleiben erhalten.
 
-## Auffüll-Mail
+## E-Mail-Versand
 
 Unter **50,00 €** wird eine E-Mail an **jugendkasse@bsvnordstern.de** vorgemerkt, mit der Bitte an Wiebke, den Safe aufzufüllen. Genau 50 € lösen keine Erinnerung aus. Weitere Bewegungen unter der Grenze erzeugen keine neuen Erinnerungen, bis eine Auffüllung auf mindestens 50 € erfolgt ist.
+
+Auch die Erstattungsbenachrichtigung wird nach **Geld überwiesen** dauerhaft vorgemerkt. Sie enthält Betrag, Mannschaft, Eintragsnummer und den Link `https://www.bsvnordstern.de/cs` mit der Bitte, nach Eingang **Geld erhalten** zu bestätigen. Fehlgeschlagene Versuche werden wiederholt; der Versandstatus ist am Erstattungseintrag sichtbar.
 
 Der Cron `bsv-cashbook-alerts` verarbeitet die Versandwarteschlange alle fünf Minuten, unabhängig von geöffneten Browsern. Fehlgeschlagene Zustellungen bleiben gespeichert und werden erneut versucht. Die Verwaltung zeigt Versandzeitpunkte und ausstehende Versuche. Der Versand nutzt den vorhandenen Resend-Schlüssel sowie `CASHBOOK_FROM`, ersatzweise `NEWSLETTER_FROM`. Ein stabiler Idempotenzschlüssel schützt Wiederholungen beim Mailanbieter im Rahmen dessen [Idempotenz-Regeln](https://resend.com/docs/dashboard/emails/idempotency-keys).
 
@@ -51,7 +69,7 @@ Das Web-App-Manifest enthält separate PNG-Icons, den gemeinsamen Suite-Scope `/
 
 ## Bereitstellung
 
-1. Migrationen `20261009110737_cashbook.sql`, `20261009141432_cashbook_suite_identity_lookup.sql` und `20261009182055_cashbook_own_entry_changes.sql` auf die bestehende Datenbank anwenden. Die zweite Migration vermeidet direkte Auth-Tabellenzugriffe durch `service_role`; die dritte ergänzt nachvollziehbare Trainerkorrekturen und Stornos. Kontoexistenz wird durch den Fremdschlüssel und die zugehörige Auth-API geprüft. Die Migration `20261011191337_cashbook_youth_leadership_deposits.sql` ergänzt Einzahlungen für die Jugendleitung nach der Suite-Rollenmigration. Die bisherigen Vereinsverzeichnis-Migrationen sowie `20260927214316_referee_club_roles.sql` müssen vorhanden sein; Cron, `pg_net` und der Vault-Eintrag `social_worker_cron_secret` stammen aus der vorhandenen Automatik.
+1. Migrationen `20261009110737_cashbook.sql`, `20261009141432_cashbook_suite_identity_lookup.sql` und `20261009182055_cashbook_own_entry_changes.sql` auf die bestehende Datenbank anwenden. Die zweite Migration vermeidet direkte Auth-Tabellenzugriffe durch `service_role`; die dritte ergänzt nachvollziehbare Trainerkorrekturen und Stornos. Kontoexistenz wird durch den Fremdschlüssel und die zugehörige Auth-API geprüft. Die Migration `20261011191337_cashbook_youth_leadership_deposits.sql` ergänzt Einzahlungen für die Jugendleitung nach der Suite-Rollenmigration. Die Migration `20261011194958_cashbook_advances.sql` ergänzt private Erstattungsereignisse, Vorstrecken und die gemeinsame Mailwarteschlange. Die bisherigen Vereinsverzeichnis-Migrationen sowie `20260927214316_referee_club_roles.sql` müssen vorhanden sein; Cron, `pg_net` und der Vault-Eintrag `social_worker_cron_secret` stammen aus der vorhandenen Automatik.
 2. Edge Functions `suite-auth`, `cashbook-alerts` und `social-media-admin-api` bereitstellen. Konfiguration und bestehender GitHub-Deployment-Workflow sind erweitert.
 3. Supabase-Secrets prüfen: `RESEND_API_KEY`, `SOCIAL_WORKER_CRON_SECRET` passend zum Vault-Eintrag und ein verifizierter Resend-Absender in `CASHBOOK_FROM` oder `NEWSLETTER_FROM`.
 4. `npm run build` ausführen und die neue Version der bestehenden Suite bereitstellen. Der Worker liefert die gemeinsame Suite, Manifest, Icons und `/suite-sw.js` aus. Es gibt keine separate Kassen-Loginseite.

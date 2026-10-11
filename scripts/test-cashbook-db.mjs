@@ -70,6 +70,19 @@ try {
   await sql(await readFile(new URL('supabase/migrations/20261011191337_cashbook_youth_leadership_deposits.sql',root),'utf8'));
   await sql(await readFile(new URL('supabase/tests/cashbook-youth-deposits.sql',root),'utf8'));
   console.log('Jugendleitung: Einzahlungen und Entnahmen, frische Rechte und unveränderliche Belege geprüft.');
+  await sql(await readFile(new URL('supabase/migrations/20261011194958_cashbook_advances.sql',root),'utf8'));
+  await sql(await readFile(new URL('supabase/tests/cashbook-advances.sql',root),'utf8'));
+  console.log('Vorstrecken: Bestand, Korrekturen, Erstattung, Eigentümerbestätigung, echte E-Mail, Wiederholungen und offene Alt-Einträge geprüft.');
+  // Competing settlement clicks may produce exactly one immutable event and one mail.
+  const advance=JSON.parse(await sql(`set role service_role;with p as (select gen_random_uuid() request_id,a.id account_id,a.suite_user_id actor,t.id team_id from private.cashbook_accounts a,public.social_teams t where a.username='jentm' and t.slug='u19-junioren') select public.cashbook_request(actor,jsonb_build_object('action','book','requestId',request_id,'direction','advance','amountCents',5000,'teamId',team_id,'confirmed',true,'notificationEmail','trainer@example.org','evidenceHash',md5(request_id::text)||md5(request_id::text),'signatureHash',repeat('1',64),'evidencePath',account_id::text||'/'||request_id::text||'/receipt','signaturePath',account_id::text||'/'||request_id::text||'/signature')) from p;`));
+  const settle=(action,username)=>sql(`set role service_role;select public.cashbook_request(suite_user_id,jsonb_build_object('action','${action}','id',${quote(advance.entryId)},'requestId',gen_random_uuid(),'confirmed',true)) from private.cashbook_accounts where username='${username}';`).then(JSON.parse);
+  for(const [action,username] of [['mark_transferred','barow'],['confirm_received','jentm']]){
+    const results=await Promise.all([settle(action,username),settle(action,username)]);
+    if(results.filter(r=>!r.error).length!==1||results.filter(r=>r.status===409).length!==1)throw new Error('Konkurrierende Erstattungsbestätigungen wurden mehrfach gespeichert.');
+  }
+  if(await sql(`select count(*) from private.cashbook_alerts where entry_id=${quote(advance.entryId)};`)!=='1')throw new Error('Überweisung erzeugte mehr als eine Benachrichtigung.');
+  console.log('Parallele Überweisungs- und Eingangsbestätigungen: genau ein Statuswechsel und eine Benachrichtigung.');
+
   await sql(`create table public.editorial_issues(id uuid primary key default gen_random_uuid(),version integer default 1,title text,kind text,publishes_on date,newsletter_settings jsonb,newsletter_selection jsonb,cover_settings jsonb,advertising jsonb,cover_path text,cover_alt text,cover_credit text,previewed_version integer,published_version integer,published_at timestamptz,updated_at timestamptz default now());
     create table public.editorial_articles(id uuid primary key default gen_random_uuid(),issue_id uuid references public.editorial_issues(id),team_id uuid references public.social_teams(id),title text,body text,author text,kind text,status text,automatic_sports boolean default false,source_snapshot jsonb,gallery_groups jsonb,people_snapshot jsonb,event_snapshot jsonb,position integer,created_at timestamptz default now());
     create table public.editorial_publications(id uuid primary key default gen_random_uuid(),issue_id uuid references public.editorial_issues(id),issue_version integer,snapshot jsonb,published_by uuid,published_at timestamptz default now());

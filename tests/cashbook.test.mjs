@@ -132,3 +132,39 @@ test('deposit permission is rechecked before upload and cannot be supplied by th
   const revoked={...db,rpc:async()=>({data:{canBook:false,canDeposit:true,user:{id,role:'trainer',isYouthLeader:true},teams:[{id}]}})};
   assert.equal((await handleCashbook(request({...booking,direction:'deposit'}),revoked)).status,403);assert.equal(uploads,0);
 });
+
+test('advances validate their own team, reachable email, amount and confirmation without trusting settlement flags',()=>{
+  const body={...booking,direction:'advance',notificationEmail:'  Trainer@Example.org  ',status:'completed',canReimburse:true};
+  const result=validateCashbookBooking(body);assert.equal(result.notificationEmail,'trainer@example.org');assert.equal(result.direction,'advance');assert.equal(result.teamId,id);assert.equal(result.status,undefined);assert.equal(result.canReimburse,undefined);
+  for(const notificationEmail of [undefined,'','invalid','a@b','cashbook-user@suite.bsvnordstern.invalid','one@example.org\nBcc: two@example.org','a'.repeat(255)+'@example.org'])assert.throws(()=>validateCashbookBooking({...body,notificationEmail}));
+  for(const change of [{teamId:null},{confirmed:false},{amountCents:0}])assert.throws(()=>validateCashbookBooking({...body,...change}));
+  assert.equal(validateCashbookBooking({...body,direction:'withdrawal'}).notificationEmail,undefined);
+});
+test('personal advances require photo and signature and recheck team rights before uploads',async()=>{
+  const calls=[];let uploads=0;const body={...booking,direction:'advance',notificationEmail:'trainer@example.org',status:'completed',balanceCents:0};
+  const db={rpc:async(_,{payload})=>{calls.push(payload);return {data:payload.action==='authorize'?{canBook:true,user:{id,role:'trainer'},teams:[{id}]}:{balanceCents:0,entries:[]}}},storage:{from:()=>({upload:async()=>{uploads++;return {}}})}};
+  assert.equal((await handleCashbook(request(body),db)).status,200);assert.equal(uploads,2);assert.equal(calls.at(-1).direction,'advance');assert.equal(calls.at(-1).notificationEmail,'trainer@example.org');assert.equal(calls.at(-1).status,undefined);assert.equal(calls.at(-1).balanceCents,undefined);
+  uploads=0;
+  for(const change of [{signatureDrawn:false},{signature:undefined},{evidence:undefined},{notificationEmail:'invalid'},{teamId:'22222222-2222-4222-8222-222222222222'}])assert.ok((await handleCashbook(request({...body,...change}),db)).status>=400);
+  assert.equal(uploads,0);
+  assert.equal((await handleCashbook(request(body),{...db,rpc:async()=>({data:{canBook:true,user:{id,role:'cashier'},teams:[{id}]}})})).status,403);assert.equal(uploads,0);
+});
+test('settlement API strips forged fields, validates confirmation and delegates fresh authorization without uploading',async()=>{
+  const calls=[];const db={rpc:async(_,{actor,payload})=>{assert.equal(actor,id);calls.push(payload);return {data:{entries:[]}}},storage:{from:()=>assert.fail('Settlement must not upload or alter evidence')}};
+  for(const action of ['mark_transferred','confirm_received']){
+    const body={action,id,requestId:id,confirmed:true,actor:'forged',status:'completed',amountCents:999,recipient:'forged@example.org'};
+    assert.equal((await handleCashbook(request(body),db)).status,200);assert.deepEqual(calls.at(-1),{action,id,requestId:id,confirmed:true});
+    for(const change of [{id:'invalid'},{requestId:null},{confirmed:false}])assert.equal((await handleCashbook(request({...body,...change}),db)).status,400);
+    assert.equal((await handleCashbook(request(body),{rpc:async()=>({data:{error:'Role revoked',status:403}})})).status,403);
+  }
+});
+test('transfer email explains amount, entry and owner confirmation with a separate stable provider idempotency key',async()=>{
+  const actions=[];let fetched=0;
+  const db={rpc:async(_,{payload})=>{actions.push(payload);return {data:payload.action==='claim'&&actions.length===1?{id,lease_id:id,kind:'advance_transferred',recipient:'trainer@example.org',person_name:'Max Trainer',team_name:'U15 C1',amount_cents:3425,sequence:7}:null}}};
+  const result=await deliverCashbookAlerts(db,{apiKey:'test',from:'BSV <test@example.org>',fetcher:async(url,options)=>{fetched++;assert.equal(options.headers['idempotency-key'],`cashbook-transfer-${id}`);const body=JSON.parse(options.body);assert.deepEqual(body.to,['trainer@example.org']);assert.match(body.subject,/Erstattung/);for(const value of ['34,25','Nr. 7','U15 C1','https://www.bsvnordstern.de/cs','Geld erhalten','Erstattung abgeschlossen'])assert.ok(body.text.includes(value),value);return new Response('{}')}});
+  assert.equal(result.sent,1);assert.equal(fetched,1);assert.equal(actions[1].action,'sent');assert.equal(actions[1].leaseId,id);
+});
+test('failed transfer notifications retain their lease-based retry rather than marking the settlement complete',async()=>{
+  const actions=[];const db={rpc:async(_,{payload})=>{actions.push(payload);return {data:actions.length===1?{id,lease_id:id,kind:'advance_transferred',recipient:'trainer@example.org',person_name:'Max',team_name:'U15',amount_cents:1000,sequence:1}:null}}};
+  const result=await deliverCashbookAlerts(db,{apiKey:'test',from:'test',fetcher:async()=>new Response('{}',{status:429})});assert.equal(result.sent,0);assert.equal(actions[1].action,'failed');assert.equal(actions[1].leaseId,id);assert.equal(actions.some(action=>action.action==='confirm_received'),false);
+});

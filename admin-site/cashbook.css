@@ -243,3 +243,9 @@
   .cashbook .cb-dialog .cb-photo { max-height: 140px; }
   .cashbook .cb-dialog .cb-review-facts { margin: 12px 0; padding: 12px; }
 }
+
+.cashbook .cb-entry-state { display: inline-block; margin: 7px 0; padding: 4px 9px; border-radius: 7px; font-size: 12px; font-weight: 600; background: var(--accent-soft); color: var(--accent-text); }
+.cashbook .cb-state-advanced { background: #fef7e0; color: #7a4f01; }
+.cashbook .cb-state-transferred { background: var(--accent-soft); border: 1px solid var(--accent-border); }
+.cashbook .cb-state-cancelled, .cashbook .cb-state-superseded { background: var(--paper); color: var(--mint); }
+.cashbook .cb-outstanding { border-color: var(--accent-border); }
