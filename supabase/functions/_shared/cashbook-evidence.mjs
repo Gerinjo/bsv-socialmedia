@@ -63,7 +63,7 @@ export async function handleCashbookWorkspace(db, actor, body) {
       signature = photo(body.signature, true);
     }
     const identity = await cashbookRpc(db, actor, { action: 'authorize' });
-    if (!identity.canBook || (booking.direction === 'deposit' && identity.user.role !== 'cashier')) throw Object.assign(new Error('Nur die Kasse darf Einzahlungen erfassen.'), { status: 403 });
+    if (!identity.canBook || (booking.direction === 'deposit' && identity.canDeposit !== true)) throw Object.assign(new Error('Nur die Kasse und die Jugendleitung dürfen Einzahlungen erfassen.'), { status: 403 });
     if (booking.direction === 'withdrawal' && (identity.user.role !== 'trainer' || !identity.teams.some(team => team.id === booking.teamId))) throw Object.assign(new Error('Bitte eine berechtigte Mannschaft auswählen.'), { status: 403 });
     const prefix = `${identity.user.id}/${booking.requestId}`;
     const uploaded = await upload(db, prefix, 'evidence', evidence);

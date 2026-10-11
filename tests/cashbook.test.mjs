@@ -116,3 +116,19 @@ test('a mail failure schedules another attempt; missing settings leave the outbo
 test('installable app shares the suite scope and both required PNG icon sizes',()=>{
   assert.equal(cashbookManifest.start_url,'/?area=cashbook');assert.equal(cashbookManifest.scope,'/');assert.equal(cashbookManifest.display,'standalone');assert.deepEqual(cashbookManifest.icons.map(i=>i.sizes),['192x192','512x512']);
 });
+
+test('server capability permits youth-leader deposits with a photo and immutable attribution',async()=>{
+  let uploads=0;const calls=[];
+  const db={rpc:async(_name,{actor,payload})=>{assert.equal(actor,id);calls.push(payload);return {data:payload.action==='authorize'?{canBook:true,canDeposit:true,user:{id,role:'trainer',isYouthLeader:true},teams:[{id}]}:{entries:[]}}},storage:{from:()=>({upload:async()=>{uploads++;return {}}})}};
+  const response=await handleCashbook(request({...booking,direction:'deposit',signature:undefined,signatureDrawn:false,teamId:null,canDeposit:true,personName:'Fake',createdAt:'Fake'}),db);
+  assert.equal(response.status,200);assert.equal(uploads,1);
+  assert.equal(calls.at(-1).direction,'deposit');assert.equal(calls.at(-1).teamId,null);assert.equal(calls.at(-1).signaturePath,null);
+  assert.equal(calls.at(-1).personName,undefined);assert.equal(calls.at(-1).createdAt,undefined);assert.ok(calls.at(-1).evidencePath.startsWith(`${id}/${id}/evidence-`));
+});
+
+test('deposit permission is rechecked before upload and cannot be supplied by the client',async()=>{
+  let uploads=0;const db={rpc:async()=>({data:{canBook:true,canDeposit:false,user:{id,role:'trainer',isYouthLeader:false},teams:[{id}]}}),storage:{from:()=>({upload:async()=>{uploads++;return {}}})}};
+  assert.equal((await handleCashbook(request({...booking,direction:'deposit',canDeposit:true,isYouthLeader:true,user:{role:'cashier'}}),db)).status,403);
+  const revoked={...db,rpc:async()=>({data:{canBook:false,canDeposit:true,user:{id,role:'trainer',isYouthLeader:true},teams:[{id}]}})};
+  assert.equal((await handleCashbook(request({...booking,direction:'deposit'}),revoked)).status,403);assert.equal(uploads,0);
+});

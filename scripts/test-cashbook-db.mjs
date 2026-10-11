@@ -67,6 +67,9 @@ try {
   await sql(`insert into auth.users(id,email) values ('00000000-0000-4000-8000-000000000020','admin@example.test');insert into public.social_admins(user_id,email,role,is_active,access_areas) values ('00000000-0000-4000-8000-000000000020','admin@example.test','admin',true,array['social_media','administration','user_management']);`);
   await sql(await readFile(new URL('supabase/migrations/20261011114319_suite_roles_profiles_navigation.sql',root),'utf8'));
   await sql(await readFile(new URL('supabase/tests/suite-roles.sql',root),'utf8'));
+  await sql(await readFile(new URL('supabase/migrations/20261011191337_cashbook_youth_leadership_deposits.sql',root),'utf8'));
+  await sql(await readFile(new URL('supabase/tests/cashbook-youth-deposits.sql',root),'utf8'));
+  console.log('Jugendleitung: Einzahlungen und Entnahmen, frische Rechte und unveränderliche Belege geprüft.');
   await sql(`create table public.editorial_issues(id uuid primary key default gen_random_uuid(),version integer default 1,title text,kind text,publishes_on date,newsletter_settings jsonb,newsletter_selection jsonb,cover_settings jsonb,advertising jsonb,cover_path text,cover_alt text,cover_credit text,previewed_version integer,published_version integer,published_at timestamptz,updated_at timestamptz default now());
     create table public.editorial_articles(id uuid primary key default gen_random_uuid(),issue_id uuid references public.editorial_issues(id),team_id uuid references public.social_teams(id),title text,body text,author text,kind text,status text,automatic_sports boolean default false,source_snapshot jsonb,gallery_groups jsonb,people_snapshot jsonb,event_snapshot jsonb,position integer,created_at timestamptz default now());
     create table public.editorial_publications(id uuid primary key default gen_random_uuid(),issue_id uuid references public.editorial_issues(id),issue_version integer,snapshot jsonb,published_by uuid,published_at timestamptz default now());
