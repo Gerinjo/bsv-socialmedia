@@ -67,6 +67,22 @@ try {
   await sql(`insert into auth.users(id,email) values ('00000000-0000-4000-8000-000000000020','admin@example.test');insert into public.social_admins(user_id,email,role,is_active,access_areas) values ('00000000-0000-4000-8000-000000000020','admin@example.test','admin',true,array['social_media','administration','user_management']);`);
   await sql(await readFile(new URL('supabase/migrations/20261011114319_suite_roles_profiles_navigation.sql',root),'utf8'));
   await sql(await readFile(new URL('supabase/tests/suite-roles.sql',root),'utf8'));
+  await sql(`create table public.editorial_issues(id uuid primary key default gen_random_uuid(),version integer default 1,title text,kind text,publishes_on date,newsletter_settings jsonb,newsletter_selection jsonb,cover_settings jsonb,advertising jsonb,cover_path text,cover_alt text,cover_credit text,previewed_version integer,published_version integer,published_at timestamptz,updated_at timestamptz default now());
+    create table public.editorial_articles(id uuid primary key default gen_random_uuid(),issue_id uuid references public.editorial_issues(id),team_id uuid references public.social_teams(id),title text,body text,author text,kind text,status text,automatic_sports boolean default false,source_snapshot jsonb,gallery_groups jsonb,people_snapshot jsonb,event_snapshot jsonb,position integer,created_at timestamptz default now());
+    create table public.editorial_publications(id uuid primary key default gen_random_uuid(),issue_id uuid references public.editorial_issues(id),issue_version integer,snapshot jsonb,published_by uuid,published_at timestamptz default now());
+    alter table public.editorial_issues enable row level security;alter table public.editorial_articles enable row level security;alter table public.editorial_publications enable row level security;
+    grant select,insert,update on public.editorial_issues,public.editorial_articles to service_role;grant select,insert on public.editorial_publications to service_role;`);
+  const publicationWorkflow=await readFile(new URL('supabase/migrations/20260920193329_editorial_publication_workflow.sql',root),'utf8');
+  await sql(publicationWorkflow.match(/create or replace function private\.editorial_version[\s\S]*?end \$\$;/)[0]);
+  await sql(`create trigger editorial_issues_version before update on public.editorial_issues for each row execute function private.editorial_version();revoke all on function private.editorial_version() from public,anon,authenticated;grant execute on function private.editorial_version() to service_role;`);
+  await sql(publicationWorkflow.match(/create function public\.preview_editorial_issue[\s\S]*?end \$\$;/)[0]);
+  const publicationApproval=await readFile(new URL('supabase/migrations/20260922092911_editorial_all_sports_automatic.sql',root),'utf8');
+  await sql(publicationApproval.slice(publicationApproval.indexOf('create or replace function public.publish_editorial_issue')));
+  await sql(`revoke all on function public.preview_editorial_issue(uuid,integer),public.publish_editorial_issue(uuid,integer,uuid) from public,anon,authenticated;grant execute on function public.preview_editorial_issue(uuid,integer),public.publish_editorial_issue(uuid,integer,uuid) to service_role;`);
+  await sql(await readFile(new URL('supabase/migrations/20261011182000_brand_themes.sql',root),'utf8'));
+  await sql(await readFile(new URL('supabase/tests/brand-themes.sql',root),'utf8'));
+  console.log('Themes: Zugriffsschutz, Validierung, öffentliche Leserechte, Heftvorschau und eingefrorene Veröffentlichungen geprüft.');
+
   console.log('Rollen, Zusatzrechte, Sammelaktionen, Alias-Login und zentraler BSV-Standard geprüft.');
   if(process.env.CASHBOOK_DB_ADVISORS==='1'){
     const {stdout:address}=await exec('docker',['inspect','-f','{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}',name]);

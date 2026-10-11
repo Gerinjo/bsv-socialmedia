@@ -213,7 +213,7 @@ export async function editorialPreviewApi(method = "GET", body = {}) {
       teamColorGroups:previewAreas().includes('corporate_identity')?[{key:'youth',label:'Jugend',color_scheme:previewSuiteBrand().color_scheme}]:[],
     };
   if(['save_suite_role','save_suite_member','bulk_suite_users','create_team_member'].includes(body.action))return previewSuiteMutation(body,previewPersona);
-  if(body.action==='save_bsv_standard'){if(!previewAreas().includes('corporate_identity'))throw new Error('Keine Berechtigung');return previewSetBrand(body.colorScheme);}
+  if(body.action==='save_bsv_standard'){if(!previewAreas().includes('corporate_identity'))throw new Error('Keine Berechtigung');return previewSetBrand(body.colorScheme,body.themeKey);}
   if (body.action?.startsWith('cashbook_')) {
     if(!previewAreas().includes('cashbook'))throw new Error('Kein Recht für das Kassenbuch.');
     if(['cashbook_list','cashbook_book','cashbook_media','cashbook_edit','cashbook_cancel'].includes(body.action))return cashbookPreviewApi({...body,action:body.action.replace('cashbook_','')},previewPersona);
@@ -487,6 +487,7 @@ export async function editorialPreviewApi(method = "GET", body = {}) {
         issue.advertising = structuredClone(previewAdvertising);
         touch(state, issue.id);
       }
+      issue.brand_settings=previewSuiteBrand();
       issue.previewed_version = issue.version;
       result = {
         snapshot: withPreviewAdvertisements({
@@ -495,6 +496,7 @@ export async function editorialPreviewApi(method = "GET", body = {}) {
             state.articles.filter((a) => a.issue_id === issue.id),
             teams,
           ),
+          brand: issue.brand_settings,
           demo: true,
         }),
       };
@@ -513,6 +515,7 @@ export async function editorialPreviewApi(method = "GET", body = {}) {
       issue.published_at = new Date().toISOString();
       state.publications.push({
         ...editorialPublicSnapshot(issue, articles, teams),
+        brand: issue.brand_settings,
         published_at: issue.published_at,
         demo: true,
       });

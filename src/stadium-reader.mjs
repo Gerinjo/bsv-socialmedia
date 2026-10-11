@@ -1,3 +1,5 @@
+import {suiteBrandColors} from './suite-brand.mjs';
+import {suiteBrandTheme,brandThemeSvg} from './brand-themes.mjs';
 import { stadiumReaderAssets } from "./stadium-reader-assets.mjs";
 export function renderEditorialMagazine(snapshot, preview = true) {
   snapshot = {...snapshot, articles: snapshot.articles.filter(article => article.status !== 'waived' && (article.kind !== 'coach' || article.status === 'ready' && article.body?.trim()))};
@@ -185,12 +187,18 @@ export function renderEditorialMagazine(snapshot, preview = true) {
   edition.note += ' ' + advertisingNote;
   const emptyArticles = articles.filter(article => !article.hasContent).length;
   if (preview && emptyArticles) edition.note += ` ${emptyArticles} Beiträge sind noch ohne Inhalt und erhalten keine eigene Heftseite.`;
+  let brandStyle='';
+  if(snapshot.brand?.color_scheme){
+    const c=suiteBrandColors(snapshot.brand.color_scheme),theme=suiteBrandTheme(snapshot.brand.theme_key||'football');
+    const motif='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(brandThemeSvg(theme,c));
+    brandStyle=`:root{--green:${c.panel};--yellow:${c.accent};--paper:${c.surface};--ink:${c.ink};--muted:${c.panel};--rule:${c.muted}}.photo-shade{background:linear-gradient(0deg,${c.panel} 1%,${c.panel}bc 25%,${c.panel}00 65%)}.cover-stories span{color:${c.accent}}.cover-photo-wrap::after{content:'';position:absolute;left:5%;top:5%;width:17%;aspect-ratio:1;background:${c.panel} url("${motif}") center/contain no-repeat;border-radius:12px;pointer-events:none}`;
+  }
   const boot = `const editions=[${safeJson(edition)}];const editionSponsorships={};\n${stadiumReaderAssets.advertisingScript}\n${stadiumReaderAssets.script}`;
   return stadiumReaderAssets.template
     .replace(
       "%%READER_STYLE%%",
       () =>
-        stadiumReaderAssets.css +
+        stadiumReaderAssets.css + brandStyle +
         `\n.prose-columns p{white-space:pre-line}`,
     )
     .replace(

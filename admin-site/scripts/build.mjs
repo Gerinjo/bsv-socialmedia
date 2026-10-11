@@ -24,7 +24,10 @@ const svgUpload = await readFile(resolve(repoDir, 'src/svg-upload.mjs'), 'utf8')
 const visionOcr = await readFile(resolve(adminDir, 'vision-ocr.mjs'), 'utf8');
 const tesseract = await readFile(resolve(repoDir, 'node_modules/tesseract.js/dist/tesseract.min.js'), 'utf8');
 let coachHtml = await readFile(resolve(adminDir, 'referee-coach.html'), 'utf8');
+const brandAssets = {};
+for(const key of ['football','christmas','easter','summer'])brandAssets[`/brand/themes/${key}-v1.png`]={type:'image/png',base64:true,body:(await readFile(resolve(adminDir,`assets/brand-themes/${key}-v1.png`))).toString('base64')};
 const cashbookAssets = {
+  ...brandAssets,
   '/kassenbuch/manifest.webmanifest': {type:'application/manifest+json',body:JSON.stringify(cashbookManifest)},
   '/suite-sw.js': {type:'application/javascript; charset=utf-8',body:await readFile(resolve(adminDir,'cashbook-sw.js'),'utf8')},
   '/kassenbuch/offline': {type:'text/html; charset=utf-8',body:cashbookOfflineHtml},
@@ -39,9 +42,9 @@ for (const [placeholder, source] of [
   ['__EDITORIAL_PUBLICATION_SCRIPT__', await readFile(resolve(repoDir, 'src/editorial-publication.mjs'), 'utf8')],
   ['__EDITORIAL_PEOPLE_SCRIPT__', await readFile(resolve(repoDir, 'src/editorial-people.mjs'), 'utf8')],
   ['__STADIUM_READER_ASSETS__', (await readFile(resolve(repoDir, 'src/stadium-reader-assets.mjs'), 'utf8')).replaceAll('</script', '<\\/script')],
-  ['__STADIUM_READER_SCRIPT__', (await readFile(resolve(repoDir, 'src/stadium-reader.mjs'), 'utf8')).replace(/^import .*;\n/, '').replaceAll('</script', '<\\/script')],
+  ['__STADIUM_READER_SCRIPT__', (await readFile(resolve(repoDir, 'src/stadium-reader.mjs'), 'utf8')).replace(/^import .*;\n/gm, '').replaceAll('</script', '<\\/script')],
   ['__NEWSLETTER_SCRIPT__',
-    'const NEWSLETTER_UNSUBSCRIBE_LINK = ' + JSON.stringify(NEWSLETTER_UNSUBSCRIBE_LINK) + ';\n' + (await readFile(resolve(repoDir, 'src/newsletter.mjs'), 'utf8')).replace(/^import .*;\n/, '') + '\nconst newsletterAssets = ' + JSON.stringify({
+    'const NEWSLETTER_UNSUBSCRIBE_LINK = ' + JSON.stringify(NEWSLETTER_UNSUBSCRIBE_LINK) + ';\n' + (await readFile(resolve(repoDir, 'src/newsletter.mjs'), 'utf8')).replace(/^import .*;\n/gm, '') + '\nconst newsletterAssets = ' + JSON.stringify({
       template: await readFile(resolve(repoDir, 'templates/newsletter.html'), 'utf8'),
     }).replaceAll('<', '\\u003c') + ';'],
   ['__EDITORIAL_DICTATION_SCRIPT__', await readFile(resolve(adminDir, 'editorial-dictation.mjs'), 'utf8')],
@@ -52,6 +55,10 @@ for (const [placeholder, source] of [
   ['__REFEREE_MODEL__', await readFile(resolve(repoDir, 'src/referees.mjs'), 'utf8')],
   ['__CASHBOOK_MODEL__', await readFile(resolve(repoDir, 'src/cashbook.mjs'), 'utf8')],
   ['__SUITE_ACCESS_MODEL__', await readFile(resolve(repoDir,'src/suite-access.mjs'),'utf8')],
+  ['__BRAND_THEMES_MODEL__', await readFile(resolve(repoDir,'src/brand-themes.mjs'),'utf8')],
+  ['__BRAND_PREVIEW_MODEL__', (await readFile(resolve(repoDir,'src/brand-preview.mjs'),'utf8')).replace(/^import .*;\n/gm,'')],
+  ['__BRAND_PREVIEW_SCRIPT__', await readFile(resolve(adminDir,'brand-preview.mjs'),'utf8')],
+  ['__BRAND_PREVIEW_CSS__', await readFile(resolve(adminDir,'brand-preview.css'),'utf8')],
   ['__SUITE_BRAND_MODEL__', await readFile(resolve(repoDir,'src/suite-brand.mjs'),'utf8')],
   ['__SUITE_USERS_SCRIPT__', await readFile(resolve(adminDir,'suite-users.mjs'),'utf8')],
   ['__SUITE_MEMBER_MODEL__', await readFile(resolve(repoDir, 'src/suite-members.mjs'), 'utf8')],
@@ -81,13 +88,15 @@ const html = ${JSON.stringify(html)};
 const coachHtml = ${JSON.stringify(coachHtml)};
 const cashbookAssets = ${JSON.stringify(cashbookAssets)};
 const stadiumReaderAssets = ${JSON.stringify(stadiumReaderAssets)};
+${(await readFile(resolve(repoDir,'src/suite-brand.mjs'),'utf8')).replace(/^export /gm,'')}
+${(await readFile(resolve(repoDir,'src/brand-themes.mjs'),'utf8')).replace(/^export /gm,'')}
 const renderEditorialMagazine = ${renderEditorialMagazine.toString()};
 
 export default {
   async fetch(request) {
     if (request.method !== 'GET') return new Response('Method not allowed', { status: 405 });
     const path = new URL(request.url).pathname;
-    if(path==='/suite-brand.json'){try{const result=await fetch('https://maejihwjzxkmthjavgnx.supabase.co/rest/v1/social_brand_settings?select=color_scheme,updated_at&id=eq.true',{headers:{apikey:'sb_publishable_a3DnmtbBycRR4mWV4Jmz-w_RJobGli9'},signal:AbortSignal.timeout(5000)});if(!result.ok)throw new Error('Brand unavailable');const rows=await result.json();return Response.json(rows[0]||{},{headers:{'cache-control':'public,max-age=60'}})}catch{return Response.json({},{status:503})}}
+    if(path==='/suite-brand.json'){try{const result=await fetch('https://maejihwjzxkmthjavgnx.supabase.co/rest/v1/social_brand_settings?select=color_scheme,theme_key,updated_at&id=eq.true',{headers:{apikey:'sb_publishable_a3DnmtbBycRR4mWV4Jmz-w_RJobGli9'},signal:AbortSignal.timeout(5000)});if(!result.ok)throw new Error('Brand unavailable');const rows=await result.json();return Response.json(rows[0]||{},{headers:{'cache-control':'public,max-age=60'}})}catch{return Response.json({},{status:503})}}
     if (path === '/kassenbuch' || path === '/kassenbuch/') return Response.redirect(new URL('/?area=cashbook',request.url),302);
     const asset = cashbookAssets[path];
     if (asset) return new Response(asset.base64 ? Uint8Array.from(atob(asset.body),char=>char.charCodeAt(0)) : asset.body,{headers:{'content-type':asset.type,'cache-control':path.endsWith('.png')?'public, max-age=86400':'no-cache','x-content-type-options':'nosniff'}});

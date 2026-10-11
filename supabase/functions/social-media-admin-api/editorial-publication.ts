@@ -190,16 +190,21 @@ export async function handleEditorialPublication(
     let version = body.version;
     const issue = await row(db.from('editorial_issues').select('*').eq('id', body.issueId).single());
     if (issue.version !== version) throw new Error('Die Ausgabe wurde geändert. Bitte neu laden.');
+    const brand = await row(db.from('social_brand_settings').select('color_scheme,theme_key').eq('id',true).single());
     if (issue.kind === 'stadium') {
       const prepared = await prepareEditorialAdvertising(db, issue);
       let saved;
       try {
-        saved = await row(db.from('editorial_issues').update({ advertising: prepared.snapshot }).eq('id', issue.id).eq('version', version).select().maybeSingle());
+        saved = await row(db.from('editorial_issues').update({ advertising: prepared.snapshot, brand_settings: brand }).eq('id', issue.id).eq('version', version).select().maybeSingle());
         if (!saved) throw new Error('Die Ausgabe wurde während des Anzeigenabrufs geändert. Bitte erneut öffnen.');
       } catch (error) {
         await prepared.cleanup();
         throw error;
       }
+      version = saved.version;
+    } else {
+      const saved = await row(db.from('editorial_issues').update({brand_settings:brand}).eq('id',issue.id).eq('version',version).select().maybeSingle());
+      if (!saved) throw new Error('Die Ausgabe wurde geändert. Bitte erneut öffnen.');
       version = saved.version;
     }
     const snapshot = await row(

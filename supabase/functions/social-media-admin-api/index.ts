@@ -2,6 +2,7 @@ import { handleReferees } from './referees.ts';
 import { handleCashbookWorkspace } from '../_shared/cashbook-evidence.mjs';
 import { handleCashbookAdmin } from './cashbook.mjs';
 import { handleSuiteUsers, suiteUsersRpc } from '../_shared/suite-users.mjs';
+import { suiteBrandTheme } from '../../../src/brand-themes.mjs';
 import { suiteBrandColors } from '../../../src/suite-brand.mjs';
 import { suiteMemberDirectory } from '../_shared/suite-member-directory.mjs';
 import { handleEditorial } from './editorial.ts';
@@ -648,7 +649,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
 
   if (request.method === 'GET') {
     const identity=await suiteUsersRpc(context.supabaseAdmin,userId,{action:'identity'});
-    const {data:brandSettings,error:brandError}=await context.supabaseAdmin.from('social_brand_settings').select('color_scheme,updated_at').eq('id',true).single();
+    const {data:brandSettings,error:brandError}=await context.supabaseAdmin.from('social_brand_settings').select('color_scheme,theme_key,updated_at').eq('id',true).single();
     if(brandError)return json({error:brandError.message},500);
     const suiteRoles=normalizedRole==='admin'?(await suiteUsersRpc(context.supabaseAdmin,userId,{action:'roles'})).roles:[];
     if (accessAreas.every(area => area === 'cashbook')) return json({user:identity,brandSettings,suiteRoles,testMode:runtimeConfig.testMode});
@@ -936,7 +937,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     }
     if(action==='save_bsv_standard') {
       const colorScheme=suiteBrandColors(body.colorScheme);
-      const result=await context.supabaseAdmin.rpc('suite_brand_request',{actor:userId,payload:{colorScheme}});
+      const result=await context.supabaseAdmin.rpc('suite_brand_request',{actor:userId,payload:{colorScheme,...(body.themeKey===undefined?{}:{themeKey:suiteBrandTheme(body.themeKey)})}});
       if(result.error)throw result.error;
       if(result.data?.error)return json(result.data,result.data.status||400);
       for(const team of result.data.teams||[])if(team.active&&team.content_enabled)await rerenderTeamAnnouncementPreviews(context.supabaseAdmin,team.id);

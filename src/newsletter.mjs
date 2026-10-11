@@ -1,3 +1,5 @@
+import {suiteBrandColors,SUITE_BRAND_DEFAULT} from './suite-brand.mjs';
+import {suiteBrandTheme} from './brand-themes.mjs';
 import { NEWSLETTER_UNSUBSCRIBE_LINK } from './newsletter-unsubscribe.mjs';
 export function newsletterDefaults(issue) {
   return {
@@ -126,6 +128,15 @@ export function renderEditorialNewsletter(snapshot, template, { preview = true, 
     UNSUBSCRIBE_URL:escape(unsubscribeUrl),
     CONTENT:rows.join('\n'),
   };
-  const html = template.replace(/\{\{(TITLE|PREHEADER|EDITION|BRAND|KICKER|HEADLINE|INTRO|CONTENT|UNSUBSCRIBE_URL)\}\}/g, (_, key) => values[key]);
+  const colors = snapshot.brand?.color_scheme ? suiteBrandColors(snapshot.brand.color_scheme) : SUITE_BRAND_DEFAULT;
+  const theme = suiteBrandTheme(snapshot.brand?.theme_key || 'football');
+  const palette = {'#092f20':colors.background,'#17613a':colors.panel,'#f4d638':colors.accent,'#edf0e9':colors.surface,'#193c2c':colors.ink,'#d7e5dc':colors.muted,'#c1d2c6':colors.muted,'#dce4d9':colors.muted};
+  const rgba = [1,3,5].map(i=>parseInt(colors.background.slice(i,i+2),16)).join(',');
+  const shell = theme === 'football' ? template : template.replaceAll('https://bsvnordstern.de/images/fussball/teams-schuss.webp',`https://bsv-story-automatik.jerome-ernsberger.chatgpt.site/brand/themes/${theme}-v1.png`);
+  const generated = shell.replace(/\{\{(TITLE|PREHEADER|EDITION|BRAND|KICKER|HEADLINE|INTRO|CONTENT|UNSUBSCRIBE_URL)\}\}/g, (_, key) => values[key]);
+  const html = snapshot.brand?.color_scheme ? generated
+    .replace(/(style=")(.*?)(")/g,(_,open,style,close)=>open+style.replace(/#[0-9a-f]{6}/gi,hex=>palette[hex.toLowerCase()]||hex).replaceAll('rgba(9,47,32,',`rgba(${rgba},`)+close)
+    .replace(/bgcolor="#092f20"/g,`bgcolor="${colors.background}"`) : generated;
+
   return { html, text: text.join('\n\n'), subject: title, preheader };
 }
