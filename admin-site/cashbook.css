@@ -176,3 +176,70 @@
   .cashbook .cb-row { grid-template-columns: 1fr; }
   .cashbook .cb-row .cb-amount { text-align: left; }
 }
+
+/* Keep modal actions visible; only the content scrolls, including with a keyboard open. */
+.cashbook dialog.cb-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  inset-inline: 0;
+  top: calc(var(--cb-viewport-top, 0px) + var(--cb-viewport-height, 100dvh) / 2);
+  bottom: auto;
+  transform: translateY(-50%);
+  margin: 0 auto;
+  padding: 0;
+  max-height: calc(var(--cb-viewport-height, 100dvh) - 24px);
+  overflow: hidden;
+}
+.cashbook .cb-dialog-header {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  gap: 12px;
+  margin: 0;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--outline);
+}
+.cashbook .cb-dialog-header h2 { min-width: 0; font-size: 22px; overflow-wrap: anywhere; }
+.cashbook .cb-dialog-header button { flex-shrink: 0; padding-inline: 14px; }
+.cashbook .cb-dialog-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  padding: 18px 20px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scroll-padding-block: 12px;
+}
+.cashbook .cb-dialog-body p:first-child { margin-top: 0; }
+.cashbook .cb-dialog-footer {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 20px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--outline);
+  background: var(--panel);
+}
+.cashbook .cb-dialog-footer button { flex: 1 1 140px; margin: 0; }
+.cashbook .cb-dialog .cb-form { gap: 14px; }
+.cashbook .cb-dialog input[type=file] { min-width: 0; overflow: hidden; }
+.cashbook .cb-dialog .cb-review-facts { overflow-wrap: anywhere; }
+@media (max-width: 620px), (max-height: 600px) {
+  .cashbook .cb-dialog-header { padding: 12px 16px; }
+  .cashbook .cb-dialog-header h2 { font-size: 20px; }
+  .cashbook .cb-dialog-header button { min-height: 44px; font-size: 14px; padding: 8px 12px; }
+  .cashbook .cb-dialog-body { padding: 14px 16px; }
+  .cashbook .cb-dialog-footer { padding: 10px 16px; padding-bottom: max(10px, env(safe-area-inset-bottom, 0px)); }
+  .cashbook .cb-dialog-footer button { min-height: 44px; padding: 10px 12px; font-size: 14px; }
+  .cashbook .cb-dialog .cb-form { gap: 12px; }
+  .cashbook .cb-dialog .cb-form label { gap: 5px; }
+  .cashbook .cb-dialog .cb-form input:not([type=checkbox]),
+  .cashbook .cb-dialog .cb-form select,
+  .cashbook .cb-dialog .cb-form textarea { padding: 9px 10px; font-size: 16px; }
+  .cashbook .cb-dialog .cb-form p { margin-block: 0 2px; }
+  .cashbook .cb-dialog canvas { height: 110px; }
+  .cashbook .cb-dialog .cb-photo { max-height: 140px; }
+  .cashbook .cb-dialog .cb-review-facts { margin: 12px 0; padding: 12px; }
+}

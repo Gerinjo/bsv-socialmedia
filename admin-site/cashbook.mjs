@@ -25,10 +25,44 @@ function cbSignature(canvas) {
 }
 async function cbShowMedia(root, request, action, id) {
   const dialog=root.querySelector('[data-cb-media-dialog]');
-  dialog.querySelector('.cb-media').textContent='Beleg wird geladen …';dialog.showModal();
+  cbLayoutDialog(dialog);dialog.querySelector('.cb-media').textContent='Beleg wird geladen …';cbResetDialogScroll(dialog);dialog.showModal();
   try {const media=await request({action,id});if(!dialog.isConnected)return;const area=dialog.querySelector('.cb-media');area.replaceChildren();for(const [url,label] of [[media.evidenceUrl,'Belegfoto'],[media.signatureUrl,'Unterschrift']]){if(!url)continue;const title=document.createElement('h3');title.textContent=label;const img=document.createElement('img');img.src=url;img.alt=label;img.referrerPolicy='no-referrer';area.append(title,img);}}catch(error){if(dialog.isConnected)dialog.querySelector('.cb-media').textContent=error.message;}
 }
 const cbMediaDialog = '<dialog data-cb-media-dialog><div class="cb-heading"><h2>Beleg zur Buchung</h2><button class="secondary" type="button" data-cb-close-media>Schließen</button></div><div class="cb-media"></div></dialog>';
+
+let cbDialogId=0,cbViewportListening=false;
+function cbSizeDialogs() {
+  const viewport=window.visualViewport;
+  for(const dialog of document.querySelectorAll('.cashbook dialog.cb-dialog')){
+    dialog.style.setProperty('--cb-viewport-height',(viewport?.height??window.innerHeight)+'px');
+    dialog.style.setProperty('--cb-viewport-top',(viewport?.offsetTop??0)+'px');
+  }
+}
+function cbLayoutDialog(dialog) {
+  if(dialog.querySelector('.cb-dialog-body'))return;
+  const header=dialog.querySelector('.cb-heading'),body=document.createElement('div'),footer=document.createElement('div');
+  dialog.classList.add('cb-dialog');header.classList.add('cb-dialog-header');
+  const title=header.querySelector('h2');title.id='cb-dialog-title-'+(++cbDialogId);dialog.setAttribute('aria-labelledby',title.id);
+  body.className='cb-dialog-body';footer.className='cb-dialog-footer';footer.hidden=true;
+  for(const node of [...dialog.childNodes])if(node!==header)body.append(node);
+  dialog.append(header,body,footer);
+  if(!cbViewportListening){
+    cbViewportListening=true;window.addEventListener('resize',cbSizeDialogs);
+    window.visualViewport?.addEventListener('resize',cbSizeDialogs);
+    window.visualViewport?.addEventListener('scroll',cbSizeDialogs);
+  }
+  cbSizeDialogs();
+}
+function cbDialogActions(dialog,form,buttons) {
+  const footer=dialog.querySelector('.cb-dialog-footer');
+  if(!form.id)form.id='cb-dialog-form-'+(++cbDialogId);
+  for(const button of buttons){
+    if(button.type==='submit')button.setAttribute('form',form.id);
+    button.style.marginTop='';
+  }
+  footer.replaceChildren(...buttons);footer.hidden=false;
+}
+function cbResetDialogScroll(dialog){dialog.querySelector('.cb-dialog-body').scrollTop=0;}
 
 export function createCashbookWorkspace(root,{request,onPending=()=>{},getPending=()=>null}) {
   let data=null,rows=[],more=false,generation=0,photo=null,signature=null,reading=false,readGeneration=0;
@@ -41,7 +75,9 @@ export function createCashbookWorkspace(root,{request,onPending=()=>{},getPendin
     const dialog=root.querySelector('[data-cb-change-dialog]'),cancel=action==='cancel',oldAmount=row.recordAmountCents??row.amountCents;
     let changePhoto=pending?.evidence||null,photoReading=false,photoError=null,readVersion=0;
     dialog.innerHTML=`<div class="cb-heading"><h2>${cancel?'Eigenen Eintrag löschen':'Eigenen Eintrag bearbeiten'}</h2><button class="secondary" type="button" data-cb-close-change>Schließen</button></div><p class="cb-muted">${cbEscape(row.teamName)} · Nr. ${row.sequence} · Bisher ${cashbookMoney(oldAmount)}</p><form class="cb-form" data-cb-change-form>${cancel?'<p>Der Eintrag wird storniert. Die ursprüngliche Buchung bleibt im Logbuch nachvollziehbar.</p>':`<label>Mannschaft<select name="teamId" required>${data.teams.map(t=>`<option value="${cbEscape(t.id)}">${cbEscape(t.name)}</option>`).join('')}</select></label><label>Tatsächlich entnommener Betrag in Euro<input name="amount" type="text" inputmode="decimal" required></label><label>Verwendungszweck / Spiel<input name="note" maxlength="500"></label><label>Schiriquittung ersetzen (optional)<input name="photo" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"></label><p class="cb-muted">Ohne neues Foto bleibt die bisherige Quittung erhalten.</p>`}<p data-cb-change-money class="cb-low"></p><label>Grund ${cancel?'der Löschung':'der Änderung'}<textarea name="reason" maxlength="500" required></textarea></label><label>Deine Unterschrift<canvas width="800" height="260" data-cb-change-signature aria-label="Änderung unterschreiben"></canvas></label><button class="secondary" type="button" data-cb-change-clear>Unterschrift löschen</button><label class="cb-check"><input name="confirmed" type="checkbox" required>Ich bestätige die Angaben und dass die genannte Geldkorrektur dem tatsächlichen Safe-Bestand entspricht.</label><button type="submit" class="${cancel?'danger':''}">${cancel?'Eintrag löschen & stornieren':'Änderung speichern'}</button></form><div data-cb-change-status class="cb-status" role="status" aria-live="polite"></div>`;
-    const form=dialog.querySelector('form'),message=dialog.querySelector('[data-cb-change-status]'),sign=cbSignature(dialog.querySelector('canvas'));
+    cbLayoutDialog(dialog);
+    const form=dialog.querySelector('form'),message=dialog.querySelector('[data-cb-change-status]'),sign=cbSignature(dialog.querySelector('canvas')),submitButton=form.querySelector('button[type=submit]');
+    cbDialogActions(dialog,form,[submitButton]);
     const money=()=>{try{const next=cancel?0:cashbookAmount(form.elements.amount.value),delta=oldAmount-next;dialog.querySelector('[data-cb-change-money]').textContent=delta>0?`${cashbookMoney(delta)} müssen zurück in den Safe, falls du sie bereits entnommen hast. Bei einer irrtümlichen Buchung bleibt dieses Geld im Safe.`:delta<0?`${cashbookMoney(-delta)} werden zusätzlich aus dem Safe entnommen.`:'Der Geldbestand bleibt unverändert.';}catch{dialog.querySelector('[data-cb-change-money]').textContent='Bitte den korrekten Betrag eingeben.';}};
     if(!cancel){form.elements.amount.value=((pending?.amountCents??oldAmount)/100).toFixed(2).replace('.',',');form.elements.teamId.value=pending?.teamId??row.teamId;form.elements.note.value=pending?.note??row.note;form.elements.amount.oninput=money;form.elements.photo.onchange=async()=>{const version=++readVersion;photoReading=true;changePhoto=null;photoError=null;message.textContent='Foto wird vorbereitet …';try{const result=form.elements.photo.files[0]?await cbPhoto(form.elements.photo.files[0]):null;if(version===readVersion&&form.isConnected){changePhoto=result;message.textContent='';}}catch(error){if(version===readVersion&&form.isConnected){photoError=error;message.textContent=error.message;}}finally{if(version===readVersion)photoReading=false;}};}
     form.elements.reason.value=pending?.reason||'';money();
@@ -50,7 +86,7 @@ export function createCashbookWorkspace(root,{request,onPending=()=>{},getPendin
     const lock=value=>{for(const field of form.querySelectorAll('input,select,textarea,[data-cb-change-clear]'))field.disabled=value;form.querySelector('canvas').style.pointerEvents=value?'none':'';};
     if(pending?.sent){lock(true);message.textContent='Diese Änderung wurde bereits gesendet. Bitte mit denselben Angaben erneut speichern, um den Ausgang zu prüfen.';}
     form.onsubmit=async event=>{
-      event.preventDefault();const button=form.querySelector('button[type=submit]'),revision=generation;let change;
+      event.preventDefault();const button=event.submitter||submitButton,revision=generation;let change;
       try{
         if(photoReading)throw new Error('Bitte warten, bis das Foto vorbereitet ist.');
         if(photoError&&!pending?.sent)throw photoError;
@@ -62,7 +98,7 @@ export function createCashbookWorkspace(root,{request,onPending=()=>{},getPendin
       catch(error){if(revision!==generation)return;message.textContent=error.message;message.classList.add('error');if(error.status===400||error.status===409||error.status===403){pending=null;onPending(null);lock(false);}}
       finally{if(button.isConnected)button.disabled=false;}
     };
-    dialog.showModal();
+    cbResetDialogScroll(dialog);dialog.showModal();
   }
   function render(direction=getPending()?.direction) {
     const canBook=data.canBook===true,canDeposit=canBook&&(data.canDeposit??data.user.role==='cashier'),canWithdraw=canBook&&(data.canWithdraw??data.user.role==='trainer'),deposit=canDeposit&&(direction==='deposit'||!canWithdraw),canExport=data.canExport??data.user.role==='cashier';
@@ -73,22 +109,25 @@ export function createCashbookWorkspace(root,{request,onPending=()=>{},getPendin
     root.querySelector('[data-cb-refresh]').onclick=async event=>{const button=event.currentTarget;button.disabled=true;try{await open();}catch(error){status(error.message,true);}finally{if(button.isConnected)button.disabled=false;}};
     root.querySelector('[data-cb-more]').onclick=async event=>{const button=event.currentTarget;button.disabled=true;const revision=generation;try{const next=await request({action:'list',before:rows.at(-1).sequence});if(revision!==generation)return;more=next.entries.length>30;rows.push(...next.entries.slice(0,30));ledger();}catch(error){status(error.message,true);}finally{if(button.isConnected)button.disabled=false;}};
     if(canExport)root.querySelector('[data-cb-export]').onclick=async event=>{const button=event.currentTarget;button.disabled=true;try{await cbExport(request,'list');status('Logbuch wurde exportiert.');}catch(error){status(error.message,true);}finally{if(button.isConnected)button.disabled=false;}};
-    const dialog=root.querySelector('[data-cb-book-dialog]'),form=root.querySelector('[data-cb-book-form]'),bookStatus=root.querySelector('[data-cb-book-status]');
+    const dialog=root.querySelector('[data-cb-book-dialog]'),form=root.querySelector('[data-cb-book-form]'),bookStatus=root.querySelector('[data-cb-book-status]'),checkButton=form.querySelector('button[type=submit]');
+    cbLayoutDialog(dialog);cbDialogActions(dialog,form,[checkButton]);
     if(!deposit){signature=cbSignature(root.querySelector('[data-cb-signature]'));root.querySelector('[data-cb-clear-signature]').onclick=()=>signature.clear();}
     const message=(text,error=false)=>{bookStatus.textContent=text;bookStatus.classList.toggle('error',error);};
     const review=booking=>{
       const team=data.teams.find(t=>t.id===booking.teamId);
       form.hidden=true;const area=root.querySelector('[data-cb-review]');area.hidden=false;
       area.innerHTML=`<p class="cb-muted">${deposit?'Einzahlung':'Entnahme'} bestätigen</p><div class="cb-review-amount">${cashbookMoney(booking.amountCents)}</div><div class="cb-review-facts">${cbEscape(team?.name||'Vereinskasse / Jugendkasse')}<br>${cbEscape(data.user.name)}${booking.note?'<br>'+cbEscape(booking.note):''}</div><img class="cb-photo" src="${booking.evidence}" alt="Beleg zur Bestätigung">${deposit?'':`<img class="cb-photo" src="${booking.signature}" alt="Deine Unterschrift" style="background:white;margin-top:12px">`}<form class="cb-form" data-cb-confirm-form style="margin-top:18px"><label class="cb-check"><input name="confirmed" type="checkbox" required>Ich bestätige, dass ich genau ${cashbookMoney(booking.amountCents)} ${deposit?'in den Safe eingelegt':'aus dem Safe entnommen'} habe und die Angaben stimmen.</label><button type="submit">Bestätigen & buchen</button></form><button type="button" class="secondary" data-cb-back style="margin-top:12px">Angaben ändern</button>`;
-      area.querySelector('[data-cb-back]').onclick=()=>{if(getPending()?.sent){message('Der Ausgang dieser Buchung ist noch unklar. Bitte dieselbe Buchung erneut bestätigen oder den aktuellen Bestand prüfen.',true);return;}area.hidden=true;form.hidden=false;onPending(null);message('');};
-      area.querySelector('form').onsubmit=async event=>{
-        event.preventDefault();const button=event.currentTarget.querySelector('button');button.disabled=true;area.querySelector('[data-cb-back]').disabled=true;
+      const confirmForm=area.querySelector('form'),confirmButton=confirmForm.querySelector('button'),backButton=area.querySelector('[data-cb-back]');
+      cbDialogActions(dialog,confirmForm,[backButton,confirmButton]);cbResetDialogScroll(dialog);
+      backButton.onclick=()=>{if(getPending()?.sent){message('Der Ausgang dieser Buchung ist noch unklar. Bitte dieselbe Buchung erneut bestätigen oder den aktuellen Bestand prüfen.',true);return;}area.hidden=true;form.hidden=false;cbDialogActions(dialog,form,[checkButton]);cbResetDialogScroll(dialog);onPending(null);message('');};
+      confirmForm.onsubmit=async event=>{
+        event.preventDefault();const button=event.submitter||confirmButton;button.disabled=true;backButton.disabled=true;
         const revision=generation;const pending={...booking,confirmed:true,sent:true};onPending(pending);message('Buchung wird gespeichert …');
-        try{const result=await request({action:'book',...pending});if(revision!==generation)return;onPending(null);dialog.close();await open(result);status(`${deposit?'Einzahlung':'Auszahlung'} von ${cashbookMoney(booking.amountCents)} wurde gebucht.`);}catch(error){message(error.message,true);if(error.status===400||error.status===409){onPending({...booking,sent:false});area.querySelector('[data-cb-back]').disabled=false;}}finally{if(button.isConnected)button.disabled=false;}
+        try{const result=await request({action:'book',...pending});if(revision!==generation)return;onPending(null);dialog.close();await open(result);status(`${deposit?'Einzahlung':'Auszahlung'} von ${cashbookMoney(booking.amountCents)} wurde gebucht.`);}catch(error){message(error.message,true);if(error.status===400||error.status===409){onPending({...booking,sent:false});backButton.disabled=false;}}finally{if(button.isConnected)button.disabled=false;}
       };
     };
     root.querySelector('[data-cb-cancel]').onclick=()=>dialog.close();
-    root.querySelector('[data-cb-new]').onclick=()=>{const pending=getPending();if(pending?.action==='edit'||pending?.action==='cancel'){beginChange(pending.targetRow,pending.action,pending);return;}if(pending){review(pending);}else{photo=null;reading=false;readGeneration++;form.reset();signature?.clear();form.hidden=false;root.querySelector('[data-cb-review]').hidden=true;root.querySelector('[data-cb-photo-preview]').hidden=true;message('');}dialog.showModal();};
+    root.querySelector('[data-cb-new]').onclick=()=>{const pending=getPending();if(pending?.action==='edit'||pending?.action==='cancel'){beginChange(pending.targetRow,pending.action,pending);return;}if(pending){review(pending);}else{photo=null;reading=false;readGeneration++;form.reset();signature?.clear();form.hidden=false;root.querySelector('[data-cb-review]').hidden=true;root.querySelector('[data-cb-photo-preview]').hidden=true;cbDialogActions(dialog,form,[checkButton]);message('');}cbResetDialogScroll(dialog);dialog.showModal();};
     const other=root.querySelector('[data-cb-other]');if(other)other.onclick=()=>{render(getPending()?.direction||(deposit?'withdrawal':'deposit'));root.querySelector('[data-cb-new]').click();};
     form.elements.photo.onchange=async()=>{const revision=++readGeneration;photo=null;reading=true;message('Foto wird vorbereitet …');try{const result=await cbPhoto(form.elements.photo.files[0]);if(revision!==readGeneration||!form.isConnected)return;photo=result;const img=root.querySelector('[data-cb-photo-preview]');img.src=photo;img.hidden=false;message('');}catch(error){message(error.message,true);}finally{if(revision===readGeneration)reading=false;}};
     form.onsubmit=event=>{event.preventDefault();try{if(reading)throw new Error('Bitte warten, bis das Foto vorbereitet ist.');if(!photo)throw new Error('Bitte zuerst das Belegfoto auswählen.');const amountCents=cashbookAmount(form.elements.amount.value);if(!deposit&&amountCents>data.balanceCents)throw new Error('Der angezeigte Safe-Bestand reicht für diesen Betrag nicht aus.');const booking={requestId:crypto.randomUUID(),direction:deposit?'deposit':'withdrawal',amountCents,teamId:deposit?null:form.elements.teamId.value,note:form.elements.note.value.trim(),evidence:photo,...(deposit?{}:{signature:signature.read(),signatureDrawn:true})};onPending(booking);message('');review(booking);}catch(error){message(error.message,true);}};
