@@ -160,8 +160,16 @@ __BRAND_PREVIEW_CSS__
         </div>
         <div class="suite-sidebar-title">Arbeitsbereiche</div>
         <nav class="suite-main-nav" aria-label="Arbeitsbereiche">
+          <button class="suite-nav-item" type="button" data-suite-area="corporate_identity" title="Corporate Identity"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18h2a2 2 0 0 0 0-4h-1a2 2 0 0 1 0-4h3a5 5 0 0 0 0-10z"></path><circle cx="7" cy="10" r="1"></circle><circle cx="10" cy="7" r="1"></circle><circle cx="15" cy="7" r="1"></circle></svg></span><span class="suite-nav-label">Corporate Identity</span></button>
           <div class="suite-nav-group">
-            <button class="suite-nav-item active" type="button" data-suite-area="social_media" title="Social Media" aria-expanded="true" aria-controls="socialMediaSubnav"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 11v3l12 4V7L3 11Z"/><path d="M15 9l5-3v13l-5-3"/><path d="m6 15 1.5 5h3L9 16"/></svg></span><span class="suite-nav-label">Social Media</span></button>
+            <button class="suite-nav-item" type="button" data-suite-area="sponsoring" title="Sponsoring" aria-expanded="false" aria-controls="sponsoringSubnav"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="17" cy="7" r="3"></circle><path d="M3 12h4l3 3 4-4 4 4-5 5a2 2 0 0 1-3 0l-4-4H3"></path><path d="M14 6H9L6 9"></path></svg></span><span class="suite-nav-label">Sponsoring</span></button>
+            <div id="sponsoringSubnav" class="suite-subnav" aria-label="Sponsoring">
+              <button type="button" class="suite-subnav-item" data-admin-section="sponsors" data-admin-area="sponsoring">Werbepartner <span id="sponsorAttentionCount"></span></button>
+              <button type="button" class="suite-subnav-item" data-admin-section="assignments" data-admin-area="sponsoring">Zuweisungen</button>
+            </div>
+          </div>
+          <div class="suite-nav-group">
+            <button class="suite-nav-item active" type="button" data-suite-area="social_media" title="Social Media" aria-expanded="true" aria-controls="socialMediaSubnav"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 11v3l12 4V7L3 11Z"></path><path d="M15 9l5-3v13l-5-3"></path><path d="m6 15 1.5 5h3L9 16"></path></svg></span><span class="suite-nav-label">Social Media</span></button>
             <div id="socialMediaSubnav" class="suite-subnav" role="tablist" aria-label="Social Media">
               <button id="gamesTabButton" class="suite-subnav-item active" type="button" role="tab" aria-selected="true" aria-controls="gamesTab">Spiele</button>
               <button id="postsTabButton" class="suite-subnav-item" type="button" role="tab" aria-selected="false" aria-controls="postsTab">Posts</button>
@@ -170,23 +178,15 @@ __BRAND_PREVIEW_CSS__
               <details id="socialMediaAdminMenu" class="suite-nested-menu hidden"><summary>Administration</summary><div><button type="button" class="suite-subnav-item" data-admin-section="instagram" data-admin-area="social_media_admin">Instagram</button><button id="cleanupNavButton" type="button" class="suite-subnav-item" data-admin-section="cleanup" data-admin-area="social_media_admin">Aufbewahrung · 30 Tage</button></div></details>
             </div>
           </div>
+          <button class="suite-nav-item" type="button" data-suite-area="editorial" title="Redaktion"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 4h16v17H4zM8 2v4M16 2v4M4 9h16M8 13h3M8 17h8"></path></svg></span><span class="suite-nav-label">Redaktion</span></button>
+          <button class="suite-nav-item" type="button" data-suite-area="club_crests" title="Vereinswappen"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 3 6v6c0 5 9 9 9 9s9-4 9-9V6z"></path><path d="m8 11 3 3 5-6"></path></svg></span><span class="suite-nav-label">Vereinswappen <span id="crestAttentionCount"></span></span></button>
+          <button class="suite-nav-item" type="button" data-suite-area="referees" title="Schiedsrichter"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h14v17H5zM9 2v4M15 2v4M8 11l3 3 5-6M8 18h8"></path></svg></span><span class="suite-nav-label">Schiedsrichter</span></button>
           <div class="suite-nav-group">
-            <button class="suite-nav-item" type="button" data-suite-area="sponsoring" title="Sponsoring" aria-expanded="false" aria-controls="sponsoringSubnav"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="17" cy="7" r="3"/><path d="M3 12h4l3 3 4-4 4 4-5 5a2 2 0 0 1-3 0l-4-4H3"/><path d="M14 6H9L6 9"/></svg></span><span class="suite-nav-label">Sponsoring</span></button>
-            <div id="sponsoringSubnav" class="suite-subnav" aria-label="Sponsoring">
-              <button type="button" class="suite-subnav-item" data-admin-section="sponsors" data-admin-area="sponsoring">Werbepartner <span id="sponsorAttentionCount"></span></button>
-              <button type="button" class="suite-subnav-item" data-admin-section="assignments" data-admin-area="sponsoring">Zuweisungen</button>
-            </div>
-          </div>
-          <button class="suite-nav-item" type="button" data-suite-area="club_crests" title="Vereinswappen"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 3 6v6c0 5 9 9 9 9s9-4 9-9V6z"/><path d="m8 11 3 3 5-6"/></svg></span><span class="suite-nav-label">Vereinswappen <span id="crestAttentionCount"></span></span></button>
-          <button class="suite-nav-item" type="button" data-suite-area="corporate_identity" title="Corporate Identity"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18h2a2 2 0 0 0 0-4h-1a2 2 0 0 1 0-4h3a5 5 0 0 0 0-10z"/><circle cx="7" cy="10" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7" r="1"/></svg></span><span class="suite-nav-label">Corporate Identity</span></button>
-          <button class="suite-nav-item" type="button" data-suite-area="referees" title="Schiedsrichter"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h14v17H5zM9 2v4M15 2v4M8 11l3 3 5-6M8 18h8"/></svg></span><span class="suite-nav-label">Schiedsrichter</span></button>
-          <button class="suite-nav-item" type="button" data-suite-area="editorial" title="Redaktion"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 4h16v17H4zM8 2v4M16 2v4M4 9h16M8 13h3M8 17h8"/></svg></span><span class="suite-nav-label">Redaktion</span></button>
-          <div class="suite-nav-group">
-          <button type="button" class="suite-nav-item" data-suite-area="cashbook" title="Kassenbuch" aria-controls="cashbookSubnav" aria-expanded="false"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 5h18v15H3zM3 9h18M16 13h3M7 13h3M7 16h3"/></svg></span><span class="suite-nav-label">Kassenbuch</span></button>
+          <button type="button" class="suite-nav-item" data-suite-area="cashbook" title="Kassenbuch" aria-controls="cashbookSubnav" aria-expanded="false"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 5h18v15H3zM3 9h18M16 13h3M7 13h3M7 16h3"></path></svg></span><span class="suite-nav-label">Kassenbuch</span></button>
             <div id="cashbookSubnav" class="suite-subnav"><button id="cashbookAdminNav" type="button" class="suite-subnav-item hidden" data-admin-section="cashbook" data-admin-area="cashbook">Kassenbuch verwalten</button></div>
           </div>
           <div class="suite-nav-group">
-          <button class="suite-nav-item" type="button" data-suite-area="user_management" title="Benutzerverwaltung" aria-controls="usersSubnav" aria-expanded="false"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20a6 6 0 0 1 12 0M14 15.5a5 5 0 0 1 7 4.5"/></svg></span><span class="suite-nav-label">Benutzerverwaltung</span></button>
+          <button class="suite-nav-item" type="button" data-suite-area="user_management" title="Benutzerverwaltung" aria-controls="usersSubnav" aria-expanded="false"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><circle cx="17" cy="9" r="2.5"></circle><path d="M3 20a6 6 0 0 1 12 0M14 15.5a5 5 0 0 1 7 4.5"></path></svg></span><span class="suite-nav-label">Benutzerverwaltung</span></button>
             <div id="usersSubnav" class="suite-subnav"><button type="button" class="suite-subnav-item" data-admin-section="members" data-admin-area="user_management">Benutzer</button><button type="button" class="suite-subnav-item" data-admin-section="roles" data-admin-area="user_management">Rollen &amp; Rechte</button></div>
           </div>
           <button id="adminTabButton" class="hidden" type="button" aria-controls="adminTab" tabindex="-1">Admin</button>
