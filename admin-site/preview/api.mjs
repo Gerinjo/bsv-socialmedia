@@ -1,3 +1,4 @@
+import {previewSuiteMembers,previewSuiteProfile,previewSuiteRoles,previewSuiteBrand,previewSuiteMutation,previewSetBrand} from '/preview-suite-users.mjs';
 import { refereePreviewApi } from '/preview-referees.mjs';
 import { cashbookPreviewApi,cashbookPreviewAdmin,cashbookPreviewMembers } from '/preview-cashbook.mjs';
 import { normalizeNewsletterSettings, newsletterSource, newsletterSelection } from '/newsletter.mjs';
@@ -196,7 +197,7 @@ function previewPasswords() {
 }
 const requestedPersona=new URLSearchParams(location.search).get('previewUser');
 let previewPersona=requestedPersona==='login'?null:(previewNames[requestedPersona]||sessionStorage.getItem('bsv-suite-preview-user')||'editorial');
-const previewAreas=()=>previewPersona==='admin'?['social_media','sponsoring','editorial','referees','cashbook','administration','user_management']:previewPersona==='editorial'?['editorial','referees']:['cashbook'];
+const previewAreas=()=>previewPersona?previewSuiteProfile(previewPersona).accessAreas:[];
 export async function suitePreviewLogin(identity,password) {
   if(password!==(previewPasswords()[identity]||'bsv1956')||!Object.values(previewNames).includes(identity))throw new Error('Vorschau: Benutzername oder Passwort stimmt nicht. Das Startpasswort ist bsv1956, sofern du es unter Profil noch nicht geändert hast.');
   previewPersona=identity;sessionStorage.setItem('bsv-suite-preview-user',identity);if(requestedPersona==='login')history.replaceState(null,'','/?area=cashbook');
@@ -205,17 +206,16 @@ export async function suitePreviewLogin(identity,password) {
 export async function editorialPreviewApi(method = "GET", body = {}) {
   if (method === "GET")
     return {
-      user: {
-        userId: "local-preview-"+previewPersona,
-        email: "Lokale Vorschau · "+previewPersona,
-        role: previewPersona==='admin'?'admin':'sm-team',
-        accessAreas: previewAreas(),
-      },
+      user:previewSuiteProfile(previewPersona),suiteRoles:previewPersona==='admin'?previewSuiteRoles():[],brandSettings:previewSuiteBrand(),
       testMode: true,
-      members: previewPersona==='admin'?cashbookPreviewMembers():[],
+      members: previewPersona==='admin'?previewSuiteMembers():[],
+      teamSettings:previewAreas().includes('corporate_identity')?teams.map(team=>({...team,competition:'Beispiel',family_key:'youth',color_source:'global',color_scheme:previewSuiteBrand().color_scheme,active:false,content_enabled:false,publishing_mode:'manual'})):[],
+      teamColorGroups:previewAreas().includes('corporate_identity')?[{key:'youth',label:'Jugend',color_scheme:previewSuiteBrand().color_scheme}]:[],
     };
+  if(['save_suite_role','save_suite_member','bulk_suite_users','create_team_member'].includes(body.action))return previewSuiteMutation(body,previewPersona);
+  if(body.action==='save_bsv_standard'){if(!previewAreas().includes('corporate_identity'))throw new Error('Keine Berechtigung');return previewSetBrand(body.colorScheme);}
   if (body.action?.startsWith('cashbook_')) {
-    if(!previewAreas().includes('cashbook'))throw new Error('Kein Recht für das Kassenbuch der Jugendabteilung.');
+    if(!previewAreas().includes('cashbook'))throw new Error('Kein Recht für das Kassenbuch.');
     if(['cashbook_list','cashbook_book','cashbook_media','cashbook_edit','cashbook_cancel'].includes(body.action))return cashbookPreviewApi({...body,action:body.action.replace('cashbook_','')},previewPersona);
     if(previewPersona!=='admin')throw new Error('Nur der Super-Admin darf die Kasse verwalten.');
     return cashbookPreviewAdmin(body);

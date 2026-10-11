@@ -29,7 +29,7 @@ test('ordinary accounts continue to use their real email address as their login 
   assert.equal(view.name,'jugend@example.org');assert.equal(view.login,'jugend@example.org');assert.equal(view.confirmation,'jugend@example.org');
 });
 test('directory fetch uses the authenticated admin actor and never grants rights from labels',async()=>{
-  const db={rpc:async(name,args)=>{assert.equal(name,'cashbook_admin_request');assert.deepEqual(args,{actor:id,payload:{action:'cashbook_load'}});return {data:{accounts:[account],entries:[{secret:'must not return'}]}};}};
+  const db={from:()=>({select:async()=>({data:[]})}),rpc:async(name,args)=>{assert.equal(name,'cashbook_admin_request');assert.deepEqual(args,{actor:id,payload:{action:'cashbook_load'}});return {data:{accounts:[account],entries:[{secret:'must not return'}]}};}};
   const result=await suiteMemberDirectory(db,id,[member]);assert.equal(result[0].username,'jentm');assert.equal(result[0].secret,undefined);assert.deepEqual(result[0].access_areas,['cashbook']);
   for(const denied of [{error:{message:'internal'}},{data:{error:'Nur Admin'}},{data:null}])await assert.rejects(()=>suiteMemberDirectory({rpc:async()=>denied},id,[member]),/nicht geladen/);
 });

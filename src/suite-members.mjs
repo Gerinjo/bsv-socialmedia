@@ -5,8 +5,8 @@ export function enrichSuiteMembers(members, accounts) {
   return members.map(member => {
     const account = byUser.get(member.user_id);
     return {...member,
-      display_name: account?.name || member.display_name || null,
-      username: account?.username || null,
+      display_name: [member.first_name,member.last_name].filter(Boolean).join(' ') || member.display_name || account?.name || null,
+      username: member.username || account?.username || null,
       cashbook_role: account?.role || null,
       is_youth_leader: account?.isYouthLeader === true,
     };
@@ -18,10 +18,10 @@ export function suiteMemberPresentation(member) {
   const internal = technicalEmail.test(email);
   const name = String(member.display_name || (internal ? 'Kassenbuchzugang' : email) || 'Unbekannt');
   const login = String(member.username || (internal ? '' : email));
-  const role = member.role === 'admin' ? 'Super-Admin'
+  const role = member.role_label || (member.role === 'admin' ? 'Super-Admin'
     : member.role === 'referee-admin' ? 'Schiedsrichteradmin'
     : member.cashbook_role === 'cashier' ? 'Kasse'
     : member.cashbook_role === 'trainer' ? member.is_youth_leader ? 'Jugendleitung' : 'Trainer'
-    : member.access_areas?.length === 1 && member.access_areas[0] === 'sponsoring' ? 'Sponsoren-Administrator' : 'Benutzer';
+    : member.access_areas?.length === 1 && member.access_areas[0] === 'sponsoring' ? 'Sponsoren-Administrator' : 'Benutzer');
   return {name,email:internal?'':email,login,role,confirmation:login || name};
 }

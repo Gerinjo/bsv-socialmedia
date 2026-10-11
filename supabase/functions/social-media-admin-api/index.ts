@@ -1,7 +1,8 @@
 import { handleReferees } from './referees.ts';
 import { handleCashbookWorkspace } from '../_shared/cashbook-evidence.mjs';
 import { handleCashbookAdmin } from './cashbook.mjs';
-import { SUITE_INITIAL_PASSWORD } from '../_shared/suite-accounts.mjs';
+import { handleSuiteUsers, suiteUsersRpc } from '../_shared/suite-users.mjs';
+import { suiteBrandColors } from '../../../src/suite-brand.mjs';
 import { suiteMemberDirectory } from '../_shared/suite-member-directory.mjs';
 import { handleEditorial } from './editorial.ts';
 import { DOMParser, XMLSerializer } from 'npm:@xmldom/xmldom@0.9.12';
@@ -29,13 +30,13 @@ const homeVenues = new Set(['Hauptplatz', 'Nebenplatz', 'Kunstrasenplatz 1', 'Ku
 const crestStatuses = new Set(['missing', 'needs_review', 'approved', 'rejected']);
 const sponsorStatuses = new Set(['missing', 'needs_review', 'approved', 'rejected']);
 const sponsorContexts = new Set(['announcement', 'lineup', 'result', 'report', 'birthday', 'post', 'story']);
-const suiteAreas = ['social_media', 'sponsoring', 'editorial', 'referees', 'administration', 'user_management', 'cashbook'] as const;
+const suiteAreas = ['social_media', 'sponsoring', 'editorial', 'referees', 'corporate_identity', 'club_crests', 'social_media_admin', 'user_management', 'cashbook'] as const;
 type SuiteArea = typeof suiteAreas[number];
 const actionAreas: Record<string, SuiteArea> = {
-  test_instagram_connection: 'administration', save_cleanup_settings: 'administration', purge_historical_data: 'administration',
-  save_team_settings: 'administration', save_team_color_group: 'administration', save_club_crest: 'administration',
-  discard_club_crest: 'administration', approve_club_crest: 'administration', reject_club_crest: 'administration',
-  set_team_member_access: 'user_management', update_team_member_permissions: 'user_management', delete_team_member: 'user_management', create_team_member: 'user_management',
+  test_instagram_connection: 'social_media_admin', save_cleanup_settings: 'social_media_admin', purge_historical_data: 'social_media_admin',
+  save_bsv_standard:'corporate_identity', save_team_settings: 'corporate_identity', save_team_color_group: 'corporate_identity', save_club_crest: 'club_crests',
+  discard_club_crest: 'club_crests', approve_club_crest: 'club_crests', reject_club_crest: 'club_crests',
+  save_suite_role:'user_management',save_suite_member:'user_management',bulk_suite_users:'user_management',set_team_member_access: 'user_management', update_team_member_permissions: 'user_management', delete_team_member: 'user_management', create_team_member: 'user_management',
   save_game: 'social_media', save_lineup: 'social_media', set_game_status: 'social_media', save_result: 'social_media',
   upload_report_image: 'social_media', approve_result: 'social_media', set_record_archived: 'social_media',
   save_independent_story: 'social_media', upload_independent_story_image: 'social_media', preview_independent_story: 'social_media',
@@ -629,11 +630,11 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
 
   const { data: membership, error: membershipError } = await context.supabaseAdmin
     .from('social_admins')
-    .select('user_id, email, role, is_active, access_areas')
+    .select('*')
     .eq('user_id', userId)
     .maybeSingle();
   if (membershipError) return json({ error: membershipError.message }, 500);
-  if (!membership || !membership.is_active) {
+  if (!membership || !membership.is_active || membership.is_blocked) {
     return json({ error: 'not_authorized', userId, email, reason: 'account_inactive' }, 403);
   }
   const normalizedRole = String(membership.role ?? '').trim().toLowerCase().replace(/\s+/g, '-');
@@ -641,17 +642,16 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
   if (!allowedRoles.has(normalizedRole)) {
     return json({ error: 'not_authorized', userId, email, reason: 'role_missing', role: membership.role }, 403);
   }
-  const accessAreas: SuiteArea[] = normalizedRole === 'admin'
-    ? [...suiteAreas]
-    : normalizedRole === 'referee-admin' ? ['referees']
-    : [...new Set((Array.isArray(membership.access_areas) ? membership.access_areas : ['social_media'])
-      .map((area: unknown) => String(area))
-      .filter((area: string): area is SuiteArea => suiteAreas.includes(area as SuiteArea)))];
+  const accessAreas: SuiteArea[] = normalizedRole==='admin'?[...suiteAreas]:(membership.access_areas||[]).filter((area:string)=>suiteAreas.includes(area as SuiteArea));
   const hasArea = (area: SuiteArea) => normalizedRole === 'admin' || accessAreas.includes(area);
   const hasAnyArea = (...areas: SuiteArea[]) => areas.some(hasArea);
 
   if (request.method === 'GET') {
-    if (accessAreas.every(area => area === 'cashbook')) return json({user:{userId,email,role:normalizedRole,accessAreas},testMode:runtimeConfig.testMode});
+    const identity=await suiteUsersRpc(context.supabaseAdmin,userId,{action:'identity'});
+    const {data:brandSettings,error:brandError}=await context.supabaseAdmin.from('social_brand_settings').select('color_scheme,updated_at').eq('id',true).single();
+    if(brandError)return json({error:brandError.message},500);
+    const suiteRoles=normalizedRole==='admin'?(await suiteUsersRpc(context.supabaseAdmin,userId,{action:'roles'})).roles:[];
+    if (accessAreas.every(area => area === 'cashbook')) return json({user:identity,brandSettings,suiteRoles,testMode:runtimeConfig.testMode});
     await ensureSeedClubAssets(context.supabaseAdmin);
     const [
       { data: games, error: gamesError },
@@ -699,7 +699,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .order('name', { ascending: true }),
       context.supabaseAdmin
         .from('social_admins')
-        .select('user_id, email, role, is_active, access_areas, created_at')
+        .select('*')
         .order('email', { ascending: true }),
       context.supabaseAdmin
         .from('social_post_audiences')
@@ -762,13 +762,13 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       story: preparedIndependentStories.map((record: any) => withHistoryState(record, 'story', retentionDays)),
     };
     return json({
-      user: { userId, email, role: String(membership.role ?? '').trim() || 'sm-team', accessAreas },
+      user: identity, brandSettings, suiteRoles,
       members: hasArea('user_management') ? await suiteMemberDirectory(context.supabaseAdmin,userId,members ?? []) : [],
       testMode: runtimeConfig.testMode,
       venues: hasArea('social_media') ? [...homeVenues] : [],
-      teams: hasAnyArea('social_media', 'administration') ? (teamSettings ?? []).filter((team: any) => team.active) : [],
-      teamSettings: hasAnyArea('social_media', 'administration') ? teamSettings ?? [] : [],
-      teamColorGroups: hasArea('administration') ? teamColorGroups ?? [] : [],
+      teams: hasAnyArea('social_media', 'corporate_identity') ? (teamSettings ?? []).filter((team: any) => team.active) : [],
+      teamSettings: hasAnyArea('social_media', 'corporate_identity') ? teamSettings ?? [] : [],
+      teamColorGroups: hasArea('corporate_identity') ? teamColorGroups ?? [] : [],
       people: hasArea('social_media') ? people ?? [] : [],
       postAudiences: hasAnyArea('social_media', 'sponsoring') ? postAudiences ?? [] : [],
       websiteAudiences: hasArea('sponsoring') ? websiteAudiences ?? [] : [],
@@ -779,12 +779,12 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       sponsorTypes: hasAnyArea('social_media', 'sponsoring') ? sponsorTypes ?? [] : [],
       sponsorAssignments: hasAnyArea('social_media', 'sponsoring') ? sponsorAssignments ?? [] : [],
       sponsorWebsiteAssignments: hasArea('sponsoring') ? sponsorWebsiteAssignments ?? [] : [],
-      clubs: hasAnyArea('social_media', 'administration') ? await freshClubUrls(context.supabaseAdmin, clubs ?? []) : [],
+      clubs: hasAnyArea('social_media', 'club_crests') ? await freshClubUrls(context.supabaseAdmin, clubs ?? []) : [],
       games: hasArea('social_media') ? historyRecords.game : [],
       birthdays: hasArea('social_media') ? await freshPreviewUrls(context.supabaseAdmin, birthdays ?? []) : [],
-      cleanupSettings: hasArea('administration') ? { retentionDays, updatedAt: cleanupSettings?.updated_at ?? null } : null,
-      cleanupSummary: hasArea('administration') ? cleanupSummary(historyRecords, retentionDays) : null,
-      instagramConfiguration: hasArea('administration') ? {
+      cleanupSettings: hasArea('social_media_admin') ? { retentionDays, updatedAt: cleanupSettings?.updated_at ?? null } : null,
+      cleanupSummary: hasArea('social_media_admin') ? cleanupSummary(historyRecords, retentionDays) : null,
+      instagramConfiguration: hasArea('social_media_admin') ? {
         accountIdConfigured: Boolean(runtimeConfig.instagramAccountId),
         accessTokenConfigured: Boolean(runtimeConfig.instagramAccessToken),
         graphApiVersion: runtimeConfig.metaGraphApiVersion,
@@ -929,168 +929,18 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       });
     }
 
-    if (action === 'set_team_member_access') {
-      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
-      const targetUserId = required(body.userId, 'Benutzer-ID');
-      if (targetUserId === userId) throw new Error('Der eigene aktuell verwendete Admin-Zugang kann nicht gesperrt werden.');
-      const isActive = body.isActive === true;
-      const { data: target, error: targetError } = await context.supabaseAdmin
-        .from('social_admins')
-        .select('user_id, email, role, is_active, access_areas')
-        .eq('user_id', targetUserId)
-        .maybeSingle();
-      if (targetError) throw targetError;
-      if (!target) throw new Error('Das Teammitglied wurde nicht gefunden.');
-      if (!isActive && target.role === 'admin' && target.is_active) {
-        const { count, error: countError } = await context.supabaseAdmin
-          .from('social_admins')
-          .select('user_id', { count: 'exact', head: true })
-          .eq('role', 'admin')
-          .eq('is_active', true)
-          .neq('user_id', targetUserId);
-        if (countError) throw countError;
-        if (!count) throw new Error('Der letzte aktive Administrator kann nicht gesperrt werden.');
-      }
-      const { data: updated, error: updateError } = await context.supabaseAdmin
-        .from('social_admins')
-        .update({ is_active: isActive })
-        .eq('user_id', targetUserId)
-        .select('user_id, email, role, is_active, access_areas, created_at')
-        .single();
-      if (updateError) throw updateError;
-      const { error: authError } = await context.supabaseAdmin.auth.admin.updateUserById(targetUserId, {
-        ban_duration: isActive ? 'none' : '876000h',
-      });
-      if (authError) {
-        await context.supabaseAdmin.from('social_admins').update({ is_active: target.is_active }).eq('user_id', targetUserId);
-        throw new Error(`Der Auth-Zugang konnte nicht ${isActive ? 'entsperrt' : 'gesperrt'} werden: ${authError.message}`);
-      }
-      return json({ ok: true, member: updated });
+    if(['save_suite_role','save_suite_member','bulk_suite_users','create_team_member','set_team_member_access','update_team_member_permissions','delete_team_member'].includes(action)) {
+      if(normalizedRole!=='admin')return json({error:'admin_only'},403);
+      if(raw.length>100000)return json({error:'Die Anfrage ist zu groß.'},413);
+      return json(await handleSuiteUsers(context.supabaseAdmin,userId,body));
     }
-
-    if (action === 'update_team_member_permissions') {
-      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
-      const targetUserId = required(body.userId, 'Benutzer-ID');
-      if (targetUserId === userId) throw new Error('Die eigene Super-Admin-Rolle kann hier nicht geändert werden.');
-      const role = String(body.role ?? 'sm-team').trim();
-      if (!['admin', 'sm-team', 'referee-admin'].includes(role)) throw new Error('Die Rolle ist ungültig.');
-      const requestedAreas = Array.isArray(body.accessAreas) ? body.accessAreas.map((area: unknown) => String(area)) : [];
-      const nextAccessAreas: SuiteArea[] = role === 'admin'
-        ? [...suiteAreas]
-        : role === 'referee-admin' ? ['referees']
-        : [...new Set(requestedAreas.filter((area: string): area is SuiteArea => suiteAreas.includes(area as SuiteArea) && area !== 'user_management'))];
-      if (!nextAccessAreas.length) throw new Error('Für einen Benutzer muss mindestens ein Bereich freigegeben sein.');
-      const { data: target, error: targetError } = await context.supabaseAdmin
-        .from('social_admins')
-        .select('user_id, email, role, is_active, access_areas')
-        .eq('user_id', targetUserId)
-        .maybeSingle();
-      if (targetError) throw targetError;
-      if (!target) throw new Error('Das Teammitglied wurde nicht gefunden.');
-      if (target.role === 'admin' && role !== 'admin' && target.is_active) {
-        const { count, error: countError } = await context.supabaseAdmin
-          .from('social_admins')
-          .select('user_id', { count: 'exact', head: true })
-          .eq('role', 'admin')
-          .eq('is_active', true)
-          .neq('user_id', targetUserId);
-        if (countError) throw countError;
-        if (!count) throw new Error('Der letzte aktive Super-Admin kann nicht herabgestuft werden.');
-      }
-      const { data: updated, error: updateError } = await context.supabaseAdmin
-        .from('social_admins')
-        .update({ role, access_areas: nextAccessAreas })
-        .eq('user_id', targetUserId)
-        .select('user_id, email, role, is_active, access_areas, created_at')
-        .single();
-      if (updateError) throw updateError;
-      const { error: authError } = await context.supabaseAdmin.auth.admin.updateUserById(targetUserId, {
-        app_metadata: { social_role: role, social_access_areas: nextAccessAreas },
-      });
-      if (authError) {
-        await context.supabaseAdmin.from('social_admins').update({ role: target.role, access_areas: target.access_areas }).eq('user_id', targetUserId);
-        throw new Error(`Die Auth-Rolle konnte nicht aktualisiert werden: ${authError.message}`);
-      }
-      return json({ ok: true, member: updated });
-    }
-
-    if (action === 'delete_team_member') {
-      if (normalizedRole !== 'admin') return json({ error: 'admin_only' }, 403);
-      const targetUserId = required(body.userId, 'Benutzer-ID');
-      if (targetUserId === userId) throw new Error('Der eigene aktuell verwendete Admin-Zugang kann nicht gelöscht werden.');
-      const { data: target, error: targetError } = await context.supabaseAdmin
-        .from('social_admins')
-        .select('user_id, email, role, is_active')
-        .eq('user_id', targetUserId)
-        .maybeSingle();
-      if (targetError) throw targetError;
-      if (!target) throw new Error('Das Teammitglied wurde nicht gefunden.');
-      if (target.role === 'admin' && target.is_active) {
-        const { count, error: countError } = await context.supabaseAdmin
-          .from('social_admins')
-          .select('user_id', { count: 'exact', head: true })
-          .eq('role', 'admin')
-          .eq('is_active', true)
-          .neq('user_id', targetUserId);
-        if (countError) throw countError;
-        if (!count) throw new Error('Der letzte aktive Administrator kann nicht gelöscht werden.');
-      }
-      const { error: authError } = await context.supabaseAdmin.auth.admin.deleteUser(targetUserId);
-      if (authError) throw new Error(`Der Auth-Zugang konnte nicht gelöscht werden: ${authError.message}`);
-      const { error: membershipDeleteError } = await context.supabaseAdmin
-        .from('social_admins')
-        .delete()
-        .eq('user_id', targetUserId);
-      if (membershipDeleteError) throw membershipDeleteError;
-      return json({ ok: true, deletedUserId: targetUserId });
-    }
-
-    if (action === 'create_team_member') {
-      if (String(membership.role ?? '').trim().toLowerCase() !== 'admin') {
-        return json({ error: 'admin_only' }, 403);
-      }
-      const email = String(body.email ?? '').trim().toLowerCase();
-      const role = String(body.role ?? 'sm-team').trim();
-      const requestedAreas = Array.isArray(body.accessAreas) ? body.accessAreas.map((area: unknown) => String(area)) : [];
-      const nextAccessAreas: SuiteArea[] = role === 'admin'
-        ? [...suiteAreas]
-        : role === 'referee-admin' ? ['referees']
-        : [...new Set(requestedAreas.filter((area: string): area is SuiteArea => suiteAreas.includes(area as SuiteArea) && area !== 'user_management'))];
-      const isActive = body.is_active !== false;
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Bitte eine gültige E-Mail-Adresse eingeben.');
-      if (!['admin', 'sm-team', 'referee-admin'].includes(role)) throw new Error('Die Rolle ist ungültig.');
-      if (!nextAccessAreas.length) throw new Error('Für einen Benutzer muss mindestens ein Bereich freigegeben sein.');
-      const { data: createdUser, error: createUserError } = await context.supabaseAdmin.auth.admin.createUser({
-        email,
-        password: SUITE_INITIAL_PASSWORD,
-        email_confirm: true,
-        app_metadata: { social_role: role, social_access_areas: nextAccessAreas },
-      });
-      if (createUserError) throw new Error(createUserError.message || 'Der Benutzer konnte nicht angelegt werden.');
-      const { data: member, error: insertError } = await context.supabaseAdmin
-        .from('social_admins')
-        .upsert({
-          user_id: createdUser.user.id,
-          email,
-          role,
-          access_areas: nextAccessAreas,
-          is_active: isActive,
-        }, { onConflict: 'user_id' })
-        .select('*')
-        .single();
-      if (insertError) {
-        await context.supabaseAdmin.auth.admin.deleteUser(createdUser.user.id);
-        throw insertError;
-      }
-      if (!isActive) {
-        const { error: banError } = await context.supabaseAdmin.auth.admin.updateUserById(createdUser.user.id, { ban_duration: '876000h' });
-        if (banError) {
-          await context.supabaseAdmin.from('social_admins').delete().eq('user_id', createdUser.user.id);
-          await context.supabaseAdmin.auth.admin.deleteUser(createdUser.user.id);
-          throw new Error(`Der inaktive Zugang konnte nicht gesperrt werden: ${banError.message}`);
-        }
-      }
-      return json({ ok: true, member });
+    if(action==='save_bsv_standard') {
+      const colorScheme=suiteBrandColors(body.colorScheme);
+      const result=await context.supabaseAdmin.rpc('suite_brand_request',{actor:userId,payload:{colorScheme}});
+      if(result.error)throw result.error;
+      if(result.data?.error)return json(result.data,result.data.status||400);
+      for(const team of result.data.teams||[])if(team.active&&team.content_enabled)await rerenderTeamAnnouncementPreviews(context.supabaseAdmin,team.id);
+      return json({ok:true,inheritedTeams:(result.data.teams||[]).length});
     }
 
     if (action === 'save_team_settings') {
@@ -1108,7 +958,9 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       if (!previousTeam) throw new Error('Die Mannschaft wurde nicht gefunden.');
       let resolvedColorScheme: Record<string, string>;
       if (colorSource === 'global') {
-        resolvedColorScheme = { ...defaultTeamColorScheme };
+        const {data:brand,error:brandError}=await context.supabaseAdmin.from('social_brand_settings').select('color_scheme').eq('id',true).single();
+        if(brandError)throw brandError;
+        resolvedColorScheme = suiteBrandColors(brand.color_scheme);
       } else if (colorSource === 'group') {
         const { data: colorGroup, error: colorGroupError } = await context.supabaseAdmin
           .from('social_team_color_groups')

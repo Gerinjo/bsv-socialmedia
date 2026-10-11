@@ -51,6 +51,9 @@ for (const [placeholder, source] of [
   ['__EXPENSE_SCRIPT__', await readFile(resolve(adminDir, 'referee-expenses.mjs'), 'utf8')],
   ['__REFEREE_MODEL__', await readFile(resolve(repoDir, 'src/referees.mjs'), 'utf8')],
   ['__CASHBOOK_MODEL__', await readFile(resolve(repoDir, 'src/cashbook.mjs'), 'utf8')],
+  ['__SUITE_ACCESS_MODEL__', await readFile(resolve(repoDir,'src/suite-access.mjs'),'utf8')],
+  ['__SUITE_BRAND_MODEL__', await readFile(resolve(repoDir,'src/suite-brand.mjs'),'utf8')],
+  ['__SUITE_USERS_SCRIPT__', await readFile(resolve(adminDir,'suite-users.mjs'),'utf8')],
   ['__SUITE_MEMBER_MODEL__', await readFile(resolve(repoDir, 'src/suite-members.mjs'), 'utf8')],
   ['__CASHBOOK_SCRIPT__', await readFile(resolve(adminDir, 'cashbook.mjs'), 'utf8')],
   ['__SUITE_INSTALL_SCRIPT__', (await readFile(resolve(adminDir, 'suite-install.mjs'), 'utf8')).replace(/^export /gm, '')],
@@ -84,6 +87,7 @@ export default {
   async fetch(request) {
     if (request.method !== 'GET') return new Response('Method not allowed', { status: 405 });
     const path = new URL(request.url).pathname;
+    if(path==='/suite-brand.json'){try{const result=await fetch('https://maejihwjzxkmthjavgnx.supabase.co/rest/v1/social_brand_settings?select=color_scheme,updated_at&id=eq.true',{headers:{apikey:'sb_publishable_a3DnmtbBycRR4mWV4Jmz-w_RJobGli9'},signal:AbortSignal.timeout(5000)});if(!result.ok)throw new Error('Brand unavailable');const rows=await result.json();return Response.json(rows[0]||{},{headers:{'cache-control':'public,max-age=60'}})}catch{return Response.json({},{status:503})}}
     if (path === '/kassenbuch' || path === '/kassenbuch/') return Response.redirect(new URL('/?area=cashbook',request.url),302);
     const asset = cashbookAssets[path];
     if (asset) return new Response(asset.base64 ? Uint8Array.from(atob(asset.body),char=>char.charCodeAt(0)) : asset.body,{headers:{'content-type':asset.type,'cache-control':path.endsWith('.png')?'public, max-age=86400':'no-cache','x-content-type-options':'nosniff'}});

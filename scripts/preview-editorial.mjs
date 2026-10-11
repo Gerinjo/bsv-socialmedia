@@ -33,6 +33,9 @@ async function previewHtml() {
   return html;
 }
 const files = new Map([
+  ['/preview-suite-users.mjs','admin-site/preview/suite-users.mjs'],
+  ['/suite-access.mjs','src/suite-access.mjs'],
+  ['/suite-brand.mjs','src/suite-brand.mjs'],
   ['/preview-cashbook.mjs','admin-site/preview/cashbook.mjs'],
   ['/cashbook-model.mjs','src/cashbook.mjs'],
   ['/suite-members.mjs','src/suite-members.mjs'],

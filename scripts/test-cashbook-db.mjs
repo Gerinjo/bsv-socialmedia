@@ -19,9 +19,9 @@ try {
     create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
     create function cron.schedule(text,text,text) returns bigint language sql as 'select 1::bigint';
     create table public.social_people(id uuid primary key default gen_random_uuid(),slug text unique,display_name text,birth_date date,active boolean default true);
-    create table public.social_teams(id uuid primary key default gen_random_uuid(),slug text unique,name text,sort_order int default 0,active boolean default false);
+    create table public.social_teams(id uuid primary key default gen_random_uuid(),slug text unique,name text,sort_order int default 0,active boolean default false,color_source text default 'global',color_scheme jsonb,content_enabled boolean default true);
     create table public.social_team_people(team_id uuid references public.social_teams(id),person_id uuid references public.social_people(id),role text,primary key(team_id,person_id,role));
-    create table public.social_admins(user_id uuid primary key,email text,role text,is_active boolean,access_areas text[] not null default array['social_media']::text[]);
+    create table public.social_admins(user_id uuid primary key,email text,role text,is_active boolean,created_at timestamptz default now(),access_areas text[] not null default array['social_media']::text[]);
     create table private.referee_club_roles(person_id uuid primary key references public.social_people(id),role text,active boolean default true);
     alter table private.referee_club_roles enable row level security;
     grant select on private.referee_club_roles to service_role;
@@ -64,6 +64,10 @@ try {
   const claims=await Promise.all([sql("select public.cashbook_alert_request('{\"action\":\"claim\"}')"),sql("select public.cashbook_alert_request('{\"action\":\"claim\"}')")]);
   if(claims.filter(Boolean).length!==1)throw new Error('Eine Erinnerung wurde mehrfach reserviert.');
   console.log('Gleichzeitige E-Mail-Worker reservieren die Erinnerung genau einmal.');
+  await sql(`insert into auth.users(id,email) values ('00000000-0000-4000-8000-000000000020','admin@example.test');insert into public.social_admins(user_id,email,role,is_active,access_areas) values ('00000000-0000-4000-8000-000000000020','admin@example.test','admin',true,array['social_media','administration','user_management']);`);
+  await sql(await readFile(new URL('supabase/migrations/20261011114319_suite_roles_profiles_navigation.sql',root),'utf8'));
+  await sql(await readFile(new URL('supabase/tests/suite-roles.sql',root),'utf8'));
+  console.log('Rollen, Zusatzrechte, Sammelaktionen, Alias-Login und zentraler BSV-Standard geprüft.');
   if(process.env.CASHBOOK_DB_ADVISORS==='1'){
     const {stdout:address}=await exec('docker',['inspect','-f','{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}',name]);
     const {stdout}=await exec('npx',['--yes','supabase','db','advisors','--db-url',`postgresql://postgres:isolated-test-only@${address.trim()}:5432/postgres?sslmode=disable`,'--type','all','--fail-on','error'],{maxBuffer:1024*1024});

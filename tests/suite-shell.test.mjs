@@ -33,7 +33,7 @@ test('active work areas expose compact subnavigation in the sidebar', () => {
   const sidebar = adminSource.slice(adminSource.indexOf('<aside class="suite-sidebar"'), adminSource.indexOf('</aside>'));
   assert.match(sidebar, /id="socialMediaSubnav"[^]*id="gamesTabButton"[^]*id="postsTabButton"[^]*id="storiesTabButton"[^]*id="birthdaysTabButton"/);
   assert.match(sidebar, /id="sponsoringSubnav"[^]*>Werbepartner [^]*>Zuweisungen</);
-  assert.match(sidebar, /id="administrationSubnav"[^]*>Mannschaften<[^]*>Vereinswappen [^]*>Instagram<[^]*>Aufbewahrung · 30 Tage</);
+  assert.match(sidebar, /id="socialMediaAdminMenu"[^]*>Administration<[^]*>Instagram<[^]*>Aufbewahrung · 30 Tage</);
   assert.match(adminSource, /\.suite-nav-item\{min-height:44px;padding:8px 14px\}/);
   assert.match(adminSource, /\.suite-nav-item\.active\+\.suite-subnav\{display:grid\}/);
   assert.match(adminSource, /function updateSuiteNavigation\(area\)[^]*aria-expanded/);

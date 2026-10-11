@@ -1,0 +1,22 @@
+export const SUITE_AREAS=['social_media','social_media_admin','sponsoring','editorial','referees','corporate_identity','club_crests','cashbook','user_management'];
+export const SUITE_AREA_LABELS={social_media:'Social Media',social_media_admin:'Social Media · Administration',sponsoring:'Sponsoring',editorial:'Redaktion',referees:'Schiedsrichter',corporate_identity:'Corporate Identity',club_crests:'Vereinswappen',cashbook:'Kassenbuch',user_management:'Benutzerverwaltung'};
+export const SUITE_ROLE_SEEDS=[
+ {key:'admin',label:'Super-Admin',access_areas:[...SUITE_AREAS],protected:true},
+ {key:'user',label:'Benutzer',access_areas:['social_media']},
+ {key:'trainer',label:'Trainer',access_areas:['cashbook']},
+ {key:'cashier',label:'Kasse',access_areas:['cashbook']},
+ {key:'youth-leadership',label:'Jugendleitung',access_areas:['cashbook']},
+ {key:'referee-admin',label:'Schiedsrichteradmin',access_areas:['referees']},
+ {key:'sponsoring',label:'Sponsorenverwaltung',access_areas:['sponsoring']},
+];
+export function suiteMemberRights(member,roles){
+ const role=roles.find(role=>role.key===member.suite_role_key);
+ const inherited=role?.key==='admin'?[...SUITE_AREAS]:(role?.access_areas||[]);
+ const extra=(member.extra_access_areas||[]).filter(area=>SUITE_AREAS.includes(area)&&area!=='user_management'&&!inherited.includes(area));
+ return {inherited,extra,effective:[...new Set([...inherited,...extra])]};
+}
+export function validateSuitePerson(body,{allowShared=false}={}){
+ const firstName=String(body.firstName||'').trim(),lastName=String(body.lastName||'').trim(),username=String(body.username||'').trim().toLowerCase();
+ if(((!firstName||!lastName)&&!(allowShared&&!firstName&&!lastName))||firstName.length>80||lastName.length>100||!/^[a-z]{2,30}$/.test(username))throw new Error('Bitte Vorname, Nachname und ein Login aus 2 bis 30 Buchstaben eingeben.');
+ return {...body,firstName,lastName,username};
+}
