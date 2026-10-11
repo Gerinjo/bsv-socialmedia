@@ -12,9 +12,11 @@ test('suite actions live in the header and use accessible icon buttons', () => {
   assert.doesNotMatch(adminSource, />Abmelden<\/button>/);
 });
 
-test('profile and operating mode are part of the sidebar', () => {
+test('profile is between header actions and operating mode remains in the sidebar', () => {
   const sidebar = adminSource.slice(adminSource.indexOf('<aside class="suite-sidebar"'), adminSource.indexOf('</aside>'));
-  assert.ok(sidebar.indexOf('id="profile"') < sidebar.indexOf('data-suite-area="user_management"'));
+  const header = adminSource.slice(adminSource.indexOf('<header>'), adminSource.indexOf('</header>'));
+  assert.match(header, /id="reload"[^]*id="profile"[^]*id="logout"[^]*id="suiteGreeting"/);
+  assert.doesNotMatch(sidebar, /id="profile"/);
   assert.match(sidebar, /id="suiteMode"/);
   assert.match(adminSource, /<h2>Profil<\/h2>/);
   assert.doesNotMatch(adminSource, /<h2>Einstellungen<\/h2>/);
