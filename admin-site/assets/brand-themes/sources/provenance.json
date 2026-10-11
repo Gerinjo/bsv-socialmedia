@@ -1,0 +1,21 @@
+{
+  "generator": "built-in image_gen",
+  "reference": "/home/gerinjo/Projekte/bsv-website/src/assets/fussball/hero-player.png",
+  "assets": [
+    {
+      "theme": "summer",
+      "file": "summer-v2.png",
+      "prompt": "Use case: style-transfer. Create a matching seasonal hero asset by transforming the reference footballer image into a surfer image. Reference image: the footballer is the reference for the same man's facial identity, athletic adult physique, cinematic sports campaign lighting, lifelike skin texture, detailed materials, photographic realism and dramatic three-quarter composition. Subject: the SAME adult man, shirtless, wearing dark forest green swimming trunks / board shorts, barefoot, holding a realistic full-size white surfboard with a subtle green stripe at his side, in a dynamic but natural relaxed ready-to-surf standing pose. Full body and entire surfboard visible with comfortable margin. No football, football clothing, boots or socks. No beach, no sea, no background glow, no floor, no text, no badges, no logo. Portrait 2:3 composition. Isolate the surfer and his board together on a genuinely transparent background, clean high-quality edges. Match the footballer's high-end photographic editorial look; not cartoon, not flat vector, not plastic 3D. Preserve a natural realistic face and anatomy. This cutout will replace the footballer in the right-hand side of a dark green BSV Nordstern website hero."
+    },
+    {
+      "theme": "christmas",
+      "file": "christmas-v2.png",
+      "prompt": "Use case: style-transfer. Transform the reference footballer artwork into a matching Christmas hero asset. The reference is for a high-end photorealistic sports campaign finish: dramatic cinematic light, tactile detailed texture, crisp isolated silhouette, restrained dark green palette, realistic photographic presence and portrait 2:3 composition. Subject: one beautiful full-size natural Christmas fir tree, dense rich deep forest-green needles, tasteful warm white fairy lights, a limited number of elegant pale champagne and silver baubles and a small refined golden star at the top. Realistic individual needles, convincing reflections, sculptural volume, premium editorial photography. Whole tree and star visible with margin, neutral natural tree trunk base. No people, no gifts, no text, no logo, no room, no snow scene, no ground or background shadow. Genuinely transparent background with clean finely detailed alpha edges. Match the footballer's realistic image language, not a cartoon, not vector, not an icon or plastic low-detail 3D. It must look strong against a dark forest-green website hero and belong to the exact same visual family as the reference footballer."
+    },
+    {
+      "theme": "easter",
+      "file": "easter-v2.png",
+      "prompt": "Use case: style-transfer. Transform the reference footballer artwork into a matching Easter hero asset. Reference image gives the visual language: high-end photorealistic campaign illustration, dramatic soft cinematic directional lighting, tactile material detail, rich natural shadows, realistic volume and clean cutout in portrait 2:3 composition. Subject: a charming believable realistic Easter rabbit with naturally proportioned face, upright long ears, extremely detailed soft brown-gray fur, visible whiskers and natural eyes. The rabbit sits upright with a small group of three elegant decorated Easter eggs beside its front paws, in forest green, cream and muted champagne. Full animal including ears and paws and all eggs completely visible, with comfortable margin. Friendly premium editorial look, not childish, no clothing, no anthropomorphic human limbs, no cartoon or vector, no oversized glassy mascot eyes, no plastic 3D. Genuinely transparent background, no scene, no grass patch, no floor, no glow, no text or logos. Same polished realism and sculptural presence as the footballer, suitable as the prominent hero cutout on a dark forest-green BSV Nordstern homepage."
+    }
+  ]
+}

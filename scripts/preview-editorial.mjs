@@ -37,6 +37,7 @@ const files = new Map([
   ['/suite-access.mjs','src/suite-access.mjs'],
   ['/suite-brand.mjs','src/suite-brand.mjs'],
   ['/brand-themes.mjs','src/brand-themes.mjs'],
+  ['/brand-theme-assets.mjs','src/brand-theme-assets.mjs'],
   ['/preview-cashbook.mjs','admin-site/preview/cashbook.mjs'],
   ['/cashbook-model.mjs','src/cashbook.mjs'],
   ['/suite-members.mjs','src/suite-members.mjs'],
