@@ -3,9 +3,9 @@ import { decodeRefereeReceipt, receiptHash } from './referee-receipts.mjs';
 
 export async function cashbookRpc(db, actor, payload) {
   const result = await db.rpc('cashbook_request', { actor, payload });
-  if (result.error) throw Object.assign(new Error('Das Kassenbuch der Jugendabteilung ist vorübergehend nicht verfügbar. Bitte dieselbe Buchung erneut senden.'),{status:503});
+  if (result.error) throw Object.assign(new Error('Das Kassenbuch ist vorübergehend nicht verfügbar. Bitte dieselbe Buchung erneut senden.'),{status:503});
   if (!result.data || result.data.error) {
-    const error = new Error(result.data?.error || 'Das Kassenbuch der Jugendabteilung ist nicht verfügbar.');
+    const error = new Error(result.data?.error || 'Das Kassenbuch ist nicht verfügbar.');
     error.status = result.data?.status || 503;
     throw error;
   }
