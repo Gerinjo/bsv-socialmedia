@@ -10,7 +10,7 @@ async function previewHtml() {
   const sdkImport =
     "import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';";
   const apiFunction =
-    /    async function api\(method='GET', body\)\{[\s\S]*?\n    \}/;
+    /    async function api\(method='GET', body, query\)\{[\s\S]*?\n    \}/;
   if (!html.includes(sdkImport) || !apiFunction.test(html))
     throw new Error(
       "Die Vorschau muss an den geänderten App-Einstieg angepasst werden.",
@@ -22,7 +22,7 @@ async function previewHtml() {
     )
     .replace(
       apiFunction,
-      "    async function api(method='GET', body){ return editorialPreviewApi(method, body); }",
+      "    async function api(method='GET', body, query){ return editorialPreviewApi(method, body, query); }",
     )
     .replace(
       "<main>",

@@ -203,7 +203,8 @@ export async function suitePreviewLogin(identity,password) {
   previewPersona=identity;sessionStorage.setItem('bsv-suite-preview-user',identity);if(requestedPersona==='login')history.replaceState(null,'','/?area=cashbook');
   return {access_token:'local-preview',refresh_token:'local-preview'};
 }
-export async function editorialPreviewApi(method = "GET", body = {}) {
+export async function editorialPreviewApi(method = "GET", body = {}, query = {}) {
+  if (method === 'GET' && query.bootstrap === '1') return {user:previewSuiteProfile(previewPersona),brandSettings:previewSuiteBrand(),testMode:true};
   if (method === "GET")
     return {
       user:previewSuiteProfile(previewPersona),suiteRoles:previewPersona==='admin'?previewSuiteRoles():[],brandSettings:previewSuiteBrand(),

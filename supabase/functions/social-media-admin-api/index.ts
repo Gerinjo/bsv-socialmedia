@@ -1,3 +1,4 @@
+import { loadSuiteDashboard } from '../_shared/suite-dashboard.mjs';
 import { handleReferees } from './referees.ts';
 import { handleCashbookWorkspace } from '../_shared/cashbook-evidence.mjs';
 import { handleCashbookAdmin } from './cashbook.mjs';
@@ -15,10 +16,8 @@ import { CLUB_CREST_SEEDS } from '../_shared/club-crest-seeds.ts';
 import { currentWeeklyEventAt, nextStoryDueAt } from '../../../src/story-schedule.mjs';
 import { inspectInstagramAccount } from '../../../src/instagram-publisher.mjs';
 import {
-  cleanupSummary,
   historyState,
   normalizeRetentionDays,
-  withHistoryState,
 } from '../../../src/history-retention.mjs';
 
 const corsHeaders = {
@@ -648,149 +647,8 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
   const hasAnyArea = (...areas: SuiteArea[]) => areas.some(hasArea);
 
   if (request.method === 'GET') {
-    const identity=await suiteUsersRpc(context.supabaseAdmin,userId,{action:'identity'});
-    const {data:brandSettings,error:brandError}=await context.supabaseAdmin.from('social_brand_settings').select('color_scheme,theme_key,updated_at').eq('id',true).single();
-    if(brandError)return json({error:brandError.message},500);
-    const suiteRoles=normalizedRole==='admin'?(await suiteUsersRpc(context.supabaseAdmin,userId,{action:'roles'})).roles:[];
-    if (accessAreas.every(area => area === 'cashbook')) return json({user:identity,brandSettings,suiteRoles,testMode:runtimeConfig.testMode});
-    await ensureSeedClubAssets(context.supabaseAdmin);
-    const [
-      { data: games, error: gamesError },
-      { data: birthdays, error: birthdaysError },
-      { data: teamSettings, error: teamsError },
-      { data: teamColorGroups, error: teamColorGroupsError },
-      { data: people, error: peopleError },
-      { data: clubs, error: clubsError },
-      { data: members, error: membersError },
-      { data: postAudiences, error: postAudiencesError },
-      { data: websiteAudiences, error: websiteAudiencesError },
-      { data: posts, error: postsError },
-      { data: storyCategories, error: storyCategoriesError },
-      { data: independentStories, error: independentStoriesError },
-      { data: sponsors, error: sponsorsError },
-      { data: sponsorTypes, error: sponsorTypesError },
-      { data: sponsorAssignments, error: sponsorAssignmentsError },
-      { data: sponsorWebsiteAssignments, error: sponsorWebsiteAssignmentsError },
-      { data: cleanupSettings, error: cleanupSettingsError },
-    ] = await Promise.all([
-      context.supabaseAdmin
-        .from('social_games')
-        .select('*, jobs:social_story_jobs(*), referee_assignments(id)')
-        .order('kickoff_at', { ascending: true }),
-      context.supabaseAdmin
-        .from('social_birthdays')
-        .select('*, person:social_people(id, display_name, roles, source_photo_url, cutout_path, birth_date), jobs:social_birthday_jobs(*)')
-        .order('birth_date', { ascending: true }),
-      context.supabaseAdmin
-        .from('social_teams')
-        .select('id, slug, name, competition, website_path, fussball_de_url, fussball_de_widget_id, sync_enabled, last_synced_at, last_sync_error, active, content_enabled, publishing_mode, family_key, color_source, color_scheme, sort_order')
-        .order('sort_order', { ascending: true }),
-      context.supabaseAdmin
-        .from('social_team_color_groups')
-        .select('key, label, color_scheme, sort_order')
-        .order('sort_order', { ascending: true }),
-      context.supabaseAdmin
-        .from('social_people')
-        .select('id, slug, display_name, roles, source_photo_url, cutout_path, birth_date')
-        .eq('active', true)
-        .order('display_name', { ascending: true }),
-      context.supabaseAdmin
-        .from('social_clubs')
-        .select('*, aliases:social_club_aliases(alias, normalized_alias)')
-        .order('name', { ascending: true }),
-      context.supabaseAdmin
-        .from('social_admins')
-        .select('*')
-        .order('email', { ascending: true }),
-      context.supabaseAdmin
-        .from('social_post_audiences')
-        .select('id, slug, audience_group, label, sort_order, team_id')
-        .eq('active', true)
-        .order('sort_order', { ascending: true }),
-      context.supabaseAdmin
-        .from('social_post_audiences')
-        .select('id, slug, audience_group, label, sort_order, team_id, active')
-        .order('sort_order', { ascending: true }),
-      context.supabaseAdmin
-        .from('social_posts')
-        .select('*, audience:social_post_audiences(id, slug, audience_group, label), job:social_post_jobs(*)')
-        .order('updated_at', { ascending: false }),
-      context.supabaseAdmin
-        .from('social_story_categories')
-        .select('id, slug, label, sort_order')
-        .eq('active', true)
-        .order('sort_order', { ascending: true }),
-      context.supabaseAdmin
-        .from('social_independent_stories')
-        .select('*, category:social_story_categories(id, slug, label), audience:social_post_audiences(id, slug, audience_group, label, team_id), jobs:social_independent_story_jobs(*)')
-        .order('updated_at', { ascending: false }),
-      context.supabaseAdmin
-        .from('social_sponsors')
-        .select('*')
-        .order('sort_order', { ascending: true })
-        .order('name', { ascending: true }),
-      context.supabaseAdmin
-        .from('social_sponsor_types')
-        .select('id, slug, label, description, active, sort_order, display_weight, created_at, updated_at')
-        .order('sort_order', { ascending: true })
-        .order('label', { ascending: true }),
-      context.supabaseAdmin
-        .from('social_sponsor_assignments')
-        .select('sponsor_id, audience_id, context, slot')
-        .order('slot', { ascending: true }),
-      context.supabaseAdmin
-        .from('social_sponsor_website_assignments')
-        .select('sponsor_id, audience_id, sponsor_type_id, description, page_size, updated_at'),
-      context.supabaseAdmin
-        .from('social_cleanup_settings')
-        .select('retention_days, updated_at')
-        .eq('id', 1)
-        .maybeSingle(),
-    ]);
-    const readError = gamesError ?? birthdaysError ?? teamsError ?? teamColorGroupsError ?? peopleError ?? clubsError ?? membersError
-      ?? postAudiencesError ?? websiteAudiencesError ?? postsError ?? storyCategoriesError ?? independentStoriesError ?? sponsorsError ?? sponsorTypesError ?? sponsorAssignmentsError
-      ?? sponsorWebsiteAssignmentsError ?? cleanupSettingsError;
-    if (readError) return json({ error: readError.message }, 500);
-    const retentionDays = normalizeRetentionDays(cleanupSettings?.retention_days);
-    const [preparedGames, preparedPosts, preparedIndependentStories] = await Promise.all([
-      freshPreviewUrls(context.supabaseAdmin, games ?? []),
-      freshPostUrls(context.supabaseAdmin, posts ?? []),
-      freshIndependentStoryUrls(context.supabaseAdmin, independentStories ?? []),
-    ]);
-    const historyRecords = {
-      game: preparedGames.map((record: any) => withHistoryState(record, 'game', retentionDays)),
-      post: preparedPosts.map((record: any) => withHistoryState(record, 'post', retentionDays)),
-      story: preparedIndependentStories.map((record: any) => withHistoryState(record, 'story', retentionDays)),
-    };
-    return json({
-      user: identity, brandSettings, suiteRoles,
-      members: hasArea('user_management') ? await suiteMemberDirectory(context.supabaseAdmin,userId,members ?? []) : [],
-      testMode: runtimeConfig.testMode,
-      venues: hasArea('social_media') ? [...homeVenues] : [],
-      teams: hasAnyArea('social_media', 'corporate_identity') ? (teamSettings ?? []).filter((team: any) => team.active) : [],
-      teamSettings: hasAnyArea('social_media', 'corporate_identity') ? teamSettings ?? [] : [],
-      teamColorGroups: hasArea('corporate_identity') ? teamColorGroups ?? [] : [],
-      people: hasArea('social_media') ? people ?? [] : [],
-      postAudiences: hasAnyArea('social_media', 'sponsoring') ? postAudiences ?? [] : [],
-      websiteAudiences: hasArea('sponsoring') ? websiteAudiences ?? [] : [],
-      posts: hasArea('social_media') ? historyRecords.post : [],
-      storyCategories: hasArea('social_media') ? storyCategories ?? [] : [],
-      independentStories: hasArea('social_media') ? historyRecords.story : [],
-      sponsors: hasAnyArea('social_media', 'sponsoring') ? await freshSponsorUrls(context.supabaseAdmin, sponsors ?? []) : [],
-      sponsorTypes: hasAnyArea('social_media', 'sponsoring') ? sponsorTypes ?? [] : [],
-      sponsorAssignments: hasAnyArea('social_media', 'sponsoring') ? sponsorAssignments ?? [] : [],
-      sponsorWebsiteAssignments: hasArea('sponsoring') ? sponsorWebsiteAssignments ?? [] : [],
-      clubs: hasAnyArea('social_media', 'club_crests') ? await freshClubUrls(context.supabaseAdmin, clubs ?? []) : [],
-      games: hasArea('social_media') ? historyRecords.game : [],
-      birthdays: hasArea('social_media') ? await freshPreviewUrls(context.supabaseAdmin, birthdays ?? []) : [],
-      cleanupSettings: hasArea('social_media_admin') ? { retentionDays, updatedAt: cleanupSettings?.updated_at ?? null } : null,
-      cleanupSummary: hasArea('social_media_admin') ? cleanupSummary(historyRecords, retentionDays) : null,
-      instagramConfiguration: hasArea('social_media_admin') ? {
-        accountIdConfigured: Boolean(runtimeConfig.instagramAccountId),
-        accessTokenConfigured: Boolean(runtimeConfig.instagramAccessToken),
-        graphApiVersion: runtimeConfig.metaGraphApiVersion,
-      } : null,
-    });
+    return loadSuiteDashboard({request,admin:context.supabaseAdmin,userId,hasArea,suiteAreas,runtimeConfig,homeVenues,
+      helpers:{suiteUsersRpc,suiteMemberDirectory,freshPreviewUrls,freshPostUrls,freshIndependentStoryUrls,freshSponsorUrls,freshClubUrls,json}});
   }
 
   if (request.method !== 'POST') return json({ error: 'method_not_allowed' }, 405);
@@ -1055,6 +913,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     }
 
     if (action === 'save_game') {
+      await ensureSeedClubAssets(context.supabaseAdmin);
       const kickoff = new Date(required(body.kickoffAt, 'Anstoß'));
       if (Number.isNaN(kickoff.getTime())) throw new Error('Anstoß ist ungültig.');
       const teamId = required(body.teamId, 'BSV-Mannschaft');
