@@ -41,3 +41,7 @@ verify_jwt = false
 # Anonymous read-only feed returns approved public trainer fields only.
 [functions.website-trainers-feed]
 verify_jwt = false
+
+# Private server-to-server bridge key is validated by the service-only import RPC.
+[functions.trainer-onboarding-import]
+verify_jwt = false

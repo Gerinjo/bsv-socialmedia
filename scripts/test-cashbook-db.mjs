@@ -107,6 +107,9 @@ try {
   await sql(await readFile(new URL('supabase/migrations/20261012072811_trainer_lifecycle.sql',root),'utf8'));
   await sql(await readFile(new URL('supabase/tests/trainer-lifecycle.sql',root),'utf8'));
   console.log('Trainerdatenbank: passiv, reaktivieren, geschütztes Löschen, private Daten, Homepage und unveränderte Finanzdaten geprüft.');
+  await sql(await readFile(new URL('supabase/migrations/20261012074319_trainer_onboarding_import.sql',root),'utf8'));
+  await sql(await readFile(new URL('supabase/tests/trainer-onboarding.sql',root),'utf8'));
+  console.log('Onboarding: Serverauthentifizierung, Kontakte, Mannschaft/Rolle, Freigabe, freie Positionen, Wiederholungen und bestehende Personen geprüft.');
   if(process.env.CASHBOOK_DB_ADVISORS==='1'){
     const {stdout:address}=await exec('docker',['inspect','-f','{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}',name]);
     const {stdout}=await exec('npx',['--yes','supabase','db','advisors','--db-url',`postgresql://postgres:isolated-test-only@${address.trim()}:5432/postgres?sslmode=disable`,'--type','all','--fail-on','error'],{maxBuffer:1024*1024});
