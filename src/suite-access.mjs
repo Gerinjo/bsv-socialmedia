@@ -1,5 +1,19 @@
 export const SUITE_AREAS=['social_media','social_media_admin','sponsoring','editorial','referees','corporate_identity','club_crests','trainer_management','cashbook','user_management'];
 export const SUITE_AREA_LABELS={social_media:'Social Media',social_media_admin:'Social Media · Administration',sponsoring:'Sponsoring',editorial:'Redaktion',referees:'Schiedsrichter',corporate_identity:'Corporate Identity',club_crests:'Vereinswappen',trainer_management:'Trainerverwaltung',cashbook:'Kassenbuch',user_management:'Benutzerverwaltung'};
+// Count sidebar functions, with Social Media administration inside its parent.
+export function suiteNavigationAreas(areas=[]){
+ const allowed=new Set(areas.filter(area=>SUITE_AREAS.includes(area)));
+ return ['corporate_identity','sponsoring','social_media','editorial','club_crests','trainer_management','referees','cashbook','user_management']
+  .map(area=>area==='social_media'&&!allowed.has(area)&&allowed.has('social_media_admin')?'social_media_admin':area)
+  .filter(area=>allowed.has(area));
+}
+export function suiteStartArea(areas=[],requested=''){
+ const navigation=suiteNavigationAreas(areas);
+ if(!navigation.length)return '';
+ if(SUITE_AREAS.includes(requested)&&areas.includes(requested))return requested;
+ if(requested==='social_media'&&areas.includes('social_media_admin'))return 'social_media_admin';
+ return navigation.length===1?navigation[0]:'welcome';
+}
 export const SUITE_ROLE_SEEDS=[
  {key:'admin',label:'Super-Admin',access_areas:[...SUITE_AREAS],protected:true},
  {key:'user',label:'Benutzer',access_areas:['social_media']},

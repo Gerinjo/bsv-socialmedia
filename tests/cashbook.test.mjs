@@ -114,7 +114,7 @@ test('a mail failure schedules another attempt; missing settings leave the outbo
   actions.length=0;assert.equal((await deliverCashbookAlerts(db,{})).configured,false);assert.equal(actions.length,0);
 });
 test('installable app shares the suite scope and both required PNG icon sizes',()=>{
-  assert.equal(cashbookManifest.start_url,'/?area=cashbook');assert.equal(cashbookManifest.scope,'/');assert.equal(cashbookManifest.display,'standalone');assert.deepEqual(cashbookManifest.icons.map(i=>i.sizes),['192x192','512x512']);
+  assert.equal(cashbookManifest.start_url,'/');assert.equal(cashbookManifest.scope,'/');assert.equal(cashbookManifest.display,'standalone');assert.deepEqual(cashbookManifest.icons.map(i=>i.sizes),['192x192','512x512']);
 });
 
 test('server capability permits youth-leader deposits with a photo and immutable attribution',async()=>{

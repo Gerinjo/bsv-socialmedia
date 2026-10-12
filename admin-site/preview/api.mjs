@@ -201,7 +201,7 @@ let previewPersona=requestedPersona==='login'?null:(previewNames[requestedPerson
 const previewAreas=()=>previewPersona?previewSuiteProfile(previewPersona).accessAreas:[];
 export async function suitePreviewLogin(identity,password) {
   if(password!==(previewPasswords()[identity]||'bsv1956')||!Object.values(previewNames).includes(identity))throw new Error('Vorschau: Benutzername oder Passwort stimmt nicht. Das Startpasswort ist bsv1956, sofern du es unter Profil noch nicht geändert hast.');
-  previewPersona=identity;sessionStorage.setItem('bsv-suite-preview-user',identity);if(requestedPersona==='login')history.replaceState(null,'','/?area=cashbook');
+  previewPersona=identity;sessionStorage.setItem('bsv-suite-preview-user',identity);if(requestedPersona==='login'){const url=new URL(location.href);url.searchParams.delete('previewUser');history.replaceState(null,'',url.pathname+url.search+url.hash);}
   return {access_token:'local-preview',refresh_token:'local-preview'};
 }
 export async function editorialPreviewApi(method = "GET", body = {}, query = {}) {
