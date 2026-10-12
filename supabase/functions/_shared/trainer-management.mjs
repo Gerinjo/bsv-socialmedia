@@ -1,4 +1,4 @@
-import {TRAINER_PHOTO_BUCKET,validateTrainerPerson,validateTrainerTeam} from '../../../src/trainer-management.mjs';
+import {TRAINER_PHOTO_BUCKET,validateTrainerPerson,validateTrainerTeam,validateTrainerLifecycle} from '../../../src/trainer-management.mjs';
 import {decodeRefereeReceipt,receiptHash} from './referee-receipts.mjs';
 export async function trainerRpc(db,actor,payload){
  const {data,error}=await db.rpc('trainer_management_request',{actor,payload});
@@ -18,6 +18,7 @@ export async function handleTrainerManagement(db,actor,body){
   data.people=await Promise.all(data.people.map(async p=>{const {photo_path,website_photo_url,...safe}=p;return {...safe,photo_url:photo_path?await trainerPhotoUrl(db,photo_path):p.source_photo_url};}));
   return data;
  }
+ if(['set_active','delete_person'].includes(action))return trainerRpc(db,actor,{action,...validateTrainerLifecycle(body)});
  if(action==='save_person')return trainerRpc(db,actor,{action,...validateTrainerPerson(body)});
  if(action==='save_team')return trainerRpc(db,actor,{action,...validateTrainerTeam(body)});
  if(action==='upload_photo'){

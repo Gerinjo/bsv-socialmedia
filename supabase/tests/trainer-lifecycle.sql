@@ -1,0 +1,41 @@
+begin;
+create function pg_temp.check_lifecycle(ok boolean,label text) returns void language plpgsql as $$begin if ok is not true then raise exception 'Trainer lifecycle: %',label;end if;end $$;
+set local role service_role;
+do $$
+declare youth uuid; ordinary uuid; target uuid; pending uuid; account uuid; team uuid; team_version bigint; v bigint; result jsonb; before_balance bigint; before_entries bigint; before_accounts bigint; advance jsonb; operation uuid:=gen_random_uuid();
+begin
+ select suite_user_id into youth from private.cashbook_accounts where username='schmo';
+ select suite_user_id,person_id,id into ordinary,pending,account from private.cashbook_accounts where username='jentm';
+ select id into target from public.social_people where slug='axel-schauble';
+ select team_id into team from public.social_team_people where person_id=target and staff_slot is not null limit 1;
+ select trainer_version into team_version from public.social_teams where id=team;
+ select version into v from private.trainer_profiles where person_id=target;
+ before_balance:=private.cashbook_balance();select count(*) into before_entries from private.cashbook_entries;select count(*) into before_accounts from private.cashbook_accounts;
+ result:=public.trainer_management_request(ordinary,jsonb_build_object('action','delete_person','personId',target,'version',v,'confirmed',true));perform pg_temp.check_lifecycle(result->>'status'='403','ordinary trainers cannot delete directory entries');
+ result:=public.trainer_management_request(youth,jsonb_build_object('action','set_active','personId',target,'version',v,'active',false));perform pg_temp.check_lifecycle(not result ? 'error','set passive');
+ perform pg_temp.check_lifecycle((select not active from private.trainer_profiles where person_id=target),'passive profile retained');
+ perform pg_temp.check_lifecycle((select active from public.social_people where id=target),'shared identity stays active');
+ perform pg_temp.check_lifecycle(exists(select 1 from public.social_team_people where person_id=target and staff_slot is not null),'assignments retained for archive');
+ perform pg_temp.check_lifecycle(not exists(select 1 from jsonb_array_elements(public.website_trainers_feed()->'teams') t,jsonb_array_elements(t->'coaches') c where c->>'name'=(select display_name from public.social_people where id=target)),'passive trainer hidden on homepage');
+ perform pg_temp.check_lifecycle((select trainer_version=team_version+1 from public.social_teams where id=team),'team revision changes on status change');
+ result:=public.trainer_management_request(youth,jsonb_build_object('action','set_active','personId',target,'version',v,'active',true));perform pg_temp.check_lifecycle(result->>'status'='409','stale reactivation rejected');
+ result:=public.trainer_management_request(youth,jsonb_build_object('action','set_active','personId',target,'version',v+1,'active',true));perform pg_temp.check_lifecycle(not result ? 'error','reactivated');
+ perform pg_temp.check_lifecycle(exists(select 1 from jsonb_array_elements(public.website_trainers_feed()->'teams') t,jsonb_array_elements(t->'coaches') c where c->>'name'=(select display_name from public.social_people where id=target)),'reactivated trainer returns to homepage');
+ result:=public.trainer_management_request(youth,jsonb_build_object('action','delete_person','personId',target,'version',v+2));perform pg_temp.check_lifecycle(result->>'status'='400','delete requires explicit confirmation');
+ result:=public.trainer_management_request(youth,jsonb_build_object('action','delete_person','personId',target,'version',v+2,'confirmed',true));perform pg_temp.check_lifecycle(not result ? 'error','delete profile');
+ perform pg_temp.check_lifecycle(not exists(select 1 from private.trainer_profiles where person_id=target) and not exists(select 1 from public.social_team_people where person_id=target and staff_slot is not null),'profile and staff slots removed');
+ perform pg_temp.check_lifecycle(exists(select 1 from public.social_people where id=target) and (select count(*)=before_accounts from private.cashbook_accounts),'financial identity and accounts retained');
+ perform pg_temp.check_lifecycle(before_balance=private.cashbook_balance() and (select count(*)=before_entries from private.cashbook_entries),'financial records unchanged');
+ perform pg_temp.check_lifecycle(exists(select 1 from private.trainer_audit where person_id=target and action='delete_person' and before_data ? 'assignments' and actor=youth and created_at is not null),'deletion audited');
+ -- Pending refunds remain usable; deleting the profile waits for settlement.
+ select (value->>'id')::uuid into team from jsonb_array_elements(private.cashbook_current_teams(pending)) limit 1;
+ advance:=public.cashbook_request(ordinary,jsonb_build_object('action','book','requestId',operation,'direction','advance','amountCents',3000,'teamId',team,'confirmed',true,'notificationEmail','trainer@example.org','evidenceHash',repeat('8',64),'signatureHash',repeat('9',64),'evidencePath',account::text||'/'||operation::text||'/receipt','signaturePath',account::text||'/'||operation::text||'/signature'));
+ perform pg_temp.check_lifecycle(not advance ? 'error','pending reimbursement created');
+ select version into v from private.trainer_profiles where person_id=pending;
+ result:=public.trainer_management_request(youth,jsonb_build_object('action','delete_person','personId',pending,'version',v,'confirmed',true));perform pg_temp.check_lifecycle(result->>'status'='409','cannot delete before pending reimbursement completes');
+ result:=public.trainer_management_request(youth,jsonb_build_object('action','set_active','personId',pending,'version',v,'active',false));perform pg_temp.check_lifecycle(not result ? 'error','pending trainer may be passive');
+ result:=public.cashbook_request(ordinary,'{"action":"authorize"}');perform pg_temp.check_lifecycle(not result ? 'error','passive trainer can finish reimbursements');
+end $$;
+reset role;
+select pg_temp.check_lifecycle(not has_table_privilege('authenticated','private.trainer_profiles','DELETE') and not has_table_privilege('anon','private.trainer_profiles','DELETE'),'no direct browser deletion');
+rollback;

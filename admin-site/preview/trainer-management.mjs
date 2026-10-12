@@ -1,11 +1,22 @@
-import {trainerSortedPeople,validateTrainerPerson,validateTrainerTeam} from '/trainer-management-model.mjs';
+import {trainerSortedPeople,validateTrainerPerson,validateTrainerTeam,validateTrainerLifecycle} from '/trainer-management-model.mjs';
 import {trainerPreviewSeed} from '/preview-trainer-seed.mjs';
 const key='bsv-trainer-management-preview-v2';
-function state(){try{const value=JSON.parse(localStorage.getItem(key)||'null');if(value)return value;}catch{}return structuredClone(trainerPreviewSeed);}
+function state(){let data;try{data=JSON.parse(localStorage.getItem(key)||'null');}catch{}data||=structuredClone(trainerPreviewSeed);
+ const ids=new Map();for(const item of [...data.people,...data.teams])if(item.id.startsWith('demo-')){ids.set(item.id,crypto.randomUUID());item.id=ids.get(item.id);}
+ for(const a of data.assignments){a.personId=ids.get(a.personId)||a.personId;a.teamId=ids.get(a.teamId)||a.teamId;}
+ if(ids.size)localStorage.setItem(key,JSON.stringify(data));return data;
+}
 export async function trainerPreviewApi(body){const data=state();const act=body.action.replace('trainer_','');
  if(act==='list')return {...data,people:trainerSortedPeople(data.people)};
  let result={ok:true};
- if(act==='save_person'){
+ if(['set_active','delete_person'].includes(act)){
+  const v=validateTrainerLifecycle(body),p=data.people.find(p=>p.id===v.personId);
+  if(!p)throw new Error('Person nicht gefunden.');
+  if(p.version!==v.version)throw new Error('Die Person wurde inzwischen geändert. Bitte neu laden.');
+  for(const t of data.teams.filter(t=>data.assignments.some(a=>a.teamId===t.id&&a.personId===p.id)))t.version++;
+  if(act==='set_active'){p.active=v.active;p.version++;p.updated_at=new Date().toISOString();result={ok:true,version:p.version};}
+  else{data.people=data.people.filter(n=>n.id!==p.id);data.assignments=data.assignments.filter(a=>a.personId!==p.id);}
+ }else if(act==='save_person'){
   const v=validateTrainerPerson(body);let p=data.people.find(p=>p.id===v.personId);
   if(p&&p.version!==v.version)throw new Error('Die Person wurde inzwischen geändert. Bitte neu laden.');
   if(!p){p={id:crypto.randomUUID(),version:0,photo_url:null};data.people.push(p);}

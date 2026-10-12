@@ -17,3 +17,15 @@ export function validateTrainerTeam(body){
  for(const a of body.assignments){if(!Object.hasOwn(TRAINER_SLOTS,a.slot)&&!/^extra-[1-9][0-9]?$/.test(a.slot))throw new Error('Ungültige Position.');if(!a.personId||slots.has(a.slot)||people.has(a.personId))throw new Error('Jede Person und Position darf pro Mannschaft nur einmal belegt sein.');slots.add(a.slot);people.add(a.personId);if(String(a.websiteRole||'').length>100)throw new Error('Bitte die Rollenbezeichnung kürzen.');}
  return {teamId:body.teamId,version:body.version,assignments:body.assignments.map(a=>({slot:a.slot,personId:a.personId,websiteVisible:a.websiteVisible===true,websiteRole:String(a.websiteRole||'').trim()}))};
 }
+
+export function trainerFilterPeople(people,status='active'){
+ if(!['active','passive','all'].includes(status))throw new Error('Ungültiger Trainerstatus.');
+ return trainerSortedPeople(people.filter(p=>status==='all'||(status==='active'?p.active!==false:p.active===false)));
+}
+export function validateTrainerLifecycle(body){
+ if(!/^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i.test(body.personId||'')||!Number.isSafeInteger(body.version)||body.version<1)throw new Error('Bitte eine gespeicherte Person auswählen und neu laden.');
+ const action=String(body.action).replace(/^trainer_/,'');
+ if(action==='delete_person'&&body.confirmed!==true)throw new Error('Bitte das Löschen ausdrücklich bestätigen.');
+ if(action==='set_active'&&typeof body.active!=='boolean')throw new Error('Bitte den Trainerstatus auswählen.');
+ return {personId:body.personId,version:body.version,...(action==='set_active'?{active:body.active}:{confirmed:true})};
+}
