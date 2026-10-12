@@ -14,6 +14,7 @@ try {
   // Initialization briefly starts a socket-only server before restarting PostgreSQL.
   for(let count=0;;count++){try{await exec('docker',['exec',name,'pg_isready','-h','127.0.0.1','-U','postgres']);break;}catch{if(count>=30)throw new Error('Testdatenbank startet nicht.');await delay(300);}}
   await sql(`create role anon; create role authenticated; create role service_role bypassrls;
+    create schema extensions;create extension pgcrypto with schema extensions;grant usage on schema extensions to service_role;
     create schema private; grant usage on schema private to service_role; create schema storage; create schema cron; create schema auth;
     create table auth.users(id uuid primary key,email text unique);grant usage on schema auth to service_role;
     create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
@@ -108,6 +109,7 @@ try {
   await sql(await readFile(new URL('supabase/tests/trainer-lifecycle.sql',root),'utf8'));
   console.log('Trainerdatenbank: passiv, reaktivieren, geschütztes Löschen, private Daten, Homepage und unveränderte Finanzdaten geprüft.');
   await sql(await readFile(new URL('supabase/migrations/20261012074319_trainer_onboarding_import.sql',root),'utf8'));
+  await sql(await readFile(new URL('supabase/migrations/20261012080109_trainer_onboarding_request_signatures.sql',root),'utf8'));
   await sql(await readFile(new URL('supabase/tests/trainer-onboarding.sql',root),'utf8'));
   console.log('Onboarding: Serverauthentifizierung, Kontakte, Mannschaft/Rolle, Freigabe, freie Positionen, Wiederholungen und bestehende Personen geprüft.');
   if(process.env.CASHBOOK_DB_ADVISORS==='1'){
