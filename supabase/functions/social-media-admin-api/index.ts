@@ -652,7 +652,8 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
   if (request.method === 'GET') {
     try {
       return await loadSuiteDashboard({request,admin:context.supabaseAdmin,userId,hasArea,suiteAreas,runtimeConfig,homeVenues,
-        recordLogin:()=>recordSuiteLogin(context.supabaseAdmin,userId,claims),
+        // userClaims contains normalized identity fields; session_id and amr live in jwtClaims.
+        recordLogin:()=>recordSuiteLogin(context.supabaseAdmin,userId,context.jwtClaims),
         helpers:{suiteUsersRpc,suiteMemberDirectory,freshPreviewUrls,freshPostUrls,freshIndependentStoryUrls,freshSponsorUrls,freshClubUrls,json}});
     } catch(error) {return json({error:error instanceof Error?error.message:'Laden fehlgeschlagen.'},Number((error as {status?:number})?.status)||503);}
   }
