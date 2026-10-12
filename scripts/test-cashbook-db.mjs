@@ -18,9 +18,9 @@ try {
     create table auth.users(id uuid primary key,email text unique);grant usage on schema auth to service_role;
     create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
     create function cron.schedule(text,text,text) returns bigint language sql as 'select 1::bigint';
-    create table public.social_people(id uuid primary key default gen_random_uuid(),slug text unique,display_name text,birth_date date,active boolean default true);
-    create table public.social_teams(id uuid primary key default gen_random_uuid(),slug text unique,name text,sort_order int default 0,active boolean default false,color_source text default 'global',color_scheme jsonb,content_enabled boolean default true);
-    create table public.social_team_people(team_id uuid references public.social_teams(id),person_id uuid references public.social_people(id),role text,primary key(team_id,person_id,role));
+    create table public.social_people(id uuid primary key default gen_random_uuid(),slug text unique,display_name text,birth_date date,roles text[] default '{}',source_photo_url text,updated_at timestamptz default now(),active boolean default true);
+    create table public.social_teams(id uuid primary key default gen_random_uuid(),slug text unique,name text,website_path text,sort_order int default 0,active boolean default false,color_source text default 'global',color_scheme jsonb,content_enabled boolean default true);
+    create table public.social_team_people(team_id uuid references public.social_teams(id),person_id uuid references public.social_people(id),role text,created_at timestamptz default now(),primary key(team_id,person_id,role));
     create table public.social_admins(user_id uuid primary key,email text,role text,is_active boolean,created_at timestamptz default now(),access_areas text[] not null default array['social_media']::text[]);
     create table private.referee_club_roles(person_id uuid primary key references public.social_people(id),role text,active boolean default true);
     alter table private.referee_club_roles enable row level security;
@@ -29,7 +29,7 @@ try {
     alter table public.social_people enable row level security; alter table public.social_teams enable row level security;
     alter table public.social_team_people enable row level security; alter table public.social_admins enable row level security;`);
   const catalog=JSON.parse(await readFile(new URL('config/bsv-catalog.json',root),'utf8'));
-  await sql(catalog.teams.map(t=>`insert into public.social_teams(slug,name,sort_order) values(${quote(t.slug)},${quote(t.name)},${t.sortOrder});`).join('\n')+catalog.people.map(p=>`insert into public.social_people(slug,display_name,birth_date) values(${quote(p.slug)},${quote(p.displayName)},'1980-01-01');`).join('\n')+catalog.memberships.map(m=>`insert into public.social_team_people(team_id,person_id,role) select t.id,p.id,${quote(m.role)} from public.social_teams t,public.social_people p where t.slug=${quote(m.teamSlug)} and p.slug=${quote(m.personSlug)};`).join('\n'));
+  await sql(catalog.teams.map(t=>`insert into public.social_teams(slug,name,website_path,sort_order) values(${quote(t.slug)},${quote(t.name)},${quote(t.websitePath||'')},${t.sortOrder});`).join('\n')+catalog.people.map(p=>`insert into public.social_people(slug,display_name,birth_date) values(${quote(p.slug)},${quote(p.displayName)},'1980-01-01');`).join('\n')+catalog.memberships.map(m=>`insert into public.social_team_people(team_id,person_id,role) select t.id,p.id,${quote(m.role)} from public.social_teams t,public.social_people p where t.slug=${quote(m.teamSlug)} and p.slug=${quote(m.personSlug)};`).join('\n'));
   await sql("insert into private.referee_club_roles(person_id,role) select id,'youth_leadership' from public.social_people where slug in ('jerome-ernsberger','ole-schmal');");
   await sql(await readFile(new URL('supabase/migrations/20261009110737_cashbook.sql',root),'utf8'));
   await sql(await readFile(new URL('supabase/migrations/20261009141432_cashbook_suite_identity_lookup.sql',root),'utf8'));
@@ -100,6 +100,10 @@ try {
   console.log('Themes: Zugriffsschutz, Validierung, öffentliche Leserechte, Heftvorschau und eingefrorene Veröffentlichungen geprüft.');
 
   console.log('Rollen, Zusatzrechte, Sammelaktionen, Alias-Login und zentraler BSV-Standard geprüft.');
+  await sql(await readFile(new URL('supabase/migrations/20261012065302_trainer_management.sql',root),'utf8'));
+  await sql(await readFile(new URL('supabase/migrations/20261012070900_trainer_directory_names.sql',root),'utf8'));
+  await sql(await readFile(new URL('supabase/tests/trainer-management.sql',root),'utf8'));
+  console.log('Trainerverwaltung: Rollen, private Kontaktdaten, vier Positionen, Homepage-Freigaben, Fotos und veraltete Änderungen geprüft.');
   if(process.env.CASHBOOK_DB_ADVISORS==='1'){
     const {stdout:address}=await exec('docker',['inspect','-f','{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}',name]);
     const {stdout}=await exec('npx',['--yes','supabase','db','advisors','--db-url',`postgresql://postgres:isolated-test-only@${address.trim()}:5432/postgres?sslmode=disable`,'--type','all','--fail-on','error'],{maxBuffer:1024*1024});

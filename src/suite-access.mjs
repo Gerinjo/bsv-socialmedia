@@ -1,11 +1,11 @@
-export const SUITE_AREAS=['social_media','social_media_admin','sponsoring','editorial','referees','corporate_identity','club_crests','cashbook','user_management'];
-export const SUITE_AREA_LABELS={social_media:'Social Media',social_media_admin:'Social Media · Administration',sponsoring:'Sponsoring',editorial:'Redaktion',referees:'Schiedsrichter',corporate_identity:'Corporate Identity',club_crests:'Vereinswappen',cashbook:'Kassenbuch',user_management:'Benutzerverwaltung'};
+export const SUITE_AREAS=['social_media','social_media_admin','sponsoring','editorial','referees','corporate_identity','club_crests','trainer_management','cashbook','user_management'];
+export const SUITE_AREA_LABELS={social_media:'Social Media',social_media_admin:'Social Media · Administration',sponsoring:'Sponsoring',editorial:'Redaktion',referees:'Schiedsrichter',corporate_identity:'Corporate Identity',club_crests:'Vereinswappen',trainer_management:'Trainerverwaltung',cashbook:'Kassenbuch',user_management:'Benutzerverwaltung'};
 export const SUITE_ROLE_SEEDS=[
  {key:'admin',label:'Super-Admin',access_areas:[...SUITE_AREAS],protected:true},
  {key:'user',label:'Benutzer',access_areas:['social_media']},
  {key:'trainer',label:'Trainer',access_areas:['cashbook']},
  {key:'cashier',label:'Kasse',access_areas:['cashbook']},
- {key:'youth-leadership',label:'Jugendleitung',access_areas:['cashbook']},
+ {key:'youth-leadership',label:'Jugendleitung',access_areas:['cashbook','trainer_management']},
  {key:'referee-admin',label:'Schiedsrichteradmin',access_areas:['referees']},
  {key:'sponsoring',label:'Sponsorenverwaltung',access_areas:['sponsoring']},
 ];

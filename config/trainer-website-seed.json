@@ -1,0 +1,383 @@
+[
+  {
+    "path": "fussball/herren/bezirksliga",
+    "coaches": [
+      {
+        "name": "Torsten Parzich",
+        "role": "Trainer",
+        "qualification": "DFB C-Lizenz",
+        "image": "/images/verein/personen/torsten-parzich.jpg",
+        "phone": "+491712800481"
+      },
+      {
+        "name": "Torben Altenburg",
+        "role": "Co-Trainer",
+        "image": "/images/verein/personen/torben-altenburg.jpg"
+      },
+      {
+        "name": "Eberhard Klinkenberg",
+        "role": "Betreuer",
+        "image": "/images/verein/personen/eberhard-klinkenberg.jpg"
+      }
+    ]
+  },
+  {
+    "path": "fussball/herren/kreisliga-2",
+    "coaches": [
+      {
+        "name": "Alexander Kaiser",
+        "role": "Trainer",
+        "phone": "+4915203887134"
+      }
+    ]
+  },
+  {
+    "path": "fussball/frauen/bezirksliga",
+    "coaches": [
+      {
+        "name": "Mathias Becht",
+        "role": "Trainer",
+        "phone": "+49 1523 8252979",
+        "image": "/images/verein/personen/mathias-becht.jpg",
+        "club": "BSV Nordstern Radolfzell"
+      },
+      {
+        "name": "Max Menzel",
+        "role": "Co-Trainer",
+        "phone": "+49 170 4971707",
+        "image": "/images/verein/personen/max-menzel.jpg",
+        "club": "FC Öhningen-Gaienhofen"
+      }
+    ]
+  },
+  {
+    "path": "fussball/frauen/kreisliga",
+    "coaches": [
+      {
+        "name": "Myriam Lipp",
+        "role": "Chef-Trainerin",
+        "phone": "+49 1522 3307366",
+        "image": "/images/verein/personen/myriam-lipp.jpg",
+        "club": "FC Öhningen-Gaienhofen"
+      },
+      {
+        "name": "Emel Bayram",
+        "role": "Co-Trainerin",
+        "phone": "+49 173 1543544",
+        "image": "/images/verein/personen/emel-bayram.jpg",
+        "club": "BSV Nordstern Radolfzell"
+      }
+    ]
+  },
+  {
+    "path": "fussball/alte-herren",
+    "coaches": [
+      {
+        "name": "Christian Stielow",
+        "role": "Ansprechperson Alte Herren"
+      }
+    ]
+  },
+  {
+    "path": "jugend/u11-e1",
+    "coaches": [
+      {
+        "name": "Niku Pourheidari",
+        "role": "Trainer",
+        "qualification": "DFB-Basis-Coach",
+        "image": "/images/verein/personen/niku-pourheidari.jpg"
+      },
+      {
+        "name": "Christoph Pabst",
+        "role": "Trainer"
+      }
+    ]
+  },
+  {
+    "path": "jugend/u11-e2",
+    "coaches": [
+      {
+        "name": "Marcelino Rüth",
+        "role": "Trainer",
+        "phone": "+491754003543",
+        "qualification": "Kindertrainer-Zertifikat"
+      },
+      {
+        "name": "Mohamad Mahmoudi",
+        "role": "Trainer"
+      }
+    ]
+  },
+  {
+    "path": "jugend/u11-e3",
+    "coaches": [
+      {
+        "name": "Stefan Sulger",
+        "role": "Trainer",
+        "qualification": "Kindertrainer-Zertifikat"
+      },
+      {
+        "name": "Michael Sick",
+        "role": "Trainer"
+      }
+    ]
+  },
+  {
+    "path": "jugend/u9-f",
+    "coaches": [
+      {
+        "name": "Andreas Wolfmüller",
+        "role": "Trainer",
+        "qualification": "DFB-Basis-Coach",
+        "image": "/images/verein/personen/andreas-wolfmueller.jpg",
+        "phone": "+4917670571197"
+      },
+      {
+        "name": "Sina Rauch",
+        "role": "Trainerin",
+        "qualification": "DFB-Basis-Coach",
+        "image": "/images/verein/personen/sina-rauch.jpg"
+      },
+      {
+        "name": "Marcelino Rüth",
+        "role": "Trainer",
+        "qualification": "Kindertrainer-Zertifikat",
+        "phone": "+491754003543"
+      }
+    ]
+  },
+  {
+    "path": "jugend/u8-f",
+    "coaches": [
+      {
+        "name": "Pascal Dieterle",
+        "role": "Trainer",
+        "qualification": "DFB-Basis-Coach",
+        "image": "/images/verein/personen/pascal-dieterle.jpg",
+        "phone": "+4917654061668"
+      },
+      {
+        "name": "Fabian Keller",
+        "role": "Trainer",
+        "qualification": "Kindertrainer-Zertifikat",
+        "image": "/images/verein/personen/fabian-keller.jpg",
+        "phone": "+4916090937204"
+      },
+      {
+        "name": "Humberto Vicente Agudo Torres",
+        "role": "Trainer",
+        "phone": "+34620364267"
+      }
+    ]
+  },
+  {
+    "path": "jugend/u7-g",
+    "coaches": [
+      {
+        "name": "Michael Meiss",
+        "role": "Trainer",
+        "phone": "+4915259341076"
+      },
+      {
+        "name": "Luca Gastaudo",
+        "role": "Trainer",
+        "qualification": "Junior-Coach / DFB-Basis-Coach",
+        "image": "/images/verein/personen/luca-gastaudo.jpg"
+      },
+      {
+        "name": "Marco Tassone",
+        "role": "Trainer"
+      }
+    ]
+  },
+  {
+    "path": "jugend/u6-g",
+    "coaches": [
+      {
+        "name": "Elias Arfa",
+        "role": "Trainer"
+      },
+      {
+        "name": "Noemi Sophie Friedrich",
+        "role": "Trainerin",
+        "qualification": "Junior-Coach",
+        "image": "/images/verein/personen/noemi-sophie-friedrich.jpg"
+      },
+      {
+        "name": "Mila Ernsberger",
+        "role": "Trainerin",
+        "image": "/images/verein/personen/mila-ernsberger.jpg"
+      },
+      {
+        "name": "Marlia Burlander",
+        "role": "Trainerin",
+        "image": "/images/verein/personen/marlia-burlander.jpg"
+      }
+    ]
+  },
+  {
+    "path": "jugend/u19",
+    "coaches": [
+      {
+        "name": "Migo Jentsch",
+        "role": "Trainer",
+        "qualification": "B-Lizenz",
+        "image": "/images/verein/personen/migo-jentsch.jpg",
+        "club": "SV Markelfingen"
+      },
+      {
+        "name": "Ole Schmal",
+        "role": "Co-Trainer",
+        "phone": "+491737104858",
+        "club": "BSV Nordstern Radolfzell"
+      },
+      {
+        "name": "Frieder Demmer",
+        "role": "Athletik- und Fitnesscoach",
+        "image": "/images/verein/personen/frieder-demmer.jpg",
+        "phone": "+4915254068949",
+        "club": "SV Markelfingen"
+      }
+    ]
+  },
+  {
+    "path": "jugend/u17",
+    "coaches": [
+      {
+        "name": "Maximilian Geismann",
+        "role": "Trainer",
+        "image": "/images/verein/personen/maximilian-geismann.jpg",
+        "phone": "+491744859948",
+        "club": "SG Liggeringen-Güttingen"
+      },
+      {
+        "name": "Andrea Basile",
+        "role": "Co-Trainer",
+        "image": "/images/verein/personen/andrea-basile.jpg",
+        "phone": "+4917680473879",
+        "club": "BSV Nordstern Radolfzell"
+      }
+    ]
+  },
+  {
+    "path": "jugend/u15-c1",
+    "coaches": [
+      {
+        "name": "Axel Schäuble",
+        "role": "Cheftrainer",
+        "image": "/images/verein/personen/axel-schaeuble.jpg"
+      },
+      {
+        "name": "Simon Bühler",
+        "role": "Co-Trainer",
+        "qualification": "Kindertrainer-Zertifikat",
+        "image": "/images/verein/personen/simon-buehler.jpg"
+      },
+      {
+        "name": "Thomas Parthenschlager",
+        "role": "Co-Trainer"
+      }
+    ]
+  },
+  {
+    "path": "jugend/u15-c2",
+    "coaches": [
+      {
+        "name": "Sebastian Bäuerle",
+        "role": "Cheftrainer",
+        "qualification": "Kindertrainer-Zertifikat",
+        "phone": "+4915150300920"
+      }
+    ]
+  },
+  {
+    "path": "jugend/u13-d1",
+    "coaches": [
+      {
+        "name": "Stephan Hellmann",
+        "role": "Trainer",
+        "qualification": "DFB-Basis-Coach",
+        "phone": "+491726240593",
+        "image": "/images/verein/personen/stephan-hellmann.jpg"
+      },
+      {
+        "name": "Hieu Ho",
+        "role": "Co-Trainerin",
+        "qualification": "DFB-Basis-Coach"
+      }
+    ]
+  },
+  {
+    "path": "jugend/u13-d2",
+    "coaches": [
+      {
+        "name": "Jörg Boreatti",
+        "role": "Trainer",
+        "qualification": "C-Lizenz (ab 2023)",
+        "phone": "+491726240593",
+        "image": "/images/verein/personen/joerg-boreatti.jpg"
+      },
+      {
+        "name": "Marko Eisner",
+        "role": "Co-Trainer",
+        "qualification": "DFB-Basis-Coach",
+        "image": "/images/verein/personen/marco-eisner.jpg"
+      },
+      {
+        "name": "Patrick Müller",
+        "role": "Co-Trainer",
+        "qualification": "DFB-Basis-Coach"
+      }
+    ]
+  },
+  {
+    "path": "jugend/u13-d3",
+    "coaches": [
+      {
+        "name": "Jérôme Ernsberger",
+        "role": "Trainer",
+        "qualification": "Trainer-C Kinder und Jugend",
+        "image": "/images/verein/personen/jerome-ernsberger.jpg"
+      }
+    ]
+  },
+  {
+    "path": "jugend/juniorinnen/u17",
+    "coaches": [
+      {
+        "name": "Sven Goldhagen",
+        "role": "Cheftrainer",
+        "qualification": "DFB-Basis-Coach",
+        "image": "/images/verein/personen/sven-goldhagen.jpg",
+        "phone": "+491727404080"
+      },
+      {
+        "name": "Sonja Thomen",
+        "role": "Co-Trainerin",
+        "qualification": "DFB-Basis-Coach"
+      }
+    ]
+  },
+  {
+    "path": "jugend/juniorinnen/u15",
+    "coaches": [
+      {
+        "name": "Alexander Kramer",
+        "role": "Trainer",
+        "qualification": "DFB-Basis-Coach",
+        "phone": "+491733276748"
+      }
+    ]
+  },
+  {
+    "path": "jugend/juniorinnen/u13",
+    "coaches": [
+      {
+        "name": "Dana Bulander",
+        "role": "Trainerin",
+        "qualification": "C-Lizenz",
+        "image": "/images/verein/personen/dana-bulander.jpg"
+      }
+    ]
+  }
+]

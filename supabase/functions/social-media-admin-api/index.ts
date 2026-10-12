@@ -1,3 +1,4 @@
+import {handleTrainerManagement} from '../_shared/trainer-management.mjs';
 import { loadSuiteDashboard } from '../_shared/suite-dashboard.mjs';
 import { handleReferees } from './referees.ts';
 import { handleCashbookWorkspace } from '../_shared/cashbook-evidence.mjs';
@@ -30,7 +31,7 @@ const homeVenues = new Set(['Hauptplatz', 'Nebenplatz', 'Kunstrasenplatz 1', 'Ku
 const crestStatuses = new Set(['missing', 'needs_review', 'approved', 'rejected']);
 const sponsorStatuses = new Set(['missing', 'needs_review', 'approved', 'rejected']);
 const sponsorContexts = new Set(['announcement', 'lineup', 'result', 'report', 'birthday', 'post', 'story']);
-const suiteAreas = ['social_media', 'sponsoring', 'editorial', 'referees', 'corporate_identity', 'club_crests', 'social_media_admin', 'user_management', 'cashbook'] as const;
+const suiteAreas = ['social_media', 'sponsoring', 'editorial', 'referees', 'corporate_identity', 'club_crests', 'social_media_admin', 'user_management', 'cashbook', 'trainer_management'] as const;
 type SuiteArea = typeof suiteAreas[number];
 const actionAreas: Record<string, SuiteArea> = {
   test_instagram_connection: 'social_media_admin', save_cleanup_settings: 'social_media_admin', purge_historical_data: 'social_media_admin',
@@ -659,6 +660,12 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     const action = required(body.action, 'Aktion');
     const requiredArea = actionAreas[action];
     if (requiredArea && !hasArea(requiredArea)) return json({ error: 'area_forbidden', area: requiredArea }, 403);
+
+    if (action.startsWith('trainer_')) {
+      if (!hasArea('trainer_management')) return json({error:'area_forbidden',area:'trainer_management'},403);
+      if (raw.length>7200000) return json({error:'Die Anfrage ist zu groß.'},413);
+      return json(await handleTrainerManagement(context.supabaseAdmin,userId,body));
+    }
 
     if (action.startsWith('cashbook_')) {
       if (raw.length > 11600000) return json({error:'Die Anfrage ist zu groß.'},413);

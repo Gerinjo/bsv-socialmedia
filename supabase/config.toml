@@ -37,3 +37,7 @@ verify_jwt = false
 # Independent outbox delivery, secured with SOCIAL_WORKER_CRON_SECRET.
 [functions.cashbook-alerts]
 verify_jwt = false
+
+# Anonymous read-only feed returns approved public trainer fields only.
+[functions.website-trainers-feed]
+verify_jwt = false

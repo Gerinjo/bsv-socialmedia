@@ -34,6 +34,9 @@ async function previewHtml() {
 }
 const files = new Map([
   ['/preview-suite-users.mjs','admin-site/preview/suite-users.mjs'],
+  ['/preview-trainer-seed.mjs','admin-site/preview/trainer-seed.mjs'],
+  ['/trainer-management-model.mjs','src/trainer-management.mjs'],
+  ['/preview-trainer-management.mjs','admin-site/preview/trainer-management.mjs'],
   ['/suite-access.mjs','src/suite-access.mjs'],
   ['/suite-brand.mjs','src/suite-brand.mjs'],
   ['/brand-themes.mjs','src/brand-themes.mjs'],

@@ -66,6 +66,16 @@ Vor dem ersten Login muss die URL einmal in Supabase unter **Authentication → 
 - Nach erfolgreichem Login wird der Benutzer direkt in den bestehenden Social Media Builder weitergeleitet.
 - Ein Logout erfolgt über die bereits vorhandene Abmeldefunktion in der Admin-Oberfläche.
 
+## Trainerverwaltung
+
+Die Club Suite zeigt unter **Trainerverwaltung** alle Trainer, Co-Trainer und Betreuer alphabetisch nach Nachname mit Foto, Kontaktdaten, Adresse, Geburtsdatum und Qualifikation. Die Mannschaftsansicht verwaltet Trainer, Co-Trainer 1, Co-Trainer 2 und Betreuer sowie zusätzliche Aufgaben. Personen können mehreren Mannschaften angehören. Die bestehenden Zuordnungen, Portraits und öffentlichen Angaben wurden übernommen; fehlende Kontaktdaten lassen sich im Personendialog ergänzen.
+
+Der Bereich `trainer_management` ist standardmäßig für Super-Admins und Jugendleitung freigegeben und kann über Rollen oder persönliche Zusatzrechte vergeben werden. Neue Personen erhalten dadurch keinen automatischen Login. Bestehende verknüpfte Suite-Konten übernehmen Namensänderungen, behalten aber Login, Passwort und Rechte.
+
+`social_team_people.staff_slot` ist die gemeinsame Zuordnung für die Verwaltung, Mannschaftszugänge im Kassenbuch und die Homepage. **Auf Homepage anzeigen** veröffentlicht die jeweilige Zuordnung. E-Mail und Telefonnummern benötigen eine zusätzliche Freigabe im Personendialog; Geburtsdatum, Adresse und Notizen bleiben privat. Der anonyme, ausschließlich lesende `website-trainers-feed` gibt nur freigegebene Website-Felder zurück und signiert Fotos aus dem privaten Bucket `trainer-portraits`. Nach Speichern und Neuladen übernimmt die Homepage die Änderungen ohne erneuten Website-Build. Der Build nutzt denselben Feed für die initiale Darstellung; bei einem Ausfall bleibt diese letzte Darstellung erhalten.
+
+Personen und Mannschaften tragen Versionsnummern gegen versehentliches Überschreiben. Änderungen werden mit Benutzer und Zeitpunkt im privaten `trainer_audit` protokolliert. Normale Portraits ersetzen keine freigestellten Bilder für Social-Media-Motive. Tests: `npm run check`, `npm run test:cashbook:db` und die Homepage-Tests einschließlich `team-staff.test.mjs`.
+
 ## Sicherheitsstandard
 
 `INSTAGRAM_TEST_MODE` ist zentral definiert und standardmäßig aktiv. Nur der exakte Wert `false` erlaubt dem Meta-Publisher den echten Versand. Freie Storys werden technisch als Instagram Story (`media_type=STORIES`) veröffentlicht; im Testmodus werden ausschließlich Vorschauen erzeugt.

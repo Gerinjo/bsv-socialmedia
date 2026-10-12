@@ -15,7 +15,7 @@ export async function loadSuiteDashboard({request,admin,userId,hasArea,suiteArea
   ]);
   if (brandError) return json({error:brandError.message},500);
   const base = {user:identity,brandSettings,testMode:runtimeConfig.testMode};
-  if (params.get('bootstrap') === '1' || (area && ['cashbook','referees','editorial'].includes(area))
+  if (params.get('bootstrap') === '1' || (area && ['cashbook','referees','editorial','trainer_management'].includes(area))
     || (!area && !['social_media','sponsoring','corporate_identity','club_crests','social_media_admin','user_management'].some(hasArea))) return json(base);
   // A skipped query never reaches PostgREST; choosing another area cannot broaden permissions.
   const read = (areas, query) => canRead(...areas) ? query() : Promise.resolve({data:[],error:null});

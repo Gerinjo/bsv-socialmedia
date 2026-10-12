@@ -1,3 +1,4 @@
+import {trainerPreviewApi} from '/preview-trainer-management.mjs';
 import {previewSuiteMembers,previewSuiteProfile,previewSuiteRoles,previewSuiteBrand,previewSuiteMutation,previewSetBrand} from '/preview-suite-users.mjs';
 import { refereePreviewApi } from '/preview-referees.mjs';
 import { cashbookPreviewApi,cashbookPreviewAdmin,cashbookPreviewMembers } from '/preview-cashbook.mjs';
@@ -215,6 +216,7 @@ export async function editorialPreviewApi(method = "GET", body = {}, query = {})
     };
   if(['save_suite_role','save_suite_member','bulk_suite_users','create_team_member'].includes(body.action))return previewSuiteMutation(body,previewPersona);
   if(body.action==='save_bsv_standard'){if(!previewAreas().includes('corporate_identity'))throw new Error('Keine Berechtigung');return previewSetBrand(body.colorScheme,body.themeKey);}
+  if(body.action?.startsWith('trainer_')){if(!previewAreas().includes('trainer_management'))throw new Error('Keine Berechtigung für die Trainerverwaltung.');return trainerPreviewApi(body);}
   if (body.action?.startsWith('cashbook_')) {
     if(!previewAreas().includes('cashbook'))throw new Error('Kein Recht für das Kassenbuch.');
     if(['cashbook_list','cashbook_book','cashbook_media','cashbook_edit','cashbook_cancel','cashbook_mark_transferred','cashbook_confirm_received'].includes(body.action))return cashbookPreviewApi({...body,action:body.action.replace('cashbook_','')},previewPersona);
