@@ -63,8 +63,14 @@ Vor dem ersten Login muss die URL einmal in Supabase unter **Authentication → 
 - Eine öffentliche Selbstregistrierung bleibt deaktiviert; neue Konten werden ausschließlich durch den Administrator angelegt.
 - In der Tabelle `public.social_admins` wird der Benutzer anschließend mit `role` (`admin` oder `sm-team`) und `is_active = true` freigeschaltet.
 - Der Administrator ist der Nutzer mit `role = 'admin'`; aktuell ist das Jérôme.
-- Nach erfolgreichem Login wird der Benutzer direkt in den bestehenden Social Media Builder weitergeleitet.
+- Nach erfolgreichem Login öffnet sich bei einem freigeschalteten Menübereich dieser Bereich direkt. Bei mehreren Bereichen erscheint die persönliche Startseite; Social Media mit Administration zählt als ein Bereich. Berechtigte Direktlinks bleiben möglich.
 - Ein Logout erfolgt über die bereits vorhandene Abmeldefunktion in der Admin-Oberfläche.
+
+Unter **Benutzerverwaltung → Aktivitätsprotokoll** sehen Super-Admins Anmeldungen sowie Kassenbuch-, Trainer- und Benutzeraktionen. Benutzer, Bereich und inklusive deutsche Kalendertage sind filterbar; die Übersicht lädt jeweils 50 Einträge mit einem stabilen Zeit-/ID-Cursor. Mobil erscheinen die Einträge als Karten. Der Zugriff wird bei jedem Abruf serverseitig und erneut in der Datenbank geprüft.
+
+`private.suite_activity_log` enthält unveränderliche Ereignisse mit Namen und Login als Momentaufnahme. Kassenbuchbewegungen, Korrekturen, Stornos, Überweisungen und Empfangsbestätigungen sowie Traineränderungen werden in derselben Transaktion protokolliert; vorhandene Ereignisse werden mit ihren ursprünglichen Zeitpunkten übernommen. Benutzer- und Rollenänderungen laufen durch den protokollierenden `suite_users_request`-Wrapper. Die vorbereitete und die tatsächlich abgeschlossene Kontolöschung sind separate Ereignisse. Historische Anmeldungen werden nicht aus einem letzten Aktivitätsdatum rekonstruiert.
+
+Beim Bootstrap wird eine Anmeldung einmal pro verifizierter Supabase-Sitzung erfasst. Der Zeitpunkt stammt aus den signierten AMR-Claims; ohne authentifizierten Anmeldezeitpunkt heißt das Ereignis ausdrücklich „Bestehende Sitzung geöffnet“. Token-Erneuerungen und Neuladen erzeugen keine doppelten Einträge. Passwörter, Tokens, IP-Adressen, Belege, Unterschriften und private Trainerkontaktdaten werden nicht in das Aktivitätsprotokoll kopiert. Tests: `npm run check` und `npm run test:cashbook:db`.
 
 ## Trainerverwaltung
 

@@ -1,4 +1,5 @@
 import {handleTrainerManagement} from '../_shared/trainer-management.mjs';
+import {recordSuiteLogin,readSuiteActivity} from '../_shared/suite-activity.mjs';
 import { loadSuiteDashboard } from '../_shared/suite-dashboard.mjs';
 import { handleReferees } from './referees.ts';
 import { handleCashbookWorkspace } from '../_shared/cashbook-evidence.mjs';
@@ -34,6 +35,7 @@ const sponsorContexts = new Set(['announcement', 'lineup', 'result', 'report', '
 const suiteAreas = ['social_media', 'sponsoring', 'editorial', 'referees', 'corporate_identity', 'club_crests', 'social_media_admin', 'user_management', 'cashbook', 'trainer_management'] as const;
 type SuiteArea = typeof suiteAreas[number];
 const actionAreas: Record<string, SuiteArea> = {
+  suite_activity_list: 'user_management',
   test_instagram_connection: 'social_media_admin', save_cleanup_settings: 'social_media_admin', purge_historical_data: 'social_media_admin',
   save_bsv_standard:'corporate_identity', save_team_settings: 'corporate_identity', save_team_color_group: 'corporate_identity', save_club_crest: 'club_crests',
   discard_club_crest: 'club_crests', approve_club_crest: 'club_crests', reject_club_crest: 'club_crests',
@@ -648,8 +650,11 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
   const hasAnyArea = (...areas: SuiteArea[]) => areas.some(hasArea);
 
   if (request.method === 'GET') {
-    return loadSuiteDashboard({request,admin:context.supabaseAdmin,userId,hasArea,suiteAreas,runtimeConfig,homeVenues,
-      helpers:{suiteUsersRpc,suiteMemberDirectory,freshPreviewUrls,freshPostUrls,freshIndependentStoryUrls,freshSponsorUrls,freshClubUrls,json}});
+    try {
+      return await loadSuiteDashboard({request,admin:context.supabaseAdmin,userId,hasArea,suiteAreas,runtimeConfig,homeVenues,
+        recordLogin:()=>recordSuiteLogin(context.supabaseAdmin,userId,claims),
+        helpers:{suiteUsersRpc,suiteMemberDirectory,freshPreviewUrls,freshPostUrls,freshIndependentStoryUrls,freshSponsorUrls,freshClubUrls,json}});
+    } catch(error) {return json({error:error instanceof Error?error.message:'Laden fehlgeschlagen.'},Number((error as {status?:number})?.status)||503);}
   }
 
   if (request.method !== 'POST') return json({ error: 'method_not_allowed' }, 405);
@@ -660,6 +665,12 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     const action = required(body.action, 'Aktion');
     const requiredArea = actionAreas[action];
     if (requiredArea && !hasArea(requiredArea)) return json({ error: 'area_forbidden', area: requiredArea }, 403);
+
+    if(action==='suite_activity_list'){
+      if(normalizedRole!=='admin')return json({error:'admin_only'},403);
+      if(raw.length>4096)return json({error:'Die Anfrage ist zu groß.'},413);
+      return json(await readSuiteActivity(context.supabaseAdmin,userId,body));
+    }
 
     if (action.startsWith('trainer_')) {
       if (!hasArea('trainer_management')) return json({error:'area_forbidden',area:'trainer_management'},403);

@@ -1,7 +1,7 @@
 import {cleanupSummary, normalizeRetentionDays, withHistoryState} from '../../../src/history-retention.mjs';
 
 // Only the opened area is loaded. Unscoped requests remain compatible with older clients.
-export async function loadSuiteDashboard({request,admin,userId,hasArea,suiteAreas,runtimeConfig,homeVenues,helpers}) {
+export async function loadSuiteDashboard({request,admin,userId,hasArea,suiteAreas,runtimeConfig,homeVenues,helpers,recordLogin}) {
   const {suiteUsersRpc,suiteMemberDirectory,freshPreviewUrls,freshPostUrls,freshIndependentStoryUrls,freshSponsorUrls,freshClubUrls,json} = helpers;
   const params = new URL(request.url).searchParams;
   const area = params.get('area');
@@ -12,6 +12,7 @@ export async function loadSuiteDashboard({request,admin,userId,hasArea,suiteArea
   const [identity, {data:brandSettings,error:brandError}] = await Promise.all([
     suiteUsersRpc(admin,userId,{action:'identity'}),
     admin.from('social_brand_settings').select('color_scheme,theme_key,updated_at').eq('id',true).single(),
+    params.get('bootstrap')==='1' ? recordLogin?.() : null,
   ]);
   if (brandError) return json({error:brandError.message},500);
   const base = {user:identity,brandSettings,testMode:runtimeConfig.testMode};

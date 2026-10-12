@@ -108,6 +108,10 @@ try {
   await sql(await readFile(new URL('supabase/migrations/20261012072811_trainer_lifecycle.sql',root),'utf8'));
   await sql(await readFile(new URL('supabase/tests/trainer-lifecycle.sql',root),'utf8'));
   console.log('Trainerdatenbank: passiv, reaktivieren, geschütztes Löschen, private Daten, Homepage und unveränderte Finanzdaten geprüft.');
+  await sql(await readFile(new URL('supabase/migrations/20261012093943_suite_activity_log.sql',root),'utf8'));
+  await sql(await readFile(new URL('supabase/tests/cashbook-advances.sql',root),'utf8'));
+  await sql(await readFile(new URL('supabase/tests/suite-activity.sql',root),'utf8'));
+  console.log('Aktivitätsprotokoll: Zugriffsschutz, Historie, Anmeldungen, Filter, Folgeseiten und unveränderliche Ereignisse geprüft.');
   await sql(await readFile(new URL('supabase/migrations/20261012074319_trainer_onboarding_import.sql',root),'utf8'));
   await sql(await readFile(new URL('supabase/migrations/20261012080109_trainer_onboarding_request_signatures.sql',root),'utf8'));
   await sql(await readFile(new URL('supabase/tests/trainer-onboarding.sql',root),'utf8'));

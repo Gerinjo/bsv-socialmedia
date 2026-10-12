@@ -33,6 +33,7 @@ async function previewHtml() {
   return html;
 }
 const files = new Map([
+  ['/preview-suite-activity.mjs','admin-site/preview/suite-activity.mjs'],
   ['/preview-suite-users.mjs','admin-site/preview/suite-users.mjs'],
   ['/preview-trainer-seed.mjs','admin-site/preview/trainer-seed.mjs'],
   ['/trainer-management-model.mjs','src/trainer-management.mjs'],

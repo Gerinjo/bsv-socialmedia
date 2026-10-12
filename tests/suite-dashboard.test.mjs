@@ -18,6 +18,14 @@ test('bootstrap reads identity and branding without fetching area data, roles or
   assert.deepEqual(Object.keys(await result.json()).sort(),['brandSettings','testMode','user']);
 });
 
+test('only bootstrap records the verified session, alongside identity and brand loading',async()=>{
+ const f=fixture();let recordCount=0;f.options.recordLogin=async()=>{recordCount++;};
+ await f.run('?bootstrap=1');assert.equal(recordCount,1);
+ await f.run('?area=cashbook');assert.equal(recordCount,1);
+ f.options.recordLogin=async()=>{throw new Error('audit unavailable');};
+ await assert.rejects(()=>f.run('?bootstrap=1'),/audit unavailable/);
+});
+
 test('an unauthorized or invalid area is rejected before reading privileged data',async()=>{
   for(const [query,status] of [['?area=user_management',403],['?area=unknown',400]]){
     const f=fixture(['cashbook']);const response=await f.run(query);assert.equal(response.status,status);assert.deepEqual(f.calls,[]);

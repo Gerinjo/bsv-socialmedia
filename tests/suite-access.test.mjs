@@ -24,7 +24,7 @@ test('bulk deletion revokes the whole checked selection before deleting Auth acc
  const calls=[];
  const db={rpc:async(name,args)=>{calls.push(['rpc',name,args]);return {data:{ok:true,userIds:['a','b']}}},auth:{admin:{deleteUser:async id=>{calls.push(['auth',id]);return id==='b'?{error:{message:'failed'}}:{}}}},from:()=>({delete:()=>({eq:async(key,id)=>{calls.push(['membership',id]);return {}}})})};
  const result=await handleSuiteUsers(db,'actor',{action:'bulk_suite_users',operation:'delete',userIds:['a','b']});
- assert.equal(calls[0][2].payload.action,'prepare_delete');assert.deepEqual(calls.map(c=>c[0]),['rpc','auth','membership','auth']);
+ assert.equal(calls[0][2].payload.action,'prepare_delete');assert.deepEqual(calls.map(c=>c[0]),['rpc','auth','rpc','auth']);assert.equal(calls[2][2].payload.action,'finish_delete');assert.equal(calls[2][2].payload.userId,'a');
  assert.equal(result.ok,false);assert.deepEqual(result.results,[{userId:'a',ok:true,error:undefined},{userId:'b',ok:false,error:'failed'}]);
 });
 test('denied preflight makes no Auth mutations',async()=>{

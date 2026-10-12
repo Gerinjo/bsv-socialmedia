@@ -16,8 +16,8 @@ export async function handleSuiteUsers(db,actor,body){
    for(const id of prepared.userIds){
     const {error}=await db.auth.admin.deleteUser(id);
     if(error){results.push({userId:id,ok:false,error:error.message});continue;}
-    const {error:deleteError}=await db.from('social_admins').delete().eq('user_id',id);
-    results.push({userId:id,ok:!deleteError,error:deleteError?.message});
+    try{await suiteUsersRpc(db,actor,{action:'finish_delete',userId:id});results.push({userId:id,ok:true,error:undefined});}
+    catch(error){results.push({userId:id,ok:false,error:error.message});}
    }
    return {ok:results.every(r=>r.ok),results};
   }
