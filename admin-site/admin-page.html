@@ -69,6 +69,7 @@
 __REFEREE_CSS__
 __CASHBOOK_CSS__
     __TRAINER_CSS__
+    __EMPLOYEE_CSS__
 __BRAND_PREVIEW_CSS__
 __SUITE_ACTIVITY_CSS__
     .suite-app-install{display:flex;align-items:center;justify-content:flex-start;gap:10px;flex-shrink:0;width:100%;margin-top:18px;padding:12px 10px;border:1px solid #dce8de;border-radius:8px;background:#f1f7f2;color:#246140;text-align:left;white-space:normal;font-weight:600}
@@ -185,7 +186,7 @@ __SUITE_ACTIVITY_CSS__
           </div>
           <button class="suite-nav-item" type="button" data-suite-area="editorial" title="Redaktion"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 4h16v17H4zM8 2v4M16 2v4M4 9h16M8 13h3M8 17h8"></path></svg></span><span class="suite-nav-label">Redaktion</span></button>
           <button class="suite-nav-item" type="button" data-suite-area="club_crests" title="Vereinswappen"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 3 6v6c0 5 9 9 9 9s9-4 9-9V6z"></path><path d="m8 11 3 3 5-6"></path></svg></span><span class="suite-nav-label">Vereinswappen <span id="crestAttentionCount"></span></span></button>
-          <button class="suite-nav-item" type="button" data-suite-area="trainer_management" title="Trainerverwaltung"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="8" cy="7" r="3"/><path d="M2 20a6 6 0 0 1 12 0M16 5h6M16 10h6M17 15h5M17 20h5"/></svg></span><span class="suite-nav-label">Trainerverwaltung</span></button>
+          <button class="suite-nav-item" type="button" data-suite-area="trainer_management" title="Mitarbeiter"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="8" cy="7" r="3"/><path d="M2 20a6 6 0 0 1 12 0M16 5h6M16 10h6M17 15h5M17 20h5"/></svg></span><span class="suite-nav-label">Mitarbeiter</span></button>
           <button class="suite-nav-item" type="button" data-suite-area="referees" title="Schiedsrichter"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h14v17H5zM9 2v4M15 2v4M8 11l3 3 5-6M8 18h8"></path></svg></span><span class="suite-nav-label">Schiedsrichter</span></button>
           <div class="suite-nav-group">
           <button type="button" class="suite-nav-item" data-suite-area="cashbook" title="Kassenbuch" aria-controls="cashbookSubnav" aria-expanded="false"><span class="suite-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 5h18v15H3zM3 9h18M16 13h3M7 13h3M7 16h3"></path></svg></span><span class="suite-nav-label">Kassenbuch</span></button>
@@ -309,7 +310,7 @@ __SUITE_ACTIVITY_CSS__
         <section class="panel"><div class="list-heading"><h2>Geburtstage</h2><span id="birthdayCount" class="count"></span></div><div id="birthdays"></div></section>
       </div>
       <div id="editorialArea" class="hidden"></div>
-      <section id="trainerArea" class="panel hidden"><h2>Trainerverwaltung</h2><p class="muted">Personen, Kontaktdaten und Trainerteams für Suite und Homepage verwalten.</p><div id="trainerWorkspace"></div></section>
+      <section id="trainerArea" class="panel hidden"><h2>Mitarbeiter</h2><p class="muted">Personenkreise, Rollenbilder, Trainer und Mannschaften zentral verwalten.</p><div id="trainerWorkspace"></div></section>
       <section id="cashbookArea" class="panel hidden cashbook"><h2>Kassenbuch</h2><div id="cashbookWorkspace"></div></section>
           <div id="refereeArea" class="hidden"><nav class="referee-modes" aria-label="Schiedsrichterbereich"><button type="button" data-referee-mode="assignment" aria-pressed="true">Vereinsschiris</button><button type="button" data-referee-mode="expense" aria-pressed="false">Erstattungen an Trainer</button></nav><div id="refereeAssignmentArea"></div><div id="refereeExpenseArea" class="hidden"></div></div>
       <div id="adminTab" class="tab-panel hidden" role="tabpanel" aria-labelledby="adminTabButton">
@@ -507,11 +508,13 @@ __BRAND_PREVIEW_SCRIPT__
     __CASHBOOK_SCRIPT__
     __TRAINER_MODEL__
     __TRAINER_SCRIPT__
+    __EMPLOYEE_MODEL__
+    __EMPLOYEE_SCRIPT__
     __REFEREE_SCRIPT__
     __EXPENSE_MODEL__
     __RECEIPT_OCR__
     __EXPENSE_SCRIPT__
-    const trainerWorkspace=createTrainerWorkspace(document.querySelector('#trainerWorkspace'),{request:body=>api('POST',{...body,action:'trainer_'+body.action})});
+    const trainerWorkspace=createEmployeeWorkspace(document.querySelector('#trainerWorkspace'),{request:body=>api('POST',{...body,action:'employee_'+body.action}),trainerRequest:body=>api('POST',{...body,action:'trainer_'+body.action})});
     const refereeWorkspace=createRefereeWorkspace(document.querySelector('#refereeAssignmentArea'),{admin:true,request:body=>api('POST',body),notify:show});
     const cashbookDraftKey=()=>`bsv-suite-cashbook-pending:${currentUserId}`;
     const cashbookWorkspace=createCashbookWorkspace(document.querySelector('#cashbookWorkspace'),{

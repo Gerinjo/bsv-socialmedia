@@ -1,3 +1,4 @@
+import {employeePhotoUrl} from '../_shared/employee-management.mjs';
 import {createClient} from 'npm:@supabase/supabase-js@2';
 import {trainerPhotoUrl} from '../_shared/trainer-management.mjs';
 const headers={'access-control-allow-origin':'*','access-control-allow-methods':'GET, OPTIONS','access-control-allow-headers':'apikey, authorization, content-type','cache-control':'no-store'};
@@ -11,10 +12,13 @@ Deno.serve(async request=>{
   const {data,error}=await db.rpc('website_trainers_feed');if(error||!data)throw new Error('feed_unavailable');
   const photos=new Map<string,Promise<string>>();
   const teams=await Promise.all(data.teams.map(async (team:any)=>({path:team.path,...(team.photoManaged?{photo:team.teamPhotoPath?{image:db.storage.from('team-photos').getPublicUrl(team.teamPhotoPath).data.publicUrl}:null}:{}),coaches:await Promise.all(team.coaches.map(async (coach:any)=>{
-   const {photoPath,...publicCoach}=coach;
+   const {photoPath,photoSource,...publicCoach}=coach;
+   if(photoSource){publicCoach.image=await employeePhotoUrl(db,photoSource);return publicCoach;}
    if(photoPath){if(!photos.has(photoPath))photos.set(photoPath,trainerPhotoUrl(db,photoPath));publicCoach.image=await photos.get(photoPath);}
    return publicCoach;
   }))})));
-  return Response.json({teams},{headers});
+  const {data:groups,error:groupError}=await db.rpc('website_employee_groups');if(groupError||!groups)throw new Error('groups_unavailable');
+  const employeeGroups=await Promise.all(groups.assignments.map(async({photoSource,personId,id,...a}:any)=>({...a,image:await employeePhotoUrl(db,photoSource)})));
+  return Response.json({teams,employeeGroups},{headers});
  }catch{return Response.json({error:'feed_unavailable'},{status:503,headers});}
 });
