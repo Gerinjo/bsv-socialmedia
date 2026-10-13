@@ -5307,7 +5307,7 @@ export function validateEmployeePhoto(body){
  }
  async function render(){embedded?.clear();embedded=null;
   root.innerHTML='<nav class="employee-groups" aria-label="Personenkreise">'+EMPLOYEE_GROUPS.map(g=>'<button class="secondary" type="button" data-employee-group="'+g.key+'" aria-pressed="'+(g.key===group)+'">'+e(g.label)+'</button>').join('')+'</nav><div class="employee-heading"><div><h3>'+e(label(group))+'</h3><p class="muted">'+e(EMPLOYEE_GROUPS.find(g=>g.key===group).description)+'</p></div>'+(!['trainers','teams'].includes(group)?'<button type="button" class="employee-new">Rolle ergänzen</button>':'')+'</div><p class="employee-status" role="status" aria-live="polite"></p><div class="employee-content"></div><dialog class="trainer-dialog employee-dialog"></dialog>';
-  root.querySelectorAll('[data-employee-group]').forEach(b=>b.onclick=async()=>{if(b.dataset.employeeGroup===group||!canLeave())return;group=b.dataset.employeeGroup;search='';await render();});
+  root.querySelectorAll('[data-employee-group]').forEach(b=>b.onclick=async()=>{if(b.dataset.employeeGroup===group||!canLeave())return;group=b.dataset.employeeGroup;search='';status('Wird geladen …');try{if(await load())await render();}catch(error){status(error.message,true);}});
   const target=root.querySelector('.employee-content');
   if(['trainers','teams'].includes(group)){
    embedded=createTrainerWorkspace(target,{request:trainerRequest,initialView:group==='teams'?'teams':'people',showTabs:false});await embedded.open();return;

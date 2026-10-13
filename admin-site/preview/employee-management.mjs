@@ -10,7 +10,7 @@ async function state(){let data;try{data=JSON.parse(localStorage.getItem(key)||'
 export async function employeePreviewApi(body){const data=await state(),action=body.action.replace(/^employee_/,'');
  if(action==='list'){
   const trainers=await trainerPreviewApi({action:'list'});
-  return {...data,people:[...new Map([...data.people,...trainers.people.map(p=>({id:p.id,name:p.name,active:p.active}))].map(p=>[p.id,p])).values()],assignments:data.assignments.map(a=>{const other=data.assignments.filter(other=>other.personId===a.personId&&other.photo).sort((x,y)=>y.photoUpdated-x.photoUpdated)[0],t=trainers.people.find(p=>p.id===a.personId),image=a.photo||other?.photo||(t?.photoInherited?null:t?.photo_url)||a.sourceImage;return {...a,name:data.people.find(p=>p.id===a.personId)?.name||'Noch nicht besetzt',photo_url:image,hasOwnPhoto:Boolean(a.photo),photoInherited:!a.photo&&Boolean(other?.photo),photo:undefined};})};
+  return {...data,people:[...new Map([...data.people,...trainers.people.map(p=>({id:p.id,name:p.name,active:p.active}))].map(p=>[p.id,p])).values()],assignments:data.assignments.map(a=>{const other=data.assignments.filter(other=>other.personId===a.personId&&other.photo).sort((x,y)=>y.photoUpdated-x.photoUpdated)[0],t=trainers.people.find(p=>p.id===a.personId),image=a.photo||other?.photo||(t?.photoInherited?null:t?.photo_url)||a.sourceImage;return {...a,name:data.people.find(p=>p.id===a.personId)?.name||'Noch nicht besetzt',photo_url:image,hasOwnPhoto:Boolean(a.photo),photoInherited:!a.photo&&Boolean(other?.photo||t?.ownPhoto),photo:undefined};})};
  }
  let result={ok:true};
  if(action==='save_assignment'){
