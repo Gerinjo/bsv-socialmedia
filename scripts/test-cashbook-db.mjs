@@ -116,6 +116,13 @@ try {
   await sql(await readFile(new URL('supabase/migrations/20261012080109_trainer_onboarding_request_signatures.sql',root),'utf8'));
   await sql(await readFile(new URL('supabase/tests/trainer-onboarding.sql',root),'utf8'));
   console.log('Onboarding: Serverauthentifizierung, Kontakte, Mannschaft/Rolle, Freigabe, freie Positionen, Wiederholungen und bestehende Personen geprüft.');
+  await sql(await readFile(new URL('supabase/migrations/20261013080627_trainer_email_contact_form.sql',root),'utf8'));
+  await sql(await readFile(new URL('supabase/tests/trainer-email-contact-form.sql',root),'utf8'));
+  console.log('Trainerkontakt: E-Mail bleibt bei alten und neuen Freigaben privat; Telefonfreigaben und öffentliche Trainerkarten erhalten.');
+  await sql(await readFile(new URL('supabase/migrations/20261013081948_trainer_contact_directory.sql',root),'utf8'));
+  await sql(await readFile(new URL('supabase/migrations/20261013082427_trainer_contact_email_import.sql',root),'utf8'));
+  await sql(await readFile(new URL('supabase/tests/trainer-contact-directory.sql',root),'utf8'));
+  console.log('Kontaktformular: private Signaturen, aktuelle Traineradressen, zusätzliche Mannschaftskontakte, Passivschaltung, Löschung und Versionsschutz geprüft.');
   if(process.env.CASHBOOK_DB_ADVISORS==='1'){
     const {stdout:address}=await exec('docker',['inspect','-f','{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}',name]);
     const {stdout}=await exec('npx',['--yes','supabase','db','advisors','--db-url',`postgresql://postgres:isolated-test-only@${address.trim()}:5432/postgres?sslmode=disable`,'--type','all','--fail-on','error'],{maxBuffer:1024*1024});

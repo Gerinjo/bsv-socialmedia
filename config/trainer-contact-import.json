@@ -1,0 +1,205 @@
+{
+  "source": "BSV Website · contact_empfaenger",
+  "capturedOn": "2026-10-13",
+  "people": [
+    {
+      "slug": "mathias-becht",
+      "email": "mathias.becht@bsvnordstern.de",
+      "source": "team--fussball--frauen--bezirksliga"
+    },
+    {
+      "slug": "emel-bayram",
+      "email": "emel.bayram@bsvnordstern.de",
+      "source": "team--fussball--frauen--kreisliga"
+    },
+    {
+      "slug": "torsten-parzich",
+      "email": "torsten.parzich@bsvnordstern.de",
+      "source": "team--fussball--herren--bezirksliga"
+    },
+    {
+      "slug": "alexander-kaiser",
+      "email": "alexander.kaiser@bsvnordstern.de",
+      "source": "team--fussball--herren--kreisliga-2"
+    },
+    {
+      "slug": "dana-bulander",
+      "email": "dana.bulander@bsvnordstern.de",
+      "source": "team--jugend--juniorinnen--u13"
+    },
+    {
+      "slug": "alexander-kramer",
+      "email": "alexander.kramer@bsvnordstern.de",
+      "source": "team--jugend--juniorinnen--u15"
+    },
+    {
+      "slug": "sven-goldhagen",
+      "email": "sven.goldhagen@bsvnordstern.de",
+      "source": "team--jugend--juniorinnen--u17"
+    },
+    {
+      "slug": "sonja-thomen",
+      "email": "sonja.thomen@bsvnordstern.de",
+      "source": "team--jugend--juniorinnen--u17"
+    },
+    {
+      "slug": "niku-pourheidari",
+      "email": "niku.pourheidari@bsvnordstern.de",
+      "source": "team--jugend--u11-e1"
+    },
+    {
+      "slug": "marcelino-ruth",
+      "email": "marcelino.rueth@bsvnordstern.de",
+      "source": "team--jugend--u9-f"
+    },
+    {
+      "slug": "mohamad-mahmoudi",
+      "email": "mohamad.mahmoudi@bsvnordstern.de",
+      "source": "team--jugend--u11-e2"
+    },
+    {
+      "slug": "stefan-sulger",
+      "email": "stefan.sulger@bsvnordstern.de",
+      "source": "team--jugend--u11-e3"
+    },
+    {
+      "slug": "michael-sick",
+      "email": "michael.sick@bsvnordstern.de",
+      "source": "team--jugend--u11-e3"
+    },
+    {
+      "slug": "stephan-hellmann",
+      "email": "stephan.hellmann@bsvnordstern.de",
+      "source": "team--jugend--u13-d1"
+    },
+    {
+      "slug": "hieu-ho",
+      "email": "hieu.ho@bsvnordstern.de",
+      "source": "team--jugend--u13-d1"
+    },
+    {
+      "slug": "jorg-boreatti",
+      "email": "joerg.boreatti@bsvnordstern.de",
+      "source": "team--jugend--u13-d2"
+    },
+    {
+      "slug": "marko-eisner",
+      "email": "marco.eisner@bsvnordstern.de",
+      "source": "team--jugend--u13-d2"
+    },
+    {
+      "slug": "jerome-ernsberger",
+      "email": "jerome.ernsberger@bsvnordstern.de",
+      "source": "person-jerome-ernsberger"
+    },
+    {
+      "slug": "axel-schauble",
+      "email": "axel.schaeuble@bsvnordstern.de",
+      "source": "team--jugend--u15-c1"
+    },
+    {
+      "slug": "simon-buhler",
+      "email": "simon.buehler@bsvnordstern.de",
+      "source": "team--jugend--u15-c1"
+    },
+    {
+      "slug": "thomas-parthenschlager",
+      "email": "thomas.parthenschlager@bsvnordstern.de",
+      "source": "team--jugend--u15-c1"
+    },
+    {
+      "slug": "sebastian-bauerle",
+      "email": "sebastian.baeuerle@bsvnordstern.de",
+      "source": "team--jugend--u15-c2"
+    },
+    {
+      "slug": "maximilian-geismann",
+      "email": "maxgeissmann@gmail.com",
+      "source": "team--jugend--u17"
+    },
+    {
+      "slug": "andrea-basile",
+      "email": "andrea.basile@bsvnordstern.de",
+      "source": "team--jugend--u17"
+    },
+    {
+      "slug": "ole-schmal",
+      "email": "schmal.ole@gmail.com",
+      "source": "team--jugend--u19"
+    },
+    {
+      "slug": "elias-arfa",
+      "email": "elias.arfa@bsvnordstern.de",
+      "source": "team--jugend--u6-g"
+    },
+    {
+      "slug": "noemi-sophie-friedrich",
+      "email": "noemi.friedrich@bsvnordstern.de",
+      "source": "team--jugend--u6-g"
+    },
+    {
+      "slug": "mila-ernsberger",
+      "email": "mila.ernsberger@bsvnordstern.de",
+      "source": "team--jugend--u6-g"
+    },
+    {
+      "slug": "michael-meiss",
+      "email": "michael.meiss@bsvnordstern.de",
+      "source": "team--jugend--u7-g"
+    },
+    {
+      "slug": "marco-tassone",
+      "email": "marco.tassone@bsvnordstern.de",
+      "source": "team--jugend--u7-g"
+    },
+    {
+      "slug": "luca-gastaudo",
+      "email": "luca.gastaudo@bsvnordstern.de",
+      "source": "team--jugend--u7-g"
+    },
+    {
+      "slug": "pascal-dieterle",
+      "email": "pascal.dieterle@bsvnordstern.de",
+      "source": "team--jugend--u8-f"
+    },
+    {
+      "slug": "fabian-keller",
+      "email": "fabian.keller@bsvnordstern.de",
+      "source": "team--jugend--u8-f"
+    },
+    {
+      "slug": "andreas-wolfmuller",
+      "email": "andy.wolfmueller@bsvnordstern.de",
+      "source": "team--jugend--u9-f"
+    },
+    {
+      "slug": "eberhard-klinkenberg",
+      "email": "eberhard.klinkenberg@bsvnordstern.de",
+      "source": "person-eberhard-klinkenberg"
+    },
+    {
+      "slug": "ole-schmal",
+      "email": "ole.schmal@bsvnordstern.de",
+      "source": "person-ole-schmal"
+    },
+    {
+      "slug": "myriam-lipp",
+      "email": "myriam.lipp@bsvnordstern.de",
+      "source": "team--fussball--frauen--kreisliga"
+    }
+  ],
+  "teamEmails": [
+    {
+      "route": "team--fussball--alte-herren",
+      "email": "alteherren@bsvnordstern.de"
+    },
+    {
+      "route": "team--jugend--u19",
+      "email": "1.vorstand@sv-markelfingen.de"
+    },
+    {
+      "route": "team--jugend--u19",
+      "email": "u13trainer@sv-markelfingen.de"
+    }
+  ]
+}

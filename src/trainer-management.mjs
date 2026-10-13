@@ -15,7 +15,13 @@ export function validateTrainerTeam(body){
  if(!Number.isSafeInteger(body.version)||body.version<1||!Array.isArray(body.assignments)||body.assignments.length>20)throw new Error('Ungültige Zuordnung.');
  const slots=new Set(),people=new Set();
  for(const a of body.assignments){if(!Object.hasOwn(TRAINER_SLOTS,a.slot)&&!/^extra-[1-9][0-9]?$/.test(a.slot))throw new Error('Ungültige Position.');if(!a.personId||slots.has(a.slot)||people.has(a.personId))throw new Error('Jede Person und Position darf pro Mannschaft nur einmal belegt sein.');slots.add(a.slot);people.add(a.personId);if(String(a.websiteRole||'').length>100)throw new Error('Bitte die Rollenbezeichnung kürzen.');}
- return {teamId:body.teamId,version:body.version,assignments:body.assignments.map(a=>({slot:a.slot,personId:a.personId,websiteVisible:a.websiteVisible===true,websiteRole:String(a.websiteRole||'').trim()}))};
+ return {teamId:body.teamId,version:body.version,...(body.contactEmails===undefined?{}:{contactEmails:trainerContactEmails(body.contactEmails)}),assignments:body.assignments.map(a=>({slot:a.slot,personId:a.personId,websiteVisible:a.websiteVisible===true,websiteRole:String(a.websiteRole||'').trim()}))};
+}
+
+export function trainerContactEmails(value){
+ const values=typeof value==='string'?value.split(/[\s,;]+/).filter(Boolean):value;
+ if(!Array.isArray(values)||values.length>20||values.some(email=>typeof email!=='string'||email.trim().length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())))throw new Error('Bitte höchstens 20 gültige zusätzliche E-Mail-Adressen eingeben.');
+ return [...new Set(values.map(email=>email.trim().toLowerCase()))];
 }
 
 export function trainerFilterPeople(people,status='active'){
