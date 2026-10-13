@@ -1,4 +1,5 @@
 export const TRAINER_SLOTS = {trainer:'Trainer',co1:'Co-Trainer 1',co2:'Co-Trainer 2',betreuer:'Betreuer'};
+export const TEAM_PHOTO_BUCKET = 'team-photos';
 export const TRAINER_PHOTO_BUCKET = 'trainer-portraits';
 export function trainerSortedPeople(people){return [...people].sort((a,b)=>String(a.last_name).localeCompare(String(b.last_name),'de',{sensitivity:'base'})||String(a.first_name).localeCompare(String(b.first_name),'de',{sensitivity:'base'}));}
 export function validateTrainerPerson(body){

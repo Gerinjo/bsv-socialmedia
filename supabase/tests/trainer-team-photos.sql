@@ -1,0 +1,30 @@
+begin;
+create function pg_temp.check_photo(ok boolean,label text) returns void language plpgsql as $$begin if ok is not true then raise exception 'Team photo: %',label;end if;end $$;
+set local role service_role;
+do $$
+declare actor uuid:='00000000-0000-4000-8000-000000000020'; team uuid; ver bigint; path text; result jsonb; feed jsonb;
+begin
+ select id,trainer_version into team,ver from public.social_teams where website_path='jugend/u19';
+ path:=team::text||'/'||repeat('a',64)||'.png';
+ result:=public.trainer_management_request(null,jsonb_build_object('action','save_team_photo','teamId',team,'version',ver,'photoPath',path));
+ perform pg_temp.check_photo(result->>'status'='403','unauthorized writes rejected');
+ result:=public.trainer_management_request(actor,jsonb_build_object('action','save_team_photo','teamId',team,'version',ver,'photoPath','../other.png'));
+ perform pg_temp.check_photo(result->>'status'='400','cross-team paths rejected');
+ result:=public.trainer_management_request(actor,jsonb_build_object('action','save_team_photo','teamId',team,'version',ver,'photoPath',path));
+ perform pg_temp.check_photo((result->>'version')::bigint=ver+1,'photo increments shared team revision');
+ perform pg_temp.check_photo(public.team_photo_source(team)->>'photoPath'=path,'magazine source uses saved photo');
+ select t into feed from jsonb_array_elements(public.website_trainers_feed()->'teams') t where t->>'path'='jugend/u19';
+ perform pg_temp.check_photo((feed->>'photoManaged')::boolean and feed->>'teamPhotoPath'=path,'public feed uses saved photo');
+ result:=public.trainer_management_request(actor,jsonb_build_object('action','save_team_photo','teamId',team,'version',ver,'photoPath',null));
+ perform pg_temp.check_photo(result->>'status'='409','stale photo update rejected');
+ result:=public.trainer_management_request(actor,jsonb_build_object('action','save_team','teamId',team,'version',ver,'assignments','[]'::jsonb));
+ perform pg_temp.check_photo(result->>'status'='409','photo protects against stale assignment saves');
+ result:=public.trainer_management_request(actor,jsonb_build_object('action','list'));
+ perform pg_temp.check_photo(exists(select 1 from jsonb_array_elements(result->'teams') t where t->>'id'=team::text and t->>'photoPath'=path),'management returns preview');
+ result:=public.trainer_management_request(actor,jsonb_build_object('action','save_team_photo','teamId',team,'version',ver+1,'photoPath',null));
+ perform pg_temp.check_photo((result->>'version')::bigint=ver+2 and public.team_photo_source(team)='{"photoPath":null}'::jsonb,'explicit removal overrides old website photos');
+ perform pg_temp.check_photo(exists(select 1 from private.trainer_audit where team_id=team and action='save_team_photo'),'changes audited');
+end $$;
+reset role;
+select pg_temp.check_photo(not has_function_privilege('anon','public.team_photo_source(uuid)','EXECUTE') and not has_table_privilege('authenticated','private.trainer_team_photos','UPDATE'),'direct writes and private source protected');
+rollback;

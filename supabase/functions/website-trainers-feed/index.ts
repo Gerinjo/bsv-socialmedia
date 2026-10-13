@@ -10,7 +10,7 @@ Deno.serve(async request=>{
   const db=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}});
   const {data,error}=await db.rpc('website_trainers_feed');if(error||!data)throw new Error('feed_unavailable');
   const photos=new Map<string,Promise<string>>();
-  const teams=await Promise.all(data.teams.map(async (team:any)=>({path:team.path,coaches:await Promise.all(team.coaches.map(async (coach:any)=>{
+  const teams=await Promise.all(data.teams.map(async (team:any)=>({path:team.path,...(team.photoManaged?{photo:team.teamPhotoPath?{image:db.storage.from('team-photos').getPublicUrl(team.teamPhotoPath).data.publicUrl}:null}:{}),coaches:await Promise.all(team.coaches.map(async (coach:any)=>{
    const {photoPath,...publicCoach}=coach;
    if(photoPath){if(!photos.has(photoPath))photos.set(photoPath,trainerPhotoUrl(db,photoPath));publicCoach.image=await photos.get(photoPath);}
    return publicCoach;
