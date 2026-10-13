@@ -19,3 +19,16 @@ Deno.test('team images are frozen, reused by content and retained on an unavaila
  let fetched=false;await prepareEditorialTeamPhoto(db,'issue',{source_url:'http://127.0.0.1/private'},null,async()=>{fetched=true;return new Response(png)});assert.equal(fetched,false);
  await first.cleanup();assert.deepEqual(removed,uploads);
 });
+
+Deno.test('central team photos override the website and are copied into the issue archive',async()=>{
+ const {resolveEditorialTeamPhoto}=await import('../supabase/functions/_shared/editorial-team-photo.ts');
+ const path='00000000-0000-4000-8000-000000000001/'+'a'.repeat(64)+'.png';let source:any={photoPath:path};const uploads:string[]=[];
+ const db={rpc:async()=>({data:source,error:null}),storage:{from(bucket:string){return {download:async(p:string)=>{assert.equal(bucket,'team-photos');assert.equal(p,path);return {data:new Blob([png],{type:'image/png'}),error:null};},upload:async(p:string)=>{assert.equal(bucket,'editorial-portraits');uploads.push(p);return {error:null};},remove:async()=>({error:null})};}}};
+ const team={id:'team',name:'U19'},fallback={source_url:'https://bsvnordstern.de/images/old.png'};
+ const selected=await resolveEditorialTeamPhoto(db,team,fallback);
+ const result=await prepareEditorialTeamPhoto(db,'issue',selected,null,async()=>{throw new Error('must not fetch website');});
+ assert.equal(uploads.length,1);assert.equal(result.photo.photo_path,uploads[0]);assert.equal(result.photo.source_url,'team-photos/'+path);
+ source={photoPath:null};assert.equal(await resolveEditorialTeamPhoto(db,team,fallback),null);
+ source=null;assert.equal(await resolveEditorialTeamPhoto(db,team,fallback),fallback);
+ await assert.rejects(()=>resolveEditorialTeamPhoto({rpc:async()=>({error:true})},team,fallback));
+});

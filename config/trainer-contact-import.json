@@ -186,20 +186,37 @@
       "slug": "myriam-lipp",
       "email": "myriam.lipp@bsvnordstern.de",
       "source": "team--fussball--frauen--kreisliga"
+    },
+    {
+      "slug": "michael-jentsch",
+      "email": "1.vorstand@sv-markelfingen.de",
+      "source": "team--jugend--u19",
+      "legacyWebsiteCommit": "36cf3ce1bdceecc166baff725eb5fb80c7f47d13"
+    },
+    {
+      "slug": "frieder-demmer",
+      "email": "u13trainer@sv-markelfingen.de",
+      "source": "team--jugend--u19",
+      "legacyWebsiteCommit": "36cf3ce1bdceecc166baff725eb5fb80c7f47d13"
+    },
+    {
+      "slug": "humberto-vicente-agudo-torres",
+      "email": "humberto.torres@bsvnordstern.de",
+      "source": "Website-Archiv · jugend/u8-f",
+      "legacyWebsiteCommit": "36cf3ce1bdceecc166baff725eb5fb80c7f47d13"
+    },
+    {
+      "slug": "patrick-brunner",
+      "email": "patrick.brunner@bsvnordstern.de",
+      "source": "Website-Archiv · jugend/u13-d2",
+      "legacyWebsiteCommit": "36cf3ce1bdceecc166baff725eb5fb80c7f47d13",
+      "identityConfirmed": "Patrick Müller – Namenskorrektur vom Nutzer bestätigt"
     }
   ],
   "teamEmails": [
     {
       "route": "team--fussball--alte-herren",
       "email": "alteherren@bsvnordstern.de"
-    },
-    {
-      "route": "team--jugend--u19",
-      "email": "1.vorstand@sv-markelfingen.de"
-    },
-    {
-      "route": "team--jugend--u19",
-      "email": "u13trainer@sv-markelfingen.de"
     }
   ]
 }

@@ -1,0 +1,362 @@
+{
+  "source": "Aktuell veröffentlichte Homepage (Build) und Satzung §§ 13, 14, 17 · Stand 13.10.2026",
+  "entries": [
+    {
+      "name": "Sandra Fuchs",
+      "role": "1. Vorstand",
+      "image": "/images/verein/personen/sandra-fuchs.jpg",
+      "groupKey": "executive",
+      "sortOrder": 1
+    },
+    {
+      "name": "Sandra Fuchs",
+      "role": "1. Vorstand",
+      "image": "/images/verein/personen/sandra-fuchs.jpg",
+      "groupKey": "board",
+      "sortOrder": 2
+    },
+    {
+      "name": "Felix Schüle",
+      "role": "2. Vorstand",
+      "image": "/images/verein/personen/felix-schuele.jpg",
+      "groupKey": "executive",
+      "sortOrder": 3
+    },
+    {
+      "name": "Felix Schüle",
+      "role": "2. Vorstand",
+      "image": "/images/verein/personen/felix-schuele.jpg",
+      "groupKey": "board",
+      "sortOrder": 4
+    },
+    {
+      "name": "Claudia Gastaudo",
+      "role": "Kassiererin",
+      "image": "/images/verein/personen/claudia-gastaudo.jpg",
+      "groupKey": "executive",
+      "sortOrder": 5
+    },
+    {
+      "name": "Claudia Gastaudo",
+      "role": "Kassiererin",
+      "image": "/images/verein/personen/claudia-gastaudo.jpg",
+      "groupKey": "board",
+      "sortOrder": 6
+    },
+    {
+      "name": "Michaela Auer",
+      "role": "Schriftführerin",
+      "image": "/images/verein/personen/michaela-auer.jpg",
+      "groupKey": "executive",
+      "sortOrder": 7
+    },
+    {
+      "name": "Michaela Auer",
+      "role": "Schriftführerin",
+      "image": "/images/verein/personen/michaela-auer.jpg",
+      "groupKey": "board",
+      "sortOrder": 8
+    },
+    {
+      "name": "Felix Schüle",
+      "role": "Sportlicher Leiter Herren",
+      "image": "/images/verein/personen/felix-schuele.jpg",
+      "groupKey": "board",
+      "sortOrder": 9
+    },
+    {
+      "name": "Ann-Kathrin Sugg",
+      "role": "Sportliche Leitung Frauen",
+      "image": "/images/verein/personen/ann-kathrin-sugg.jpg",
+      "groupKey": "board",
+      "sortOrder": 10
+    },
+    {
+      "name": "Karsten Grammel",
+      "role": "Sportliche Leitung Alte Herren",
+      "image": null,
+      "groupKey": "board",
+      "sortOrder": 11
+    },
+    {
+      "name": "Oliver Schillinger",
+      "role": "Spielbetrieb",
+      "image": null,
+      "groupKey": "board",
+      "sortOrder": 12
+    },
+    {
+      "name": "Manuel Schellhammer",
+      "role": "Passwesen",
+      "image": "/images/verein/personen/manuel-schellhammer.jpg",
+      "groupKey": "board",
+      "sortOrder": 13
+    },
+    {
+      "name": "Konrad Mauz",
+      "role": "Abteilungsleiter Bogensport",
+      "image": "/images/verein/personen/konrad-mauz.jpg",
+      "groupKey": "board",
+      "sortOrder": 14
+    },
+    {
+      "name": "Sigrid Burkhardt",
+      "role": "Abteilungsleitung: Gymnastik",
+      "image": "/images/verein/personen/sigrid-burkhardt.jpg",
+      "groupKey": "board",
+      "sortOrder": 15
+    },
+    {
+      "name": "Thomas Graf",
+      "role": "Abteilungsleiter Wandern",
+      "image": null,
+      "groupKey": "board",
+      "sortOrder": 16
+    },
+    {
+      "name": "Aktuell vakant",
+      "role": "Förderung & Qualifizierung",
+      "image": null,
+      "groupKey": "board",
+      "sortOrder": 17
+    },
+    {
+      "name": "Sigrid Burkhardt",
+      "role": "Mitgliederbestandspflege",
+      "image": "/images/verein/personen/sigrid-burkhardt.jpg",
+      "groupKey": "board",
+      "sortOrder": 18
+    },
+    {
+      "name": "Aktuell vakant",
+      "role": "Ehrung",
+      "image": null,
+      "groupKey": "board",
+      "sortOrder": 19
+    },
+    {
+      "name": "Jérôme Ernsberger",
+      "role": "IT & Administration",
+      "image": "/images/verein/personen/jerome-ernsberger.jpg",
+      "groupKey": "board",
+      "sortOrder": 20
+    },
+    {
+      "name": "Stefan Gastaudo",
+      "role": "Datenschutzbeauftragter",
+      "image": "/images/verein/personen/stefan-gastaudo.jpg",
+      "groupKey": "board",
+      "sortOrder": 21
+    },
+    {
+      "name": "Markus Sawicki",
+      "role": "Einkauf Organisation",
+      "image": "/images/verein/personen/markus-sawicki.jpg",
+      "groupKey": "board",
+      "sortOrder": 22
+    },
+    {
+      "name": "Ole Schmal",
+      "role": "Marketing & Social Media",
+      "image": null,
+      "groupKey": "board",
+      "sortOrder": 23
+    },
+    {
+      "name": "Julian Kemmer",
+      "role": "Presse",
+      "image": "/images/verein/personen/julian-kemmer.jpg",
+      "groupKey": "board",
+      "sortOrder": 24
+    },
+    {
+      "name": "Mario Jost",
+      "role": "Platzwart",
+      "image": "/images/verein/personen/mario-jost.jpg",
+      "groupKey": "board",
+      "sortOrder": 25
+    },
+    {
+      "name": "Eberhard Klinkenberg",
+      "role": "Hausmeister",
+      "image": "/images/verein/personen/eberhard-klinkenberg.jpg",
+      "groupKey": "board",
+      "sortOrder": 26
+    },
+    {
+      "name": "Markus Moßbrugger",
+      "role": "Schlüsselmanagement",
+      "image": null,
+      "groupKey": "board",
+      "sortOrder": 27
+    },
+    {
+      "name": "Jérôme Ernsberger",
+      "role": "Jugendleiter",
+      "image": "/images/verein/personen/jerome-ernsberger.jpg",
+      "groupKey": "youth",
+      "sortOrder": 28
+    },
+    {
+      "name": "Ole Schmal",
+      "role": "Stellvertretender Jugendleiter",
+      "image": null,
+      "groupKey": "youth",
+      "sortOrder": 29
+    },
+    {
+      "name": "Wiebke Baronner-Dieterle",
+      "role": "Jugendkassiererin",
+      "image": "/images/verein/personen/wiebke-baronner-dieterle.jpg",
+      "groupKey": "youth",
+      "sortOrder": 30
+    },
+    {
+      "name": "Sarah Klumpp",
+      "role": "Elternvertretung",
+      "image": null,
+      "groupKey": "youth",
+      "sortOrder": 31
+    },
+    {
+      "name": "Monika Peglau",
+      "role": "Jugendschutzbeauftragte",
+      "image": null,
+      "groupKey": "youth",
+      "sortOrder": 32
+    },
+    {
+      "name": "Laila Goldhagen",
+      "role": "Jugendvertretung C–B-Juniorinnen",
+      "image": "/images/verein/personen/laila-goldhagen.jpeg",
+      "groupKey": "youth",
+      "sortOrder": 33
+    },
+    {
+      "name": "Samuel Auer",
+      "role": "Jugendvertretung B–A-Junioren",
+      "image": "/images/verein/personen/samuel-auer.jpg",
+      "groupKey": "youth",
+      "sortOrder": 34
+    },
+    {
+      "name": "Ella Kramer",
+      "role": "Jugendvertretung G–D-Junioren & Juniorinnen",
+      "image": "/images/verein/personen/ella-kramer.jpeg",
+      "groupKey": "youth",
+      "sortOrder": 35
+    },
+    {
+      "name": "Susi Eisner",
+      "role": "Organisation",
+      "image": null,
+      "groupKey": "youth",
+      "sortOrder": 36
+    },
+    {
+      "name": "Wiebke Baronner-Dieterle",
+      "role": "Organisation (Rechte Hand)",
+      "image": "/images/verein/personen/wiebke-baronner-dieterle.jpg",
+      "groupKey": "youth",
+      "sortOrder": 37
+    },
+    {
+      "name": "Tobias Messmer",
+      "role": "Sport Events",
+      "image": null,
+      "groupKey": "youth",
+      "sortOrder": 38
+    },
+    {
+      "name": "Manuel Schellhammer",
+      "role": "Passwesen",
+      "image": "/images/verein/personen/manuel-schellhammer.jpg",
+      "groupKey": "youth",
+      "sortOrder": 39
+    },
+    {
+      "name": "Oliver Schillinger",
+      "role": "Spielbetrieb",
+      "image": null,
+      "groupKey": "youth",
+      "sortOrder": 40
+    },
+    {
+      "name": "Jérôme Ernsberger",
+      "role": "Jugendleiter",
+      "image": "/images/verein/personen/jerome-ernsberger.jpg",
+      "groupKey": "board",
+      "sortOrder": 41
+    },
+    {
+      "name": "Ole Schmal",
+      "role": "Stellvertretender Jugendleiter",
+      "image": null,
+      "groupKey": "board",
+      "sortOrder": 42
+    },
+    {
+      "name": "Aktuell vakant",
+      "role": "1. Vorsitz",
+      "image": null,
+      "groupKey": "supporters",
+      "sortOrder": 43
+    },
+    {
+      "name": "Eberhard Klinkenberg",
+      "role": "2. Vorsitz",
+      "image": "/images/verein/personen/eberhard-klinkenberg.jpg",
+      "groupKey": "supporters",
+      "sortOrder": 44
+    },
+    {
+      "name": "Heike Seidel",
+      "role": "Kasse",
+      "image": "/images/verein/personen/heike-seidel.jpg",
+      "groupKey": "supporters",
+      "sortOrder": 45
+    },
+    {
+      "name": "Sarah Hainke",
+      "role": "Schriftführerin",
+      "image": null,
+      "groupKey": "supporters",
+      "sortOrder": 46
+    },
+    {
+      "name": "Thomas Burkhardt",
+      "role": "Unterstützer",
+      "image": "/images/verein/personen/thomas-burkhardt.jpg",
+      "groupKey": "supporters",
+      "sortOrder": 47
+    },
+    {
+      "name": "Theopolt Walz",
+      "role": "Unterstützer",
+      "image": null,
+      "groupKey": "supporters",
+      "sortOrder": 48
+    },
+    {
+      "name": "Sigrid Burkhardt",
+      "role": "Unterstützerin",
+      "image": "/images/verein/personen/sigrid-burkhardt.jpg",
+      "groupKey": "supporters",
+      "sortOrder": 49
+    },
+    {
+      "name": "Hardy Seidel",
+      "role": "Unterstützer",
+      "image": "/images/verein/personen/hardy-seidel.jpg",
+      "groupKey": "supporters",
+      "sortOrder": 50
+    },
+    {
+      "name": "Janet Nohl",
+      "role": "Unterstützerin",
+      "image": "/images/verein/personen/janet-nohl.jpg",
+      "groupKey": "supporters",
+      "sortOrder": 51
+    }
+  ]
+}

@@ -6,7 +6,7 @@ export function discoverEditorialTeamPhoto(html, pageUrl) {
   const tag = hero.match(/<div\b[^>]*class=["'][^"']*\bhero-image\b[^"']*["'][^>]*>\s*(<img\b[^>]*>)/i)?.[1];
   if (!tag) return null;
   const decode = text => text.replaceAll('&amp;', '&').replaceAll('&quot;', '"').replaceAll('&#39;', "'");
-  const source = tag.match(/\bsrc=["']([^"']+)["']/i)?.[1];
+  const source = tag.match(/\bdata-original-src=["']([^"']+)["']/i)?.[1] || tag.match(/\bsrc=["']([^"']+)["']/i)?.[1];
   if (!source) return null;
   const url = new URL(decode(source), pageUrl);
   if (url.protocol !== 'https:' || !['bsvnordstern.de', 'www.bsvnordstern.de'].includes(url.hostname) || !url.pathname.startsWith('/images/') || /platzhalter|placeholder/i.test(url.pathname)) return null;

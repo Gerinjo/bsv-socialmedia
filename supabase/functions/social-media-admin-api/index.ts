@@ -1,3 +1,4 @@
+import {handleEmployeeManagement} from '../_shared/employee-management.mjs';
 import {handleTrainerManagement} from '../_shared/trainer-management.mjs';
 import {recordSuiteLogin,readSuiteActivity} from '../_shared/suite-activity.mjs';
 import { loadSuiteDashboard } from '../_shared/suite-dashboard.mjs';
@@ -671,6 +672,12 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       if(normalizedRole!=='admin')return json({error:'admin_only'},403);
       if(raw.length>4096)return json({error:'Die Anfrage ist zu groß.'},413);
       return json(await readSuiteActivity(context.supabaseAdmin,userId,body));
+    }
+
+    if(action.startsWith('employee_')){
+      if(!hasArea('trainer_management'))return json({error:'area_forbidden',area:'trainer_management'},403);
+      if(raw.length>7200000)return json({error:'Die Anfrage ist zu groß.'},413);
+      return json(await handleEmployeeManagement(context.supabaseAdmin,userId,body));
     }
 
     if (action.startsWith('trainer_')) {

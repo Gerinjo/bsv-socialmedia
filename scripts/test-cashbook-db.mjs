@@ -121,8 +121,17 @@ try {
   console.log('Trainerkontakt: E-Mail bleibt bei alten und neuen Freigaben privat; Telefonfreigaben und öffentliche Trainerkarten erhalten.');
   await sql(await readFile(new URL('supabase/migrations/20261013081948_trainer_contact_directory.sql',root),'utf8'));
   await sql(await readFile(new URL('supabase/migrations/20261013082427_trainer_contact_email_import.sql',root),'utf8'));
+  await sql(await readFile(new URL('supabase/migrations/20261013091811_trainer_recovered_website_emails.sql',root),'utf8'));
   await sql(await readFile(new URL('supabase/tests/trainer-contact-directory.sql',root),'utf8'));
   console.log('Kontaktformular: private Signaturen, aktuelle Traineradressen, zusätzliche Mannschaftskontakte, Passivschaltung, Löschung und Versionsschutz geprüft.');
+  await sql(await readFile(new URL('supabase/migrations/20261013162607_trainer_team_photos.sql',root),'utf8'));
+  await sql(await readFile(new URL('supabase/tests/trainer-team-photos.sql',root),'utf8'));
+  await sql(await readFile(new URL('supabase/tests/trainer-email-contact-form.sql',root),'utf8'));
+  console.log('Mannschaftsbilder: Rechte, Versionsschutz, Homepage, Heftquelle, Entfernen und E-Mail-Datenschutz geprüft.');
+  await sql(await readFile(new URL('supabase/migrations/20261013163658_employee_roles.sql',root),'utf8'));
+  await sql(await readFile(new URL('supabase/tests/employee-roles.sql',root),'utf8'));
+  await sql(await readFile(new URL('supabase/tests/trainer-email-contact-form.sql',root),'utf8'));
+  console.log('Mitarbeiter: Mehrfachrollen, aktuelle Personenkreise, Rollenbilder, automatische Übernahme, Versionsschutz und Rechte geprüft.');
   if(process.env.CASHBOOK_DB_ADVISORS==='1'){
     const {stdout:address}=await exec('docker',['inspect','-f','{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}',name]);
     const {stdout}=await exec('npx',['--yes','supabase','db','advisors','--db-url',`postgresql://postgres:isolated-test-only@${address.trim()}:5432/postgres?sslmode=disable`,'--type','all','--fail-on','error'],{maxBuffer:1024*1024});

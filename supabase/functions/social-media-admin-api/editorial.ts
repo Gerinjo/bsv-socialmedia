@@ -1,4 +1,4 @@
-import { prepareEditorialTeamPhoto } from '../_shared/editorial-team-photo.ts';
+import { prepareEditorialTeamPhoto, resolveEditorialTeamPhoto } from '../_shared/editorial-team-photo.ts';
 import { prepareEditorialGalleries, withArticleGalleries } from '../_shared/editorial-galleries.ts';
 import { loadEditorialPeople, prepareEditorialPeople } from '../_shared/editorial-people.ts';
 import {
@@ -403,7 +403,7 @@ export async function handleEditorial(db: any, userId: string, body: any) {
         article,
         warning: `Sportdaten unverändert: ${snapshot.warning}`,
       };
-    const preparedPhoto = await prepareEditorialTeamPhoto(db, article.issue_id, snapshot.teamPhoto, article.source_snapshot?.teamPhoto);
+    const preparedPhoto = await prepareEditorialTeamPhoto(db, article.issue_id, await resolveEditorialTeamPhoto(db, team, snapshot.teamPhoto), article.source_snapshot?.teamPhoto);
     snapshot.teamPhoto = preparedPhoto.photo;
     if (preparedPhoto.warning) snapshot.warning = [snapshot.warning, preparedPhoto.warning].filter(Boolean).join(' ');
     let saved;

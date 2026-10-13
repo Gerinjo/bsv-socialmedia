@@ -32,3 +32,5 @@ test('the first mens and womens team pictures introduce their own coaching and s
   assert.equal(page.blocks[0].photo.src,'https://example.org/'+group+'-1.jpg');
  }
 });
+
+test('magazine photo discovery retains the original behind a compressed website image',()=>{const html='<section class="girls-team-hero"><div class="hero-image"><img src="/images/optimized/team.jpg.w1800.webp" data-original-src="/images/team.jpg" alt="Mannschaft"></div></section>';assert.deepEqual(discoverEditorialTeamPhoto(html,'https://bsvnordstern.de/team/'),{source_url:'https://bsvnordstern.de/images/team.jpg',alt:'Mannschaft'});});

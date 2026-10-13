@@ -7,7 +7,7 @@ function state(){let data;try{data=JSON.parse(localStorage.getItem(key)||'null')
  if(ids.size)localStorage.setItem(key,JSON.stringify(data));return data;
 }
 export async function trainerPreviewApi(body){const data=state();const act=body.action.replace('trainer_','');
- if(act==='list')return {...data,people:trainerSortedPeople(data.people)};
+ if(act==='list'){let staff;try{staff=JSON.parse(localStorage.getItem('bsv-employee-management-preview-v1')||'null');}catch{}return {...data,people:trainerSortedPeople(data.people.map(p=>{const rolePhoto=staff?.assignments?.filter(a=>a.personId===p.id&&a.photo).sort((a,b)=>b.photoUpdated-a.photoUpdated)[0];return p.ownPhoto||!rolePhoto?{...p,photoInherited:false}:{...p,photo_url:rolePhoto.photo,photoInherited:true};}))};}
  let result={ok:true};
  if(['set_active','delete_person'].includes(act)){
   const v=validateTrainerLifecycle(body),p=data.people.find(p=>p.id===v.personId);
@@ -22,7 +22,8 @@ export async function trainerPreviewApi(body){const data=state();const act=body.
   if(!p){p={id:crypto.randomUUID(),version:0,photo_url:null};data.people.push(p);}
   const map={firstName:'first_name',lastName:'last_name',websiteName:'website_name',birthDate:'birth_date',publicEmail:'public_email',publicPhone:'public_phone'};
   for(const [k,value] of Object.entries(v)){if(!['personId','version'].includes(k))p[map[k]||k]=value;}p.name=p.first_name+' '+p.last_name;p.version++;p.updated_at=new Date().toISOString();result={ok:true,personId:p.id,version:p.version};
- }else if(act==='upload_photo'){const p=data.people.find(p=>p.id===body.personId);if(!p||p.version!==body.version)throw new Error('Bitte neu laden.');p.photo_url=body.photo;p.version++;result={ok:true,version:p.version};}
+ }else if(act==='upload_photo'){const p=data.people.find(p=>p.id===body.personId);if(!p||p.version!==body.version)throw new Error('Bitte neu laden.');p.photo_url=body.photo;p.ownPhoto=true;p.version++;result={ok:true,version:p.version};}
+ else if(['upload_team_photo','remove_team_photo'].includes(act)){const t=data.teams.find(t=>t.id===body.teamId);if(!t||t.version!==body.version)throw new Error('Bitte neu laden.');t.photo_url=act==='upload_team_photo'?body.photo:null;t.photoManaged=true;t.version++;result={ok:true,version:t.version};}
  else if(act==='save_team'){const v=validateTrainerTeam(body),t=data.teams.find(t=>t.id===v.teamId);if(!t||t.version!==v.version)throw new Error('Bitte neu laden.');data.assignments=data.assignments.filter(a=>a.teamId!==t.id).concat(v.assignments.map(a=>({...a,teamId:t.id})));if(v.contactEmails!==undefined)t.contactEmails=v.contactEmails;t.version++;t.managed=true;}
  else throw new Error('Unbekannte Traineraktion.');
  localStorage.setItem(key,JSON.stringify(data));return result;
