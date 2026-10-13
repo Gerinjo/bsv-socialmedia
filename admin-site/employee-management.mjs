@@ -1,4 +1,4 @@
-function createEmployeeWorkspace(root,{request,trainerRequest}){
+function createEmployeeWorkspace(root,{request,trainerRequest,onGroupChange=()=>{}}){
  const e=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  let data={people:[],assignments:[]},group='executive',opened=false,busy=false,sequence=0,embedded=null,search='';
  const label=key=>EMPLOYEE_GROUPS.find(g=>g.key===key)?.label||key;
@@ -11,8 +11,8 @@ function createEmployeeWorkspace(root,{request,trainerRequest}){
   root.querySelectorAll('[data-employee-edit]').forEach(b=>b.onclick=()=>editRole(b.dataset.employeeEdit));root.querySelectorAll('[data-employee-photo]').forEach(b=>b.onclick=()=>editPhoto(b.dataset.employeePhoto));
  }
  async function render(){embedded?.clear();embedded=null;
-  root.innerHTML='<nav class="employee-groups" aria-label="Personenkreise">'+EMPLOYEE_GROUPS.map(g=>'<button class="secondary" type="button" data-employee-group="'+g.key+'" aria-pressed="'+(g.key===group)+'">'+e(g.label)+'</button>').join('')+'</nav><div class="employee-heading"><div><h3>'+e(label(group))+'</h3><p class="muted">'+e(EMPLOYEE_GROUPS.find(g=>g.key===group).description)+'</p></div>'+(!['trainers','teams'].includes(group)?'<button type="button" class="employee-new">Rolle ergänzen</button>':'')+'</div><p class="employee-status" role="status" aria-live="polite"></p><div class="employee-content"></div><dialog class="trainer-dialog employee-dialog"></dialog>';
-  root.querySelectorAll('[data-employee-group]').forEach(b=>b.onclick=async()=>{if(b.dataset.employeeGroup===group||!canLeave())return;group=b.dataset.employeeGroup;search='';status('Wird geladen …');try{if(await load())await render();}catch(error){status(error.message,true);}});
+  root.innerHTML='<div class="employee-heading"><div><h3>'+e(label(group))+'</h3><p class="muted">'+e(EMPLOYEE_GROUPS.find(g=>g.key===group).description)+'</p></div>'+(!['trainers','teams'].includes(group)?'<button type="button" class="employee-new">Rolle ergänzen</button>':'')+'</div><p class="employee-status" role="status" aria-live="polite"></p><div class="employee-content"></div><dialog class="trainer-dialog employee-dialog"></dialog>';
+  onGroupChange(group);
   const target=root.querySelector('.employee-content');
   if(['trainers','teams'].includes(group)){
    embedded=createTrainerWorkspace(target,{request:trainerRequest,initialView:group==='teams'?'teams':'people',showTabs:false});await embedded.open();return;
@@ -34,5 +34,5 @@ function createEmployeeWorkspace(root,{request,trainerRequest}){
   d.querySelector('.employee-clear-photo')?.addEventListener('click',()=>{clear=true;file=null;input.value='';d.querySelector('.employee-form-status').textContent='Nach dem Speichern wird wieder ein verfügbares Bild aus einer anderen Rolle verwendet.';});
   d.querySelector('form').onsubmit=event=>{event.preventDefault();if(!file&&!clear){d.querySelector('.employee-form-status').textContent='Bitte ein Bild auswählen.';return;}save(d,async()=>{const identity={personId:a.personId,roleKey:a.roleKey,version:a.version};if(clear)return request({action:'clear_photo',...identity});const photo=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(new Error('Bild konnte nicht gelesen werden.'));r.readAsDataURL(file);});return request({action:'upload_photo',...identity,photo});});};
  }
- return {async open(){opened=true;root.innerHTML='<p role="status">Mitarbeiter werden geladen …</p>';try{if(await load())await render();}catch(error){root.innerHTML='<p class="status error" role="alert">'+e(error.message)+'</p>';throw error;}},canLeave,clear(){opened=false;sequence++;embedded?.clear();embedded=null;root.querySelector('.employee-dialog')?.close();root.innerHTML='';}};
+ return {get group(){return group;},async selectGroup(next){if(!EMPLOYEE_GROUPS.some(g=>g.key===next)||next===group||!canLeave())return;group=next;search='';status('Wird geladen …');try{if(await load())await render();}catch(error){status(error.message,true);}},async open({group:next}={}){if(EMPLOYEE_GROUPS.some(g=>g.key===next))group=next;opened=true;root.innerHTML='<p role="status">Mitarbeiter werden geladen …</p>';try{if(await load())await render();}catch(error){root.innerHTML='<p class="status error" role="alert">'+e(error.message)+'</p>';throw error;}},canLeave,clear(){opened=false;sequence++;embedded?.clear();embedded=null;root.querySelector('.employee-dialog')?.close();root.innerHTML='';}};
 }
