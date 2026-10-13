@@ -86,3 +86,10 @@ jobs:
       - name: Deploy website sponsor feed
         if: steps.secret.outputs.available == 'true'
         run: npx --yes supabase@latest functions deploy website-sponsor-feed --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Deploy trainer directory and private website contact bridge
+        if: steps.secret.outputs.available == 'true'
+        run: |
+          npx --yes supabase@latest functions deploy website-trainers-feed --project-ref "$SUPABASE_PROJECT_REF"
+          npx --yes supabase@latest functions deploy trainer-onboarding-import --project-ref "$SUPABASE_PROJECT_REF"
+          npx --yes supabase@latest functions deploy trainer-contact-recipients --project-ref "$SUPABASE_PROJECT_REF"

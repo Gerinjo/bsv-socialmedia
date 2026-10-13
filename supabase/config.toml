@@ -45,3 +45,7 @@ verify_jwt = false
 # Private server-to-server bridge key is validated by the service-only import RPC.
 [functions.trainer-onboarding-import]
 verify_jwt = false
+
+# Server-only contact lookup authenticates a short-lived payload signature in SQL.
+[functions.trainer-contact-recipients]
+verify_jwt = false

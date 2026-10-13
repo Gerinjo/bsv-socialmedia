@@ -1,0 +1,54 @@
+begin;
+create function pg_temp.check_contacts(ok boolean,label text) returns void language plpgsql as $$begin if ok is not true then raise exception 'Trainer contacts: %',label;end if;end $$;
+insert into private.trainer_onboarding_bridge(secret_hash) values(repeat('a',64)) on conflict(singleton) do update set secret_hash=excluded.secret_hash;
+create function pg_temp.contacts(key text) returns jsonb language sql as $$
+ with request as (select jsonb_build_object('purpose','trainer-contact','routingKey',key,'requestedAt',now()) payload)
+ select public.resolve_trainer_contact(encode(extensions.hmac(payload::text,repeat('a',64),'sha256'),'hex'),payload) from request;
+$$;
+set local role service_role;
+do $$
+declare youth uuid; ordinary uuid; target uuid; co uuid; team uuid; v bigint; result jsonb; payload jsonb; signature text;
+begin
+ select suite_user_id into youth from private.cashbook_accounts where username='schmo';
+ select suite_user_id into ordinary from private.cashbook_accounts where username='jentm';
+ select id into target from public.social_people where slug='axel-schauble';select id into co from public.social_people where slug='simon-buhler';
+ select id,trainer_version into team,v from public.social_teams where website_path='jugend/u15-c1';
+ update private.trainer_profiles set email=case when person_id=target then 'trainer@example.test' else 'co@example.test' end,public_email=false where person_id in(target,co);
+ result:=public.trainer_management_request(youth,jsonb_build_object('action','save_team','teamId',team,'version',v,'contactEmails',jsonb_build_array('SG@example.test','trainer@example.test'),'assignments',jsonb_build_array(jsonb_build_object('slot','trainer','personId',target,'websiteVisible',true),jsonb_build_object('slot','co1','personId',co,'websiteVisible',true))));
+ perform pg_temp.check_contacts(result->>'ok'='true','team contacts saved with existing team permissions and revision');
+ perform pg_temp.check_contacts(pg_temp.contacts('team--jugend--u15-c1')->'emails'='["trainer@example.test","co@example.test","sg@example.test"]','current active published trainers and additional contacts deduplicated, independent of old email publication flag');
+ perform pg_temp.check_contacts(pg_temp.contacts('person-axel-schauble')->'emails'='["trainer@example.test"]','person route follows the current profile');
+ result:=public.trainer_management_request(youth,jsonb_build_object('action','save_team','teamId',team,'version',v,'contactEmails','[]'::jsonb,'assignments','[]'::jsonb));
+ perform pg_temp.check_contacts(result->>'status'='409' and (select cardinality(emails)=2 from private.trainer_team_contact_emails where team_id=team),'stale save cannot overwrite extra contacts');
+ result:=public.trainer_management_request(ordinary,jsonb_build_object('action','save_team','teamId',team,'version',v+1,'contactEmails','[]'::jsonb,'assignments','[]'::jsonb));perform pg_temp.check_contacts(result->>'status'='403','ordinary trainers cannot change routing');
+ result:=public.trainer_management_request(youth,jsonb_build_object('action','save_team','teamId',team,'version',v+1,'contactEmails',jsonb_build_array('bad'),'assignments','[]'::jsonb));perform pg_temp.check_contacts(result->>'status'='400','invalid contacts rejected atomically');
+ result:=public.trainer_management_request(youth,jsonb_build_object('action','list'));
+ perform pg_temp.check_contacts(exists(select 1 from jsonb_array_elements(result->'teams') t where t->>'id'=team::text and t->'contactEmails'='["sg@example.test","trainer@example.test"]'),'team contacts available only in authorized management');
+ update private.trainer_profiles set email='new@example.test' where person_id=target;
+ perform pg_temp.check_contacts(pg_temp.contacts('team--jugend--u15-c1')->'emails' ? 'new@example.test','email edits apply to the next lookup');
+ update private.trainer_team_contact_emails set emails='{}' where team_id=team;
+ update private.trainer_profiles set active=false where person_id=target;
+ perform pg_temp.check_contacts(pg_temp.contacts('team--jugend--u15-c1')->'emails'='["co@example.test"]','passive trainer removed immediately');
+ perform pg_temp.check_contacts(pg_temp.contacts('person-axel-schauble')->'emails'='[]','passive person link cannot revive a static recipient');
+ update private.trainer_profiles set active=true where person_id=target;
+ update public.social_team_people set website_visible=false where team_id=team and person_id=co;
+ perform pg_temp.check_contacts(pg_temp.contacts('team--jugend--u15-c1')->'emails'='["new@example.test"]','internal assignments excluded');
+ delete from public.social_team_people where team_id=team and staff_slot is not null;
+ perform pg_temp.check_contacts(pg_temp.contacts('team--jugend--u15-c1')->>'managed'='true' and pg_temp.contacts('team--jugend--u15-c1')->'emails'='[]','removed assignments cannot fall back to old website addresses');
+ payload:=jsonb_build_object('purpose','trainer-contact','routingKey','team--jugend--u15-c1','requestedAt',now());
+ signature:=encode(extensions.hmac(payload::text,repeat('a',64),'sha256'),'hex');
+ perform pg_temp.check_contacts(public.resolve_trainer_contact(repeat('b',64),payload)->>'status'='401','forged signature rejected');
+ perform pg_temp.check_contacts(public.resolve_trainer_contact(signature,payload||'{"routingKey":"team--jugend--u19"}')->>'status'='401','signature binds requested team');
+ payload:=payload||jsonb_build_object('requestedAt',now()-interval '3 minutes');signature:=encode(extensions.hmac(payload::text,repeat('a',64),'sha256'),'hex');
+ perform pg_temp.check_contacts(public.resolve_trainer_contact(signature,payload)->>'error'='expired_lookup','expired lookup rejected');
+ payload:=payload||jsonb_build_object('requestedAt',now(),'purpose','onboarding');signature:=encode(extensions.hmac(payload::text,repeat('a',64),'sha256'),'hex');
+ perform pg_temp.check_contacts(public.resolve_trainer_contact(signature,payload)->>'error'='invalid_lookup','signatures cannot cross purposes');
+ select version into v from private.trainer_profiles where person_id=target;
+ result:=public.trainer_management_request(youth,jsonb_build_object('action','delete_person','personId',target,'version',v,'confirmed',true));
+ perform pg_temp.check_contacts(result->>'ok'='true' and pg_temp.contacts('person-axel-schauble')->>'managed'='true' and pg_temp.contacts('person-axel-schauble')->'emails'='[]','deleted profile cannot revive an old person route');
+ perform pg_temp.check_contacts(public.website_trainers_feed()::text not like '%new@example.test%','private routing does not expose addresses in public feed');
+end $$;
+reset role;
+select pg_temp.check_contacts(not has_function_privilege('anon','public.resolve_trainer_contact(text,jsonb)','EXECUTE') and not has_function_privilege('authenticated','public.resolve_trainer_contact(text,jsonb)','EXECUTE'),'private lookup unavailable to browsers');
+select pg_temp.check_contacts(not has_function_privilege('anon','private.trainer_management_request_base(uuid,jsonb)','EXECUTE') and not has_table_privilege('authenticated','private.trainer_team_contact_emails','SELECT'),'wrapper cannot bypass authorization or expose extras');
+rollback;

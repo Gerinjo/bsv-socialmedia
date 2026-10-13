@@ -23,7 +23,7 @@ export async function trainerPreviewApi(body){const data=state();const act=body.
   const map={firstName:'first_name',lastName:'last_name',websiteName:'website_name',birthDate:'birth_date',publicEmail:'public_email',publicPhone:'public_phone'};
   for(const [k,value] of Object.entries(v)){if(!['personId','version'].includes(k))p[map[k]||k]=value;}p.name=p.first_name+' '+p.last_name;p.version++;p.updated_at=new Date().toISOString();result={ok:true,personId:p.id,version:p.version};
  }else if(act==='upload_photo'){const p=data.people.find(p=>p.id===body.personId);if(!p||p.version!==body.version)throw new Error('Bitte neu laden.');p.photo_url=body.photo;p.version++;result={ok:true,version:p.version};}
- else if(act==='save_team'){const v=validateTrainerTeam(body),t=data.teams.find(t=>t.id===v.teamId);if(!t||t.version!==v.version)throw new Error('Bitte neu laden.');data.assignments=data.assignments.filter(a=>a.teamId!==t.id).concat(v.assignments.map(a=>({...a,teamId:t.id})));t.version++;t.managed=true;}
+ else if(act==='save_team'){const v=validateTrainerTeam(body),t=data.teams.find(t=>t.id===v.teamId);if(!t||t.version!==v.version)throw new Error('Bitte neu laden.');data.assignments=data.assignments.filter(a=>a.teamId!==t.id).concat(v.assignments.map(a=>({...a,teamId:t.id})));if(v.contactEmails!==undefined)t.contactEmails=v.contactEmails;t.version++;t.managed=true;}
  else throw new Error('Unbekannte Traineraktion.');
  localStorage.setItem(key,JSON.stringify(data));return result;
 }
