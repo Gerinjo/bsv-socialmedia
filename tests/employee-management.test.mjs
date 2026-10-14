@@ -1,7 +1,15 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {EMPLOYEE_GROUPS,validateEmployeeAssignment,validateEmployeePhoto} from '../src/employee-management.mjs';
+import {EMPLOYEE_GROUPS,validateEmployeeAssignment,validateEmployeePhoto,validateEmployeeContact} from '../src/employee-management.mjs';
 import {handleEmployeeManagement,employeePhotoUrl} from '../supabase/functions/_shared/employee-management.mjs';
 const id='00000000-0000-4000-8000-000000000001',roleKey='role-'+id;
+test('employee contact edits validate shared identity, revision, mail and phone while preserving privacy',async()=>{
+ const body={personId:id,version:0,contactSource:'employee',email:' Current@Example.test ',phone:'+49 (123) 456',publicPhone:true};
+ const v=validateEmployeeContact(body);assert.equal(v.email,'current@example.test');assert.equal(v.publicPhone,true);
+ for(const invalid of [{personId:'bad'},{version:-1},{contactSource:'other'},{email:'bad'},{phone:'<script>'},{mobile:'abc'}])assert.throws(()=>validateEmployeeContact({...body,...invalid}));
+ let sent;const db={rpc:async(name,args)=>{sent=args;return {data:{ok:true,contactVersion:1}};}};
+ await handleEmployeeManagement(db,'authorized-actor',{action:'employee_save_contact',...body,active:true,role:'trainer'});
+ assert.equal(sent.actor,'authorized-actor');assert.deepEqual(sent.payload,{action:'save_contact',...v});assert.equal(sent.payload.active,undefined);
+});
 test('employees offer the six requested circles and reject invalid assignments',()=>{
  assert.deepEqual(EMPLOYEE_GROUPS.map(g=>g.key),['executive','board','trainers','teams','youth','supporters']);
  assert.throws(()=>validateEmployeeAssignment({groupKey:'teams',version:0,roleLabel:'Trainer'}));

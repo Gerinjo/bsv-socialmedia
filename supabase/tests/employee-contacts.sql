@@ -1,0 +1,36 @@
+begin;
+set local role service_role;
+do $$
+declare actor uuid; person uuid:=gen_random_uuid(); person2 uuid:=gen_random_uuid(); result jsonb; listing jsonb; payload jsonb; signature text; hash text;
+begin
+ select user_id into actor from public.social_admins where role='admin' and is_active and not is_blocked limit 1;
+ if actor is null then raise exception 'Active admin fixture required';end if;
+ insert into public.social_people(id,slug,display_name,roles,active) values(person,'employee-contact-test-'||person::text,'Employee Contact Test','{}',true),(person2,'trainer-contact-test-'||person2::text,'Trainer Contact Test','{}',true);
+ perform public.employee_management_request(actor,jsonb_build_object('action','save_assignment','groupKey','board','roleLabel','Contact test','personId',person,'version',0));
+ perform public.employee_management_request(actor,jsonb_build_object('action','save_assignment','groupKey','youth','roleLabel','Contact test 2','personId',person,'version',0));
+ payload:=jsonb_build_object('action','save_contact','personId',person,'version',0,'contactSource','employee','email','employee-contacts-test@example.test','phone','+49 123 456','publicPhone',false);
+ result:=public.employee_management_request(gen_random_uuid(),payload);if result->>'status'<>'403' then raise exception 'Unauthorized contact update';end if;
+ result:=public.employee_management_request(actor,payload);if result->>'ok'<>'true' or result->>'contactVersion'<>'1' then raise exception 'Contact save failed: %',result;end if;
+ result:=public.employee_management_request(actor,payload);if result->>'status'<>'409' then raise exception 'Stale contact update accepted';end if;
+ listing:=public.website_employee_groups();if listing::text like '%employee-contacts-test@example.test%' then raise exception 'Private email published';end if;
+ if exists(select 1 from jsonb_array_elements(listing->'assignments') a where a->>'personId'=person::text and nullif(a->>'phone','') is not null) then raise exception 'Private phone published';end if;
+ payload:=payload||jsonb_build_object('version',1,'publicPhone',true);
+ perform public.employee_management_request(actor,payload);
+ if (select count(*) from jsonb_array_elements(public.website_employee_groups()->'assignments') a where a->>'personId'=person::text and a->>'phone'='+49 123 456')<>2 then raise exception 'Roles do not share published contacts';end if;
+ if has_table_privilege('anon','private.employee_contacts','select') or has_table_privilege('authenticated','private.employee_contacts','select') or has_function_privilege('anon','public.employee_management_request(uuid,jsonb)','execute') then raise exception 'Public contact access granted';end if;
+ select secret_hash into hash from private.trainer_onboarding_bridge limit 1;
+ payload:=jsonb_build_object('purpose','trainer-contact','routingKey','person-employee-contact-test-'||person::text,'requestedAt',now());
+ signature:=encode(extensions.hmac(payload::text,hash,'sha256'),'hex');
+ result:=public.resolve_trainer_contact(signature,payload);if result->'emails'<>jsonb_build_array('employee-contacts-test@example.test') then raise exception 'Contact bridge does not use employee data: %',result;end if;
+ update private.employee_assignments set active=false where person_id=person;
+ result:=public.resolve_trainer_contact(signature,payload);if result->>'managed'<>'true' or result->'emails'<>'[]'::jsonb then raise exception 'Removed contact revived';end if;
+ if public.resolve_trainer_contact(repeat('0',64),payload)->>'status'<>'401' then raise exception 'Unsigned contact lookup allowed';end if;
+ perform public.employee_management_request(actor,jsonb_build_object('action','save_assignment','groupKey','board','roleLabel','Trainer and employee','personId',person2,'version',0));
+ insert into private.trainer_profiles(person_id,first_name,last_name,email,phone,qualification) values(person2,'Trainer','Contact Test','old@example.test','+49 111','Keep qualification');
+ result:=public.employee_management_request(actor,jsonb_build_object('action','save_contact','personId',person2,'version',1,'contactSource','trainer','email','new@example.test','phone','+49 222','publicPhone',true));
+ if result->>'ok'<>'true' or not exists(select 1 from private.trainer_profiles where person_id=person2 and email='new@example.test' and qualification='Keep qualification' and version=2) then raise exception 'Trainer contacts did not synchronize safely';end if;
+ insert into private.trainer_profiles(person_id,first_name,last_name) values(person,'Employee','Contact Test');
+ if not exists(select 1 from private.trainer_profiles where person_id=person and email='employee-contacts-test@example.test' and phone='+49 123 456' and public_phone) then raise exception 'New trainer lost existing employee contacts';end if;
+ raise notice 'Employee contacts: authorization, revisions, sharing, privacy and signed routing passed';
+end $$;
+rollback;
