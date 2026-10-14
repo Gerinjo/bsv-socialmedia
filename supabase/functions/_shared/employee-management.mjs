@@ -1,4 +1,4 @@
-import {EMPLOYEE_PHOTO_BUCKET,validateEmployeeAssignment,validateEmployeePhoto} from '../../../src/employee-management.mjs';
+import {EMPLOYEE_PHOTO_BUCKET,validateEmployeeAssignment,validateEmployeePhoto,validateEmployeeContact} from '../../../src/employee-management.mjs';
 import {decodeRefereeReceipt,receiptHash} from './referee-receipts.mjs';
 export async function employeePhotoUrl(db,source){
  if(!source)return null;
@@ -22,6 +22,7 @@ export async function handleEmployeeManagement(db,actor,body){
   return data;
  }
  if(action==='save_assignment')return employeeRpc(db,actor,{action,...validateEmployeeAssignment(body)});
+ if(action==='save_contact')return employeeRpc(db,actor,{action,...validateEmployeeContact(body)});
  if(action==='remove_assignment'){
   if(!/^[a-f\d-]{36}$/i.test(body.assignmentId||'')||!Number.isSafeInteger(body.version)||body.version<1)throw new Error('Bitte eine gespeicherte Rolle auswählen.');
   return employeeRpc(db,actor,{action,assignmentId:body.assignmentId,version:body.version});

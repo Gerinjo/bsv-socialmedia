@@ -19,3 +19,9 @@ export function validateEmployeePhoto(body){
  if(!uuid(body.personId)||!/^role-[a-f\d-]{36}$/i.test(body.roleKey||'')||!Number.isSafeInteger(body.version)||body.version<1)throw new Error('Bitte eine gespeicherte Rolle auswählen und neu laden.');
  return {personId:body.personId,roleKey:body.roleKey,version:body.version};
 }
+export function validateEmployeeContact(body){
+ const personId=body.personId,version=Number(body.version),contactSource=body.contactSource;
+ const email=String(body.email||'').trim().toLowerCase(),phone=String(body.phone||'').trim(),mobile=String(body.mobile||'').trim();
+ if(!uuid(personId)||!Number.isSafeInteger(version)||version<0||!['employee','trainer'].includes(contactSource)||email.length>254||email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||[phone,mobile].some(v=>v&&(!/^[+\d ()/.-]{3,50}$/.test(v))))throw new Error('Bitte E-Mail-Adresse und Telefonnummern prüfen.');
+ return {personId,version,contactSource,email,phone,mobile,publicPhone:body.publicPhone===true};
+}
