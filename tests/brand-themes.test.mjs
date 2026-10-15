@@ -32,5 +32,5 @@ test('email uses the snapshot palette and a durable PNG seasonal motif, keeping 
 });
 test('magazine renders frozen brand without relying on the live feed',()=>{
  const html=renderEditorialMagazine({id:'design-test',title:'Weihnachtsausgabe',publishes_on:'2026-12-01',brand:{color_scheme:colors,theme_key:'christmas'},articles:[]},false);
- assert.match(html,/--green:#204870/);assert.match(html,/--yellow:#dfab23/);assert.match(html,/cover-photo-wrap::after/);assert.doesNotMatch(html,/social_brand_settings/);
+ assert.match(html,/--green:#204870/);assert.match(html,/--yellow:#dfab23/);assert.doesNotMatch(html,/cover-photo-wrap::after/);assert.doesNotMatch(html,/social_brand_settings/);
 });

@@ -1,6 +1,24 @@
 import { decodeEditorialCover } from '../../../src/editorial-publication.mjs';
 import { fetchEditorialImage } from './editorial-image-fetch.ts';
+import { websiteTeamPhoto } from './website-image-urls.mjs';
 const bucket = 'editorial-portraits';
+export function editorialTeamPhotoUrl(db: any, path: string) {
+  if (!/^[a-f0-9-]{36}\/[a-f0-9]{64}\.(jpg|png|webp)$/.test(path)) throw new Error('Ungültiges Mannschaftsbild.');
+  // Use the immutable original: email clients need a permanent public URL.
+  return db.storage.from('team-photos').getPublicUrl(path).data.publicUrl;
+}
+export async function loadEditorialTeamPhotos(db: any) {
+  const [teams, feed] = await Promise.all([
+    db.from('social_teams').select('id,name,slug,website_path').order('sort_order'),
+    db.rpc('website_trainers_feed'),
+  ]);
+  if (teams.error || feed.error || !feed.data) throw new Error('Die Mannschaftsbilder konnten nicht geladen werden.');
+  return teams.data.flatMap((team: any) => {
+    const photo = feed.data.teams.find((item: any) => item.path === team.website_path);
+    return photo?.teamPhotoPath ? [{team_id:team.id, name:team.name, slug:team.slug,
+      photo_url:editorialTeamPhotoUrl(db,photo.teamPhotoPath), preview_url:websiteTeamPhoto(db,photo.teamPhotoPath,900)}] : [];
+  });
+}
 export async function resolveEditorialTeamPhoto(db: any, team: any, fallback: any) {
   const {data,error}=await db.rpc('team_photo_source',{team:team.id});
   if(error)throw new Error('Das zentrale Mannschaftsbild konnte nicht geladen werden. Bitte erneut versuchen.');

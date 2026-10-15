@@ -32,3 +32,13 @@ Deno.test('central team photos override the website and are copied into the issu
  source=null;assert.equal(await resolveEditorialTeamPhoto(db,team,fallback),fallback);
  await assert.rejects(()=>resolveEditorialTeamPhoto({rpc:async()=>({error:true})},team,fallback));
 });
+
+Deno.test('editorial image library lists centrally managed team photos without exposing trainer details',async()=>{
+ const {loadEditorialTeamPhotos}=await import('../supabase/functions/_shared/editorial-team-photo.ts');
+ const path='00000000-0000-4000-8000-000000000001/'+'a'.repeat(64)+'.png';
+ const db={from:(table:string)=>{assert.equal(table,'social_teams');return {select:()=>({order:async()=>({data:[{id:'first',name:'Erste',slug:'herren-1',website_path:'first'},{id:'removed',website_path:'removed'},{id:'legacy',website_path:'legacy'}],error:null})})};},rpc:async(name:string)=>{assert.equal(name,'website_trainers_feed');return {data:{teams:[{path:'first',teamPhotoPath:path,coaches:[{email:'PRIVATE'}]},{path:'removed',teamPhotoPath:null}]},error:null};},storage:{from:(bucket:string)=>{assert.equal(bucket,'team-photos');return {getPublicUrl:(p:string)=>({data:{publicUrl:'https://example.org/'+p}})};}}};
+ const photos=await loadEditorialTeamPhotos(db);
+ assert.equal(photos.length,1);assert.equal(photos[0].team_id,'first');assert.ok(photos[0].photo_url.endsWith(path));
+ assert.ok(!JSON.stringify(photos).includes('PRIVATE'));
+ await assert.rejects(()=>loadEditorialTeamPhotos({...db,rpc:async()=>({error:true})}),/nicht geladen/);
+});

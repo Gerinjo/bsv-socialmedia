@@ -201,7 +201,9 @@ export function normalizeEditorialGalleries(value) {
     const images = group.images.map(image => {
       const imageId = id(image.id), alt = String(image.alt || '').trim();
       if (alt.length > 300) throw new Error('Bildbeschreibungen dürfen höchstens 300 Zeichen lang sein.');
-      return { id: imageId, alt, ...(image.dataUrl ? { dataUrl: String(image.dataUrl) } : {}) };
+      if (image.team_id != null && (typeof image.team_id !== 'string' || !/^[a-zA-Z0-9-]{1,80}$/.test(image.team_id))) throw new Error('Bitte eine Mannschaft auswählen.');
+      if (image.team_id && image.dataUrl) throw new Error('Bitte eine eindeutige Bildquelle auswählen.');
+      return { id: imageId, alt, ...(image.dataUrl ? { dataUrl: String(image.dataUrl) } : {}), ...(image.team_id ? {team_id:image.team_id} : {}) };
     });
     if (!images.some(image => image.id === group.cover_id)) throw new Error('Bitte ein Titelbild aus der Bildgruppe auswählen.');
     return { id: groupId, title, cover_id: group.cover_id, images };

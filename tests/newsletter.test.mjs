@@ -174,3 +174,38 @@ test('sendable newsletter links to the confirmation page with the personal Resen
   assert.match(preview.html,/newsletter\/abmelden\?vorschau=1/);
   assert.doesNotMatch(preview.html,/RESEND_UNSUBSCRIBE_URL|\{\{UNSUBSCRIBE_URL/);
 });
+
+test('central team photos survive a newsletter export and frozen magazine import',()=>{
+ const url='https://example.org/storage/v1/object/public/team-photos/team/hash.jpg';
+ const image={photo_url:url,alt:'Erste Mannschaft & Freunde'};
+ const article={id:'team',title:'Unsere Mannschaft',status:'ready',body:'Gemeinsam in die Saison.',galleries:[{images:[image]}]};
+ const direct=renderEditorialNewsletter({...snapshot,articles:[article]},template,{preview:false});
+ assert.ok(direct.html.includes(url));assert.ok(direct.text.includes(url));assert.ok(direct.html.includes('Erste Mannschaft &amp; Freunde'));
+ const source=newsletterSource({...publication,snapshot:{...publication.snapshot,articles:[article]}});
+ const selection=newsletterSelection(source,['team']);
+ source.articles[0].images[0].photo_url='https://example.org/new.jpg';
+ assert.equal(selection.articles[0].images[0].photo_url,url);
+ const imported=renderEditorialNewsletter({...snapshot,articles:[],newsletter_selection:selection},template,{preview:false});
+ assert.ok(imported.html.includes(url));assert.ok(imported.text.includes(url));
+ const signed={photo_url:'https://example.org/storage/v1/object/sign/private.jpg?token=secret'};
+ const privateSource=newsletterSource({...publication,snapshot:{...publication.snapshot,articles:[{...article,galleries:[{images:[signed]}]}]}});
+ assert.deepEqual(privateSource.articles[0].images,[]);
+});
+
+test('all selected personnel portraits reach direct newsletter mail and frozen magazine excerpts',()=>{
+ const url='https://example.org/storage/v1/object/public/editorial-public-images/issue/frozen.jpg';
+ const person={name:'Anna & Beispiel',role:'Jugendleiterin',photo_url:url};
+ const article={id:'greeting',title:'Aus dem Vorstand',status:'ready',body:'Willkommen im Verein.',people:[person]};
+ const direct=renderEditorialNewsletter({...snapshot,articles:[article]},template,{preview:false});
+ assert.ok(direct.html.includes(url));assert.ok(direct.html.includes('Anna &amp; Beispiel'));assert.ok(direct.html.includes('Jugendleiterin'));assert.ok(direct.text.includes(url));
+ const source=newsletterSource({...publication,snapshot:{...publication.snapshot,articles:[article]}});
+ const selection=newsletterSelection(source,['greeting']);
+ source.articles[0].people[0].photo_url='https://example.org/changed.jpg';
+ const imported=renderEditorialNewsletter({...snapshot,articles:[],newsletter_selection:selection},template,{preview:false});
+ assert.ok(imported.html.includes(url));assert.ok(imported.text.includes(url));
+ const signed={...person,photo_url:'https://example.org/storage/v1/object/sign/private.jpg?token=temporary'};
+ assert.throws(()=>renderEditorialNewsletter({...snapshot,articles:[{...article,people:[signed]}]},template,{preview:false}),/dauerhaften öffentlichen Link/);
+ const local={...person,photo_url:'data:image/png;base64,aGVsbG8='};
+ assert.ok(renderEditorialNewsletter({...snapshot,demo:true,articles:[{...article,people:[local]}]},template).html.includes(local.photo_url));
+ assert.throws(()=>renderEditorialNewsletter({...snapshot,demo:true,articles:[{...article,people:[local]}]},template,{preview:false}),/dauerhaften öffentlichen Link/);
+});

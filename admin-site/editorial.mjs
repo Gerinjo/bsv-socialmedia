@@ -22,6 +22,8 @@ export function createEditorialWorkspace(
     teams = [],
     people = [],
     editingGalleries = [],
+    teamPhotos = [],
+    teamPhotoRequest = 0,
     selected = null,
     articles = [],
     month = new Date()
@@ -64,7 +66,7 @@ export function createEditorialWorkspace(
     <section class="panel"><div class="editorial-calendar-heading"><div><h3>Redaktionskalender</h3><div class="editorial-legend"><span class="ed-start">● Redaktionsstart</span><span class="ed-close">● Redaktionsschluss</span><span class="ed-publish">● Erscheinung</span><span>▰ Redaktionszeitraum</span></div></div><label>Ausgabeart<select id="edFilter"><option value="">Alle Ausgaben</option><option value="stadium">Stadionheft</option><option value="newsletter">Newsletter</option></select></label></div><div class="editorial-month-nav"><button class="ghost" id="edPrev" aria-label="Vorheriger Monat">←</button><h3 id="edMonth" aria-live="polite"></h3><button class="ghost" id="edNext" aria-label="Nächster Monat">→</button><button class="ghost" id="edToday">Heute</button></div><div class="editorial-calendar-scroll"><div id="edCalendar" class="editorial-calendar"></div></div></section>
     <div class="editorial-columns"><section class="panel"><h3>Ausgaben</h3><div id="edIssues" aria-live="polite"></div></section><section class="panel" id="edDetail"><div class="empty">Lege die erste Ausgabe an oder wähle eine Ausgabe aus.</div></section></div>
     <dialog id="edIssueDialog" aria-labelledby="edIssueHeading"><div class="dialog-header"><h2 id="edIssueHeading">Ausgabe anlegen</h2><button type="button" class="ghost" id="edIssueClose" aria-label="Schließen">✕</button></div><form id="edIssueForm" class="fields"><label>Ausgabeart<select name="kind"><option value="stadium">Stadionheft</option><option value="newsletter">Newsletter</option></select></label><label>Titel<input name="title" required maxlength="180" placeholder="Zum Beispiel: Nordstern · Heimspielausgabe 01"></label><label>Redaktionsstart<input name="starts_on" type="date" required></label><label>Redaktionsschluss<input name="closes_on" type="date" required></label><label>Erscheinungsdatum<input name="publishes_on" type="date" required></label><p class="small">Im Stadionheft werden Grußworte, Trainerbegrüßungen und Sportdaten als feste Beiträge angelegt. Newsletter starten mit einem freien Inhaltsplan.</p><div class="wide toolbar"><button type="submit">Ausgabe speichern</button><span id="edIssueMessage" role="status"></span></div></form></dialog>
-    <dialog id="edArticleDialog" aria-labelledby="edArticleHeading"><div class="dialog-header"><div><span class="editorial-eyebrow">TEXTREDAKTION</span><h2 id="edArticleHeading">Beitrag bearbeiten</h2></div><button type="button" class="ghost" id="edArticleClose" aria-label="Editor schließen">✕</button></div><form id="edArticleForm"><div class="fields"><label class="wide">Titel<input name="title" required maxlength="180"></label><label>Abteilung<select name="department_id"></select></label><label>Autor / Verantwortlich<input name="author" maxlength="180" placeholder="Name"></label><div><span class="small">Freigabestatus</span><p id="edApprovalStatus"></p><input type="hidden" name="status" value="draft"></div><div class="small" id="edSource"></div><fieldset class="wide ed-person-selection" id="edPersonSelection"><legend>Personen zum Beitrag auswählen</legend><p class="small">Eine oder mehrere Personen auswählen. Hinterlegte Bilder erscheinen beim Text.</p><div id="edPersonCandidates"></div></fieldset><div class="wide ed-dictation" id="edDictation"><button type="button" class="ghost" id="edDictate" aria-pressed="false" aria-controls="edBody" aria-describedby="edDictationHint"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg><span>Diktieren</span></button><p class="small" id="edDictationHint"></p><p class="small" id="edDictationStatus" role="status" aria-live="polite"></p></div><label class="wide">Beitrag<textarea id="edBody" name="body" maxlength="30000" rows="15" spellcheck="true" lang="de" placeholder="Hier ist Platz für euren Beitrag …"></textarea></label><fieldset class="wide ed-gallery-editor" id="edGalleryEditor"><legend>Bildgruppen zum Beitrag</legend><p class="small">Jeder Upload bildet eine eigene Gruppe. Wähle je Gruppe ein Titelbild für die Heftseite. Ein Klick darauf öffnet alle Bilder der Gruppe.</p><div id="edGalleryGroups"></div><label>Neue Bildgruppe hinzufügen (bis 20 Bilder)<input id="edGalleryFiles" type="file" accept="image/jpeg,image/png,image/webp" multiple></label><p class="small">Bis zu 6 Gruppen. JPG, PNG oder WebP, bis 5 MB je Original. Fotos werden auf höchstens 1600 Pixel verkleinert.</p></fieldset></div><p class="small" id="edRewriteHint"></p><div class="toolbar"><button type="submit" id="edSaveArticle">Speichern & überarbeiten</button><button type="submit" class="ghost" id="edRetryRewrite" data-rewrite="true">Erneut überarbeiten</button><button type="button" class="ghost" id="edHistory">Original & Verlauf</button><button type="button" class="ghost hidden" id="edDeleteArticle">Beitrag löschen</button><button type="button" class="ghost hidden" id="edWaiveArticle">Verzicht</button><button type="button" class="primary-action" id="edApproveArticle">Beitrag freigeben</button><span class="small" id="edWordCount"></span></div><p id="edArticleMessage" role="status" aria-live="polite"></p><div id="edRevisionList"></div></form></dialog>
+    <dialog id="edArticleDialog" aria-labelledby="edArticleHeading"><div class="dialog-header"><div><span class="editorial-eyebrow">TEXTREDAKTION</span><h2 id="edArticleHeading">Beitrag bearbeiten</h2></div><button type="button" class="ghost" id="edArticleClose" aria-label="Editor schließen">✕</button></div><form id="edArticleForm"><div class="fields"><label class="wide">Titel<input name="title" required maxlength="180"></label><label>Abteilung<select name="department_id"></select></label><label>Autor / Verantwortlich<input name="author" maxlength="180" placeholder="Name"></label><div><span class="small">Freigabestatus</span><p id="edApprovalStatus"></p><input type="hidden" name="status" value="draft"></div><div class="small" id="edSource"></div><fieldset class="wide ed-person-selection" id="edPersonSelection"><legend>Personen zum Beitrag auswählen</legend><p class="small">Bis zu vier Personen auswählen. Die passenden Bilder aus der Mitarbeiterverwaltung erscheinen beim Beitrag.</p><div id="edPersonCandidates"></div></fieldset><div class="wide ed-dictation" id="edDictation"><button type="button" class="ghost" id="edDictate" aria-pressed="false" aria-controls="edBody" aria-describedby="edDictationHint"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg><span>Diktieren</span></button><p class="small" id="edDictationHint"></p><p class="small" id="edDictationStatus" role="status" aria-live="polite"></p></div><label class="wide">Beitrag<textarea id="edBody" name="body" maxlength="30000" rows="15" spellcheck="true" lang="de" placeholder="Hier ist Platz für euren Beitrag …"></textarea></label><fieldset class="wide ed-gallery-editor" id="edGalleryEditor"><legend>Bildgruppen zum Beitrag</legend><p class="small">Jeder Upload bildet eine eigene Gruppe. Wähle je Gruppe ein Titelbild für die Heftseite. Ein Klick darauf öffnet alle Bilder der Gruppe.</p><div class="ed-team-photo-picker"><label>Mannschaftsbild auswählen<select id="edTeamPhotoSelect"><option value="">Mannschaftsbilder werden geladen …</option></select></label><p id="edTeamPhotoStatus" class="small" role="status"></p><img id="edTeamPhotoPreview" alt="" hidden style="max-width:100%;max-height:220px;object-fit:contain"><button id="edAddTeamPhoto" type="button" class="ghost">Mannschaftsbild zum Beitrag hinzufügen</button></div><div id="edGalleryGroups"></div><label>Neue Bildgruppe hinzufügen (bis 20 Bilder)<input id="edGalleryFiles" type="file" accept="image/jpeg,image/png,image/webp" multiple></label><p class="small">Bis zu 6 Gruppen. JPG, PNG oder WebP, bis 5 MB je Original. Fotos werden auf höchstens 1600 Pixel verkleinert.</p></fieldset></div><p class="small" id="edRewriteHint"></p><div class="toolbar"><button type="submit" id="edSaveArticle">Speichern & überarbeiten</button><button type="submit" class="ghost" id="edRetryRewrite" data-rewrite="true">Erneut überarbeiten</button><button type="button" class="ghost" id="edHistory">Original & Verlauf</button><button type="button" class="ghost hidden" id="edDeleteArticle">Beitrag löschen</button><button type="button" class="ghost hidden" id="edWaiveArticle">Verzicht</button><button type="button" class="primary-action" id="edApproveArticle">Beitrag freigeben</button><span class="small" id="edWordCount"></span></div><p id="edArticleMessage" role="status" aria-live="polite"></p><div id="edRevisionList"></div></form></dialog>
     <dialog id="edEventDialog" aria-labelledby="edEventHeading"><div class="dialog-header"><h2 id="edEventHeading">Veranstaltung ins Heft aufnehmen</h2><button class="ghost" id="edEventClose" type="button" aria-label="Schließen">✕</button></div><form id="edEventForm" class="fields"><label class="wide">Termin auswählen<select id="edEventSource"><option value="">Eigene Veranstaltung</option></select></label><label class="wide">Titel<input name="title" maxlength="180" required></label><label>Datum<input type="date" name="date" required></label><label>Uhrzeit<input type="time" name="time"></label><label class="wide">Ort<input name="location" maxlength="200"></label><label class="wide">Beschreibung im Heft<textarea name="description" required maxlength="30000" rows="6"></textarea></label><p class="small wide">Der Termin erscheint als eigener Beitrag im Heft und lässt sich in der Titelblatt-Karte für das Cover auswählen. Bitte bei wiederkehrenden Stories das gewünschte Veranstaltungsdatum prüfen. Der Beitrag muss anschließend freigegeben werden.</p><div class="toolbar wide"><button type="submit">Veranstaltung aufnehmen</button><span id="edEventMessage" role="status"></span></div></form></dialog>
     <dialog id="edNewsletterSourceDialog" aria-labelledby="edNewsletterSourceHeading"><div class="dialog-header"><h2 id="edNewsletterSourceHeading">Aus dem Stadionheft übernehmen</h2><button type="button" class="ghost" id="edNewsletterSourceClose" aria-label="Schließen">✕</button></div><form id="edNewsletterSourceForm"><label>Veröffentlichtes Stadionheft<select id="edNewsletterSourceIssue"></select></label><p class="small">Wähle die Artikel für deinen Newsletter. Die Vorschau unten zeigt die gekürzten Texte. Jeder Auszug erhält einen Link zum vollständigen Artikel im Stadionheft.</p><p id="edNewsletterSourceInfo" class="small"></p><button type="button" class="ghost" id="edNewsletterSourceLatest" hidden>Aktuelle Heftfassung laden</button><div id="edNewsletterSourceArticles" class="ed-newsletter-source-list"></div><p id="edNewsletterSourceCount" class="small" aria-live="polite"></p><p id="edNewsletterSourceMessage" role="status"></p><div class="toolbar"><button id="edNewsletterSourceSave" type="submit">Artikelauswahl speichern</button></div></form></dialog>
     <dialog id="edPreviewDialog" aria-labelledby="edPreviewHeading"><div class="dialog-header"><h2 id="edPreviewHeading">Heftvorschau · Entwurf</h2><button class="ghost" id="edPreviewClose" type="button" aria-label="Vorschau schließen">✕</button></div><iframe id="edMagazineFrame" title="Stadionheft vor Veröffentlichung ansehen" sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"></iframe></dialog>`;
@@ -357,11 +359,11 @@ export function createEditorialWorkspace(
         if (busy || !canLeaveCover()) return;
         busy = true;
         try {
-          const result = await call('preview_issue', {issueId:selected.id, version:selected.version});
+          const result = await call('preview_issue', {issueId:selected.id, version:selected.version, forExport:true});
           const mail = await newsletterMail(result.snapshot, false);
           downloadNewsletter(mail[format], `nordstern-post-${selected.publishes_on}`, format);
         } catch (error) { show(error.message, true); }
-        finally { busy = false; }
+        finally { busy = false; try { await refresh(); } catch (error) { show(error.message,true); } }
       };
     }
     $('#edNewsletterSelectArticles').onclick = openNewsletterSource;
@@ -534,20 +536,56 @@ export function createEditorialWorkspace(
           : "Die KI-Überarbeitung ist noch nicht eingerichtet. Deine Texte werden trotzdem gespeichert; Original und Verlauf bleiben erhalten.";
     const candidates = editorialPersonCandidates(article, people);
     const chosen = article?.people_snapshot || [];
-    form.elements.author.readOnly = automatic || chosen.length > 0;
-    $('#edPersonSelection').hidden = !['board', 'youth', 'coach'].includes(article?.kind);
+    form.elements.author.readOnly = automatic || article?.kind !== 'free' && chosen.length > 0;
+    $('#edPersonSelection').hidden = Boolean(article && !['board', 'youth', 'coach', 'free'].includes(article.kind));
     const options = [...candidates];
     for (const person of chosen) if (!options.some(candidate => candidate.id === person.person_id)) options.push({ id: person.person_id, display_name: person.name, role: person.role + ' · Zuordnung nicht mehr verfügbar', unavailable: true });
-    $('#edPersonCandidates').innerHTML = options.map(person => `<label class="ed-person-option"><input type="checkbox" name="person_ids" value="${esc(person.id)}" ${chosen.some(saved => saved.person_id === person.id) ? 'checked' : ''}><span><strong>${esc(person.display_name)}</strong><small>${esc(person.role)}${person.photo_url ? '' : ' · Kein Bild hinterlegt'}</small></span></label>`).join('') || '<p class="small">Für diese Funktion ist noch keine Person im Katalog zugeordnet.</p>';
+    $('#edPersonCandidates').innerHTML = options.map(person => `<label class="ed-person-option"><input type="checkbox" name="person_ids" value="${esc(person.id)}" ${chosen.some(saved => saved.person_id === person.id) ? 'checked' : ''}><span><strong>${esc(person.display_name)}</strong><small>${esc(person.role)}${person.photo_url || person.has_photo ? '' : ' · Kein Bild hinterlegt'}</small></span></label>`).join('') || '<p class="small">Für diese Funktion ist noch keine Person im Katalog zugeordnet.</p>';
     $('#edGalleryEditor legend').textContent = selected.kind === 'newsletter' ? 'Bilder zum Newsletter-Beitrag' : 'Bildgruppen zum Beitrag';
-    $('#edGalleryEditor p').textContent = selected.kind === 'newsletter' ? 'Für den E-Mail-Export werden dauerhafte öffentliche Bildadressen benötigt. Hochgeladene Bilder haben vorerst nur zeitlich begrenzte Vorschau-Links.' : 'Jeder Upload bildet eine eigene Gruppe. Wähle je Gruppe ein Titelbild für die Heftseite. Ein Klick darauf öffnet alle Bilder der Gruppe.';
+    $('#edGalleryEditor p').textContent = selected.kind === 'newsletter' ? 'Mannschaftsbilder aus der zentralen Verwaltung können direkt verwendet und als E-Mail exportiert werden. Eigene Uploads benötigen für den Versand weiterhin dauerhafte öffentliche Bildadressen.' : 'Jeder Upload bildet eine eigene Gruppe. Wähle je Gruppe ein Titelbild für die Heftseite. Ein Klick darauf öffnet alle Bilder der Gruppe.';
     editingGalleries = structuredClone(article?.gallery_groups || []);
     $("#edGalleryEditor").hidden = Boolean(article && article.kind !== "free");
     renderGalleryEditor();
+    if (!article || article.kind === "free") loadTeamPhotoChoices();
     dirty = false;
     updateApprovalButton();
     wordCount();
   }
+  async function loadTeamPhotoChoices() {
+    const request = ++teamPhotoRequest;
+    teamPhotos = [];
+    $('#edTeamPhotoSelect').innerHTML = '<option value="">Mannschaftsbilder werden geladen …</option>';
+    $('#edTeamPhotoStatus').textContent = '';
+    $('#edTeamPhotoPreview').hidden = true;
+    try {
+      const result = await call('team_photos');
+      if (request !== teamPhotoRequest) return;
+      teamPhotos = result.photos || [];
+      $('#edTeamPhotoSelect').innerHTML = '<option value="">Bitte Mannschaft auswählen</option>' + teamPhotos.map(photo => `<option value="${esc(photo.team_id)}">${esc(photo.name)}</option>`).join('');
+      $('#edTeamPhotoStatus').textContent = teamPhotos.length ? 'Bilder aus der Mannschaftsverwaltung · kein erneuter Upload nötig.' : 'Noch keine Mannschaftsbilder hinterlegt. Lade sie zuerst unter Mitarbeitende → Mannschaften hoch.';
+    } catch (error) {
+      if (request !== teamPhotoRequest) return;
+      $('#edTeamPhotoSelect').innerHTML = '<option value="">Mannschaftsbilder nicht verfügbar</option>';
+      $('#edTeamPhotoStatus').textContent = error.message;
+    }
+  }
+  $('#edTeamPhotoSelect').onchange = () => {
+    const photo = teamPhotos.find(photo => photo.team_id === $('#edTeamPhotoSelect').value);
+    const preview = $('#edTeamPhotoPreview');
+    preview.hidden = !photo;
+    if (photo) { preview.src = photo.preview_url || photo.photo_url; preview.alt = `Mannschaftsbild ${photo.name}`; }
+  };
+  $('#edAddTeamPhoto').onclick = () => {
+    const photo = teamPhotos.find(photo => photo.team_id === $('#edTeamPhotoSelect').value);
+    if (!photo) { $('#edTeamPhotoStatus').textContent = 'Bitte zuerst eine Mannschaft auswählen.'; return; }
+    if (editingGalleries.length >= 6) { $('#edTeamPhotoStatus').textContent = 'Bis zu sechs Bildgruppen pro Beitrag möglich.'; return; }
+    const id = crypto.randomUUID();
+    editingGalleries.push({id:crypto.randomUUID(),title:photo.name,cover_id:id,images:[{id,team_id:photo.team_id,alt:`Mannschaftsbild ${photo.name}`,photo_url:photo.photo_url}]});
+    dirty = true;
+    renderGalleryEditor();
+    updateApprovalButton();
+    $('#edTeamPhotoStatus').textContent = 'Mannschaftsbild hinzugefügt. Bitte den Beitrag speichern und anschließend freigeben.';
+  };
   function renderGalleryEditor() {
     $('#edGalleryGroups').innerHTML = editingGalleries.map((group,index)=>`<section class="ed-gallery-group" data-group="${esc(group.id)}"><div class="toolbar"><label>Gruppentitel<input data-group-title maxlength="180" value="${esc(group.title)}" placeholder="Zum Beispiel: Sommerfest – Spiele"></label><button type="button" class="ghost" data-remove-group>Gruppe entfernen</button></div><div class="ed-gallery-images">${group.images.map(image=>`<div class="ed-gallery-image" data-image="${esc(image.id)}"><img src="${esc(image.dataUrl || image.photo_url || '')}" alt="${esc(image.alt)}"><label><input type="radio" name="gallery-cover-${index}" value="${esc(image.id)}" data-gallery-cover ${group.cover_id===image.id?'checked':''}> Titelbild</label><label>Bildbeschreibung<input data-image-alt maxlength="300" value="${esc(image.alt)}"></label><button type="button" class="ghost" data-remove-image>Bild entfernen</button></div>`).join('')}</div></section>`).join('');
     $('#edGalleryFiles').value='';
@@ -639,6 +677,7 @@ export function createEditorialWorkspace(
     wordCount();
   };
   $('#edPersonCandidates').onchange = () => {
+    if (!editing || editing.kind === 'free') return;
     const ids = [...$('#edPersonCandidates').querySelectorAll('input:checked')].map(input => input.value);
     const names = ids.map(id => people.find(person => person.id === id)?.display_name).filter(Boolean);
     $('#edArticleForm').elements.author.value = names.join(' & ');

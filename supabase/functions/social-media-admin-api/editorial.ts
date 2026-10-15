@@ -1,6 +1,6 @@
-import { prepareEditorialTeamPhoto, resolveEditorialTeamPhoto } from '../_shared/editorial-team-photo.ts';
-import { prepareEditorialGalleries, withArticleGalleries } from '../_shared/editorial-galleries.ts';
-import { loadEditorialPeople, prepareEditorialPeople } from '../_shared/editorial-people.ts';
+import { prepareEditorialTeamPhoto, resolveEditorialTeamPhoto, loadEditorialTeamPhotos } from '../_shared/editorial-team-photo.ts';
+import { prepareEditorialGalleries, withArticleGalleries, withNewsletterGalleryImages } from '../_shared/editorial-galleries.ts';
+import { loadEditorialPeople, prepareEditorialPeople, publicEditorialPeople, withEditorialPeople } from '../_shared/editorial-people.ts';
 import {
   handleEditorialPublication,
   withEditorialCover,
@@ -55,11 +55,14 @@ async function loadNewsletterSource(db: any, sourceIssueId: unknown, sourceVersi
   if (sourceVersion != null && (!Number.isInteger(sourceVersion) || Number(sourceVersion) < 1)) fail('Ungültige Heftfassung.');
   let query = db.from('editorial_publications').select('issue_id,issue_version,published_at,snapshot').eq('issue_id', sourceIssueId);
   if (sourceVersion != null) query = query.eq('issue_version', sourceVersion);
-  return newsletterSource(await row(query.order('issue_version',{ascending:false}).limit(1).maybeSingle()));
+  const publication = await row(query.order('issue_version',{ascending:false}).limit(1).maybeSingle());
+  if (publication?.snapshot) publication.snapshot = await withEditorialPeople(db,withNewsletterGalleryImages(db, publication.snapshot),{permanent:true});
+  return newsletterSource(publication);
 }
 
 export async function handleEditorial(db: any, userId: string, body: any) {
   const action = body.action;
+  if (action === 'editorial_team_photos') return {photos:await loadEditorialTeamPhotos(db)};
   if (
     [
       "editorial_approve_article",
@@ -98,7 +101,7 @@ export async function handleEditorial(db: any, userId: string, body: any) {
       loadEditorialPeople(db),
     ]);
     return {
-      people,
+      people:await publicEditorialPeople(db,people),
       issues: await Promise.all(
         issues.map((issue: any) => withEditorialCover(db, issue)),
       ),
@@ -248,7 +251,7 @@ export async function handleEditorial(db: any, userId: string, body: any) {
     catch(error) { await preparedPeople?.cleanup(); throw error; }
     const galleryGroups = preparedGalleries?.galleries || current?.gallery_groups || [];
     const peopleSnapshot = preparedPeople?.people || current?.people_snapshot || [];
-    const selectedAuthor = peopleSnapshot.length ? peopleSnapshot.map((person: any) => person.name).join(' & ') : author;
+    const selectedAuthor = (current?.kind || 'free') !== 'free' && peopleSnapshot.length ? peopleSnapshot.map((person: any) => person.name).join(' & ') : author;
     const contentChanged = !current || content !== current.body;
     const metadataChanged =
       !current ||

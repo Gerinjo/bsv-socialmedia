@@ -3305,7 +3305,9 @@ export function normalizeEditorialGalleries(value) {
     const images = group.images.map(image => {
       const imageId = id(image.id), alt = String(image.alt || '').trim();
       if (alt.length > 300) throw new Error('Bildbeschreibungen dürfen höchstens 300 Zeichen lang sein.');
-      return { id: imageId, alt, ...(image.dataUrl ? { dataUrl: String(image.dataUrl) } : {}) };
+      if (image.team_id != null && (typeof image.team_id !== 'string' || !/^[a-zA-Z0-9-]{1,80}$/.test(image.team_id))) throw new Error('Bitte eine Mannschaft auswählen.');
+      if (image.team_id && image.dataUrl) throw new Error('Bitte eine eindeutige Bildquelle auswählen.');
+      return { id: imageId, alt, ...(image.dataUrl ? { dataUrl: String(image.dataUrl) } : {}), ...(image.team_id ? {team_id:image.team_id} : {}) };
     });
     if (!images.some(image => image.id === group.cover_id)) throw new Error('Bitte ein Titelbild aus der Bildgruppe auswählen.');
     return { id: groupId, title, cover_id: group.cover_id, images };
@@ -3314,12 +3316,19 @@ export function normalizeEditorialGalleries(value) {
 
     export function editorialPersonCandidates(article, people) {
   return people.filter(person => person.active !== false).flatMap(person => {
+    const roleGroup = article?.kind === 'board' ? 'executive' : article?.kind === 'youth' ? 'youth' : null;
+    const rolePhotos = (person.role_photos || []).filter(photo => !roleGroup || !photo.group || photo.group === roleGroup);
+    const availableRoles = roleGroup && person.role_photos ? rolePhotos.map(photo => photo.role) : person.roles || [];
     const roles = article?.kind === 'coach'
       ? (person.teams || []).filter(team => team.team_id === article.team_id && /trainer|coach/i.test(team.role)).map(team => team.role)
-      : (person.roles || []).filter(role => article?.kind === 'board'
+      : availableRoles.filter(role => article?.kind === 'board'
         ? /(?:[12]\.\s*(?:vorstand|vorsitz)|vorstandsvorsitz|vorsitzend)/i.test(role) && !/jugend/i.test(role)
-        : article?.kind === 'youth' ? /jugendleit|jugendvorstand/i.test(role) : false);
-    return roles.length ? [{ ...person, role: [...new Set(roles)].join(' · ') }] : [];
+        : article?.kind === 'youth' ? /jugendleit|jugendvorstand/i.test(role) : !article || article.kind === 'free');
+    if ((!article || article.kind === 'free') && !roles.length) roles.push('Vereinsmitglied');
+    const source = article?.kind === 'coach'
+      ? (person.teams || []).find(team => team.team_id === article.team_id && /trainer|coach/i.test(team.role))
+      : roleGroup ? rolePhotos.find(photo => roles.includes(photo.role)) : null;
+    return roles.length ? [{ ...person, role: [...new Set(roles)].join(' · '), photo_source:source?.photo_source ?? person.photo_source }] : [];
   }).sort((a, b) => a.role.localeCompare(b.role, 'de') || a.display_name.localeCompare(b.display_name, 'de'));
 }
 
@@ -3409,10 +3418,10 @@ export const stadiumReaderAssets={"template":"\u003c!doctype html>\n\u003chtml l
   const articleTitle = index => articles[index].title;
   for (let index = 0; index < articles.length; index++) {
     const people = (snapshot.articles[index].people || []).map(person => ({ name: person.name, role: person.role, websiteUrl: personWebsite(person.name, articles[index].teamSlug),
-      photo_url: /^https:\/\//.test(person.photo_url || '') || snapshot.demo && /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(person.photo_url || '') ? person.photo_url : null }));
+      photo_url: /^https:\/\//.test(person.photo_url || '') || snapshot.demo && (/^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(person.photo_url || '') || /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(person.photo_url || '')) ? person.photo_url : null }));
     const galleries = [];
     for (const group of snapshot.articles[index].galleries || []) {
-      const images = group.images.map(img => ({ id: img.id, alt: img.alt || group.title || articleTitle(index), src: img.photo_url })).filter(img => /^https:\/\//.test(img.src || '') || snapshot.demo && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(img.src || ''));
+      const images = group.images.map(img => ({ id: img.id, alt: img.alt || group.title || articleTitle(index), src: img.photo_url })).filter(img => /^https:\/\//.test(img.src || '') || snapshot.demo && (/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(img.src || '') || /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(img.src || '')));
       if (images.length) galleries.push({ type: 'editorial-gallery', id: group.id, title: group.title, coverId: group.cover_id, images });
     }
     const galleryRow = groups => ({type:'editorial-gallery-row',wide:true,galleries:groups});
@@ -3524,9 +3533,8 @@ export const stadiumReaderAssets={"template":"\u003c!doctype html>\n\u003chtml l
   if (preview && emptyArticles) edition.note += ` ${emptyArticles} Beiträge sind noch ohne Inhalt und erhalten keine eigene Heftseite.`;
   let brandStyle='';
   if(snapshot.brand?.color_scheme){
-    const c=suiteBrandColors(snapshot.brand.color_scheme),theme=suiteBrandTheme(snapshot.brand.theme_key||'football');
-    const motif='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(brandThemeSvg(theme,c));
-    brandStyle=`:root{--green:${c.panel};--yellow:${c.accent};--paper:${c.surface};--ink:${c.ink};--muted:${c.panel};--rule:${c.muted}}.photo-shade{background:linear-gradient(0deg,${c.panel} 1%,${c.panel}bc 25%,${c.panel}00 65%)}.cover-stories span{color:${c.accent}}.cover-photo-wrap::after{content:'';position:absolute;left:5%;top:5%;width:17%;aspect-ratio:1;background:${c.panel} url("${motif}") center/contain no-repeat;border-radius:12px;pointer-events:none}`;
+    const c=suiteBrandColors(snapshot.brand.color_scheme);
+    brandStyle=`:root{--green:${c.panel};--yellow:${c.accent};--paper:${c.surface};--ink:${c.ink};--muted:${c.panel};--rule:${c.muted}}.photo-shade{background:linear-gradient(0deg,${c.panel} 1%,${c.panel}bc 25%,${c.panel}00 65%)}.cover-stories span{color:${c.accent}}`;
   }
   const boot = `const editions=[${safeJson(edition)}];const editionSponsorships={};\n${stadiumReaderAssets.advertisingScript}\n${stadiumReaderAssets.script}`;
   return stadiumReaderAssets.template
@@ -3681,6 +3689,10 @@ export function newsletterExcerpt(body) {
   const end = sentence && sentence.index >= 200 ? sentence.index + 1 : prefix.lastIndexOf(' ');
   return prefix.slice(0, end > 0 ? end : 419).trimEnd() + '…';
 }
+function durableNewsletterPhoto(image) {
+  const url = image?.photo_url || '';
+  return /^https:\/\//.test(url) && !/\/object\/sign\/|[?&](token|signature|expires)=/i.test(url);
+}
 export function newsletterSource(publication) {
   const snapshot = publication?.snapshot;
   if (!snapshot || snapshot.kind !== 'stadium' || !publication.published_at || !Number.isInteger(publication.issue_version) || publication.issue_version < 1) throw new Error('Dieses Stadionheft ist noch nicht veröffentlicht.');
@@ -3689,13 +3701,15 @@ export function newsletterSource(publication) {
     title: snapshot.title, published_at: publication.published_at,
     articles: (snapshot.articles || []).filter(article => article.status === 'ready' && article.body?.trim()).map(article => ({
       id: article.id, title: article.title, author: article.author || '', excerpt: newsletterExcerpt(article.body),
+      images: (article.galleries || []).flatMap(group => group.images || []).filter(durableNewsletterPhoto).map(image => ({photo_url:image.photo_url,alt:image.alt || article.title})),
+      people: (article.people || []).filter(durableNewsletterPhoto).map(person => ({name:person.name,role:person.role,photo_url:person.photo_url})),
     })),
   };
 }
 export function newsletterSelection(source, articleIds) {
   if (!Array.isArray(articleIds) || articleIds.length > 30 || new Set(articleIds).size !== articleIds.length || articleIds.some(id => typeof id !== 'string' || !source.articles.some(article => article.id === id))) throw new Error('Bitte bis zu 30 verfügbare Artikel aus diesem Heft auswählen.');
   if (!articleIds.length) return null;
-  return {...source, articles:source.articles.filter(article => articleIds.includes(article.id)).map(article => ({...article}))};
+  return {...source, articles:structuredClone(source.articles.filter(article => articleIds.includes(article.id)))};
 }
 export function newsletterArticleUrl(selection, article, origin = 'https://bsv-story-automatik.jerome-ernsberger.chatgpt.site') {
   return `${origin}/stadionheft/${encodeURIComponent(selection.issue_id)}?version=${encodeURIComponent(selection.issue_version)}#artikel/${encodeURIComponent(article.id)}`;
@@ -3726,26 +3740,32 @@ export function renderEditorialNewsletter(snapshot, template, { preview = true, 
   const edition = [settings.showNumber && settings.number ? `Ausgabe ${settings.number}` : '', settings.showDate ? month : ''].filter(Boolean).join(' · ');
   const text = [settings.showName ? `✦ ${settings.name}` : '', edition,
     settings.showKicker ? settings.kicker : '', settings.showHeadline ? settings.headline : '', settings.showIntro ? settings.intro : ''].filter(Boolean);
+  const imageMarkup = (image, title, width) => {
+    const url = image.photo_url || '';
+    if (!durableNewsletterPhoto(image) && !preview) throw new Error(`„${title}“ enthält ein Bild ohne dauerhaften öffentlichen Link. Für die E-Mail bitte zuerst eine dauerhafte Bildadresse bereitstellen.`);
+    const localImage = snapshot.demo && preview && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(url);
+    if (!/^https?:\/\//.test(url) && !localImage) return '';
+    text.push(`${image.alt || title}: ${localImage ? '(Bild aus lokaler Vorschau)' : url}`);
+    return `<img src="${escape(url)}" alt="${escape(image.alt || title)}" width="${width}" style="display:block;width:100%;max-width:${width}px;height:auto;border:0;" />`;
+  };
+  const renderPhotos = (images, title) => images.map(image => `<p>${imageMarkup(image,title,632)}</p>`).join('');
+  const renderPortraits = people => (people || []).filter(person => person.photo_url).map(person =>
+    `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 24px;"><tr><td width="112" style="width:112px;vertical-align:top;">${imageMarkup({photo_url:person.photo_url,alt:person.name},person.name,112)}</td><td style="padding:0 0 0 16px;vertical-align:middle;overflow-wrap:anywhere;"><strong>${escape(person.name)}</strong><br /><span style="font-size:13px;line-height:20px;">${escape(person.role)}</span></td></tr></table>`
+  ).join('');
   const rows = articles.map((article, index) => {
     const state = preview && article.status !== 'ready' ? '<p style="color:#865700;font-size:13px;">Entwurf · noch nicht freigegeben</p>' : '';
     const body = String(article.body || '').split(/\n\s*\n/).map(paragraph => `<p style="margin:0 0 16px;font-size:16px;line-height:26px;">${linkText(paragraph)}</p>`).join('');
     const images = (article.galleries || []).flatMap(group => group.images || []);
-    const photos = images.map(image => {
-      const url = image.photo_url || '';
-      // Storage URLs used by the magazine expire. They cannot be sent in email.
-      if (!/^https:\/\//.test(url) || /\/object\/sign\/|[?&](token|signature|expires)=/i.test(url)) {
-        if (!preview) throw new Error(`„${article.title}“ enthält ein Bild ohne dauerhaften öffentlichen Link. Für die E-Mail bitte zuerst eine dauerhafte Bildadresse bereitstellen.`);
-      }
-      if (!/^https?:\/\//.test(url)) return '';
-      text.push(`${image.alt || article.title}: ${url}`);
-      return `<p><img src="${escape(url)}" alt="${escape(image.alt || article.title)}" width="632" style="display:block;width:100%;max-width:632px;height:auto;border:0;" /></p>`;
-    }).join('');
+    const photos = renderPhotos(images,article.title);
+    const portraits = renderPortraits(article.people);
     text.push(`\n${article.title}\n${article.author ? article.author + '\n' : ''}\n${article.body || ''}`);
-    return `<tr><td class="section" style="padding:36px 40px;background-color:${index % 2 ? '#edf0e9' : '#ffffff'};">${state}<h2 style="margin:0 0 18px;color:#17613a;font-size:28px;line-height:34px;">${escape(article.title)}</h2>${article.author ? `<p style="font-size:13px;">${escape(article.author)}</p>` : ''}${body}${photos}</td></tr>`;
+    return `<tr><td class="section" style="padding:36px 40px;background-color:${index % 2 ? '#edf0e9' : '#ffffff'};">${state}<h2 style="margin:0 0 18px;color:#17613a;font-size:28px;line-height:34px;">${escape(article.title)}</h2>${article.author ? `<p style="font-size:13px;">${escape(article.author)}</p>` : ''}${portraits}${body}${photos}</td></tr>`;
   });
   for (const article of imported) {
     const url = newsletterArticleUrl(selection, article, stadiumOrigin);
-    rows.push(`<tr><td class="section" data-newsletter-excerpt="${escape(article.id)}" style="padding:36px 40px;border-top:1px solid #dce4d9;background-color:#ffffff;"><p style="margin:0 0 12px;color:#17613a;font-size:12px;line-height:18px;font-weight:bold;">AUS DEM STADIONHEFT · ${escape(selection.title)}</p><h2 style="margin:0 0 18px;color:#17613a;font-size:28px;line-height:34px;">${escape(article.title)}</h2><p style="margin:0 0 20px;font-size:16px;line-height:26px;">${escape(article.excerpt)}</p><p style="margin:0;font-size:16px;line-height:26px;"><a href="${escape(url)}" style="color:#17613a;font-weight:bold;">Weiterlesen im Stadionheft →</a></p></td></tr>`);
+    const photos = renderPhotos(article.images || [],article.title);
+    const portraits = renderPortraits(article.people);
+    rows.push(`<tr><td class="section" data-newsletter-excerpt="${escape(article.id)}" style="padding:36px 40px;border-top:1px solid #dce4d9;background-color:#ffffff;"><p style="margin:0 0 12px;color:#17613a;font-size:12px;line-height:18px;font-weight:bold;">AUS DEM STADIONHEFT · ${escape(selection.title)}</p><h2 style="margin:0 0 18px;color:#17613a;font-size:28px;line-height:34px;">${escape(article.title)}</h2>${portraits}<p style="margin:0 0 20px;font-size:16px;line-height:26px;">${escape(article.excerpt)}</p>${photos}<p style="margin:0;font-size:16px;line-height:26px;"><a href="${escape(url)}" style="color:#17613a;font-weight:bold;">Weiterlesen im Stadionheft →</a></p></td></tr>`);
     text.push(`\nAUS DEM STADIONHEFT · ${selection.title}\n\n${article.title}\n\n${article.excerpt}\n\nWeiterlesen im Stadionheft: ${url}`);
   }
   // This section is mandatory, even for an empty draft. Use publication dates
@@ -3817,6 +3837,8 @@ export function createEditorialWorkspace(
     teams = [],
     people = [],
     editingGalleries = [],
+    teamPhotos = [],
+    teamPhotoRequest = 0,
     selected = null,
     articles = [],
     month = new Date()
@@ -3859,7 +3881,7 @@ export function createEditorialWorkspace(
     <section class="panel"><div class="editorial-calendar-heading"><div><h3>Redaktionskalender</h3><div class="editorial-legend"><span class="ed-start">● Redaktionsstart</span><span class="ed-close">● Redaktionsschluss</span><span class="ed-publish">● Erscheinung</span><span>▰ Redaktionszeitraum</span></div></div><label>Ausgabeart<select id="edFilter"><option value="">Alle Ausgaben</option><option value="stadium">Stadionheft</option><option value="newsletter">Newsletter</option></select></label></div><div class="editorial-month-nav"><button class="ghost" id="edPrev" aria-label="Vorheriger Monat">←</button><h3 id="edMonth" aria-live="polite"></h3><button class="ghost" id="edNext" aria-label="Nächster Monat">→</button><button class="ghost" id="edToday">Heute</button></div><div class="editorial-calendar-scroll"><div id="edCalendar" class="editorial-calendar"></div></div></section>
     <div class="editorial-columns"><section class="panel"><h3>Ausgaben</h3><div id="edIssues" aria-live="polite"></div></section><section class="panel" id="edDetail"><div class="empty">Lege die erste Ausgabe an oder wähle eine Ausgabe aus.</div></section></div>
     <dialog id="edIssueDialog" aria-labelledby="edIssueHeading"><div class="dialog-header"><h2 id="edIssueHeading">Ausgabe anlegen</h2><button type="button" class="ghost" id="edIssueClose" aria-label="Schließen">✕</button></div><form id="edIssueForm" class="fields"><label>Ausgabeart<select name="kind"><option value="stadium">Stadionheft</option><option value="newsletter">Newsletter</option></select></label><label>Titel<input name="title" required maxlength="180" placeholder="Zum Beispiel: Nordstern · Heimspielausgabe 01"></label><label>Redaktionsstart<input name="starts_on" type="date" required></label><label>Redaktionsschluss<input name="closes_on" type="date" required></label><label>Erscheinungsdatum<input name="publishes_on" type="date" required></label><p class="small">Im Stadionheft werden Grußworte, Trainerbegrüßungen und Sportdaten als feste Beiträge angelegt. Newsletter starten mit einem freien Inhaltsplan.</p><div class="wide toolbar"><button type="submit">Ausgabe speichern</button><span id="edIssueMessage" role="status"></span></div></form></dialog>
-    <dialog id="edArticleDialog" aria-labelledby="edArticleHeading"><div class="dialog-header"><div><span class="editorial-eyebrow">TEXTREDAKTION</span><h2 id="edArticleHeading">Beitrag bearbeiten</h2></div><button type="button" class="ghost" id="edArticleClose" aria-label="Editor schließen">✕</button></div><form id="edArticleForm"><div class="fields"><label class="wide">Titel<input name="title" required maxlength="180"></label><label>Abteilung<select name="department_id"></select></label><label>Autor / Verantwortlich<input name="author" maxlength="180" placeholder="Name"></label><div><span class="small">Freigabestatus</span><p id="edApprovalStatus"></p><input type="hidden" name="status" value="draft"></div><div class="small" id="edSource"></div><fieldset class="wide ed-person-selection" id="edPersonSelection"><legend>Personen zum Beitrag auswählen</legend><p class="small">Eine oder mehrere Personen auswählen. Hinterlegte Bilder erscheinen beim Text.</p><div id="edPersonCandidates"></div></fieldset><div class="wide ed-dictation" id="edDictation"><button type="button" class="ghost" id="edDictate" aria-pressed="false" aria-controls="edBody" aria-describedby="edDictationHint"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg><span>Diktieren</span></button><p class="small" id="edDictationHint"></p><p class="small" id="edDictationStatus" role="status" aria-live="polite"></p></div><label class="wide">Beitrag<textarea id="edBody" name="body" maxlength="30000" rows="15" spellcheck="true" lang="de" placeholder="Hier ist Platz für euren Beitrag …"></textarea></label><fieldset class="wide ed-gallery-editor" id="edGalleryEditor"><legend>Bildgruppen zum Beitrag</legend><p class="small">Jeder Upload bildet eine eigene Gruppe. Wähle je Gruppe ein Titelbild für die Heftseite. Ein Klick darauf öffnet alle Bilder der Gruppe.</p><div id="edGalleryGroups"></div><label>Neue Bildgruppe hinzufügen (bis 20 Bilder)<input id="edGalleryFiles" type="file" accept="image/jpeg,image/png,image/webp" multiple></label><p class="small">Bis zu 6 Gruppen. JPG, PNG oder WebP, bis 5 MB je Original. Fotos werden auf höchstens 1600 Pixel verkleinert.</p></fieldset></div><p class="small" id="edRewriteHint"></p><div class="toolbar"><button type="submit" id="edSaveArticle">Speichern & überarbeiten</button><button type="submit" class="ghost" id="edRetryRewrite" data-rewrite="true">Erneut überarbeiten</button><button type="button" class="ghost" id="edHistory">Original & Verlauf</button><button type="button" class="ghost hidden" id="edDeleteArticle">Beitrag löschen</button><button type="button" class="ghost hidden" id="edWaiveArticle">Verzicht</button><button type="button" class="primary-action" id="edApproveArticle">Beitrag freigeben</button><span class="small" id="edWordCount"></span></div><p id="edArticleMessage" role="status" aria-live="polite"></p><div id="edRevisionList"></div></form></dialog>
+    <dialog id="edArticleDialog" aria-labelledby="edArticleHeading"><div class="dialog-header"><div><span class="editorial-eyebrow">TEXTREDAKTION</span><h2 id="edArticleHeading">Beitrag bearbeiten</h2></div><button type="button" class="ghost" id="edArticleClose" aria-label="Editor schließen">✕</button></div><form id="edArticleForm"><div class="fields"><label class="wide">Titel<input name="title" required maxlength="180"></label><label>Abteilung<select name="department_id"></select></label><label>Autor / Verantwortlich<input name="author" maxlength="180" placeholder="Name"></label><div><span class="small">Freigabestatus</span><p id="edApprovalStatus"></p><input type="hidden" name="status" value="draft"></div><div class="small" id="edSource"></div><fieldset class="wide ed-person-selection" id="edPersonSelection"><legend>Personen zum Beitrag auswählen</legend><p class="small">Bis zu vier Personen auswählen. Die passenden Bilder aus der Mitarbeiterverwaltung erscheinen beim Beitrag.</p><div id="edPersonCandidates"></div></fieldset><div class="wide ed-dictation" id="edDictation"><button type="button" class="ghost" id="edDictate" aria-pressed="false" aria-controls="edBody" aria-describedby="edDictationHint"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg><span>Diktieren</span></button><p class="small" id="edDictationHint"></p><p class="small" id="edDictationStatus" role="status" aria-live="polite"></p></div><label class="wide">Beitrag<textarea id="edBody" name="body" maxlength="30000" rows="15" spellcheck="true" lang="de" placeholder="Hier ist Platz für euren Beitrag …"></textarea></label><fieldset class="wide ed-gallery-editor" id="edGalleryEditor"><legend>Bildgruppen zum Beitrag</legend><p class="small">Jeder Upload bildet eine eigene Gruppe. Wähle je Gruppe ein Titelbild für die Heftseite. Ein Klick darauf öffnet alle Bilder der Gruppe.</p><div class="ed-team-photo-picker"><label>Mannschaftsbild auswählen<select id="edTeamPhotoSelect"><option value="">Mannschaftsbilder werden geladen …</option></select></label><p id="edTeamPhotoStatus" class="small" role="status"></p><img id="edTeamPhotoPreview" alt="" hidden style="max-width:100%;max-height:220px;object-fit:contain"><button id="edAddTeamPhoto" type="button" class="ghost">Mannschaftsbild zum Beitrag hinzufügen</button></div><div id="edGalleryGroups"></div><label>Neue Bildgruppe hinzufügen (bis 20 Bilder)<input id="edGalleryFiles" type="file" accept="image/jpeg,image/png,image/webp" multiple></label><p class="small">Bis zu 6 Gruppen. JPG, PNG oder WebP, bis 5 MB je Original. Fotos werden auf höchstens 1600 Pixel verkleinert.</p></fieldset></div><p class="small" id="edRewriteHint"></p><div class="toolbar"><button type="submit" id="edSaveArticle">Speichern & überarbeiten</button><button type="submit" class="ghost" id="edRetryRewrite" data-rewrite="true">Erneut überarbeiten</button><button type="button" class="ghost" id="edHistory">Original & Verlauf</button><button type="button" class="ghost hidden" id="edDeleteArticle">Beitrag löschen</button><button type="button" class="ghost hidden" id="edWaiveArticle">Verzicht</button><button type="button" class="primary-action" id="edApproveArticle">Beitrag freigeben</button><span class="small" id="edWordCount"></span></div><p id="edArticleMessage" role="status" aria-live="polite"></p><div id="edRevisionList"></div></form></dialog>
     <dialog id="edEventDialog" aria-labelledby="edEventHeading"><div class="dialog-header"><h2 id="edEventHeading">Veranstaltung ins Heft aufnehmen</h2><button class="ghost" id="edEventClose" type="button" aria-label="Schließen">✕</button></div><form id="edEventForm" class="fields"><label class="wide">Termin auswählen<select id="edEventSource"><option value="">Eigene Veranstaltung</option></select></label><label class="wide">Titel<input name="title" maxlength="180" required></label><label>Datum<input type="date" name="date" required></label><label>Uhrzeit<input type="time" name="time"></label><label class="wide">Ort<input name="location" maxlength="200"></label><label class="wide">Beschreibung im Heft<textarea name="description" required maxlength="30000" rows="6"></textarea></label><p class="small wide">Der Termin erscheint als eigener Beitrag im Heft und lässt sich in der Titelblatt-Karte für das Cover auswählen. Bitte bei wiederkehrenden Stories das gewünschte Veranstaltungsdatum prüfen. Der Beitrag muss anschließend freigegeben werden.</p><div class="toolbar wide"><button type="submit">Veranstaltung aufnehmen</button><span id="edEventMessage" role="status"></span></div></form></dialog>
     <dialog id="edNewsletterSourceDialog" aria-labelledby="edNewsletterSourceHeading"><div class="dialog-header"><h2 id="edNewsletterSourceHeading">Aus dem Stadionheft übernehmen</h2><button type="button" class="ghost" id="edNewsletterSourceClose" aria-label="Schließen">✕</button></div><form id="edNewsletterSourceForm"><label>Veröffentlichtes Stadionheft<select id="edNewsletterSourceIssue"></select></label><p class="small">Wähle die Artikel für deinen Newsletter. Die Vorschau unten zeigt die gekürzten Texte. Jeder Auszug erhält einen Link zum vollständigen Artikel im Stadionheft.</p><p id="edNewsletterSourceInfo" class="small"></p><button type="button" class="ghost" id="edNewsletterSourceLatest" hidden>Aktuelle Heftfassung laden</button><div id="edNewsletterSourceArticles" class="ed-newsletter-source-list"></div><p id="edNewsletterSourceCount" class="small" aria-live="polite"></p><p id="edNewsletterSourceMessage" role="status"></p><div class="toolbar"><button id="edNewsletterSourceSave" type="submit">Artikelauswahl speichern</button></div></form></dialog>
     <dialog id="edPreviewDialog" aria-labelledby="edPreviewHeading"><div class="dialog-header"><h2 id="edPreviewHeading">Heftvorschau · Entwurf</h2><button class="ghost" id="edPreviewClose" type="button" aria-label="Vorschau schließen">✕</button></div><iframe id="edMagazineFrame" title="Stadionheft vor Veröffentlichung ansehen" sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"></iframe></dialog>`;
@@ -4152,11 +4174,11 @@ export function createEditorialWorkspace(
         if (busy || !canLeaveCover()) return;
         busy = true;
         try {
-          const result = await call('preview_issue', {issueId:selected.id, version:selected.version});
+          const result = await call('preview_issue', {issueId:selected.id, version:selected.version, forExport:true});
           const mail = await newsletterMail(result.snapshot, false);
           downloadNewsletter(mail[format], `nordstern-post-${selected.publishes_on}`, format);
         } catch (error) { show(error.message, true); }
-        finally { busy = false; }
+        finally { busy = false; try { await refresh(); } catch (error) { show(error.message,true); } }
       };
     }
     $('#edNewsletterSelectArticles').onclick = openNewsletterSource;
@@ -4329,20 +4351,56 @@ export function createEditorialWorkspace(
           : "Die KI-Überarbeitung ist noch nicht eingerichtet. Deine Texte werden trotzdem gespeichert; Original und Verlauf bleiben erhalten.";
     const candidates = editorialPersonCandidates(article, people);
     const chosen = article?.people_snapshot || [];
-    form.elements.author.readOnly = automatic || chosen.length > 0;
-    $('#edPersonSelection').hidden = !['board', 'youth', 'coach'].includes(article?.kind);
+    form.elements.author.readOnly = automatic || article?.kind !== 'free' && chosen.length > 0;
+    $('#edPersonSelection').hidden = Boolean(article && !['board', 'youth', 'coach', 'free'].includes(article.kind));
     const options = [...candidates];
     for (const person of chosen) if (!options.some(candidate => candidate.id === person.person_id)) options.push({ id: person.person_id, display_name: person.name, role: person.role + ' · Zuordnung nicht mehr verfügbar', unavailable: true });
-    $('#edPersonCandidates').innerHTML = options.map(person => `<label class="ed-person-option"><input type="checkbox" name="person_ids" value="${esc(person.id)}" ${chosen.some(saved => saved.person_id === person.id) ? 'checked' : ''}><span><strong>${esc(person.display_name)}</strong><small>${esc(person.role)}${person.photo_url ? '' : ' · Kein Bild hinterlegt'}</small></span></label>`).join('') || '<p class="small">Für diese Funktion ist noch keine Person im Katalog zugeordnet.</p>';
+    $('#edPersonCandidates').innerHTML = options.map(person => `<label class="ed-person-option"><input type="checkbox" name="person_ids" value="${esc(person.id)}" ${chosen.some(saved => saved.person_id === person.id) ? 'checked' : ''}><span><strong>${esc(person.display_name)}</strong><small>${esc(person.role)}${person.photo_url || person.has_photo ? '' : ' · Kein Bild hinterlegt'}</small></span></label>`).join('') || '<p class="small">Für diese Funktion ist noch keine Person im Katalog zugeordnet.</p>';
     $('#edGalleryEditor legend').textContent = selected.kind === 'newsletter' ? 'Bilder zum Newsletter-Beitrag' : 'Bildgruppen zum Beitrag';
-    $('#edGalleryEditor p').textContent = selected.kind === 'newsletter' ? 'Für den E-Mail-Export werden dauerhafte öffentliche Bildadressen benötigt. Hochgeladene Bilder haben vorerst nur zeitlich begrenzte Vorschau-Links.' : 'Jeder Upload bildet eine eigene Gruppe. Wähle je Gruppe ein Titelbild für die Heftseite. Ein Klick darauf öffnet alle Bilder der Gruppe.';
+    $('#edGalleryEditor p').textContent = selected.kind === 'newsletter' ? 'Mannschaftsbilder aus der zentralen Verwaltung können direkt verwendet und als E-Mail exportiert werden. Eigene Uploads benötigen für den Versand weiterhin dauerhafte öffentliche Bildadressen.' : 'Jeder Upload bildet eine eigene Gruppe. Wähle je Gruppe ein Titelbild für die Heftseite. Ein Klick darauf öffnet alle Bilder der Gruppe.';
     editingGalleries = structuredClone(article?.gallery_groups || []);
     $("#edGalleryEditor").hidden = Boolean(article && article.kind !== "free");
     renderGalleryEditor();
+    if (!article || article.kind === "free") loadTeamPhotoChoices();
     dirty = false;
     updateApprovalButton();
     wordCount();
   }
+  async function loadTeamPhotoChoices() {
+    const request = ++teamPhotoRequest;
+    teamPhotos = [];
+    $('#edTeamPhotoSelect').innerHTML = '<option value="">Mannschaftsbilder werden geladen …</option>';
+    $('#edTeamPhotoStatus').textContent = '';
+    $('#edTeamPhotoPreview').hidden = true;
+    try {
+      const result = await call('team_photos');
+      if (request !== teamPhotoRequest) return;
+      teamPhotos = result.photos || [];
+      $('#edTeamPhotoSelect').innerHTML = '<option value="">Bitte Mannschaft auswählen</option>' + teamPhotos.map(photo => `<option value="${esc(photo.team_id)}">${esc(photo.name)}</option>`).join('');
+      $('#edTeamPhotoStatus').textContent = teamPhotos.length ? 'Bilder aus der Mannschaftsverwaltung · kein erneuter Upload nötig.' : 'Noch keine Mannschaftsbilder hinterlegt. Lade sie zuerst unter Mitarbeitende → Mannschaften hoch.';
+    } catch (error) {
+      if (request !== teamPhotoRequest) return;
+      $('#edTeamPhotoSelect').innerHTML = '<option value="">Mannschaftsbilder nicht verfügbar</option>';
+      $('#edTeamPhotoStatus').textContent = error.message;
+    }
+  }
+  $('#edTeamPhotoSelect').onchange = () => {
+    const photo = teamPhotos.find(photo => photo.team_id === $('#edTeamPhotoSelect').value);
+    const preview = $('#edTeamPhotoPreview');
+    preview.hidden = !photo;
+    if (photo) { preview.src = photo.preview_url || photo.photo_url; preview.alt = `Mannschaftsbild ${photo.name}`; }
+  };
+  $('#edAddTeamPhoto').onclick = () => {
+    const photo = teamPhotos.find(photo => photo.team_id === $('#edTeamPhotoSelect').value);
+    if (!photo) { $('#edTeamPhotoStatus').textContent = 'Bitte zuerst eine Mannschaft auswählen.'; return; }
+    if (editingGalleries.length >= 6) { $('#edTeamPhotoStatus').textContent = 'Bis zu sechs Bildgruppen pro Beitrag möglich.'; return; }
+    const id = crypto.randomUUID();
+    editingGalleries.push({id:crypto.randomUUID(),title:photo.name,cover_id:id,images:[{id,team_id:photo.team_id,alt:`Mannschaftsbild ${photo.name}`,photo_url:photo.photo_url}]});
+    dirty = true;
+    renderGalleryEditor();
+    updateApprovalButton();
+    $('#edTeamPhotoStatus').textContent = 'Mannschaftsbild hinzugefügt. Bitte den Beitrag speichern und anschließend freigeben.';
+  };
   function renderGalleryEditor() {
     $('#edGalleryGroups').innerHTML = editingGalleries.map((group,index)=>`<section class="ed-gallery-group" data-group="${esc(group.id)}"><div class="toolbar"><label>Gruppentitel<input data-group-title maxlength="180" value="${esc(group.title)}" placeholder="Zum Beispiel: Sommerfest – Spiele"></label><button type="button" class="ghost" data-remove-group>Gruppe entfernen</button></div><div class="ed-gallery-images">${group.images.map(image=>`<div class="ed-gallery-image" data-image="${esc(image.id)}"><img src="${esc(image.dataUrl || image.photo_url || '')}" alt="${esc(image.alt)}"><label><input type="radio" name="gallery-cover-${index}" value="${esc(image.id)}" data-gallery-cover ${group.cover_id===image.id?'checked':''}> Titelbild</label><label>Bildbeschreibung<input data-image-alt maxlength="300" value="${esc(image.alt)}"></label><button type="button" class="ghost" data-remove-image>Bild entfernen</button></div>`).join('')}</div></section>`).join('');
     $('#edGalleryFiles').value='';
@@ -4434,6 +4492,7 @@ export function createEditorialWorkspace(
     wordCount();
   };
   $('#edPersonCandidates').onchange = () => {
+    if (!editing || editing.kind === 'free') return;
     const ids = [...$('#edPersonCandidates').querySelectorAll('input:checked')].map(input => input.value);
     const names = ids.map(id => people.find(person => person.id === id)?.display_name).filter(Boolean);
     $('#edArticleForm').elements.author.value = names.join(' & ');
