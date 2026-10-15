@@ -7,7 +7,7 @@ export function renderEditorialMagazine(snapshot, preview = true) {
       .replaceAll("<", "\\u003c")
       .replaceAll("\u2028", "\\u2028")
       .replaceAll("\u2029", "\\u2029");
-  const contacts = stadiumReaderAssets.contacts;
+  const contacts = snapshot.contacts || stadiumReaderAssets.contacts;
   const teamWebsite = slug => contacts.teams[slug] || null;
   const personWebsite = (name, slug) => {
     const groups = contacts.groups;

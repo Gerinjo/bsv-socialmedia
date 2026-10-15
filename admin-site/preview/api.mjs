@@ -1,3 +1,4 @@
+import {editorialContactDirectory} from '/editorial-contacts.mjs';
 import {employeePreviewApi} from '/preview-employee-management.mjs';
 import {previewSuiteActivity} from '/preview-suite-activity.mjs';
 import {trainerPreviewApi} from '/preview-trainer-management.mjs';
@@ -65,6 +66,17 @@ async function localEditorialPeople() {
 }
 function localSelectedPeople(article, ids) {
   return selectEditorialPeople(article,people,ids).map(person => ({person_id:person.id,name:person.display_name,role:person.role,photo_url:person.photo_source?.url || person.photo_url}));
+}
+async function localEditorialContacts() {
+  const [staff,trainers] = await Promise.all([employeePreviewApi({action:'list'}),trainerPreviewApi({action:'list'})]);
+  return editorialContactDirectory({
+    assignments:staff.assignments.filter(assignment => !assignment.personId || staff.people.find(person => person.id === assignment.personId)?.active !== false).map(assignment => ({groupKey:assignment.groupKey,personId:assignment.personId,name:assignment.name,role:assignment.roleLabel})),
+    teams:trainers.teams,
+    trainerTeams:trainers.teams.map(team => ({path:team.website_path,coaches:trainers.assignments.filter(assignment => assignment.teamId === team.id && assignment.websiteVisible).flatMap(assignment => {
+      const person=trainers.people.find(person => person.id === assignment.personId && person.active !== false);
+      return person ? [{name:person.website_name || person.name,role:assignment.websiteRole || (assignment.slot === 'trainer' ? 'Trainer' : assignment.slot.startsWith('co') ? 'Co-Trainer' : 'Betreuer')}] : [];
+    })})),
+  });
 }
 function localTeamPhoto(team) {
   let managed;
@@ -724,4 +736,4 @@ async function prepareLocalGalleries(article,input){
 async function localArticleGalleries(article,field='gallery_groups'){
   return {...article,[field]:await Promise.all((article[field] || []).map(async group=>({...group,images:await Promise.all(group.images.map(async image=>({...image,photo_url:image.team_photo ? image.photo_url : await localImageStore('readonly',store=>store.get(image.photo_path))})))})))};
 }
-async function localSnapshotGalleries(snapshot){return {...snapshot,articles:await Promise.all(snapshot.articles.map(article=>localArticleGalleries(article,'galleries')))};}
+async function localSnapshotGalleries(snapshot){return {...snapshot,...(snapshot.kind === 'stadium' ? {contacts:await localEditorialContacts()} : {}),articles:await Promise.all(snapshot.articles.map(article=>localArticleGalleries(article,'galleries')))};}

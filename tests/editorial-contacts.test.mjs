@@ -24,7 +24,7 @@ test('person links target real name fragments and all adult/youth teams have the
   assert.equal(decodeURIComponent(url.hash),'#:~:text='+person.name);
  }
  const slugs=['herren-1','herren-2','frauen-1','frauen-2','u19-junioren','u17-junioren','u15-c1-junioren','u13-d1-junioren'];
- const html=renderEditorialMagazine({id:'issue',title:'Test',publishes_on:'2026-09-27',articles:slugs.map(slug=>({id:slug,team_slug:slug,title:slug,kind:'sports',status:'ready',body:'TABELLE'})),coverMatches:slugs.slice(0,4).map((slug,i)=>({team:['Herren I','Herren II','Frauen I','Frauen II'][i],articleId:slug}))});
+ const html=renderEditorialMagazine({contacts:directory,id:'issue',title:'Test',publishes_on:'2026-09-27',articles:slugs.map(slug=>({id:slug,team_slug:slug,title:slug,kind:'sports',status:'ready',body:'TABELLE'})),coverMatches:slugs.slice(0,4).map((slug,i)=>({team:['Herren I','Herren II','Frauen I','Frauen II'][i],articleId:slug}))});
  const edition=JSON.parse(html.match(/const editions=(\[.*?\]);const editionSponsorships/s)[1])[0];
  for(const article of edition.articles)assert.equal(article.websiteUrl,directory.teams[article.teamSlug]);
  for(const team of edition.editorialPages.flatMap(p=>p.blocks[0].teams||[]))assert.ok(team.websiteUrl.startsWith(directory.sourceUrl));
@@ -39,4 +39,12 @@ test('website icons reject unsafe destinations and escape untrusted labels',asyn
  for(const url of ['javascript:alert(1)','https://bsvnordstern.de.evil.example','//evil.example','https://evil.example','http://bsvnordstern.de/'])assert.equal(context.clubWebsiteLink(url,'Test'),'');
  const html=context.clubWebsiteLink(directory.teams['herren-1'],'<img src=x onerror="alert(1)">');
  assert.doesNotMatch(html,/<img/);assert.match(html,/rel="noopener noreferrer"/);assert.match(html,/target="_blank"/);
+});
+
+test('the reader uses supplied current contacts and never revives the bundled September roster',()=>{
+ const snapshot={id:'issue',kind:'stadium',title:'Heft',publishes_on:'2026-10-15',articles:[],contacts:{source:'suite',verifiedAt:'2026-10-15',teams:{},groups:[{title:'Aktuelle Gruppe',people:[{name:'Neue Person',role:'Neue Rolle'}]}]}};
+ const extract=input=>JSON.parse(renderEditorialMagazine(input).match(/const editions=(\[.*?\]);const editionSponsorships/s)[1])[0];
+ assert.deepEqual(extract(snapshot).contacts,snapshot.contacts);
+ assert.deepEqual(extract({...snapshot,contacts:{...snapshot.contacts,groups:[]}}).contacts.groups,[]);
+ assert.deepEqual(extract({...snapshot,contacts:undefined}).contacts.groups,[]);
 });

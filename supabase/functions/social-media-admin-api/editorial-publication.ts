@@ -1,3 +1,4 @@
+import {withEditorialContacts} from '../_shared/editorial-contacts.ts';
 import { withEditorialTeamPhotos } from '../_shared/editorial-team-photo.ts';
 import { withEditorialGalleries, withArticleGalleries } from '../_shared/editorial-galleries.ts';
 import { withEditorialPeople, refreshEditorialPeople } from '../_shared/editorial-people.ts';
@@ -217,7 +218,7 @@ export async function handleEditorialPublication(
     const permanent = issue.kind === 'newsletter' && body.forExport === true;
     if (permanent && snapshot.articles.some((article: any) => article.status !== 'waived' && (article.status !== 'ready' || !article.body?.trim())))
       throw new Error('Bitte alle Newsletter-Beiträge ausfüllen und freigeben, bevor du die Versanddateien exportierst.');
-    return { snapshot: await withEditorialTeamPhotos(db, await withEditorialGalleries(db, await withEditorialPeople(db, await withEditorialAdvertising(db, await withEditorialCover(db, snapshot)),{permanent}))) };
+    return { snapshot: await withEditorialContacts(db, await withEditorialTeamPhotos(db, await withEditorialGalleries(db, await withEditorialPeople(db, await withEditorialAdvertising(db, await withEditorialCover(db, snapshot)),{permanent})))) };
   }
   if (body.action === "editorial_publish_issue") {
     const issue = await row(

@@ -5,7 +5,10 @@ const read = (name) =>
 let [template, css, script, crest] = await Promise.all(
   ["index.html", "style.css", "app.js", "wappen.svg"].map(read),
 );
-const contacts = JSON.parse(await readFile(new URL('config/editorial-contacts.json', root), 'utf8'));
+// Only neutral team links are bundled. People and roles are loaded from the
+// current Suite configuration for every private preview and public reading.
+const catalog = JSON.parse(await readFile(new URL('config/bsv-catalog.json', root), 'utf8'));
+const contacts = {sourceUrl:'https://bsvnordstern.de/',groups:[],teams:Object.fromEntries(catalog.teams.filter(team=>team.websitePath).map(team=>[team.slug,'https://bsvnordstern.de/'+team.websitePath.replace(/^\/+|\/+$/g,'')+'/']))};
 const advertisingScript = (await readFile(new URL('src/stadium-magazine/platform-sponsors.mjs', root), 'utf8')).replaceAll('export ', '') + '\n' +
   (await readFile(new URL('src/stadium-magazine/ad-layout.mjs', root), 'utf8')).replace(/^import .*;\n/, '').replaceAll('export ', '') + '\n' +
   (await readFile(new URL('src/stadium-magazine/editorial-layout.mjs', root), 'utf8')).replace(/^import .*;\n/, '').replaceAll('export ', '') + `

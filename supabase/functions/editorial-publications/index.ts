@@ -1,3 +1,4 @@
+import {withEditorialContacts} from '../_shared/editorial-contacts.ts';
 import { withEditorialTeamPhotos } from '../_shared/editorial-team-photo.ts';
 import { withEditorialGalleries } from '../_shared/editorial-galleries.ts';
 import { withEditorialPeople } from '../_shared/editorial-people.ts';
@@ -52,7 +53,7 @@ const handler = withSupabase(
       );
     try {
       return Response.json(
-        await withEditorialTeamPhotos(context.supabaseAdmin, await withEditorialGalleries(context.supabaseAdmin, await withEditorialPeople(context.supabaseAdmin, await withEditorialAdvertising(context.supabaseAdmin, { ...snapshot, cover_url: cover.signedUrl })))),
+        await withEditorialContacts(context.supabaseAdmin, await withEditorialTeamPhotos(context.supabaseAdmin, await withEditorialGalleries(context.supabaseAdmin, await withEditorialPeople(context.supabaseAdmin, await withEditorialAdvertising(context.supabaseAdmin, { ...snapshot, cover_url: cover.signedUrl }))))),
         { headers },
       );
     } catch {
