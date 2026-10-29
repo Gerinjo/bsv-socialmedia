@@ -90,6 +90,14 @@ Bestehende Website-Kontakte wurden anhand der geprüften Zuordnung in `config/tr
 
 Personen und Mannschaften tragen Versionsnummern gegen versehentliches Überschreiben. Änderungen werden mit Benutzer und Zeitpunkt im privaten `trainer_audit` protokolliert. Normale Portraits ersetzen keine freigestellten Bilder für Social-Media-Motive. Tests: `npm run check`, `npm run test:cashbook:db` und die Homepage-Tests einschließlich `team-staff.test.mjs`.
 
+## Trainerzugänge zur App
+
+Die Rolle **Trainer** enthält standardmäßig **Hallentraining** und kein Kassenbuchrecht. Beim Umstellen bestehender Konten bleibt bereits gewährter Kassenbuchzugriff als persönliches Zusatzrecht erhalten. Neue Trainerzugänge erhalten ihn nur nach ausdrücklicher Freigabe durch die Administration.
+
+`social_admins.person_id` verknüpft einen Suite-Zugang direkt mit der zentralen Person und ihren Mannschaften. Dafür wird kein Kassenbuchkonto angelegt. Bestehende Finanzkonten und Buchungen behalten ihre Identitäten. Eindeutige bestehende Namenszuordnungen werden beim Übernehmen der Trainer mit ihrem Profil verknüpft; vorhandene Logins, Passwörter und Rechte bleiben erhalten. Passive Trainer werden nicht neu freigeschaltet.
+
+Die einmalige Übernahme aktiver Trainer läuft serverseitig über **Supabase Auth Admin.createUser** mit dem bestehenden Startpasswort `bsv1956`. Interne Anmeldeadressen dienen dem Kürzel-Login und werden in der Oberfläche ausgeblendet. Es werden keine Einladungs-E-Mails verschickt. Der Operator-Endpunkt `suite-trainer-accounts` verlangt einen service-seitig angelegten Auftrag mit ablaufendem, einmaligem Zugriffstoken und prüft den ausführenden Super-Admin bei jeder Aktion. Konten werden einzeln über den protokollierenden Suite-Workflow angelegt; schlägt die Zuordnung fehl, wird der gerade neu erstellte Auth-Zugang wieder entfernt. Wiederholungen setzen keine bestehenden Passwörter zurück.
+
 ## Hallentraining
 
 Unter **Hallentraining → BSZ** buchen Trainer einzelne Zeitblöcke für eine ihrer zugeordneten Mannschaften und geben eigene Buchungen wieder frei. In der Übersicht steht die Mannschaft; **Details** zeigt zusätzlich den verantwortlichen Trainer. Bei mehreren Mannschaften wird beim Buchen die gewünschte Mannschaft ausgewählt. Die neun Termine am 7./21./28. November 2026, 5./12./19. Dezember 2026 und 17./24./31. Januar 2027 sind jeweils von **08:00 bis 20:00 Uhr** angelegt. Die Blocklänge beträgt **120 Minuten** (sechs Blöcke pro Tag). Alle Zeiten gelten für Europe/Berlin.

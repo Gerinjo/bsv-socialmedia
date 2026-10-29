@@ -1757,7 +1757,7 @@ export function suiteStartArea(areas=[],requested=''){
 export const SUITE_ROLE_SEEDS=[
  {key:'admin',label:'Super-Admin',access_areas:[...SUITE_AREAS],protected:true},
  {key:'user',label:'Benutzer',access_areas:['social_media']},
- {key:'trainer',label:'Trainer',access_areas:['cashbook','hall_training']},
+ {key:'trainer',label:'Trainer',access_areas:['hall_training']},
  {key:'cashier',label:'Kasse',access_areas:['cashbook']},
  {key:'youth-leadership',label:'Jugendleitung',access_areas:['cashbook','trainer_management','hall_training']},
  {key:'referee-admin',label:'Schiedsrichteradmin',access_areas:['referees']},
@@ -1865,7 +1865,7 @@ export function createBrandPreview(root) {
   };
 }
 
-    const technicalEmail = /^cashbook-[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}@suite\.bsvnordstern\.invalid$/i;
+    const technicalEmail = /^(?:cashbook|trainer)-[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}@suite\.bsvnordstern\.invalid$/i;
 
 export function enrichSuiteMembers(members, accounts) {
   const byUser = new Map(accounts.filter(account => account.suiteUserId).map(account => [account.suiteUserId, account]));

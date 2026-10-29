@@ -1,4 +1,4 @@
-const technicalEmail = /^cashbook-[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}@suite\.bsvnordstern\.invalid$/i;
+const technicalEmail = /^(?:cashbook|trainer)-[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}@suite\.bsvnordstern\.invalid$/i;
 
 export function enrichSuiteMembers(members, accounts) {
   const byUser = new Map(accounts.filter(account => account.suiteUserId).map(account => [account.suiteUserId, account]));

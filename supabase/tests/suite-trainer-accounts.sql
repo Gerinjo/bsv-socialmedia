@@ -1,0 +1,40 @@
+begin;
+create function pg_temp.trainer_accounts_check(ok boolean,label text) returns void language plpgsql as $$begin if ok is not true then raise exception 'Trainer accounts: %',label;end if;end $$;
+select pg_temp.trainer_accounts_check((select access_areas=array['hall_training']::text[] from public.social_suite_roles where key='trainer'),'new trainer role excludes cashbook');
+select pg_temp.trainer_accounts_check(not exists(select 1 from public.social_admins where suite_role_key='trainer' and not 'cashbook'=any(access_areas)),'existing trainers retain cashbook');
+select pg_temp.trainer_accounts_check(not has_function_privilege('authenticated','public.suite_trainer_account_job(uuid,text,jsonb)','execute') and not has_table_privilege('anon','private.suite_trainer_account_jobs','select'),'job service only');
+set local role service_role;
+do $$
+declare admin_id uuid; job_id uuid; selected_person uuid; new_user uuid:=gen_random_uuid(); result jsonb; plan_item jsonb; team uuid; day_id uuid; booking uuid; old_cashbook_count bigint;
+begin
+ select user_id into admin_id from public.social_admins where role='admin' and is_active and not is_blocked limit 1;
+ select count(*) into old_cashbook_count from private.cashbook_accounts;
+ insert into private.suite_trainer_account_jobs(actor_id,token_hash,expires_at) values(admin_id,repeat('a',64),now()+interval '10 minutes') returning id into job_id;
+ result:=public.suite_trainer_account_job(job_id,repeat('b',64),'{"action":"claim"}');perform pg_temp.trainer_accounts_check(result->>'status'='403','wrong capability denied');
+ result:=public.suite_trainer_account_job(job_id,repeat('a',64),'{"action":"claim"}');perform pg_temp.trainer_accounts_check(jsonb_array_length(result->'people')>0,'missing trainers planned');
+ select value into plan_item from jsonb_array_elements(result->'people') p where jsonb_array_length(private.hall_training_teams((p->>'personId')::uuid))>0 limit 1;
+ selected_person:=(plan_item->>'personId')::uuid;
+ perform pg_temp.trainer_accounts_check(selected_person is not null,'new trainer has team');
+ result:=public.suite_trainer_account_job(job_id,repeat('a',64),'{"action":"claim"}');perform pg_temp.trainer_accounts_check(result->>'status'='409','job claim single use');
+ result:=public.suite_trainer_account_job(job_id,repeat('a',64),jsonb_build_object('action','finish_person','personId',selected_person,'userId',new_user));perform pg_temp.trainer_accounts_check(result->>'status'='403','cannot link arbitrary auth user');
+ -- Fixture Auth identity represents Auth Admin.createUser's server-assigned metadata.
+ reset role;
+ insert into auth.users(id,email,raw_app_meta_data) values(new_user,plan_item->>'email',jsonb_build_object('trainer_person_id',selected_person));
+ set local role service_role;
+ result:=public.suite_trainer_account_job(job_id,repeat('a',64),jsonb_build_object('action','finish_person','personId',selected_person,'userId',new_user));perform pg_temp.trainer_accounts_check(result->>'ok'='true','created member');
+ perform pg_temp.trainer_accounts_check((select person_id=selected_person and access_areas=array['hall_training']::text[] and extra_access_areas='{}'::text[] from public.social_admins where user_id=new_user),'new account only hall, linked directly');
+ perform pg_temp.trainer_accounts_check((select count(*)=old_cashbook_count from private.cashbook_accounts),'no financial accounts created');
+ result:=public.suite_cashbook_login(jsonb_build_object('action','attempt','username',plan_item->>'username'));perform pg_temp.trainer_accounts_check(result->>'email'=plan_item->>'email','shared login works without cashbook');
+ result:=public.suite_users_request(new_user,'{"action":"identity"}');perform pg_temp.trainer_accounts_check(result->>'personId'=selected_person::text and jsonb_array_length(result->'teams')>0,'identity includes own teams');
+ result:=public.cashbook_request(new_user,'{"action":"load"}');perform pg_temp.trainer_accounts_check(result->>'status'='403','new account denied cashbook');
+ result:=public.hall_training_request(new_user,'{"action":"list"}');team:=(result->'teams'->0->>'id')::uuid;perform pg_temp.trainer_accounts_check(team is not null,'hall team resolves without financial account');
+ result:=public.hall_training_request(admin_id,'{"action":"save_day","date":"2038-03-01","startMinute":480,"endMinute":1200,"blockMinutes":120}');day_id:=(result->>'dayId')::uuid;
+ result:=public.hall_training_request(new_user,jsonb_build_object('action','book','dayId',day_id,'version',1,'startMinute',480,'teamId',team));perform pg_temp.trainer_accounts_check(result->>'ok'='true','new trainer books own team');booking:=(result->>'bookingId')::uuid;
+ result:=public.hall_training_request(new_user,jsonb_build_object('action','release','dayId',day_id,'bookingId',booking));perform pg_temp.trainer_accounts_check(result->>'ok'='true','new trainer releases own booking');
+ update private.trainer_profiles set first_name='Changed' where person_id=selected_person;
+ perform pg_temp.trainer_accounts_check((select first_name='Changed' and username=plan_item->>'username' and access_areas=array['hall_training']::text[] from public.social_admins where user_id=new_user),'profile name updates preserve login and rights');
+ result:=public.suite_trainer_account_job(job_id,repeat('a',64),'{"action":"complete","result":{"ok":true}}');perform pg_temp.trainer_accounts_check(result->>'ok'='true','job completes');
+ result:=public.suite_trainer_account_job(job_id,repeat('a',64),'{"action":"claim"}');perform pg_temp.trainer_accounts_check(result->>'status'='409','completed token cannot replay');
+end $$;
+reset role;
+rollback;

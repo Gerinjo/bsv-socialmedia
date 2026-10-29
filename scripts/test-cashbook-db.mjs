@@ -16,7 +16,7 @@ try {
   await sql(`create role anon; create role authenticated; create role service_role bypassrls;
     create schema extensions;create extension pgcrypto with schema extensions;grant usage on schema extensions to service_role;
     create schema private; grant usage on schema private to service_role; create schema storage; create schema cron; create schema auth;
-    create table auth.users(id uuid primary key,email text unique);grant usage on schema auth to service_role;
+    create table auth.users(id uuid primary key,email text unique,raw_app_meta_data jsonb default '{}');grant usage on schema auth to service_role;
     create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
     create function cron.schedule(text,text,text) returns bigint language sql as 'select 1::bigint';
     create table public.social_people(id uuid primary key default gen_random_uuid(),slug text unique,display_name text,birth_date date,roles text[] default '{}',source_photo_url text,updated_at timestamptz default now(),active boolean default true);
@@ -140,6 +140,9 @@ try {
   await sql(await readFile(new URL('supabase/migrations/20261029163301_hall_training_teams.sql',root),'utf8'));
   await sql(await readFile(new URL('supabase/tests/hall-training.sql',root),'utf8'));
   console.log('Hallentraining: Termine, Zeitraster, Buchungen, Freigaben, Adminvertretung und Zugriffsrechte geprüft.');
+  await sql(await readFile(new URL('supabase/migrations/20261029164137_suite_trainer_accounts.sql',root),'utf8'));
+  await sql(await readFile(new URL('supabase/tests/suite-trainer-accounts.sql',root),'utf8'));
+  console.log('Trainerzugänge: Kassenbuchrechte erhalten, neue Trainer ohne Kasse, direkte Identität, Mannschaften und einmalige Kontoanlage geprüft.');
   const hallRace=JSON.parse(await sql(`set role service_role;insert into private.hall_training_days(date) values('2038-02-01') returning jsonb_build_object('dayId',id,'version',version);`));
   const hallActors=JSON.parse(await sql(`select jsonb_agg(jsonb_build_object('actor',user_id,'teamId',teams->0->>'id')) from (select m.user_id,private.hall_training_teams(a.person_id) as teams from public.social_admins m join private.cashbook_accounts a on a.suite_user_id=m.user_id where m.suite_role_key='trainer' and m.is_active and not m.is_blocked and jsonb_array_length(private.hall_training_teams(a.person_id))>0 order by m.user_id limit 2) m;`));
   const raceBook=({actor,teamId})=>sql(`set role service_role;select public.hall_training_request(${quote(actor)},${quote(JSON.stringify({action:'book',...hallRace,startMinute:480,teamId}))}::jsonb);`).then(JSON.parse);

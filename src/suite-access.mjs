@@ -17,7 +17,7 @@ export function suiteStartArea(areas=[],requested=''){
 export const SUITE_ROLE_SEEDS=[
  {key:'admin',label:'Super-Admin',access_areas:[...SUITE_AREAS],protected:true},
  {key:'user',label:'Benutzer',access_areas:['social_media']},
- {key:'trainer',label:'Trainer',access_areas:['cashbook','hall_training']},
+ {key:'trainer',label:'Trainer',access_areas:['hall_training']},
  {key:'cashier',label:'Kasse',access_areas:['cashbook']},
  {key:'youth-leadership',label:'Jugendleitung',access_areas:['cashbook','trainer_management','hall_training']},
  {key:'referee-admin',label:'Schiedsrichteradmin',access_areas:['referees']},
