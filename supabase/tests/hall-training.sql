@@ -6,9 +6,12 @@ select pg_temp.hall_check(not has_function_privilege('anon','public.hall_trainin
 select pg_temp.hall_check(not has_table_privilege('authenticated','private.hall_training_bookings','select') and not has_table_privilege('anon','private.hall_training_days','select'),'tables private');
 set local role service_role;
 do $$
-declare admin_id uuid:='00000000-0000-4000-8000-000000000077'; trainer uuid; other_trainer uuid; person uuid; selected_day uuid; booking_id uuid; result jsonb; listing jsonb;
+declare admin_id uuid:='00000000-0000-4000-8000-000000000077'; trainer uuid; other_trainer uuid; person uuid; selected_day uuid; selected_team uuid; foreign_team uuid; booking_id uuid; result jsonb; listing jsonb;
 begin
  select suite_user_id,person_id into trainer,person from private.cashbook_accounts where username='jentm';
+ select tp.team_id into selected_team from public.social_team_people tp join public.social_teams t on t.id=tp.team_id where tp.person_id=person and tp.staff_slot is not null and t.trainer_managed limit 1;
+ select t.id into foreign_team from public.social_teams t where t.trainer_managed and not exists(select 1 from public.social_team_people tp where tp.team_id=t.id and tp.person_id=person and tp.staff_slot is not null) limit 1;
+ perform pg_temp.hall_check(selected_team is not null and foreign_team is not null,'assigned and unassigned team fixtures');
  select user_id into other_trainer from public.social_admins where suite_role_key='trainer' and user_id<>trainer limit 1;
  perform pg_temp.hall_check(trainer is not null and other_trainer is not null,'test trainers exist');
  perform pg_temp.hall_check((select count(*)=9 from private.hall_training_days),'nine seed dates');
@@ -19,21 +22,24 @@ begin
  result:=public.hall_training_request(admin_id,'{"action":"save_day","date":"2038-01-01","startMinute":480,"endMinute":1200,"blockMinutes":60}');perform pg_temp.hall_check(result->>'ok'='true','admin creates date');selected_day:=(result->>'dayId')::uuid;
  listing:=public.hall_training_request(trainer,'{"action":"list"}');perform pg_temp.hall_check(listing->>'admin'='false' and listing->'trainers'='[]'::jsonb,'trainer has no administration roster');
  perform pg_temp.hall_check(not listing::text ~ '(trainer_user_id|email|birth_date|phone|street)','no private contacts or account identifiers');
- result:=public.hall_training_request(trainer,jsonb_build_object('action','book','dayId',selected_day,'version',1,'startMinute',481));perform pg_temp.hall_check(result->>'status'='400','off-grid block rejected');
- result:=public.hall_training_request(trainer,jsonb_build_object('action','book','dayId',selected_day,'version',1,'startMinute',480,'trainerUserId',other_trainer));perform pg_temp.hall_check(result->>'status'='403','cannot impersonate another trainer');
- result:=public.hall_training_request(trainer,jsonb_build_object('action','book','dayId',selected_day,'version',1,'startMinute',480));perform pg_temp.hall_check(result->>'ok'='true','trainer books self');booking_id:=(result->>'bookingId')::uuid;
- result:=public.hall_training_request(other_trainer,jsonb_build_object('action','book','dayId',selected_day,'version',1,'startMinute',480));perform pg_temp.hall_check(result->>'status'='409','double booking rejected');
+ result:=public.hall_training_request(trainer,jsonb_build_object('action','book','teamId',selected_team,'dayId',selected_day,'version',1,'startMinute',481));perform pg_temp.hall_check(result->>'status'='400','off-grid block rejected');
+ result:=public.hall_training_request(trainer,jsonb_build_object('action','book','teamId',selected_team,'dayId',selected_day,'version',1,'startMinute',480,'trainerUserId',other_trainer));perform pg_temp.hall_check(result->>'status'='403','cannot impersonate another trainer');
+ result:=public.hall_training_request(trainer,jsonb_build_object('action','book','dayId',selected_day,'version',1,'startMinute',480));perform pg_temp.hall_check(result->>'status'='400','team selection required');
+ result:=public.hall_training_request(trainer,jsonb_build_object('action','book','teamId',foreign_team,'dayId',selected_day,'version',1,'startMinute',480));perform pg_temp.hall_check(result->>'status'='403','cannot book an unassigned team');
+ result:=public.hall_training_request(trainer,jsonb_build_object('action','book','teamId',selected_team,'dayId',selected_day,'version',1,'startMinute',480));perform pg_temp.hall_check(result->>'ok'='true','trainer books self');booking_id:=(result->>'bookingId')::uuid;
+ result:=public.hall_training_request(other_trainer,jsonb_build_object('action','book','teamId',selected_team,'dayId',selected_day,'version',1,'startMinute',480));perform pg_temp.hall_check(result->>'status'='409','double booking rejected');
  result:=public.hall_training_request(other_trainer,jsonb_build_object('action','release','dayId',selected_day,'bookingId',booking_id));perform pg_temp.hall_check(result->>'status'='403','other trainer cannot release');
  result:=public.hall_training_request(admin_id,jsonb_build_object('action','save_day','dayId',selected_day,'version',1,'date','2038-01-01','startMinute',480,'endMinute',1200,'blockMinutes',120));perform pg_temp.hall_check(result->>'status'='409','booked schedule cannot change');
  result:=public.hall_training_request(admin_id,jsonb_build_object('action','delete_day','dayId',selected_day,'version',1));perform pg_temp.hall_check(result->>'status'='409','booked day cannot disappear');
  result:=public.hall_training_request(trainer,jsonb_build_object('action','release','dayId',selected_day,'bookingId',booking_id));perform pg_temp.hall_check(result->>'ok'='true','owner releases');
- result:=public.hall_training_request(admin_id,jsonb_build_object('action','book','dayId',selected_day,'version',1,'startMinute',480,'trainerPersonId',person));perform pg_temp.hall_check(result->>'ok'='true','admin books for trainer');
- listing:=public.hall_training_request(trainer,'{"action":"list"}');perform pg_temp.hall_check(exists(select 1 from jsonb_array_elements(listing->'days') d,jsonb_array_elements(d->'slots') s where d->>'id'=selected_day::text and s->>'startMinute'='480' and s->>'own'='true'),'admin booking owned by trainer');
+ result:=public.hall_training_request(admin_id,jsonb_build_object('action','book','teamId',selected_team,'dayId',selected_day,'version',1,'startMinute',480,'trainerPersonId',person));perform pg_temp.hall_check(result->>'ok'='true','admin books for trainer');
+ listing:=public.hall_training_request(trainer,'{"action":"list"}');perform pg_temp.hall_check(not exists(select 1 from jsonb_array_elements(listing->'teams') t where t->>'id'=foreign_team::text),'team selector excludes other teams');
+ perform pg_temp.hall_check(exists(select 1 from jsonb_array_elements(listing->'days') d,jsonb_array_elements(d->'slots') s where d->>'id'=selected_day::text and s->>'startMinute'='480' and s->>'own'='true' and s->>'teamId'=selected_team::text and s->>'teamName'=(select name from public.social_teams where id=selected_team) and length(s->>'trainerName')>0),'admin booking owned by trainer');
  result:=public.hall_training_request(admin_id,jsonb_build_object('action','release','dayId',selected_day,'bookingId',booking_id));perform pg_temp.hall_check(result->>'status'='409','stale cancellation cannot remove new reservation');
  select id into booking_id from private.hall_training_bookings where hall_training_bookings.day_id=selected_day and start_minute=480 limit 1;
  result:=public.hall_training_request(admin_id,jsonb_build_object('action','release','dayId',selected_day,'bookingId',booking_id));perform pg_temp.hall_check(result->>'ok'='true','admin releases trainer booking');
  result:=public.hall_training_request(admin_id,jsonb_build_object('action','save_day','dayId',selected_day,'version',1,'date','2038-01-01','startMinute',480,'endMinute',1200,'blockMinutes',120));perform pg_temp.hall_check(result->>'ok'='true','empty schedule changed');
- result:=public.hall_training_request(trainer,jsonb_build_object('action','book','dayId',selected_day,'version',1,'startMinute',480));perform pg_temp.hall_check(result->>'status'='409','stale timetable cannot book');
+ result:=public.hall_training_request(trainer,jsonb_build_object('action','book','teamId',selected_team,'dayId',selected_day,'version',1,'startMinute',480));perform pg_temp.hall_check(result->>'status'='409','stale timetable cannot book');
  result:=public.hall_training_request(admin_id,jsonb_build_object('action','delete_day','dayId',selected_day,'version',2));perform pg_temp.hall_check(result->>'ok'='true','admin removes empty date');
  update public.social_admins set is_blocked=true where user_id=trainer;
  result:=public.hall_training_request(trainer,'{"action":"list"}');perform pg_temp.hall_check(result->>'status'='403','blocked old session denied');

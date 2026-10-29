@@ -92,7 +92,7 @@ Personen und Mannschaften tragen Versionsnummern gegen versehentliches Überschr
 
 ## Hallentraining
 
-Unter **Hallentraining → BSZ** buchen Trainer einzelne Zeitblöcke der Halle im Berufsschulzentrum und geben eigene Buchungen wieder frei. Die neun Termine am 7./21./28. November 2026, 5./12./19. Dezember 2026 und 17./24./31. Januar 2027 sind jeweils von **08:00 bis 20:00 Uhr** angelegt. Die Blocklänge beträgt **120 Minuten** (sechs Blöcke pro Tag). Alle Zeiten gelten für Europe/Berlin.
+Unter **Hallentraining → BSZ** buchen Trainer einzelne Zeitblöcke für eine ihrer zugeordneten Mannschaften und geben eigene Buchungen wieder frei. In der Übersicht steht die Mannschaft; **Details** zeigt zusätzlich den verantwortlichen Trainer. Bei mehreren Mannschaften wird beim Buchen die gewünschte Mannschaft ausgewählt. Die neun Termine am 7./21./28. November 2026, 5./12./19. Dezember 2026 und 17./24./31. Januar 2027 sind jeweils von **08:00 bis 20:00 Uhr** angelegt. Die Blocklänge beträgt **120 Minuten** (sechs Blöcke pro Tag). Alle Zeiten gelten für Europe/Berlin.
 
 Super-Admins verwalten im Reiter **Administration** Datum, Beginn, Ende und Blocklänge, legen weitere Trainingstage an und löschen leere Tage. Die Blocklänge muss den Zeitraum vollständig aufteilen. Bestehende Buchungen müssen vor Änderungen am Datum oder Zeitraster freigegeben werden. Über **Buchen für** können Admins aktive Trainer auswählen, auch ohne verknüpften Login, und jede Buchung wieder freigeben. Stellvertretend gebuchte Blöcke gehören dem ausgewählten Trainer.
 

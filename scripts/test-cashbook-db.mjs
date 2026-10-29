@@ -137,11 +137,12 @@ try {
   console.log('Redaktion: aktuelle Mitarbeiterrollen, eigene und übernommene Personenbilder, Trainerbilder, Datenschutz und dauerhafte Newsletter-Bildkopien geprüft.');
   await sql(await readFile(new URL('supabase/migrations/20261029155937_hall_training.sql',root),'utf8'));
   await sql(await readFile(new URL('supabase/migrations/20261029162007_hall_training_two_hour_blocks.sql',root),'utf8'));
+  await sql(await readFile(new URL('supabase/migrations/20261029163301_hall_training_teams.sql',root),'utf8'));
   await sql(await readFile(new URL('supabase/tests/hall-training.sql',root),'utf8'));
   console.log('Hallentraining: Termine, Zeitraster, Buchungen, Freigaben, Adminvertretung und Zugriffsrechte geprüft.');
   const hallRace=JSON.parse(await sql(`set role service_role;insert into private.hall_training_days(date) values('2038-02-01') returning jsonb_build_object('dayId',id,'version',version);`));
-  const hallActors=JSON.parse(await sql(`select jsonb_agg(user_id) from (select user_id from public.social_admins where suite_role_key='trainer' and is_active and not is_blocked order by user_id limit 2) m;`));
-  const raceBook=actor=>sql(`set role service_role;select public.hall_training_request(${quote(actor)},${quote(JSON.stringify({action:'book',...hallRace,startMinute:480}))}::jsonb);`).then(JSON.parse);
+  const hallActors=JSON.parse(await sql(`select jsonb_agg(jsonb_build_object('actor',user_id,'teamId',teams->0->>'id')) from (select m.user_id,private.hall_training_teams(a.person_id) as teams from public.social_admins m join private.cashbook_accounts a on a.suite_user_id=m.user_id where m.suite_role_key='trainer' and m.is_active and not m.is_blocked and jsonb_array_length(private.hall_training_teams(a.person_id))>0 order by m.user_id limit 2) m;`));
+  const raceBook=({actor,teamId})=>sql(`set role service_role;select public.hall_training_request(${quote(actor)},${quote(JSON.stringify({action:'book',...hallRace,startMinute:480,teamId}))}::jsonb);`).then(JSON.parse);
   const hallResults=await Promise.all(hallActors.map(raceBook));
   if(hallResults.filter(r=>r.ok).length!==1||hallResults.filter(r=>r.status===409).length!==1)throw new Error('Gleichzeitige Hallenbuchungen wurden nicht korrekt abgesichert: '+JSON.stringify(hallResults));
   console.log('Hallentraining: zwei gleichzeitige Buchungen ergeben genau eine Buchung und einen Konflikt.');
