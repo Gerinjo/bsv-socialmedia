@@ -90,6 +90,14 @@ Bestehende Website-Kontakte wurden anhand der geprüften Zuordnung in `config/tr
 
 Personen und Mannschaften tragen Versionsnummern gegen versehentliches Überschreiben. Änderungen werden mit Benutzer und Zeitpunkt im privaten `trainer_audit` protokolliert. Normale Portraits ersetzen keine freigestellten Bilder für Social-Media-Motive. Tests: `npm run check`, `npm run test:cashbook:db` und die Homepage-Tests einschließlich `team-staff.test.mjs`.
 
+## Hallentraining
+
+Unter **Hallentraining → BSZ** buchen Trainer einzelne Zeitblöcke der Halle im Berufsschulzentrum und geben eigene Buchungen wieder frei. Die neun Termine am 7./21./28. November 2026, 5./12./19. Dezember 2026 und 17./24./31. Januar 2027 sind jeweils von **08:00 bis 20:00 Uhr** angelegt. Die anfängliche Blocklänge beträgt **60 Minuten**. Alle Zeiten gelten für Europe/Berlin.
+
+Super-Admins verwalten im Reiter **Administration** Datum, Beginn, Ende und Blocklänge, legen weitere Trainingstage an und löschen leere Tage. Die Blocklänge muss den Zeitraum vollständig aufteilen. Bestehende Buchungen müssen vor Änderungen am Datum oder Zeitraster freigegeben werden. Über **Buchen für** können Admins aktive Trainer auswählen, auch ohne verknüpften Login, und jede Buchung wieder freigeben. Stellvertretend gebuchte Blöcke gehören dem ausgewählten Trainer.
+
+Der Bereich `hall_training` ist für Trainer, Jugendleitung und Super-Admins freigeschaltet; zusätzliche Rechte werden wie gewohnt in der Benutzerverwaltung vergeben. Die service-only RPC prüft Konto und Rechte bei jeder Aktion. Private Tabellen, Zeilensperren pro Trainingstag, eindeutige Blöcke, Versionsnummern und Buchungs-IDs schützen vor Doppelbuchungen und veralteten Änderungen. Vergangene Blöcke sind nicht neu buchbar. Tests: `npm run check`, `npm run test:cashbook:db`; die lokale Suite-Vorschau unterstützt den Bereich mit Beispieldaten.
+
 ## Sicherheitsstandard
 
 `INSTAGRAM_TEST_MODE` ist zentral definiert und standardmäßig aktiv. Nur der exakte Wert `false` erlaubt dem Meta-Publisher den echten Versand. Freie Storys werden technisch als Instagram Story (`media_type=STORIES`) veröffentlicht; im Testmodus werden ausschließlich Vorschauen erzeugt.

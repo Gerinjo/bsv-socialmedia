@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {loadSuiteDashboard} from '../supabase/functions/_shared/suite-dashboard.mjs';
 
-const areas=['social_media','sponsoring','editorial','referees','corporate_identity','club_crests','social_media_admin','user_management','cashbook','trainer_management'];
+const areas=['social_media','sponsoring','editorial','referees','corporate_identity','club_crests','social_media_admin','user_management','cashbook','trainer_management','hall_training'];
 function fixture(accessAreas=areas){
   const calls=[];
   const rows={social_brand_settings:{color_scheme:{accent:'#cccccc'},theme_key:'football'},social_teams:[{id:'team',active:true}],social_admins:[{user_id:'member'}]};
@@ -33,7 +33,7 @@ test('an unauthorized or invalid area is rejected before reading privileged data
 });
 
 test('independent workspaces do not wait for social media, crest or user data',async()=>{
-  for(const area of ['cashbook','editorial','referees','trainer_management']){
+  for(const area of ['cashbook','editorial','referees','trainer_management','hall_training']){
     const f=fixture();await f.run('?area='+area);assert.deepEqual(f.calls.sort(),['identity','social_brand_settings']);
   }
 });

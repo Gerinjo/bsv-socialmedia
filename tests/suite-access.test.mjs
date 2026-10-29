@@ -5,7 +5,7 @@ import {suiteBrandColors,suiteBrandVariables,SUITE_BRAND_DEFAULT} from '../src/s
 import {handleSuiteUsers} from '../supabase/functions/_shared/suite-users.mjs';
 test('inherited permissions cannot be cancelled by personal grants',()=>{
  const member={suite_role_key:'trainer',extra_access_areas:['cashbook','editorial','user_management','unknown']};
- assert.deepEqual(suiteMemberRights(member,SUITE_ROLE_SEEDS),{inherited:['cashbook'],extra:['editorial'],effective:['cashbook','editorial']});
+ assert.deepEqual(suiteMemberRights(member,SUITE_ROLE_SEEDS),{inherited:['cashbook','hall_training'],extra:['editorial'],effective:['cashbook','hall_training','editorial']});
  const changed=SUITE_ROLE_SEEDS.map(r=>r.key==='trainer'?{...r,access_areas:['club_crests']}:r);
  assert.deepEqual(suiteMemberRights(member,changed).effective,['club_crests','cashbook','editorial']);
 });

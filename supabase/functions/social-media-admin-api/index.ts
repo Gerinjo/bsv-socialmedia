@@ -1,3 +1,4 @@
+import {handleHallTraining} from '../_shared/hall-training.mjs';
 import {handleEmployeeManagement} from '../_shared/employee-management.mjs';
 import {handleTrainerManagement} from '../_shared/trainer-management.mjs';
 import {recordSuiteLogin,readSuiteActivity} from '../_shared/suite-activity.mjs';
@@ -33,7 +34,7 @@ const homeVenues = new Set(['Hauptplatz', 'Nebenplatz', 'Kunstrasenplatz 1', 'Ku
 const crestStatuses = new Set(['missing', 'needs_review', 'approved', 'rejected']);
 const sponsorStatuses = new Set(['missing', 'needs_review', 'approved', 'rejected']);
 const sponsorContexts = new Set(['announcement', 'lineup', 'result', 'report', 'birthday', 'post', 'story']);
-const suiteAreas = ['social_media', 'sponsoring', 'editorial', 'referees', 'corporate_identity', 'club_crests', 'social_media_admin', 'user_management', 'cashbook', 'trainer_management'] as const;
+const suiteAreas = ['social_media', 'sponsoring', 'editorial', 'referees', 'corporate_identity', 'club_crests', 'social_media_admin', 'user_management', 'cashbook', 'trainer_management', 'hall_training'] as const;
 type SuiteArea = typeof suiteAreas[number];
 const actionAreas: Record<string, SuiteArea> = {
   suite_activity_list: 'user_management',
@@ -672,6 +673,12 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       if(normalizedRole!=='admin')return json({error:'admin_only'},403);
       if(raw.length>4096)return json({error:'Die Anfrage ist zu groß.'},413);
       return json(await readSuiteActivity(context.supabaseAdmin,userId,body));
+    }
+
+    if(action.startsWith('hall_')){
+      if(!hasArea('hall_training'))return json({error:'area_forbidden',area:'hall_training'},403);
+      if(raw.length>4096)return json({error:'Die Anfrage ist zu groß.'},413);
+      return json(await handleHallTraining(context.supabaseAdmin,userId,body));
     }
 
     if(action.startsWith('employee_')){

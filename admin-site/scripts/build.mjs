@@ -53,6 +53,9 @@ for (const [placeholder, source] of [
   ['__RECEIPT_OCR__', await readFile(resolve(adminDir, 'receipt-ocr.mjs'), 'utf8')],
   ['__EXPENSE_SCRIPT__', await readFile(resolve(adminDir, 'referee-expenses.mjs'), 'utf8')],
   ['__REFEREE_MODEL__', await readFile(resolve(repoDir, 'src/referees.mjs'), 'utf8')],
+  ['__HALL_MODEL__', await readFile(resolve(repoDir,'src/hall-training.mjs'),'utf8')],
+  ['__HALL_SCRIPT__', await readFile(resolve(adminDir,'hall-training.mjs'),'utf8')],
+  ['__HALL_CSS__', await readFile(resolve(adminDir,'hall-training.css'),'utf8')],
   ['__TRAINER_MODEL__', await readFile(resolve(repoDir,'src/trainer-management.mjs'),'utf8')],
   ['__TRAINER_SCRIPT__', await readFile(resolve(adminDir,'trainer-management.mjs'),'utf8')],
   ['__EMPLOYEE_MODEL__', await readFile(resolve(repoDir,'src/employee-management.mjs'),'utf8')],
@@ -107,6 +110,7 @@ export default {
     if (request.method !== 'GET') return new Response('Method not allowed', { status: 405 });
     const path = new URL(request.url).pathname;
     if(path==='/suite-brand.json'){try{const result=await fetch('https://maejihwjzxkmthjavgnx.supabase.co/rest/v1/social_brand_settings?select=color_scheme,theme_key,updated_at&id=eq.true',{headers:{apikey:'sb_publishable_a3DnmtbBycRR4mWV4Jmz-w_RJobGli9'},signal:AbortSignal.timeout(5000)});if(!result.ok)throw new Error('Brand unavailable');const rows=await result.json();return Response.json(rows[0]||{},{headers:{'cache-control':'public,max-age=60'}})}catch{return Response.json({},{status:503})}}
+    if (path === '/hallentraining' || path === '/hallentraining/') return Response.redirect(new URL('/?area=hall_training',request.url),302);
     if (path === '/kassenbuch' || path === '/kassenbuch/') return Response.redirect(new URL('/?area=cashbook',request.url),302);
     const asset = cashbookAssets[path];
     if (asset) return new Response(asset.base64 ? Uint8Array.from(atob(asset.body),char=>char.charCodeAt(0)) : asset.body,{headers:{'content-type':asset.type,'cache-control':path.endsWith('.png')?'public, max-age=86400':'no-cache','x-content-type-options':'nosniff'}});

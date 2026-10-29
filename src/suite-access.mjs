@@ -1,9 +1,9 @@
-export const SUITE_AREAS=['social_media','social_media_admin','sponsoring','editorial','referees','corporate_identity','club_crests','trainer_management','cashbook','user_management'];
-export const SUITE_AREA_LABELS={social_media:'Social Media',social_media_admin:'Social Media · Administration',sponsoring:'Sponsoring',editorial:'Redaktion',referees:'Schiedsrichter',corporate_identity:'Corporate Identity',club_crests:'Vereinswappen',trainer_management:'Mitarbeiter',cashbook:'Kassenbuch',user_management:'Benutzerverwaltung'};
+export const SUITE_AREAS=['social_media','social_media_admin','sponsoring','editorial','referees','corporate_identity','club_crests','trainer_management','hall_training','cashbook','user_management'];
+export const SUITE_AREA_LABELS={social_media:'Social Media',social_media_admin:'Social Media · Administration',sponsoring:'Sponsoring',editorial:'Redaktion',referees:'Schiedsrichter',corporate_identity:'Corporate Identity',club_crests:'Vereinswappen',trainer_management:'Mitarbeiter',hall_training:'Hallentraining',cashbook:'Kassenbuch',user_management:'Benutzerverwaltung'};
 // Count sidebar functions, with Social Media administration inside its parent.
 export function suiteNavigationAreas(areas=[]){
  const allowed=new Set(areas.filter(area=>SUITE_AREAS.includes(area)));
- return ['corporate_identity','sponsoring','social_media','editorial','club_crests','trainer_management','referees','cashbook','user_management']
+ return ['corporate_identity','sponsoring','social_media','editorial','club_crests','trainer_management','hall_training','referees','cashbook','user_management']
   .map(area=>area==='social_media'&&!allowed.has(area)&&allowed.has('social_media_admin')?'social_media_admin':area)
   .filter(area=>allowed.has(area));
 }
@@ -17,9 +17,9 @@ export function suiteStartArea(areas=[],requested=''){
 export const SUITE_ROLE_SEEDS=[
  {key:'admin',label:'Super-Admin',access_areas:[...SUITE_AREAS],protected:true},
  {key:'user',label:'Benutzer',access_areas:['social_media']},
- {key:'trainer',label:'Trainer',access_areas:['cashbook']},
+ {key:'trainer',label:'Trainer',access_areas:['cashbook','hall_training']},
  {key:'cashier',label:'Kasse',access_areas:['cashbook']},
- {key:'youth-leadership',label:'Jugendleitung',access_areas:['cashbook','trainer_management']},
+ {key:'youth-leadership',label:'Jugendleitung',access_areas:['cashbook','trainer_management','hall_training']},
  {key:'referee-admin',label:'Schiedsrichteradmin',access_areas:['referees']},
  {key:'sponsoring',label:'Sponsorenverwaltung',access_areas:['sponsoring']},
 ];

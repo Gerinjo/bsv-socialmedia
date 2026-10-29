@@ -29,10 +29,12 @@ async function previewHtml() {
       '<div style="margin:0 auto 16px;padding:12px 18px;max-width:1648px;background:#fef3d5;color:#6b4400;border-radius:12px;font-size:14px" role="note"><strong>Lokale Vorschau mit Beispieldaten</strong> · Änderungen bleiben in diesem Browser gespeichert. KI und Live-Sportdaten sind hier deaktiviert.</div><main>',
     );
   html=html.replace(/const response=await fetch\(apiUrl\.replace\('social-media-admin-api','suite-auth'\),[\s\S]*?result=await supabase\.auth\.setSession\(tokens\);/, "const tokens=await suitePreviewLogin(identity,password);result=await supabase.auth.setSession(tokens);");
-  html=html.replace('<main>', '<main><p role="note">Lokale Suite-Vorschau · <a href="/?previewUser=trainer">Trainer (nur Kasse)</a> · <a href="/?previewUser=kasse">Kasse</a> · <a href="/?previewUser=jugend">Jugendleitung</a> · <a href="/?previewUser=admin">Super-Admin</a> · <a href="/?previewUser=login">Login testen</a><br>Login: mustm / kassw / beisj / admin · Startpasswort: bsv1956 · Nur Beispieldaten, keine E-Mails.</p>');
+  html=html.replace('<main>', '<main><p role="note">Lokale Suite-Vorschau · <a href="/?previewUser=trainer">Trainer</a> · <a href="/?previewUser=kasse">Kasse</a> · <a href="/?previewUser=jugend">Jugendleitung</a> · <a href="/?previewUser=admin">Super-Admin</a> · <a href="/?previewUser=login">Login testen</a><br>Login: mustm / kassw / beisj / admin · Startpasswort: bsv1956 · Nur Beispieldaten, keine E-Mails.</p>');
   return html;
 }
 const files = new Map([
+  ['/hall-training-model.mjs','src/hall-training.mjs'],
+  ['/preview-hall-training.mjs','admin-site/preview/hall-training.mjs'],
   ['/editorial-contacts.mjs','src/editorial-contacts.mjs'],
   ['/employee-management.mjs','src/employee-management.mjs'],
   ['/preview-suite-activity.mjs','admin-site/preview/suite-activity.mjs'],
