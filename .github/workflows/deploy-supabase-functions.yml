@@ -65,6 +65,7 @@ jobs:
         if: steps.secret.outputs.available == 'true'
         run: |
           npx --yes supabase@latest functions deploy suite-auth --project-ref "$SUPABASE_PROJECT_REF"
+          npx --yes supabase@latest functions deploy suite-trainer-accounts --project-ref "$SUPABASE_PROJECT_REF"
           npx --yes supabase@latest functions deploy cashbook-alerts --project-ref "$SUPABASE_PROJECT_REF"
 
       - name: Deploy editorial publications
