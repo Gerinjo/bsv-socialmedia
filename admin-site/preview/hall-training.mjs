@@ -1,10 +1,10 @@
 import {HALL_TRAINING_DATES,validateHallDay} from '/hall-training-model.mjs';
 import {previewSuiteProfile,previewSuiteMembers} from '/preview-suite-users.mjs';
-const key='bsv-hall-training-preview-v1';
+const key='bsv-hall-training-preview-v2';
 export function hallTrainingPreviewApi(body,persona){
  const user=previewSuiteProfile(persona),admin=user.role==='admin';
  if(!user.accessAreas.includes('hall_training'))throw new Error('Keine Berechtigung für Hallentraining.');
- const state=JSON.parse(localStorage.getItem(key)||'null')||{days:HALL_TRAINING_DATES.map(date=>({id:crypto.randomUUID(),date,startMinute:480,endMinute:1200,blockMinutes:60,version:1})),bookings:[]};
+ const state=JSON.parse(localStorage.getItem(key)||'null')||{days:HALL_TRAINING_DATES.map(date=>({id:crypto.randomUUID(),date,startMinute:480,endMinute:1200,blockMinutes:120,version:1})),bookings:[]};
  localStorage.setItem(key,JSON.stringify(state));
  const trainers=previewSuiteMembers().filter(m=>m.suite_role_key==='trainer'&&m.is_active&&!m.is_blocked).map(m=>({userId:m.user_id,personId:null,name:m.display_name}));
  const fail=(message,status=409)=>{throw Object.assign(new Error(message),{status});};

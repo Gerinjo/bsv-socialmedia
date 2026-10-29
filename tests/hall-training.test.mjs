@@ -5,8 +5,8 @@ import {handleHallTraining} from '../supabase/functions/_shared/hall-training.mj
 test('hall dates span the requested winter and time parsing rejects invalid or incomplete blocks',()=>{
  assert.equal(HALL_TRAINING_DATES.length,9);assert.equal(HALL_TRAINING_DATES[0],'2026-11-07');assert.equal(HALL_TRAINING_DATES.at(-1),'2027-01-31');
  assert.equal(hallTime(480),'08:00');assert.equal(hallMinutes('20:00'),1200);
- const body={date:'2026-11-07',start:'08:00',end:'20:00',blockMinutes:60};
- assert.deepEqual(validateHallDay(body),{date:body.date,dayId:null,version:0,startMinute:480,endMinute:1200,blockMinutes:60});
+ const body={date:'2026-11-07',start:'08:00',end:'20:00',blockMinutes:120};
+ assert.deepEqual(validateHallDay(body),{date:body.date,dayId:null,version:0,startMinute:480,endMinute:1200,blockMinutes:120});
  for(const change of [{date:'2026-02-30'},{start:'24:00'},{start:'8:00'},{end:'07:00'},{blockMinutes:50},{blockMinutes:0},{blockMinutes:15.5}])assert.throws(()=>validateHallDay({...body,...change}));
 });
 test('server forwards the verified actor separately and respects database conflict/permission status',async()=>{

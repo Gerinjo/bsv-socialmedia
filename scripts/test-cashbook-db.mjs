@@ -136,6 +136,7 @@ try {
   await sql(await readFile(new URL('supabase/tests/editorial-central-people.sql',root),'utf8'));
   console.log('Redaktion: aktuelle Mitarbeiterrollen, eigene und übernommene Personenbilder, Trainerbilder, Datenschutz und dauerhafte Newsletter-Bildkopien geprüft.');
   await sql(await readFile(new URL('supabase/migrations/20261029155937_hall_training.sql',root),'utf8'));
+  await sql(await readFile(new URL('supabase/migrations/20261029162007_hall_training_two_hour_blocks.sql',root),'utf8'));
   await sql(await readFile(new URL('supabase/tests/hall-training.sql',root),'utf8'));
   console.log('Hallentraining: Termine, Zeitraster, Buchungen, Freigaben, Adminvertretung und Zugriffsrechte geprüft.');
   const hallRace=JSON.parse(await sql(`set role service_role;insert into private.hall_training_days(date) values('2038-02-01') returning jsonb_build_object('dayId',id,'version',version);`));

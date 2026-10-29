@@ -12,7 +12,7 @@ begin
  select user_id into other_trainer from public.social_admins where suite_role_key='trainer' and user_id<>trainer limit 1;
  perform pg_temp.hall_check(trainer is not null and other_trainer is not null,'test trainers exist');
  perform pg_temp.hall_check((select count(*)=9 from private.hall_training_days),'nine seed dates');
- perform pg_temp.hall_check((select bool_and(start_minute=480 and end_minute=1200 and block_minutes=60) from private.hall_training_days),'08–20 with sixty-minute default');
+ perform pg_temp.hall_check((select bool_and(start_minute=480 and end_minute=1200 and block_minutes=120) from private.hall_training_days),'08–20 with two-hour default');
  result:=public.hall_training_request(gen_random_uuid(),'{"action":"list"}');perform pg_temp.hall_check(result->>'status'='403','unknown actor denied');
  result:=public.hall_training_request(trainer,'{"action":"save_day","date":"2038-01-01","startMinute":480,"endMinute":1200,"blockMinutes":60}');perform pg_temp.hall_check(result->>'status'='403','trainer cannot define dates');
  result:=public.hall_training_request(admin_id,'{"action":"save_day","date":"2038-01-01","startMinute":480,"endMinute":1200,"blockMinutes":50}');perform pg_temp.hall_check(result->>'status'='400','incomplete block rejected');
