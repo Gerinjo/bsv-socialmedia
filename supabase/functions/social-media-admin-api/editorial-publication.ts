@@ -1,6 +1,7 @@
+import {withEditorialContacts} from '../_shared/editorial-contacts.ts';
 import { withEditorialTeamPhotos } from '../_shared/editorial-team-photo.ts';
 import { withEditorialGalleries, withArticleGalleries } from '../_shared/editorial-galleries.ts';
-import { withEditorialPeople } from '../_shared/editorial-people.ts';
+import { withEditorialPeople, refreshEditorialPeople } from '../_shared/editorial-people.ts';
 import {
   decodeEditorialCover,
   normalizeEditorialEvent,
@@ -190,6 +191,7 @@ export async function handleEditorialPublication(
     let version = body.version;
     const issue = await row(db.from('editorial_issues').select('*').eq('id', body.issueId).single());
     if (issue.version !== version) throw new Error('Die Ausgabe wurde geändert. Bitte neu laden.');
+    version = await refreshEditorialPeople(db,issue,userId);
     const brand = await row(db.from('social_brand_settings').select('color_scheme,theme_key').eq('id',true).single());
     if (issue.kind === 'stadium') {
       const prepared = await prepareEditorialAdvertising(db, issue);
@@ -213,7 +215,10 @@ export async function handleEditorialPublication(
         expected_version: version,
       }),
     );
-    return { snapshot: await withEditorialTeamPhotos(db, await withEditorialGalleries(db, await withEditorialPeople(db, await withEditorialAdvertising(db, await withEditorialCover(db, snapshot))))) };
+    const permanent = issue.kind === 'newsletter' && body.forExport === true;
+    if (permanent && snapshot.articles.some((article: any) => article.status !== 'waived' && (article.status !== 'ready' || !article.body?.trim())))
+      throw new Error('Bitte alle Newsletter-Beiträge ausfüllen und freigeben, bevor du die Versanddateien exportierst.');
+    return { snapshot: await withEditorialContacts(db, await withEditorialTeamPhotos(db, await withEditorialGalleries(db, await withEditorialPeople(db, await withEditorialAdvertising(db, await withEditorialCover(db, snapshot)),{permanent})))) };
   }
   if (body.action === "editorial_publish_issue") {
     const issue = await row(

@@ -1,3 +1,4 @@
+import {editorialContactDirectory} from '/editorial-contacts.mjs';
 import {employeePreviewApi} from '/preview-employee-management.mjs';
 import {previewSuiteActivity} from '/preview-suite-activity.mjs';
 import {trainerPreviewApi} from '/preview-trainer-management.mjs';
@@ -35,12 +36,58 @@ import {
 } from "/editorial-model.mjs";
 const storageKey = "bsv-editorial-local-preview-v1";
 const teams = previewSports.map(item => item.team);
-const people = previewPeople.map(person => ({ ...person, photo_url: person.photo_url ? new URL(person.photo_url, location.origin).href : null, teams: person.teams.map(team => ({ ...team, team_id: teams.find(t => t.slug === team.team_slug)?.id })) }));
+const legacyPeople = previewPeople.map(person => ({ ...person, photo_url: person.photo_url ? new URL(person.photo_url, location.origin).href : null, teams: person.teams.map(team => ({ ...team, team_id: teams.find(t => t.slug === team.team_slug)?.id })) }));
+let people = legacyPeople;
 const departments = [
   { id: "demo-fussball", label: "Fußballabteilung" },
   { id: "demo-jugend", label: "Jugendabteilung" },
   { id: "demo-turnen", label: "Turnen" },
 ];
+async function localEditorialPeople() {
+  const [staff,trainers] = await Promise.all([employeePreviewApi({action:'list'}),trainerPreviewApi({action:'list'})]);
+  const names = new Set([...legacyPeople.map(person => person.display_name),...staff.people.filter(person => person.active !== false).map(person => person.name)]);
+  return [...names].flatMap(name => {
+    const legacy = legacyPeople.find(person => person.display_name === name);
+    const employee = staff.people.find(person => person.name === name);
+    if (employee?.active === false) return [];
+    const trainer = trainers.people.find(person => person.name === name);
+    const assignments = staff.assignments.filter(assignment => assignment.personId === employee?.id);
+    const rolePhotos = assignments.map(assignment => ({role:assignment.roleLabel,group:assignment.groupKey,photo_source:{url:assignment.photo_url || null}}));
+    const photo = trainer?.photo_url || assignments.find(assignment => assignment.photo_url)?.photo_url || legacy?.photo_url || null;
+    return [{id:legacy?.id || employee.id,display_name:name,active:true,
+      roles:[...new Set([...(legacy?.roles || []).filter(role => !/vorstand|vorsitz|jugendleit/i.test(role)),...assignments.map(assignment => assignment.roleLabel)])],
+      photo_url:photo,photo_source:{url:photo},role_photos:rolePhotos,
+      teams:trainers.assignments.filter(assignment => assignment.personId === trainer?.id).flatMap(assignment => {
+        const team = teams.find(team => team.slug === trainers.teams.find(team => team.id === assignment.teamId)?.slug);
+        return team ? [{team_id:team.id,role:assignment.slot === 'trainer' ? 'Trainer' : assignment.slot.startsWith('co') ? 'Co-Trainer' : 'Betreuer',photo_source:{url:trainer.photo_url || photo}}] : [];
+      }),
+    }];
+  });
+}
+function localSelectedPeople(article, ids) {
+  return selectEditorialPeople(article,people,ids).map(person => ({person_id:person.id,name:person.display_name,role:person.role,photo_url:person.photo_source?.url || person.photo_url}));
+}
+async function localEditorialContacts() {
+  const [staff,trainers] = await Promise.all([employeePreviewApi({action:'list'}),trainerPreviewApi({action:'list'})]);
+  return editorialContactDirectory({
+    assignments:staff.assignments.filter(assignment => !assignment.personId || staff.people.find(person => person.id === assignment.personId)?.active !== false).map(assignment => ({groupKey:assignment.groupKey,personId:assignment.personId,name:assignment.name,role:assignment.roleLabel})),
+    teams:trainers.teams,
+    trainerTeams:trainers.teams.map(team => ({path:team.website_path,coaches:trainers.assignments.filter(assignment => assignment.teamId === team.id && assignment.websiteVisible).flatMap(assignment => {
+      const person=trainers.people.find(person => person.id === assignment.personId && person.active !== false);
+      return person ? [{name:person.website_name || person.name,role:assignment.websiteRole || (assignment.slot === 'trainer' ? 'Trainer' : assignment.slot.startsWith('co') ? 'Co-Trainer' : 'Betreuer')}] : [];
+    })})),
+  });
+}
+function localTeamPhoto(team) {
+  let managed;
+  try { managed = JSON.parse(localStorage.getItem('bsv-trainer-management-preview-v2') || 'null')?.teams.find(item => item.slug === team.slug); } catch {}
+  if (managed?.photoManaged) return managed.photo_url ? {photo_url:managed.photo_url,alt:`Mannschaftsbild ${team.name}`} : null;
+  const photo = previewTeamPhotos[team.slug];
+  return photo ? {...photo,photo_url:new URL(photo.photo_url,location.origin).href} : null;
+}
+function localTeamPhotoLibrary() {
+  return teams.flatMap(team => { const photo = localTeamPhoto(team); return photo ? [{team_id:team.id,name:team.name,slug:team.slug,photo_url:photo.photo_url,preview_url:photo.photo_url}] : []; });
+}
 function day(offset) {
   const now = new Date();
   now.setDate(now.getDate() + offset);
@@ -232,6 +279,7 @@ export async function editorialPreviewApi(method = "GET", body = {}, query = {})
   let result;
   switch (body.action) {
     case "editorial_list":
+      people = await localEditorialPeople();
       result = {
         issues: state.issues,
         teams,
@@ -239,6 +287,9 @@ export async function editorialPreviewApi(method = "GET", body = {}, query = {})
         people,
         rewriteAvailable: false,
       };
+      break;
+    case "editorial_team_photos":
+      result = {photos:localTeamPhotoLibrary()};
       break;
     case "editorial_articles":
       result = {
@@ -337,8 +388,9 @@ export async function editorialPreviewApi(method = "GET", body = {}, query = {})
         existing ||
         article({ title, kind: "free", position: 1000 }, body.issueId);
       const galleryGroups = body.gallery_groups === undefined ? saved.gallery_groups || [] : await prepareLocalGalleries(saved, body.gallery_groups);
-      const peopleSnapshot = body.person_ids === undefined ? saved.people_snapshot || [] : selectEditorialPeople(saved, people, body.person_ids).map(person => ({ person_id: person.id, name: person.display_name, role: person.role, photo_url: person.photo_url }));
-      const selectedAuthor = peopleSnapshot.length ? peopleSnapshot.map(person => person.name).join(' & ') : author;
+      if (body.person_ids !== undefined) people = await localEditorialPeople();
+      const peopleSnapshot = body.person_ids === undefined ? saved.people_snapshot || [] : localSelectedPeople(saved,body.person_ids);
+      const selectedAuthor = saved.kind !== 'free' && peopleSnapshot.length ? peopleSnapshot.map(person => person.name).join(' & ') : author;
       const changed =
         JSON.stringify(galleryGroups) !== JSON.stringify(saved.gallery_groups || []) ||
         JSON.stringify(peopleSnapshot) !== JSON.stringify(saved.people_snapshot || []) ||
@@ -490,6 +542,14 @@ export async function editorialPreviewApi(method = "GET", body = {}, query = {})
       const issue = state.issues.find((i) => i.id === body.issueId);
       if (!issue || issue.version !== body.version)
         throw new Error("Die Ausgabe wurde geändert. Bitte neu laden.");
+      people = await localEditorialPeople();
+      for (const article of state.articles.filter(article => article.issue_id === issue.id && article.status !== 'waived' && article.people_snapshot?.length)) {
+        const portraits = localSelectedPeople(article,article.people_snapshot.map(person => person.person_id));
+        if (JSON.stringify(portraits) !== JSON.stringify(article.people_snapshot)) {
+          article.people_snapshot = portraits;article.status = article.body.trim() ? 'review' : 'draft';article.approved_at = null;article.approved_by = null;article.version++;
+          touch(state,issue.id);
+        }
+      }
       if (issue.kind === 'stadium' && JSON.stringify(issue.advertising) !== JSON.stringify(previewAdvertising)) {
         issue.advertising = structuredClone(previewAdvertising);
         touch(state, issue.id);
@@ -558,7 +618,7 @@ export async function editorialPreviewApi(method = "GET", body = {}, query = {})
       if (!source) throw new Error('Für diese Mannschaft fehlen lokale Sportdaten.');
       const issue = state.issues.find(i => i.id === saved.issue_id);
       const snapshot = structuredClone(source.snapshot);
-      snapshot.teamPhoto = previewTeamPhotos[team.slug] ? {...previewTeamPhotos[team.slug],photo_url:new URL(previewTeamPhotos[team.slug].photo_url,location.origin).href} : null;
+      snapshot.teamPhoto = localTeamPhoto(team);
       snapshot.compact = editorialTeamProfile(team).compact;
       snapshot.upcoming = snapshot.upcoming.filter(match => match.date >= issue.publishes_on);
       snapshot.lastMatches = snapshot.lastMatches.filter(match => match.date <= issue.publishes_on);
@@ -652,20 +712,28 @@ async function prepareLocalGalleries(article,input){
   const existing=new Map((article.gallery_groups || []).flatMap(group=>group.images).map(image=>[image.id,image]));
   let total=0;
   for(const group of groups) for(const image of group.images){
-    if(image.dataUrl){
+    if(image.team_id){
+      const photo = localTeamPhotoLibrary().find(photo => photo.team_id === image.team_id);
+      if (!photo) throw new Error('Für diese Mannschaft ist kein Bild mehr hinterlegt.');
+      image.photo_url = photo.photo_url;
+      image.team_photo = true;
+      delete image.team_id;
+    }else if(image.dataUrl){
       total+=decodeEditorialCover(image.dataUrl).bytes.length;
       if(total>30*1024*1024)throw new Error('Bitte höchstens 30 MB Bilder auf einmal speichern.');
       image.photo_path=crypto.randomUUID();
       await localImageStore('readwrite',store=>store.put(image.dataUrl,image.photo_path));
       delete image.dataUrl;
     }else{
-      if(!existing.get(image.id)?.photo_path)throw new Error('Bild gehört nicht zu diesem Beitrag.');
+      const saved = existing.get(image.id);
+      if (saved?.team_photo) { image.photo_url=saved.photo_url;image.team_photo=true;continue; }
+      if(!saved?.photo_path)throw new Error('Bild gehört nicht zu diesem Beitrag.');
       image.photo_path=existing.get(image.id).photo_path;
     }
   }
   return groups;
 }
 async function localArticleGalleries(article,field='gallery_groups'){
-  return {...article,[field]:await Promise.all((article[field] || []).map(async group=>({...group,images:await Promise.all(group.images.map(async image=>({...image,photo_url:await localImageStore('readonly',store=>store.get(image.photo_path))})))})))};
+  return {...article,[field]:await Promise.all((article[field] || []).map(async group=>({...group,images:await Promise.all(group.images.map(async image=>({...image,photo_url:image.team_photo ? image.photo_url : await localImageStore('readonly',store=>store.get(image.photo_path))})))})))};
 }
-async function localSnapshotGalleries(snapshot){return {...snapshot,articles:await Promise.all(snapshot.articles.map(article=>localArticleGalleries(article,'galleries')))};}
+async function localSnapshotGalleries(snapshot){return {...snapshot,...(snapshot.kind === 'stadium' ? {contacts:await localEditorialContacts()} : {}),articles:await Promise.all(snapshot.articles.map(article=>localArticleGalleries(article,'galleries')))};}

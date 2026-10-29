@@ -35,6 +35,10 @@ export function newsletterExcerpt(body) {
   const end = sentence && sentence.index >= 200 ? sentence.index + 1 : prefix.lastIndexOf(' ');
   return prefix.slice(0, end > 0 ? end : 419).trimEnd() + '…';
 }
+function durableNewsletterPhoto(image) {
+  const url = image?.photo_url || '';
+  return /^https:\/\//.test(url) && !/\/object\/sign\/|[?&](token|signature|expires)=/i.test(url);
+}
 export function newsletterSource(publication) {
   const snapshot = publication?.snapshot;
   if (!snapshot || snapshot.kind !== 'stadium' || !publication.published_at || !Number.isInteger(publication.issue_version) || publication.issue_version < 1) throw new Error('Dieses Stadionheft ist noch nicht veröffentlicht.');
@@ -43,13 +47,15 @@ export function newsletterSource(publication) {
     title: snapshot.title, published_at: publication.published_at,
     articles: (snapshot.articles || []).filter(article => article.status === 'ready' && article.body?.trim()).map(article => ({
       id: article.id, title: article.title, author: article.author || '', excerpt: newsletterExcerpt(article.body),
+      images: (article.galleries || []).flatMap(group => group.images || []).filter(durableNewsletterPhoto).map(image => ({photo_url:image.photo_url,alt:image.alt || article.title})),
+      people: (article.people || []).filter(durableNewsletterPhoto).map(person => ({name:person.name,role:person.role,photo_url:person.photo_url})),
     })),
   };
 }
 export function newsletterSelection(source, articleIds) {
   if (!Array.isArray(articleIds) || articleIds.length > 30 || new Set(articleIds).size !== articleIds.length || articleIds.some(id => typeof id !== 'string' || !source.articles.some(article => article.id === id))) throw new Error('Bitte bis zu 30 verfügbare Artikel aus diesem Heft auswählen.');
   if (!articleIds.length) return null;
-  return {...source, articles:source.articles.filter(article => articleIds.includes(article.id)).map(article => ({...article}))};
+  return {...source, articles:structuredClone(source.articles.filter(article => articleIds.includes(article.id)))};
 }
 export function newsletterArticleUrl(selection, article, origin = 'https://bsv-story-automatik.jerome-ernsberger.chatgpt.site') {
   return `${origin}/stadionheft/${encodeURIComponent(selection.issue_id)}?version=${encodeURIComponent(selection.issue_version)}#artikel/${encodeURIComponent(article.id)}`;
@@ -80,26 +86,32 @@ export function renderEditorialNewsletter(snapshot, template, { preview = true, 
   const edition = [settings.showNumber && settings.number ? `Ausgabe ${settings.number}` : '', settings.showDate ? month : ''].filter(Boolean).join(' · ');
   const text = [settings.showName ? `✦ ${settings.name}` : '', edition,
     settings.showKicker ? settings.kicker : '', settings.showHeadline ? settings.headline : '', settings.showIntro ? settings.intro : ''].filter(Boolean);
+  const imageMarkup = (image, title, width) => {
+    const url = image.photo_url || '';
+    if (!durableNewsletterPhoto(image) && !preview) throw new Error(`„${title}“ enthält ein Bild ohne dauerhaften öffentlichen Link. Für die E-Mail bitte zuerst eine dauerhafte Bildadresse bereitstellen.`);
+    const localImage = snapshot.demo && preview && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(url);
+    if (!/^https?:\/\//.test(url) && !localImage) return '';
+    text.push(`${image.alt || title}: ${localImage ? '(Bild aus lokaler Vorschau)' : url}`);
+    return `<img src="${escape(url)}" alt="${escape(image.alt || title)}" width="${width}" style="display:block;width:100%;max-width:${width}px;height:auto;border:0;" />`;
+  };
+  const renderPhotos = (images, title) => images.map(image => `<p>${imageMarkup(image,title,632)}</p>`).join('');
+  const renderPortraits = people => (people || []).filter(person => person.photo_url).map(person =>
+    `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 24px;"><tr><td width="112" style="width:112px;vertical-align:top;">${imageMarkup({photo_url:person.photo_url,alt:person.name},person.name,112)}</td><td style="padding:0 0 0 16px;vertical-align:middle;overflow-wrap:anywhere;"><strong>${escape(person.name)}</strong><br /><span style="font-size:13px;line-height:20px;">${escape(person.role)}</span></td></tr></table>`
+  ).join('');
   const rows = articles.map((article, index) => {
     const state = preview && article.status !== 'ready' ? '<p style="color:#865700;font-size:13px;">Entwurf · noch nicht freigegeben</p>' : '';
     const body = String(article.body || '').split(/\n\s*\n/).map(paragraph => `<p style="margin:0 0 16px;font-size:16px;line-height:26px;">${linkText(paragraph)}</p>`).join('');
     const images = (article.galleries || []).flatMap(group => group.images || []);
-    const photos = images.map(image => {
-      const url = image.photo_url || '';
-      // Storage URLs used by the magazine expire. They cannot be sent in email.
-      if (!/^https:\/\//.test(url) || /\/object\/sign\/|[?&](token|signature|expires)=/i.test(url)) {
-        if (!preview) throw new Error(`„${article.title}“ enthält ein Bild ohne dauerhaften öffentlichen Link. Für die E-Mail bitte zuerst eine dauerhafte Bildadresse bereitstellen.`);
-      }
-      if (!/^https?:\/\//.test(url)) return '';
-      text.push(`${image.alt || article.title}: ${url}`);
-      return `<p><img src="${escape(url)}" alt="${escape(image.alt || article.title)}" width="632" style="display:block;width:100%;max-width:632px;height:auto;border:0;" /></p>`;
-    }).join('');
+    const photos = renderPhotos(images,article.title);
+    const portraits = renderPortraits(article.people);
     text.push(`\n${article.title}\n${article.author ? article.author + '\n' : ''}\n${article.body || ''}`);
-    return `<tr><td class="section" style="padding:36px 40px;background-color:${index % 2 ? '#edf0e9' : '#ffffff'};">${state}<h2 style="margin:0 0 18px;color:#17613a;font-size:28px;line-height:34px;">${escape(article.title)}</h2>${article.author ? `<p style="font-size:13px;">${escape(article.author)}</p>` : ''}${body}${photos}</td></tr>`;
+    return `<tr><td class="section" style="padding:36px 40px;background-color:${index % 2 ? '#edf0e9' : '#ffffff'};">${state}<h2 style="margin:0 0 18px;color:#17613a;font-size:28px;line-height:34px;">${escape(article.title)}</h2>${article.author ? `<p style="font-size:13px;">${escape(article.author)}</p>` : ''}${portraits}${body}${photos}</td></tr>`;
   });
   for (const article of imported) {
     const url = newsletterArticleUrl(selection, article, stadiumOrigin);
-    rows.push(`<tr><td class="section" data-newsletter-excerpt="${escape(article.id)}" style="padding:36px 40px;border-top:1px solid #dce4d9;background-color:#ffffff;"><p style="margin:0 0 12px;color:#17613a;font-size:12px;line-height:18px;font-weight:bold;">AUS DEM STADIONHEFT · ${escape(selection.title)}</p><h2 style="margin:0 0 18px;color:#17613a;font-size:28px;line-height:34px;">${escape(article.title)}</h2><p style="margin:0 0 20px;font-size:16px;line-height:26px;">${escape(article.excerpt)}</p><p style="margin:0;font-size:16px;line-height:26px;"><a href="${escape(url)}" style="color:#17613a;font-weight:bold;">Weiterlesen im Stadionheft →</a></p></td></tr>`);
+    const photos = renderPhotos(article.images || [],article.title);
+    const portraits = renderPortraits(article.people);
+    rows.push(`<tr><td class="section" data-newsletter-excerpt="${escape(article.id)}" style="padding:36px 40px;border-top:1px solid #dce4d9;background-color:#ffffff;"><p style="margin:0 0 12px;color:#17613a;font-size:12px;line-height:18px;font-weight:bold;">AUS DEM STADIONHEFT · ${escape(selection.title)}</p><h2 style="margin:0 0 18px;color:#17613a;font-size:28px;line-height:34px;">${escape(article.title)}</h2>${portraits}<p style="margin:0 0 20px;font-size:16px;line-height:26px;">${escape(article.excerpt)}</p>${photos}<p style="margin:0;font-size:16px;line-height:26px;"><a href="${escape(url)}" style="color:#17613a;font-weight:bold;">Weiterlesen im Stadionheft →</a></p></td></tr>`);
     text.push(`\nAUS DEM STADIONHEFT · ${selection.title}\n\n${article.title}\n\n${article.excerpt}\n\nWeiterlesen im Stadionheft: ${url}`);
   }
   // This section is mandatory, even for an empty draft. Use publication dates

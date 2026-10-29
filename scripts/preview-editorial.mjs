@@ -33,6 +33,8 @@ async function previewHtml() {
   return html;
 }
 const files = new Map([
+  ['/editorial-contacts.mjs','src/editorial-contacts.mjs'],
+  ['/employee-management.mjs','src/employee-management.mjs'],
   ['/preview-suite-activity.mjs','admin-site/preview/suite-activity.mjs'],
   ['/preview-suite-users.mjs','admin-site/preview/suite-users.mjs'],
   ['/preview-trainer-seed.mjs','admin-site/preview/trainer-seed.mjs'],

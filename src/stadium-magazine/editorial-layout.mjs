@@ -115,7 +115,7 @@ export function paginateEditorialContacts(directory, measure, firstFolio = 2) {
     title: pages.length ? 'Kontakte · Fortsetzung' : 'Wir sind für euch da.',
     category: 'Kontakte & Ansprechpersonen', lead: 'Menschen, die unseren Verein bewegen. Der Pfeil führt zur jeweiligen Person auf unserer Homepage.',
     approved: true, fullPage: true, contactPage: true, paged: true, editorialPaged: true,
-    folio: firstFolio + pages.length, blocks: [{type:'contact-directory', wide:true, groups, verifiedAt:directory.verifiedAt}], adSlots: []});
+    folio: firstFolio + pages.length, blocks: [{type:'contact-directory', wide:true, groups, verifiedAt:directory.verifiedAt, source:directory.source}], adSlots: []});
   let groups = [];
   const finish = () => {
     if (!groups.length) return;

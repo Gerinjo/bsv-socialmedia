@@ -201,3 +201,25 @@ Beim Live-Abgleich fehlte `EDITORIAL_AI_MODEL`. Es wurde auf `gpt-4.1` gesetzt (
 
 - Groq-Umstellung: `GROQ_API_KEY` ausschließlich als Supabase Edge Secret hinterlegen, `EDITORIAL_GROQ_MODEL=openai/gpt-oss-120b`. Keine automatische Rückkehr zu OpenAI. Original und Verlauf bleiben erhalten, nur vollständige Antworten mit `finish_reason=stop` werden übernommen. Ratenlimit, fehlende Berechtigung, ungültiges Modell und Netzwerk-/Zeitfehler werden ohne interne Providerdetails angezeigt. Die frühere OpenAI-Konfiguration wird von der Redaktion nicht mehr gelesen.
 - Live-Stand Groq (22.09.2026): `social-media-admin-api` Version 59 ist ACTIVE, JWT-Prüfung bleibt aktiv. `EDITORIAL_GROQ_MODEL=openai/gpt-oss-120b` wurde hinterlegt. 209 Projekttests und 22 API-Tests erfolgreich, einschließlich Originalerhalt bei Groq-Ratenlimit und Versionsschutz bei verzögerter Antwort. Nach Ersetzen des Schlüssels sind beide echten Groq-Testaufrufe erfolgreich: Rechtschreibung, Grammatik und Satzzeichen korrigiert, Absätze neu gesetzt; Spielstand 2:1, Datum 27.09.2026, Uhrzeit 15:00 und Name unverändert erhalten. Die Anbindung ist einsatzbereit. Kein weiteres Deployment erforderlich; die Oberfläche muss ihre Redaktionsdaten neu laden. Die noncegeschützte Diagnosefunktion wurde nach der Prüfung wieder gelöscht.
+
+## Zentrale Mannschaftsbilder
+
+In freien Beiträgen für Stadionheft und Newsletter stehen unter den Bildgruppen die zentral hochgeladenen Mannschaftsbilder zur Auswahl. Mannschaft auswählen, Vorschau prüfen und **Mannschaftsbild zum Beitrag hinzufügen** anklicken. Danach den Beitrag speichern und freigeben. Ein erneuter Upload ist nicht nötig. Entfernte Mannschaftsbilder werden nicht mehr angeboten; bereits gespeicherte Beiträge behalten ihren bisherigen Bildstand.
+
+Die Mannschaftsbilder haben dauerhafte öffentliche Bildadressen und funktionieren auch im E-Mail-Export. Bei **Aus dem Stadionheft übernehmen** bleiben diese Bilder mit dem ausgewählten Artikel erhalten. Andere private Galerie-Uploads benötigen für den Newsletterversand weiterhin eine dauerhafte öffentliche Bildadresse. Die Sportübersichten beziehen die zentral gepflegten Mannschaftsbilder weiterhin über **Sportdaten aktualisieren**.
+
+Das zusätzliche Themenmotiv auf der Hefttitelseite wurde entfernt. Titelbild, Titeltexte, Spielhinweise und Vereinsfarben bleiben erhalten.
+
+## Zentrale Personenbilder
+
+Die Personenauswahl bezieht aktive Personen, aktuelle Rollen und Bilder aus der Mitarbeiterverwaltung. Grußworte der Vorstandschaft und Jugendleitung verwenden das eigene Bild der jeweiligen Rolle; Trainerbeiträge das Trainerbild. Fehlt ein eigenes Rollenbild, gilt dieselbe automatische Bildübernahme wie in der Mitarbeiterverwaltung. Auch freie Beiträge in Heft und Newsletter können bis zu vier Personenbilder erhalten, ohne die Angabe des Autors zu verändern.
+
+Beim Öffnen einer Vorschau werden bereits zugeordnete Personenbilder in der Arbeitsfassung auf den aktuellen zentralen Stand gebracht. Änderungen heben die Beitragsfreigabe auf; anschließend erneut prüfen und freigeben. Bereits veröffentlichte Heftfassungen und übernommene Heftauszüge behalten ihren gespeicherten Bildstand. Die Kontaktübersicht am Heftende enthält weiterhin reine Textkontakte.
+
+Beim Export freigegebener Newsletter werden ausgewählte archivierte Personenbilder als unveränderliche Kopien mit dauerhaften öffentlichen Bildlinks bereitgestellt. Das gilt auch für Porträts beim Übernehmen veröffentlichter Heftbeiträge. Normale Newsletter-Vorschauen, die ursprünglichen Mitarbeiter- und Trainerbilder sowie die Heftarchive bleiben privat. Vor der Bereitstellung muss die Migration `20261015080308_editorial_central_people.sql` angewendet werden; danach Admin-API und Frontend gemeinsam bereitstellen.
+
+## Aktuelle Kontaktseite „Wir sind für euch da“
+
+Die Schlussseiten werden bei jedem Öffnen einer Heftvorschau und jedes öffentlichen Heftleselinks aus der aktuellen Mitarbeiter- und Mannschaftskonfiguration aufgebaut. Das gilt auch für ältere veröffentlichte Heftfassungen. Geschäftsvorstandschaft, Vorstandschaft, Jugendausschuss, öffentlich sichtbare Trainerteams aller konfigurierten Mannschaften und Förderverein werden mit ihren aktuellen Namen und Rollen übernommen. Unbesetzte Rollen erscheinen als vakant; entfernte Zuordnungen entfallen. Änderungen benötigen weder einen neuen Website-Build noch eine erneute Heftveröffentlichung.
+
+Es werden ausschließlich Namen, Rollen und Homepage-Verweise übernommen. Private Kontaktdaten, Geburtstage, Zugänge und interne Bildquellen gelangen nicht auf die Seite. Die Artikel und Freigaben des veröffentlichten Hefts bleiben davon unabhängig. Bei einem fehlgeschlagenen Konfigurationsabruf erscheint ein Fehler; der frühere feste Kontaktstand wird nicht ersatzweise angezeigt. `config/editorial-contacts.json` wird nicht mehr in den Reader eingebaut.

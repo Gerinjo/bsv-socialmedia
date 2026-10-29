@@ -1,5 +1,4 @@
 import {suiteBrandColors} from './suite-brand.mjs';
-import {suiteBrandTheme,brandThemeSvg} from './brand-themes.mjs';
 import { stadiumReaderAssets } from "./stadium-reader-assets.mjs";
 export function renderEditorialMagazine(snapshot, preview = true) {
   snapshot = {...snapshot, articles: snapshot.articles.filter(article => article.status !== 'waived' && (article.kind !== 'coach' || article.status === 'ready' && article.body?.trim()))};
@@ -8,7 +7,7 @@ export function renderEditorialMagazine(snapshot, preview = true) {
       .replaceAll("<", "\\u003c")
       .replaceAll("\u2028", "\\u2028")
       .replaceAll("\u2029", "\\u2029");
-  const contacts = stadiumReaderAssets.contacts;
+  const contacts = snapshot.contacts || stadiumReaderAssets.contacts;
   const teamWebsite = slug => contacts.teams[slug] || null;
   const personWebsite = (name, slug) => {
     const groups = contacts.groups;
@@ -74,10 +73,10 @@ export function renderEditorialMagazine(snapshot, preview = true) {
   const articleTitle = index => articles[index].title;
   for (let index = 0; index < articles.length; index++) {
     const people = (snapshot.articles[index].people || []).map(person => ({ name: person.name, role: person.role, websiteUrl: personWebsite(person.name, articles[index].teamSlug),
-      photo_url: /^https:\/\//.test(person.photo_url || '') || snapshot.demo && /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(person.photo_url || '') ? person.photo_url : null }));
+      photo_url: /^https:\/\//.test(person.photo_url || '') || snapshot.demo && (/^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(person.photo_url || '') || /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(person.photo_url || '')) ? person.photo_url : null }));
     const galleries = [];
     for (const group of snapshot.articles[index].galleries || []) {
-      const images = group.images.map(img => ({ id: img.id, alt: img.alt || group.title || articleTitle(index), src: img.photo_url })).filter(img => /^https:\/\//.test(img.src || '') || snapshot.demo && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(img.src || ''));
+      const images = group.images.map(img => ({ id: img.id, alt: img.alt || group.title || articleTitle(index), src: img.photo_url })).filter(img => /^https:\/\//.test(img.src || '') || snapshot.demo && (/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(img.src || '') || /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(img.src || '')));
       if (images.length) galleries.push({ type: 'editorial-gallery', id: group.id, title: group.title, coverId: group.cover_id, images });
     }
     const galleryRow = groups => ({type:'editorial-gallery-row',wide:true,galleries:groups});
@@ -189,9 +188,8 @@ export function renderEditorialMagazine(snapshot, preview = true) {
   if (preview && emptyArticles) edition.note += ` ${emptyArticles} Beiträge sind noch ohne Inhalt und erhalten keine eigene Heftseite.`;
   let brandStyle='';
   if(snapshot.brand?.color_scheme){
-    const c=suiteBrandColors(snapshot.brand.color_scheme),theme=suiteBrandTheme(snapshot.brand.theme_key||'football');
-    const motif='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(brandThemeSvg(theme,c));
-    brandStyle=`:root{--green:${c.panel};--yellow:${c.accent};--paper:${c.surface};--ink:${c.ink};--muted:${c.panel};--rule:${c.muted}}.photo-shade{background:linear-gradient(0deg,${c.panel} 1%,${c.panel}bc 25%,${c.panel}00 65%)}.cover-stories span{color:${c.accent}}.cover-photo-wrap::after{content:'';position:absolute;left:5%;top:5%;width:17%;aspect-ratio:1;background:${c.panel} url("${motif}") center/contain no-repeat;border-radius:12px;pointer-events:none}`;
+    const c=suiteBrandColors(snapshot.brand.color_scheme);
+    brandStyle=`:root{--green:${c.panel};--yellow:${c.accent};--paper:${c.surface};--ink:${c.ink};--muted:${c.panel};--rule:${c.muted}}.photo-shade{background:linear-gradient(0deg,${c.panel} 1%,${c.panel}bc 25%,${c.panel}00 65%)}.cover-stories span{color:${c.accent}}`;
   }
   const boot = `const editions=[${safeJson(edition)}];const editionSponsorships={};\n${stadiumReaderAssets.advertisingScript}\n${stadiumReaderAssets.script}`;
   return stadiumReaderAssets.template

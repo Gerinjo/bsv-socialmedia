@@ -9,7 +9,7 @@ function database(replies: any[]) {
   const db = {
     rpc(name: string, args: any) {
       calls.push({rpc:name,args});
-      return Promise.resolve({data:replies.shift(),error:null});
+      return Promise.resolve().then(()=>({data:replies.shift(),error:null}));
     },
     from(table: string) {
       const call: any = { table, filters: [] };
@@ -84,20 +84,20 @@ Deno.test('waiver is an explicit versioned coach-only action that keeps text and
 Deno.test('people are resolved from office/team assignments and client-supplied names or portraits are ignored', async () => {
   const board = { ...current, kind: 'board', title: 'Grußwort', author: '', department_id: null };
   const { db, calls } = database([issue, board,
-    [{ id: 'chair', display_name: 'Vorstand', roles: ['1. Vorstand'], source_photo_url: null }], [],
+    [{ id: 'chair', display_name: 'Vorstand', roles: ['1. Vorstand'], source_photo_url: null }],
     { ...board, version: 3 }]);
   await handleEditorial(db, 'user', { ...request, body: 'Alt', title: 'Grußwort', person_ids: ['chair'], author: 'Forged', people_snapshot: [{ photo_url: 'https://evil.example/' }] });
-  assert.equal(calls[4].update.author, 'Vorstand');
-  assert.deepEqual(calls[4].update.people_snapshot, [{person_id:'chair',name:'Vorstand',role:'1. Vorstand',source_photo_url:null,photo_path:null}]);
-  assert.equal(calls[4].update.status, 'review');
+  assert.equal(calls[3].update.author, 'Vorstand');
+  assert.deepEqual(calls[3].update.people_snapshot, [{person_id:'chair',name:'Vorstand',role:'1. Vorstand',source_photo_url:null,photo_path:null}]);
+  assert.equal(calls[3].update.status, 'review');
   const invalid = database([issue, { ...current, kind:'coach', team_id:'first' },
-    [{id:'wrong',display_name:'Falsches Team',roles:['Trainer']}], [{person_id:'wrong',team_id:'second',role:'Trainer'}]]);
+    [{id:'wrong',display_name:'Falsches Team',roles:['Trainer'],teams:[{team_id:'second',role:'Trainer'}]}]]);
   await assert.rejects(handleEditorial(invalid.db, 'user', {...request,person_ids:['wrong']}), /Funktion oder Mannschaft/);
   assert.ok(invalid.calls.every(call=>!call.update));
 });
 Deno.test('selected portraits are copied privately, reused on text edits and signed without exposing storage paths', async () => {
   const person={id:'chair',display_name:'Vorstand',roles:['1. Vorstand'],source_photo_url:'https://gerinjo.github.io/bsv-website/images/portrait.png'};
-  const {db}=database([[person],[],[person],[]]);
+  const {db}=database([[person],[person]]);
   const uploads:any[]=[],removed:any[]=[];
   (db as any).storage={from(bucket:string){assert.equal(bucket,'editorial-portraits');return {
     upload:async(path:string,bytes:any)=>{uploads.push({path,bytes});return {error:null};},
@@ -143,16 +143,17 @@ Deno.test('sport refresh adds missing A–D teams without overwriting existing a
 });
 Deno.test('a team without a table can still refresh previously imported match results', async () => {
   const old = { ...current, kind: 'sports', team_id: 'd3', source_snapshot: { table: null, lastMatches: [{ score: '0:0' }] } };
-  const { db, calls } = database([old, { publishes_on: '2026-09-27' }, { id: 'd3', name: 'D3-Junioren', website_path: 'jugend/u13-d3' }, [], [], { ...old, version: 3 }]);
+  const { db, calls } = database([old, { publishes_on: '2026-09-27' }, { id: 'd3', name: 'D3-Junioren', website_path: 'jugend/u13-d3' }, [], [], null, { ...old, version: 3 }]);
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (url: any) => new Response(String(url).includes('/widget/')
     ? '<script id="__NEXT_DATA__">' + JSON.stringify({ props: { pageProps: { nextMatches: [], previousMatches: [{ id: 'match', status: 'acknowledged', kickoff: { date: '01.01.2026', time: '14:00' }, homeTeam: { name: 'BSV' }, guestTeam: { name: 'Gast' }, result: { homeResult: '2', guestResult: '0' } }] } } }) + '</script>'
     : '<div data-type="team-matches" data-id="af96d999-a7ba-432a-87c5-439ab401516d"></div>');
   try {
     await handleEditorial(db, 'user', { action: 'editorial_sports', id: 'article', version: 2 });
-    assert.equal(calls[5].update.source_snapshot.lastMatches[0].score, '2:0');
-    assert.equal(calls[5].update.status, 'ready');
-    assert.equal(calls[5].update.automatic_sports, true);
+    assert.equal(calls[5].rpc, 'team_photo_source');
+    assert.equal(calls[6].update.source_snapshot.lastMatches[0].score, '2:0');
+    assert.equal(calls[6].update.status, 'ready');
+    assert.equal(calls[6].update.automatic_sports, true);
   } finally { globalThis.fetch = originalFetch; }
 });
 Deno.test("a saved cover survives a temporary signed URL failure", async () => {
@@ -362,7 +363,7 @@ Deno.test('saving cover defaults validates selections and atomically saves with 
 
 Deno.test('editorial list and issue creation include disabled second adult teams without youth greetings',async()=>{
  const teams=[{id:'second-men',slug:'herren-2',name:'Zweite Herren',active:false},{id:'second-women',slug:'frauen-2',name:'Zweite Frauen',active:false},{id:'young',slug:'u15-junioren',name:'C-Jugend',active:false}];
- const listing=database([[],teams,[],[],[]]);
+ const listing=database([[],teams,[],[]]);
  const listed:any=await handleEditorial(listing.db,'actor',{action:'editorial_list'});
  assert.equal(listed.teams[0].active,true);assert.equal(listed.teams[1].active,true);assert.equal(teams[0].active,false);
  const creation=database([teams,{id:'new'}]);
@@ -462,4 +463,29 @@ Deno.test('newsletter selection rejects unavailable publications, invalid articl
   const {db,calls}=database([newsletterIssue,{...newsletterIssue,version:4}]);
   await handleEditorial(db,'user',{...request,sourceIssueId:null,articleIds:[]});
   assert.equal(calls[1].update.newsletter_selection,null);
+});
+
+Deno.test('free article portraits do not turn pictured people into the article author',async()=>{
+ const {db,calls}=database([issue,current,[{id:'member',display_name:'Abgebildete Person',roles:[]}],{...current,version:3}]);
+ await handleEditorial(db,'user',{...request,body:'Alt',title:'Artikel',author:'Redaktion',person_ids:['member']});
+ assert.equal(calls[3].update.author,'Redaktion');
+ assert.equal(calls[3].update.people_snapshot[0].name,'Abgebildete Person');
+});
+
+Deno.test('newsletter draft previews stay private and public portrait copies require a fully approved export',async()=>{
+ const photo={name:'Anna',role:'Vorstand',photo_path:'issue/frozen.png'};
+ const draft={kind:'newsletter',articles:[{title:'Beitrag',body:'Unser Text',status:'review',people:[photo]}]};
+ const request={action:'editorial_preview_issue',issueId:'issue',version:1,forExport:true};
+ const setup=(snapshot:any)=>database([{id:'issue',kind:'newsletter',version:1},[],{}, {version:2},snapshot]);
+ let copies=0,signs=0;
+ const storage={from:(bucket:string)=>({copy:async()=>{copies++;return {error:null};},getPublicUrl:()=>({data:{publicUrl:'https://example.org/public/frozen.png'}}),createSignedUrl:async()=>{signs++;return {data:{signedUrl:'https://example.org/sign/frozen.png?token=private'},error:null};}})};
+ const blocked=setup(draft);(blocked.db as any).storage=storage;
+ await assert.rejects(()=>handleEditorial(blocked.db,'actor',request),/alle Newsletter-Beiträge/);
+ assert.equal(copies,0);
+ const preview=setup(draft);(preview.db as any).storage=storage;
+ const privatePreview=await handleEditorial(preview.db,'actor',{...request,forExport:false});
+ assert.equal(copies,0);assert.equal(signs,1);assert.ok(privatePreview.snapshot.articles[0].people[0].photo_url.includes('token=private'));
+ const ready=setup({...draft,articles:[{...draft.articles[0],status:'ready'}]});(ready.db as any).storage=storage;
+ const exported=await handleEditorial(ready.db,'actor',request);
+ assert.equal(copies,1);assert.equal(exported.snapshot.articles[0].people[0].photo_url,'https://example.org/public/frozen.png');
 });

@@ -20,3 +20,20 @@ test('public people contain no internal IDs or source data and cannot mutate sav
  assert.equal(snapshot.articles[0].people[0].name,'Vorstand');
  assert.doesNotMatch(JSON.stringify(snapshot),/PRIVATE/);
 });
+
+test('free contributions can choose active people and greetings keep their matching role portrait',()=>{
+ const person={id:'shared',display_name:'Anna',roles:['1. Vorstand','Jugendleiter'],photo_source:{path:'default'},role_photos:[{role:'1. Vorstand',photo_source:{path:'board'}},{role:'Jugendleiter',photo_source:{path:'youth'}}],teams:[{team_id:'first',role:'Trainer',photo_source:{path:'trainer'}}]};
+ assert.equal(selectEditorialPeople({kind:'board'},[person],['shared'])[0].photo_source.path,'board');
+ assert.equal(selectEditorialPeople({kind:'youth'},[person],['shared'])[0].photo_source.path,'youth');
+ assert.equal(selectEditorialPeople({kind:'coach',team_id:'first'},[person],['shared'])[0].photo_source.path,'trainer');
+ assert.equal(selectEditorialPeople({kind:'free'},[person],['shared']).length,1);
+ assert.equal(selectEditorialPeople({kind:'free'},[person],['shared'])[0].photo_source.path,'default');
+ assert.equal(editorialPersonCandidates({kind:'free'},[{id:'member',display_name:'Mitglied',roles:[]}])[0].role,'Vereinsmitglied');
+ assert.deepEqual(editorialPersonCandidates({kind:'free'},[{...person,active:false}]),[]);
+});
+
+test('the same youth role on the board never replaces the youth departments own portrait',()=>{
+ const person={id:'shared',display_name:'Anna',roles:['Jugendleiter'],role_photos:[{group:'board',role:'Jugendleiter',photo_source:{path:'board'}},{group:'youth',role:'Jugendleiter',photo_source:{path:'youth'}}]};
+ assert.equal(selectEditorialPeople({kind:'youth'},[person],['shared'])[0].photo_source.path,'youth');
+ assert.deepEqual(editorialPersonCandidates({kind:'youth'},[{...person,role_photos:person.role_photos.slice(0,1)}]),[]);
+});

@@ -57,3 +57,11 @@ test('gallery tiles form rows of at most three, with overflow introduced inside 
   assert.equal(blocks.at(-1).type,'editorial-gallery-row');
  }
 });
+
+test('central image previews work on localhost only in a demo magazine',()=>{
+ const url='http://localhost:4173/preview-team-photos/herren-1.jpg';
+ const input={id:'issue',title:'Heft',publishes_on:'2026-10-15',articles:[{id:'free',kind:'free',title:'Mannschaft',body:'Unser Team',status:'ready',galleries:[{id:'group',title:'Erste',cover_id:'image',images:[{id:'image',alt:'Erste',photo_url:url}]}]}]};
+ const edition=demo=>JSON.parse(renderEditorialMagazine({...input,demo}).match(/const editions=(\[.*?\]);const editionSponsorships/s)[1])[0];
+ assert.ok(JSON.stringify(edition(true).articles).includes(url));
+ assert.ok(!JSON.stringify(edition(false).articles).includes(url));
+});
