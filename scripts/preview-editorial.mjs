@@ -34,6 +34,8 @@ async function previewHtml() {
 }
 const files = new Map([
   ['/preview-club-crests.mjs','admin-site/preview/club-crests.mjs'],
+  ['/resources-model.mjs','src/resources.mjs'],
+  ['/preview-resources.mjs','admin-site/preview/resources.mjs'],
   ['/hall-training-model.mjs','src/hall-training.mjs'],
   ['/preview-hall-training.mjs','admin-site/preview/hall-training.mjs'],
   ['/editorial-contacts.mjs','src/editorial-contacts.mjs'],

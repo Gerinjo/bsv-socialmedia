@@ -54,6 +54,8 @@ for (const [placeholder, source] of [
   ['__EXPENSE_SCRIPT__', await readFile(resolve(adminDir, 'referee-expenses.mjs'), 'utf8')],
   ['__REFEREE_MODEL__', await readFile(resolve(repoDir, 'src/referees.mjs'), 'utf8')],
   ['__HALL_MODEL__', await readFile(resolve(repoDir,'src/hall-training.mjs'),'utf8')],
+  ['__RESOURCES_SCRIPT__', (await readFile(resolve(repoDir,'src/resources.mjs'),'utf8'))+'\n'+await readFile(resolve(adminDir,'resources.mjs'),'utf8')],
+  ['__RESOURCES_CSS__', await readFile(resolve(adminDir,'resources.css'),'utf8')],
   ['__HALL_SCRIPT__', await readFile(resolve(adminDir,'hall-training.mjs'),'utf8')],
   ['__HALL_CSS__', await readFile(resolve(adminDir,'hall-training.css'),'utf8')],
   ['__TRAINER_MODEL__', await readFile(resolve(repoDir,'src/trainer-management.mjs'),'utf8')],

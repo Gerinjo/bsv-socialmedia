@@ -1,3 +1,4 @@
+import {resourcePreviewApi} from '/preview-resources.mjs';
 import {previewClubCrests,previewClubCrestAction} from '/preview-club-crests.mjs';
 import {hallTrainingPreviewApi} from '/preview-hall-training.mjs';
 import {editorialContactDirectory} from '/editorial-contacts.mjs';
@@ -282,6 +283,7 @@ export async function editorialPreviewApi(method = "GET", body = {}, query = {})
   if(body.action==='suite_activity_list'){if(previewPersona!=='admin')throw new Error('Nur Super-Admins dürfen das Aktivitätsprotokoll ansehen.');return previewSuiteActivity(body,previewSuiteMembers());}
   if(['save_suite_role','save_suite_member','bulk_suite_users','create_team_member'].includes(body.action))return previewSuiteMutation(body,previewPersona);
   if(body.action==='save_bsv_standard'){if(!previewAreas().includes('corporate_identity'))throw new Error('Keine Berechtigung');return previewSetBrand(body.colorScheme,body.themeKey);}
+  if(body.action?.startsWith('resource_'))return resourcePreviewApi(body,previewPersona);
   if(body.action?.startsWith('hall_'))return hallTrainingPreviewApi(body,previewPersona);
   if(body.action?.startsWith('employee_')){if(!previewAreas().includes('trainer_management'))throw new Error('Keine Berechtigung für Mitarbeiter.');return employeePreviewApi(body);}
   if(body.action?.startsWith('trainer_')){if(!previewAreas().includes('trainer_management'))throw new Error('Keine Berechtigung für die Trainerverwaltung.');return trainerPreviewApi(body);}

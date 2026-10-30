@@ -1,3 +1,5 @@
+import {handleResources} from '../_shared/resources.mjs';
+import {load as loadResourceHtml} from 'npm:cheerio@1.2.0';
 import {handleClubCrestTools} from '../_shared/club-crest-tools.mjs';
 import {handleHallTraining} from '../_shared/hall-training.mjs';
 import {handleEmployeeManagement} from '../_shared/employee-management.mjs';
@@ -35,7 +37,7 @@ const homeVenues = new Set(['Hauptplatz', 'Nebenplatz', 'Kunstrasenplatz 1', 'Ku
 const crestStatuses = new Set(['missing', 'needs_review', 'approved', 'rejected']);
 const sponsorStatuses = new Set(['missing', 'needs_review', 'approved', 'rejected']);
 const sponsorContexts = new Set(['announcement', 'lineup', 'result', 'report', 'birthday', 'post', 'story']);
-const suiteAreas = ['social_media', 'sponsoring', 'editorial', 'referees', 'corporate_identity', 'club_crests', 'social_media_admin', 'user_management', 'cashbook', 'trainer_management', 'hall_training'] as const;
+const suiteAreas = ['social_media', 'sponsoring', 'editorial', 'referees', 'corporate_identity', 'club_crests', 'social_media_admin', 'user_management', 'cashbook', 'trainer_management', 'hall_training', 'resources'] as const;
 type SuiteArea = typeof suiteAreas[number];
 const actionAreas: Record<string, SuiteArea> = {
   suite_activity_list: 'user_management',
@@ -671,6 +673,13 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
     const requiredArea = actionAreas[action];
     if (requiredArea && !hasArea(requiredArea)) return json({ error: 'area_forbidden', area: requiredArea }, 403);
 
+    if(action.startsWith('resource_')) {
+      if(!hasArea('resources'))return json({error:'area_forbidden',area:'resources'},403);
+      if(raw.length>8192)return json({error:'Die Anfrage ist zu groß.'},413);
+      const result=await handleResources(context.supabaseAdmin,userId,body,{parseFont:opentype.parse,load:loadResourceHtml,
+        geocoder:Deno.env.get('RESOURCE_GEOCODER_URL')||undefined,router:Deno.env.get('RESOURCE_ROUTER_URL')||undefined});
+      return json(result);
+    }
     if(action==='suite_activity_list'){
       if(normalizedRole!=='admin')return json({error:'admin_only'},403);
       if(raw.length>4096)return json({error:'Die Anfrage ist zu groß.'},413);
