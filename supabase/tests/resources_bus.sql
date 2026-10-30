@@ -1,7 +1,7 @@
 begin;
 set local role service_role;
 do $$
-declare actor uuid:=gen_random_uuid();other uuid:=gen_random_uuid();person uuid:=gen_random_uuid();team uuid:=gen_random_uuid();other_team uuid:=gen_random_uuid();bus uuid;result jsonb;book uuid;event_book uuid;event_payload jsonb;start_value timestamptz:=now()+interval '10 days';
+declare actor uuid:=gen_random_uuid();other uuid:=gen_random_uuid();person uuid:=gen_random_uuid();team uuid:=gen_random_uuid();other_team uuid:=gen_random_uuid();bus uuid;result jsonb;book uuid;event_book uuid;event_payload jsonb;calendar_month date;last_calendar_day timestamptz;start_value timestamptz:=now()+interval '10 days';
 begin
  insert into public.social_admins(user_id,role,is_active,is_blocked,person_id,first_name,last_name,username,access_areas) values(actor,'sm-team',true,false,person,'Trainer','Test','test',array['resources']), (other,'sm-team',true,false,null,'Andere','Person','andere',array['resources']);
  insert into private.trainer_profiles(person_id,active) values(person,true);
@@ -61,7 +61,18 @@ begin
 
  result:=public.resource_request(actor,event_payload);if result->>'ok' is distinct from 'true' then raise exception 'ASSERT: trainer free event failed';end if;event_book:=(result->>'bookingId')::uuid;
  update public.social_admins set role='admin' where user_id=other;
+ result:=public.resource_request(other,jsonb_build_object('action','list','month',to_char(start_value at time zone 'Europe/Berlin','YYYY-MM')));
+ if exists(select 1 from jsonb_array_elements(result->'teams') t where not (t->>'canBook')::boolean or (t->>'isOwn')::boolean) then raise exception 'ASSERT: admin booking rights confused with personal teams';end if;
+ insert into private.resource_matches(id,team_id,source_match_id,kickoff_at,home_team,away_team,status,is_home,source_url,match_minutes) values('test-admin-other',other_team,'admin-other',start_value+interval '8 hours','Gastgeber','C1','scheduled',false,'https://example.org',85);
+ result:=public.resource_request(other,jsonb_build_object('action','book','resourceId',bus,'teamId',other_team,'matchId','test-admin-other','expectedKickoff',start_value+interval '8 hours','startsAt',start_value+interval '7 hours','endsAt',start_value+interval '10 hours'));if result->>'ok' is distinct from 'true' then raise exception 'ASSERT: admin cannot reserve unassigned team: %',result;end if;
+
  result:=public.resource_request(other,jsonb_build_object('action','cancel','resourceId',bus,'bookingId',event_book));if result->>'ok' is distinct from 'true' then raise exception 'ASSERT: admin cannot cancel another member event';end if;
+
+ -- A 28-day month starting on Monday still displays six full calendar weeks.
+ select (date_trunc('month',now())+make_interval(months=>i))::date into calendar_month from generate_series(1,24) i where extract(isodow from (date_trunc('month',now())+make_interval(months=>i)))=1 order by i limit 1;
+ last_calendar_day:=((calendar_month+41)::timestamp at time zone 'Europe/Berlin')+interval '20 hours';
+ result:=public.resource_request(other,jsonb_build_object('action','book','bookingKind','event','resourceId',bus,'startsAt',last_calendar_day,'endsAt',last_calendar_day+interval '1 hour','event',jsonb_build_object('title','Last calendar day','category','other','contact','QA')));if result->>'ok' is distinct from 'true' then raise exception 'ASSERT: final calendar day booking failed';end if;event_book:=(result->>'bookingId')::uuid;
+ result:=public.resource_request(other,jsonb_build_object('action','list','month',to_char(calendar_month,'YYYY-MM')));if not exists(select 1 from jsonb_array_elements(result->'bookings') b where b->>'id'=event_book::text) then raise exception 'ASSERT: last displayed calendar week omits bus reservation';end if;
  update private.trainer_profiles set active=false where person_id=person;
  result:=public.resource_request(actor,jsonb_build_object('action','authorize','teamId',team));if result->>'status' is distinct from '403' then raise exception 'ASSERT: inactive trainer accepted';end if;
  update public.social_admins set is_blocked=true where user_id=actor;

@@ -1,7 +1,19 @@
 export const BUS_ORIGIN={name:'BSV Nordstern',address:'Schlesierstraße 43, 78315 Radolfzell am Bodensee',coordinates:[8.9700514,47.7543133]};
 export const RESOURCE_EVENT_CATEGORIES={training:'Trainerweiterbildung',supporters:'Förderverein',city_event:'Stadtevent / Verkauf',other:'Sonstiges'};
 export function resourceBookingLabel(booking){return booking.bookingKind==='event'?booking.event?.title||'Freies Event':booking.teamName||'Mannschaft';}
-export function resourceCalendarMatches(matches,teamId=''){return matches.filter(match=>match.isHome===false&&(!teamId||match.teamId===teamId));}
+export function resourceTeamInFilter(teamId,filter,teams){return !filter||(filter==='__own__'?teams.some(team=>team.id===teamId&&team.isOwn):teamId===filter);}
+export function resourceCalendarMatches(matches,filter='',teams=[],bookings=[]){
+ const booked=new Set(bookings.filter(b=>!b.cancelledAt&&!b.cancelled&&b.matchId).map(b=>b.matchId));
+ return matches.filter(match=>match.isHome===false&&!booked.has(match.id)&&resourceTeamInFilter(match.teamId,filter,teams));
+}
+export function resourceCalendarBookings(bookings,filter='',teams=[]){return bookings.filter(b=>!b.cancelledAt&&!b.cancelled&&(b.bookingKind==='event'||resourceTeamInFilter(b.teamId,filter,teams)));}
+export function resourceDayOccupancy(bookings,date){
+ const start=Date.parse(resourceUtcTime(date+'T00:00')),next=new Date(Date.parse(date+'T12:00Z')+86400000).toISOString().slice(0,10),end=Date.parse(resourceUtcTime(next+'T00:00'));
+ return bookings.filter(b=>!b.cancelledAt&&!b.cancelled).flatMap(b=>{
+  const from=Math.max(start,Date.parse(b.startsAt)),to=Math.min(end,Date.parse(b.endsAt));if(!(to>from))return [];
+  return [{id:b.id,label:resourceBookingLabel(b),startPercent:100*(from-start)/(end-start),heightPercent:100*(to-from)/(end-start),startLabel:from===start?'00:00':resourceLocalTime(from).slice(11),endLabel:to===end?'24:00':resourceLocalTime(to).slice(11)}];
+ });
+}
 export function validateResourceTimeChange(body){
  const result={resourceId:body.resourceId,bookingId:body.bookingId};
  if(typeof result.resourceId!=='string'||!result.resourceId||typeof result.bookingId!=='string'||!result.bookingId)throw new Error('Bitte eine Busbuchung auswählen.');

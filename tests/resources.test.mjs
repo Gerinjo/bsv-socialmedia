@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {load} from 'cheerio';
-import {resourceTeamGroup,resourceMatchMinutes,resourceTimeSuggestion,resourceTimePlan,resourceCanBookMatch,resourceBookingLabel,resourceCalendarMatches,validateResourceTimeChange,resourceOverlap,resourceMonthDays,resourceLocalTime,resourceUtcTime,validateResourceBooking} from '../src/resources.mjs';
+import {resourceTeamGroup,resourceMatchMinutes,resourceTimeSuggestion,resourceTimePlan,resourceCanBookMatch,resourceBookingLabel,resourceCalendarMatches,resourceCalendarBookings,resourceDayOccupancy,validateResourceTimeChange,resourceOverlap,resourceMonthDays,resourceLocalTime,resourceUtcTime,validateResourceBooking} from '../src/resources.mjs';
 import {parseResourceVenue,resourceRoute,handleResources} from '../supabase/functions/_shared/resources.mjs';
 test('D through active teams use match durations and the detailed arrival and return buffers across midnight and DST',()=>{
  for(const [slug,group,minutes] of [['u13-d1-junioren','D',70],['u15-c1-junioren','C',85],['u17-juniorinnen','B',95],['u19-junioren','A',105],['herren-2','senior',105],['frauen-1','senior',105]]){assert.equal(resourceTeamGroup({slug}),group);assert.equal(resourceMatchMinutes({slug}),minutes);}
@@ -38,6 +38,18 @@ test('bus calendar contains only away games and time changes preserve the origin
  for(const values of [{expectedStartsAt:null},{startsAt:'invalid'},{endsAt:body.startsAt},{endsAt:'2027-01-10T00:00Z'}])assert.throws(()=>validateResourceTimeChange({...body,...values}));
  const calls=[];const db={rpc:async(_,{payload})=>{calls.push(payload);return {data:{ok:true}};}};
  await handleResources(db,'actor',{action:'resource_reschedule',...body});assert.deepEqual(calls.map(p=>p.action),['authorize','reschedule']);assert.equal(calls[1].expectedEndsAt,normalized.expectedEndsAt);
+});
+test('personal and team filters remove duplicate match cards while all reservations block their actual daily intervals',()=>{
+ const teams=[{id:'A',isOwn:true,canBook:true},{id:'B',isOwn:false,canBook:true}],matches=[{id:'a',teamId:'A',isHome:false},{id:'b',teamId:'B',isHome:false}];
+ const booking={id:'bus-b',bookingKind:'match',matchId:'b',teamId:'B',teamName:'Team B',startsAt:'2026-11-01T12:00Z',endsAt:'2026-11-01T17:00Z'},event={...booking,id:'event',bookingKind:'event',teamId:null,matchId:null,event:{title:'Stadtfest'}};
+ assert.deepEqual(resourceCalendarMatches(matches,'__own__',teams).map(m=>m.id),['a']);
+ assert.deepEqual(resourceCalendarMatches(matches,'',teams,[booking]).map(m=>m.id),['a']);assert.deepEqual(resourceCalendarMatches(matches,'B',teams,[booking]),[]);
+ assert.deepEqual(resourceCalendarBookings([booking,event],'__own__',teams).map(b=>b.id),['event']);assert.deepEqual(resourceCalendarBookings([booking],'B',teams).map(b=>b.id),['bus-b']);
+ const occupied=resourceDayOccupancy([booking],'2026-11-01');assert.equal(occupied.length,1);assert.equal(occupied[0].startLabel,'13:00');assert.equal(occupied[0].endLabel,'18:00');assert.equal(occupied[0].heightPercent,100*5/24);
+ assert.deepEqual(resourceCalendarMatches(matches,'B',teams,[{...booking,cancelledAt:'2026-10-30T00:00Z'}]).map(m=>m.id),['b']);assert.deepEqual(resourceDayOccupancy([{...booking,cancelledAt:'2026-10-30T00:00Z'}],'2026-11-01'),[]);
+ const night={...booking,startsAt:'2026-10-24T21:00Z',endsAt:'2026-10-25T04:00Z'};
+ assert.equal(resourceDayOccupancy([night],'2026-10-24')[0].endLabel,'24:00');const dst=resourceDayOccupancy([night],'2026-10-25')[0];assert.equal(dst.startLabel,'00:00');assert.equal(dst.endLabel,'05:00');assert.equal(dst.heightPercent,24); // Six real hours on a 25-hour day.
+ assert.equal(resourceDayOccupancy([{...booking,startsAt:'2026-10-31T23:00Z',endsAt:'2026-11-01T23:00Z'}],'2026-11-01')[0].heightPercent,100);
 });
 test('free club events need a title and responsible person, work without a team and cannot masquerade as match bookings',async()=>{
  const input={bookingKind:'event',resourceId:'bus',startsAt:'2027-01-01T08:00Z',endsAt:'2027-01-01T18:00Z',event:{title:' Stadtfest – Getränkestand ',category:'city_event',organizer:'Förderverein',contact:'Erika Muster'}};
