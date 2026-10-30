@@ -6,10 +6,21 @@ export function resourceTeamGroup(team){
  return /(?:alte.herren|\bu35\b)/.test(text)?'other':/herren|frauen|aktive/.test(text)?'senior':'other';
 }
 export function resourceMatchMinutes(team){return ({D:70,C:85,B:95,A:105,senior:105})[resourceTeamGroup(team)]||105;}
-export function resourceTimeSuggestion({kickoffAt,travelMinutes,returnMinutes=travelMinutes,matchMinutes=105,beforeMinutes=45,afterMinutes=45}){
- const kickoff=Date.parse(kickoffAt);
- if(!Number.isFinite(kickoff)||![travelMinutes,returnMinutes,matchMinutes,beforeMinutes,afterMinutes].every(v=>Number.isFinite(v)&&v>=0&&v<=1440))throw new Error('Bitte Spiel- und Fahrzeiten prüfen.');
- return {startsAt:new Date(kickoff-(travelMinutes+beforeMinutes)*60000).toISOString(),endsAt:new Date(kickoff+(matchMinutes+afterMinutes+returnMinutes)*60000).toISOString()};
+export const RESOURCE_TIMING_DEFAULTS={meetingMinutes:15,changeBeforeMinutes:15,warmupMinutes:45,matchMinutes:105,cooldownMinutes:15,changeAfterMinutes:30,toleranceMinutes:20};
+export function resourceCanBookMatch(match,now=Date.now()){
+ return Boolean(match?.canBook&&match.isHome===false&&match.status==='scheduled'&&Date.parse(match.kickoffAt)>now);
+}
+export function resourceTimePlan({kickoffAt,travelMinutes,returnMinutes=travelMinutes,...values}){
+ const timing={...RESOURCE_TIMING_DEFAULTS,...Object.fromEntries(Object.keys(RESOURCE_TIMING_DEFAULTS).filter(key=>values[key]!==undefined).map(key=>[key,values[key]])),travelMinutes,returnMinutes},kickoff=Date.parse(kickoffAt);
+ if(!Number.isFinite(kickoff)||!Object.values(timing).every(v=>Number.isInteger(v)&&v>=0&&v<=1440)||timing.matchMinutes<1||timing.matchMinutes>360)throw new Error('Bitte Spiel-, Fahr- und Pufferzeiten als ganze Minuten prüfen.');
+ const at=minutes=>new Date(kickoff+minutes*60000).toISOString(),arrival=-timing.changeBeforeMinutes-timing.warmupMinutes,departure=arrival-travelMinutes,meeting=departure-timing.meetingMinutes,gameEnd=timing.matchMinutes,changeAfter=gameEnd+timing.cooldownMinutes,returnDeparture=changeAfter+timing.changeAfterMinutes,back=returnDeparture+returnMinutes,end=back+timing.toleranceMinutes;
+ const events=[
+  ['Treffpunkt beim BSV · Packen',meeting,timing.meetingMinutes],['Abfahrt beim BSV · Hinfahrt',departure,travelMinutes],['Ankunft am Spielort · Umziehen',arrival,timing.changeBeforeMinutes],['Aufwärmen',-timing.warmupMinutes,timing.warmupMinutes],['Anpfiff',0,null],['Voraussichtliches Spielende · Auslaufen / Nachspiel',gameEnd,timing.cooldownMinutes],['Umziehen nach dem Spiel',changeAfter,timing.changeAfterMinutes],['Rückfahrt',returnDeparture,returnMinutes],['Ankunft beim BSV · Toleranz',back,timing.toleranceMinutes],['Bus zurückgeben',end,null],
+ ].map(([label,minutes,duration])=>({label,at:at(minutes),duration}));
+ return {startsAt:at(meeting),endsAt:at(end),kickoffAt:new Date(kickoff).toISOString(),timing,events};
+}
+export function resourceTimeSuggestion(input){
+ const {startsAt,endsAt}=resourceTimePlan(input);return {startsAt,endsAt};
 }
 export function resourceOverlap(a,b){return Date.parse(a.startsAt)<Date.parse(b.endsAt)&&Date.parse(b.startsAt)<Date.parse(a.endsAt);}
 export function resourceMonthDays(month){
@@ -29,6 +40,8 @@ export function validateResourceBooking(body){
  const startsAt=new Date(body.startsAt),endsAt=new Date(body.endsAt);
  if(!Number.isFinite(startsAt.getTime())||!Number.isFinite(endsAt.getTime())||endsAt<=startsAt||endsAt-startsAt>72*3600000)throw new Error('Bitte einen Zeitraum von höchstens 72 Stunden mit Rückgabe nach Abfahrt eingeben.');
  if(typeof body.teamId!=='string'||!body.teamId||typeof body.resourceId!=='string'||!body.resourceId)throw new Error('Bitte Bus und Mannschaft auswählen.');
+ if(typeof body.matchId!=='string'||!body.matchId||!Number.isFinite(Date.parse(body.expectedKickoff)))throw new Error('Bitte ein zukünftiges Auswärtsspiel im Kalender auswählen.');
  const note=String(body.note||'').trim();if(note.length>500)throw new Error('Der Hinweis darf höchstens 500 Zeichen enthalten.');
- return {resourceId:body.resourceId,teamId:body.teamId,matchId:body.matchId||null,expectedKickoff:body.expectedKickoff||null,startsAt:startsAt.toISOString(),endsAt:endsAt.toISOString(),destination:String(body.destination||'').slice(0,400),routeKey:body.routeKey||null,note};
+ const planning=body.timing?resourceTimePlan({...body.timing,kickoffAt:body.expectedKickoff}):null;
+ return {resourceId:body.resourceId,teamId:body.teamId,matchId:body.matchId,expectedKickoff:body.expectedKickoff,startsAt:startsAt.toISOString(),endsAt:endsAt.toISOString(),destination:String(body.destination||'').slice(0,400),routeKey:body.routeKey||null,planning,timing:planning?.timing||null,note};
 }

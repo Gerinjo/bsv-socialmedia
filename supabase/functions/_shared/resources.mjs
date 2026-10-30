@@ -67,10 +67,16 @@ export async function handleResources(db,actor,body,{parseFont,load,fetcher=fetc
  await resourceRpc(db,actor,{action:'authorize',...(['route','book'].includes(action)?{teamId:body.teamId}:{})});
  if(action==='list'){if(body.month&&!/^\d{4}-(0[1-9]|1[0-2])$/.test(body.month))throw new Error('Ungültiger Kalendermonat.');return resourceRpc(db,actor,{action,month:body.month});}
  if(action==='sync')return syncResourceMatches(db,actor,{parseFont,fetcher});
- if(action==='book')return resourceRpc(db,actor,{action,...validateResourceBooking(body)});
+ if(action==='book'){
+  const booking=validateResourceBooking(body);
+  const {match}=await resourceRpc(db,actor,{action:'_match',matchId:booking.matchId});
+  if(match.is_home!==false)throw Object.assign(new Error('Für Heimspiele ist der Bus nicht reservierbar.'),{status:409});
+  return resourceRpc(db,actor,{action,...booking});
+ }
  if(action==='cancel')return resourceRpc(db,actor,{action,resourceId:body.resourceId,bookingId:body.bookingId});
  if(action==='match'){
   const {match}=await resourceRpc(db,actor,{action:'_match',matchId:body.matchId});let venue=match.venue;
+  if(match.is_home!==false)throw Object.assign(new Error('Für Heimspiele ist der Bus nicht reservierbar.'),{status:409});
   if(!venue){try{const result=parseResourceVenue(await(await readResourceSource(match.source_url,fetcher)).text(),load);venue=result?.address;if(venue)await resourceRpc(db,actor,{action:'_venue',matchId:match.id,venue});}catch{}}
   return {match:{...match,venue:venue||''},warning:venue?'':'Spieladresse konnte nicht gelesen werden. Bitte den tatsächlichen Spielort eingeben.'};
  }
