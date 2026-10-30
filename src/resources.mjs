@@ -1,6 +1,13 @@
 export const BUS_ORIGIN={name:'BSV Nordstern',address:'Schlesierstraße 43, 78315 Radolfzell am Bodensee',coordinates:[8.9700514,47.7543133]};
 export const RESOURCE_EVENT_CATEGORIES={training:'Trainerweiterbildung',supporters:'Förderverein',city_event:'Stadtevent / Verkauf',other:'Sonstiges'};
 export function resourceBookingLabel(booking){return booking.bookingKind==='event'?booking.event?.title||'Freies Event':booking.teamName||'Mannschaft';}
+export function resourceBookingConflicts(bookings,planned,excludeId=null){
+ const start=Date.parse(planned?.startsAt),end=Date.parse(planned?.endsAt);if(!Number.isFinite(start)||!Number.isFinite(end)||end<=start)return [];
+ return bookings.filter(b=>b.id!==excludeId&&!b.cancelledAt&&!b.cancelled&&(!planned.resourceId||!b.resourceId||b.resourceId===planned.resourceId)&&resourceOverlap(b,planned)).sort((a,b)=>Date.parse(a.startsAt)-Date.parse(b.startsAt)).map(b=>{
+  const occupiedStart=Date.parse(b.startsAt),occupiedEnd=Date.parse(b.endsAt),overlapStart=Math.max(start,occupiedStart),overlapEnd=Math.min(end,occupiedEnd),axisStart=Math.min(start,occupiedStart),axisEnd=Math.max(end,occupiedEnd),position=value=>100*(value-axisStart)/(axisEnd-axisStart);
+  return {id:b.id,label:resourceBookingLabel(b),axisStart:new Date(axisStart).toISOString(),axisEnd:new Date(axisEnd).toISOString(),occupied:{startsAt:b.startsAt,endsAt:b.endsAt,startPercent:position(occupiedStart),endPercent:position(occupiedEnd)},planned:{startsAt:planned.startsAt,endsAt:planned.endsAt,startPercent:position(start),endPercent:position(end)},overlap:{startsAt:new Date(overlapStart).toISOString(),endsAt:new Date(overlapEnd).toISOString(),startPercent:position(overlapStart),endPercent:position(overlapEnd),minutes:Math.ceil((overlapEnd-overlapStart)/60000)}};
+ });
+}
 export function resourceTeamInFilter(teamId,filter,teams){return !filter||(filter==='__own__'?teams.some(team=>team.id===teamId&&team.isOwn):teamId===filter);}
 export function resourceCalendarMatches(matches,filter='',teams=[],bookings=[]){
  const booked=new Set(bookings.filter(b=>!b.cancelledAt&&!b.cancelled&&b.matchId).map(b=>b.matchId));

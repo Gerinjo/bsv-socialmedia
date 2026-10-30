@@ -32,13 +32,13 @@ function createResourcesWorkspace(root,{request}){
   dialog.innerHTML=`<div class="dialog-header"><h3 id="resourceBookingTitle">${e(resourceBookingLabel(b))} · Busreservierung</h3><button type="button" class="ghost" data-resource-close aria-label="Schließen">✕</button></div><p>${dateTime(b.startsAt)} – ${dateTime(b.endsAt)}</p>${b.canManage?`<form data-resource-edit-times><div class="resource-times"><label>Beginn / Bus übernehmen<input name="startsAt" type="datetime-local" required value="${resourceLocalTime(b.startsAt)}"></label><label>Ende / Bus zurückgeben<input name="endsAt" type="datetime-local" required value="${resourceLocalTime(b.endsAt)}"></label></div><p class="small">Die gespeicherten Buchungszeiten sind anpassbar. Der berechnete Ablauf bleibt als Vorschlag sichtbar.</p><p data-resource-form-status role="status" aria-live="polite"></p><button type="submit">Zeiten speichern</button></form>`:''}${timelineHtml(b.planning)}<p>${e(b.destination)}</p><p>${e(b.note)}</p>${b.bookingKind==='event'?`<p class="resource-event-label">◆ Freies Event · ${e(RESOURCE_EVENT_CATEGORIES[b.event?.category]||'Sonstiges')}</p><p>${e(b.event?.organizer)}<br>Verantwortlich: ${e(b.event?.contact)}</p>`:''}<p>Reserviert von ${e(b.trainerName)}</p>${b.canManage?'<button type="button" class="secondary" data-resource-release>Reservierung freigeben</button>':''}`;
   dialog.querySelector('[data-resource-close]').onclick=()=>{if(!busy){dialog.close();open();}};dialog.oncancel=event=>{if(busy)event.preventDefault();};
   dialog.querySelector('[data-resource-release]')?.addEventListener('click',()=>cancel(b));
-  const form=dialog.querySelector('[data-resource-edit-times]');if(form)form.onsubmit=async event=>{
+  const form=dialog.querySelector('[data-resource-edit-times]');if(form)attachConflictPreview(form,b.resourceId,b.id);if(form)form.onsubmit=async event=>{
    event.preventDefault();if(busy)return;
    try{
     const body=validateResourceTimeChange({resourceId:b.resourceId,bookingId:b.id,startsAt:resourceUtcTime(form.elements.startsAt.value),endsAt:resourceUtcTime(form.elements.endsAt.value),expectedStartsAt:b.startsAt,expectedEndsAt:b.endsAt});
-    if(data.bookings.some(other=>other.id!==b.id&&resourceOverlap(other,body)))throw new Error('Der Bus ist in diesem Zeitraum bereits reserviert. Bitte andere Zeiten wählen.');
+    guardBookingConflict(form,body);
     busy=true;lockDialog(true);await request({action:'reschedule',...body});dialog.close();month=day(body.startsAt).slice(0,7);busy=false;await open();message('Buchungszeiten gespeichert.');
-   }catch(error){formStatus(error.message,true);}finally{busy=false;lockDialog(false);}
+   }catch(error){await bookingFailure(error,form);}finally{busy=false;lockDialog(false);}
   };dialog.showModal();
  }
  function showFreeEvent(selectedDate){
@@ -50,13 +50,13 @@ function createResourcesWorkspace(root,{request}){
   dialog.innerHTML=`<div class="dialog-header"><h3 id="resourceBookingTitle">Bus für ein freies Event buchen</h3><button type="button" class="ghost" data-resource-close aria-label="Schließen">✕</button></div><p>Für Weiterbildungen, Fördervereinsfahrten und Veranstaltungen. Der Zeitraum umfasst Abholung, Fahrt, Einsatz und Rückgabe beim BSV; höchstens 72 Stunden.</p><form data-resource-form><label>Anlass / Veranstaltung<input name="eventTitle" required maxlength="160" placeholder="z. B. Stadtfest – Speisen- und Getränkeverkauf"></label><label>Veranstaltungsart<select name="eventCategory">${Object.entries(RESOURCE_EVENT_CATEGORIES).map(([key,label])=>`<option value="${key}">${e(label)}</option>`).join('')}</select></label><label>Gruppe / Veranstalter (optional)<input name="eventOrganizer" maxlength="120" placeholder="z. B. Förderverein"></label><label>Verantwortliche Person / Kontakt<input name="eventContact" required maxlength="160" value="${e(data.actorName||'')}"></label><label>Ort / Zieladresse (optional)<input name="destination" maxlength="400" placeholder="z. B. Marktplatz Radolfzell"></label><div class="resource-times"><label>Bus übernehmen<input name="startsAt" type="datetime-local" required value="${startValue}"></label><label>Bus zurückgeben<input name="endsAt" type="datetime-local" required value="${endValue}"></label></div><label>Hinweis (optional)<input name="note" maxlength="500" placeholder="z. B. Transport von Tischen und Verkaufsstand"></label><p data-resource-form-status role="status" aria-live="polite"></p><div class="toolbar"><button type="submit">Event verbindlich buchen</button><button type="button" class="secondary" data-resource-close>Abbrechen</button></div></form>`;
   dialog.querySelectorAll('[data-resource-close]').forEach(button=>button.onclick=()=>{if(!busy){sequence++;draft=null;dialog.close();}});
   dialog.oncancel=event=>{if(busy)event.preventDefault();else{sequence++;draft=null;}};
-  const form=dialog.querySelector('form');form.onsubmit=async event=>{
+  const form=dialog.querySelector('form');attachConflictPreview(form,data.resources[0]?.id);form.onsubmit=async event=>{
    event.preventDefault();if(busy)return;
    try{
     const body=validateResourceBooking({bookingKind:'event',resourceId:data.resources[0]?.id,event:{title:form.elements.eventTitle.value,category:form.elements.eventCategory.value,organizer:form.elements.eventOrganizer.value,contact:form.elements.eventContact.value},startsAt:resourceUtcTime(form.elements.startsAt.value),endsAt:resourceUtcTime(form.elements.endsAt.value),destination:form.elements.destination.value,note:form.elements.note.value});
-    if(data.bookings.some(b=>resourceOverlap(b,body)))throw new Error('Der Bus ist in diesem Zeitraum bereits reserviert. Bitte andere Zeiten wählen.');
+    guardBookingConflict(form,body);
     busy=true;lockDialog(true);await request({action:'book',...body});dialog.close();draft=null;month=day(body.startsAt).slice(0,7);busy=false;await open();message('Bus für das freie Event reserviert.');
-   }catch(error){formStatus(error.message,true);}finally{busy=false;lockDialog(false);}
+   }catch(error){await bookingFailure(error,form);}finally{busy=false;lockDialog(false);}
   };dialog.showModal();
  }
  function showBooking(match){
@@ -65,7 +65,7 @@ function createResourcesWorkspace(root,{request}){
   draft={match,route:null,candidates:[],manualTimes:{startsAt:false,endsAt:false},token:++sequence};const teams=data.teams.filter(t=>t.canBook);
   dialog.innerHTML=`<div class="dialog-header"><h3 id="resourceBookingTitle">${match?'Bus zum Spiel reservieren':'Bus reservieren'}</h3><button type="button" class="ghost" data-resource-close aria-label="Schließen">✕</button></div>${match?`<p><strong>${e(match.home)} – ${e(match.away)}</strong><br>${dateTime(match.kickoffAt)} · ${e(teamName(match.teamId))}</p>`:''}
    <form data-resource-form><div class="resource-times"><label>Beginn / Bus übernehmen<input name="startsAt" type="datetime-local" required></label><label>Ende / Bus zurückgeben<input name="endsAt" type="datetime-local" required></label></div><p class="small" data-resource-manual-note>Beginn und Ende kannst du unabhängig vom berechneten Vorschlag ändern.</p><section data-resource-plan aria-live="polite"><p class="small">Der Ablauf wird aus Anstoßzeit, Fahrzeiten und den Zeitpuffern berechnet.</p></section><details data-resource-options><summary>Fahrzeit und Zeitbausteine anpassen</summary><div class="resource-options"><label>Mannschaft<select name="teamId" required ${match?'disabled':''}>${teams.map(t=>`<option value="${e(t.id)}" ${match?.teamId===t.id?'selected':''}>${e(t.name)}</option>`).join('')}</select></label><label>Spielort / Zieladresse<input name="destination" maxlength="400" value="${e(match?.venue||'')}" placeholder="Sportplatz, Straße, Ort"></label><div class="toolbar"><button type="button" class="secondary" data-resource-route>Spielort suchen & Route berechnen</button></div><label data-resource-place-label hidden>Gefundener Spielort<select data-resource-place></select></label><p data-resource-route-info class="small">Spielort und Zeiten vor dem Reservieren prüfen. Falls keine Route verfügbar ist, Hinfahrt und Rückfahrt in Minuten selbst eingeben.</p><fieldset><legend>Vor dem Spiel · Minuten</legend><div class="resource-buffers">${timingInputs([['meetingMinutes','Treffpunkt / Packen'],['travelMinutes','Hinfahrt'],['changeBeforeMinutes','Umziehen vor dem Spiel'],['warmupMinutes','Aufwärmen']])}</div></fieldset><label>Spiel einschließlich Halbzeitpause (Min.)<input data-resource-timing name="matchMinutes" type="number" required min="1" max="360" value="${match.matchMinutes||105}"></label><fieldset><legend>Nach dem Spiel · Minuten</legend><div class="resource-buffers">${timingInputs([['cooldownMinutes','Auslaufen / Nachspiel'],['changeAfterMinutes','Umziehen nach dem Spiel'],['returnMinutes','Rückfahrt'],['toleranceMinutes','Toleranz bei Rückgabe']])}</div></fieldset><button type="button" class="ghost" data-resource-recalculate>Berechnete Zeiten übernehmen</button></div></details><label>Hinweis (optional)<input name="note" maxlength="500" placeholder="z. B. Abholung durch …"></label><p data-resource-form-status role="status" aria-live="polite"></p><div class="toolbar"><button type="submit" ${teams.length&&data.resources.length?'':'disabled'}>Verbindlich reservieren</button><button type="button" class="secondary" data-resource-close>Abbrechen</button></div></form><p class="small">Routen ohne Live-Verkehr: OSRM / FOSSGIS · Ortssuche: Photon / komoot · © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap-Mitwirkende</a> · <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener">Kartendaten berichtigen</a></p>`;
-  const form=dialog.querySelector('form'),token=draft.token;
+  const form=dialog.querySelector('form'),token=draft.token;attachConflictPreview(form,data.resources[0]?.id);
   dialog.querySelectorAll('[data-resource-close]').forEach(button=>button.onclick=()=>{if(!busy){sequence++;draft=null;dialog.close();}});
   dialog.oncancel=event=>{if(busy)event.preventDefault();else{sequence++;draft=null;}};
   dialog.querySelector('[data-resource-route]').onclick=()=>calculate();
@@ -78,12 +78,48 @@ function createResourcesWorkspace(root,{request}){
    event.preventDefault();if(busy)return;
    try{
     const body=validateResourceBooking({resourceId:data.resources[0].id,teamId:match?.teamId||form.elements.teamId.value,matchId:match?.id,expectedKickoff:match?.kickoffAt,startsAt:resourceUtcTime(form.elements.startsAt.value),endsAt:resourceUtcTime(form.elements.endsAt.value),destination:form.elements.destination.value,note:form.elements.note.value,routeKey:draft.route?.key,timing:readTiming(form)});
-    if(data.bookings.some(b=>resourceOverlap(b,body)))throw new Error('Der Bus ist in diesem Zeitraum bereits reserviert. Bitte andere Zeiten wählen.');
+    guardBookingConflict(form,body);
     busy=true;lockDialog(true);await request({action:'book',...body});dialog.close();draft=null;month=day(body.startsAt).slice(0,7);busy=false;await open();message('Bus für die Mannschaft reserviert.');
-   }catch(error){formStatus(error.message,true);}finally{busy=false;lockDialog(false);}
+   }catch(error){await bookingFailure(error,form);}finally{busy=false;lockDialog(false);}
   };
   dialog.showModal();
   if(match){(async()=>{try{busy=true;lockDialog(true,'Spieladresse wird geladen');formStatus('Spieladresse wird geladen …');const result=await request({action:'match',matchId:match.id});if(sequence!==token)return;form.elements.destination.value=result.match.venue||'';formStatus(result.warning||'Spieladresse geladen.');if(!form.elements.destination.value)root.querySelector('[data-resource-options]').open=true;}catch(error){formStatus(error.message,true);}finally{busy=false;lockDialog(false);}if(sequence===token&&form.elements.destination.value)await calculate();})();}
+ }
+ function attachConflictPreview(form,resourceId,excludeId=null){
+  form.dataset.conflictResource=resourceId||'';form.dataset.conflictExclude=excludeId||'';
+  const node=document.createElement('section');node.dataset.resourceConflicts='';node.className='resource-conflicts';node.hidden=true;node.setAttribute('aria-live','polite');node.setAttribute('aria-label','Zeitvergleich bei Buskonflikten');form.querySelector('.resource-times').after(node);
+  form.addEventListener('input',()=>updateConflictPreview(form));updateConflictPreview(form);
+ }
+ function conflictPeriod(form){try{return {resourceId:form.dataset.conflictResource,startsAt:resourceUtcTime(form.elements.startsAt.value),endsAt:resourceUtcTime(form.elements.endsAt.value)};}catch{return null;}}
+ function updateConflictPreview(form,planned=conflictPeriod(form)){
+  const node=form.querySelector('[data-resource-conflicts]');if(!node)return [];
+  const conflicts=planned?resourceBookingConflicts(form._resourceConflictBookings||data.bookings,planned,form.dataset.conflictExclude||null):[];
+  node.hidden=!conflicts.length;
+  if(planned&&Date.parse(planned.endsAt)>Date.parse(planned.startsAt)){
+   if(!conflicts.length&&node.dataset.hadConflict==='true'){const status=form.querySelector('[data-resource-form-status]');if(status?.classList.contains('error')&&/^Der Bus ist in diesem Zeitraum bereits reserviert\./.test(status.textContent))formStatus('Der Zeitkonflikt ist aufgelöst.');}
+   node.dataset.hadConflict=String(Boolean(conflicts.length));
+  }
+  if(conflicts.length){const html='<h4>Busbelegung und deine Planung überschneiden sich</h4><p class="small">Links die bestehende Belegung, rechts deine Planung. Beide Balken verwenden dieselbe Zeitachse. Rot schraffiert ist der kritische Zeitraum.</p>'+conflicts.map(conflictComparisonHtml).join('');if(node.innerHTML!==html)node.innerHTML=html;}else node.innerHTML='';
+  return conflicts;
+ }
+ function conflictComparisonHtml(c,index){
+  const y=percent=>24+2.88*percent,stamp=value=>new Date(value).toLocaleString('de-DE',{timeZone:'Europe/Berlin',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}),pattern='resource-conflict-hatch-'+index;
+  const labels=(range,right)=>{
+   const targets=[y(range.startPercent),y((c.overlap.startPercent+c.overlap.endPercent)/2),y(range.endPercent)],centers=targets.map(value=>Math.max(28,Math.min(312,value)));
+   for(let i=1;i<3;i++)centers[i]=Math.max(centers[i],centers[i-1]+90);
+   centers[2]=Math.min(centers[2],312);for(let i=1;i>=0;i--)centers[i]=Math.min(centers[i],centers[i+1]-90);
+   return targets.map((target,i)=>{const x=right?222:4,lineStart=right?208:98,lineEnd=right?222:112,critical=i===1,lines=critical?['Kritisch',stamp(c.overlap.startsAt),stamp(c.overlap.endsAt)]:[i===0?'Beginn':'Ende',stamp(i===0?range.startsAt:range.endsAt)];return `<line x1="${lineStart}" y1="${right?target:centers[i]}" x2="${lineEnd}" y2="${right?centers[i]:target}" class="${critical?'resource-conflict-critical-line':'resource-conflict-label-line'}"/><text x="${x}" y="${centers[i]-(critical?16:8)}" class="${critical?'resource-conflict-critical-text':''}">${lines.map((line,j)=>`<tspan x="${x}" dy="${j?15:0}" class="${j?'resource-conflict-time':'resource-conflict-caption'}">${e(line)}</tspan>`).join('')}</text>`;}).join('');
+  };
+  const height=range=>Math.max(2,y(range.endPercent)-y(range.startPercent));
+  return `<figure class="resource-conflict-pair"><figcaption><strong>Belegt: ${e(c.label)}</strong><span>Zeitraum: ${dateTime(c.axisStart)} – ${dateTime(c.axisEnd)}</span></figcaption><div class="resource-conflict-head"><span>Bestehende Belegung</span><span>Deine Planung</span></div><svg class="resource-conflict-svg" viewBox="0 0 320 340" role="img" aria-label="${e('Bestehende Belegung '+dateTime(c.occupied.startsAt)+' bis '+dateTime(c.occupied.endsAt)+'. Planung '+dateTime(c.planned.startsAt)+' bis '+dateTime(c.planned.endsAt)+'. Kritische Überschneidung '+dateTime(c.overlap.startsAt)+' bis '+dateTime(c.overlap.endsAt))}"><defs><pattern id="${pattern}" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><rect width="6" height="6" fill="#fce8e6"/><line x1="0" y1="0" x2="0" y2="6" stroke="#b3261e" stroke-width="3"/></pattern></defs><rect x="106" y="${y(c.overlap.startPercent)}" width="106" height="${height(c.overlap)}" fill="#fce8e6"/><rect x="112" y="24" width="18" height="288" rx="9" fill="#f1f3f1"/><rect x="190" y="24" width="18" height="288" rx="9" fill="#f1f3f1"/><rect data-resource-conflict-occupied x="112" y="${y(c.occupied.startPercent)}" width="18" height="${height(c.occupied)}" rx="4" fill="#b78924"/><rect data-resource-conflict-planned x="190" y="${y(c.planned.startPercent)}" width="18" height="${height(c.planned)}" rx="4" fill="#237151"/>${[112,190].map(x=>`<rect data-resource-conflict-overlap x="${x}" y="${y(c.overlap.startPercent)}" width="18" height="${height(c.overlap)}" fill="url(#${pattern})" stroke="#b3261e"/>`).join('')}${labels(c.occupied,false)}${labels(c.planned,true)}</svg><p class="resource-conflict-window"><strong>Kritischer Zeitraum:</strong> ${dateTime(c.overlap.startsAt)} – ${dateTime(c.overlap.endsAt)} · ${c.overlap.minutes} Min.</p></figure>`;
+ }
+ function guardBookingConflict(form,planned){if(updateConflictPreview(form,planned).length)throw Object.assign(new Error('Der Bus ist in diesem Zeitraum bereits reserviert. Bitte andere Zeiten wählen.'),{status:409,localConflict:true});}
+ async function bookingFailure(error,form){
+  busy=true;lockDialog(true);
+  const planned=conflictPeriod(form);
+  if(error.status===409&&planned){try{const latest=await request({action:'list',month:day(planned.startsAt).slice(0,7)});form._resourceConflictBookings=latest.bookings;}catch{}}
+  const conflicts=updateConflictPreview(form,planned);formStatus(error.localConflict&&!conflicts.length?'Die Belegung wurde aktualisiert. Bitte die Buchung erneut speichern.':error.message,true);
+  if(conflicts.length)form.querySelector('[data-resource-conflicts]').scrollIntoView({block:'start'});
  }
  function formStatus(text,error=false){const node=root.querySelector('[data-resource-form-status]');if(node){node.textContent=text;node.className=error?'error':'';}}
  function lockDialog(locked,loadingText=''){
@@ -100,7 +136,7 @@ function createResourcesWorkspace(root,{request}){
  function readTiming(form){return Object.fromEntries([...Object.keys(RESOURCE_TIMING_DEFAULTS),'travelMinutes','returnMinutes'].map(key=>[key,form.elements[key].value===''?NaN:Number(form.elements[key].value)]));}
  function timelineHtml(plan){return plan?.events?.length?`<h4>Zeitscheiben · berechneter Ablauf</h4><ol class="resource-plan">${plan.events.map(event=>`<li><time datetime="${e(event.at)}">${dateTime(event.at)}</time><span>${e(event.label)}${event.duration!==null?' · '+e(event.duration)+' Min.':''}</span></li>`).join('')}</ol>`:'';}
  function showManualNote(form){const manual=Object.values(draft.manualTimes).some(Boolean);form.querySelector('[data-resource-manual-note]').textContent=manual?'Deine manuell gewählten Buchungszeiten werden gespeichert. Die Zeitscheiben zeigen den Berechnungsvorschlag.':'Beginn und Ende kannst du unabhängig vom berechneten Vorschlag ändern.';}
- function applyTimes(form,force=false){const plan=resourceTimePlan({kickoffAt:draft.match.kickoffAt,...readTiming(form)});for(const key of ['startsAt','endsAt']){if(force)draft.manualTimes[key]=false;if(!draft.manualTimes[key])form.elements[key].value=resourceLocalTime(plan[key]);}root.querySelector('[data-resource-plan]').innerHTML=timelineHtml(plan);showManualNote(form);}
+ function applyTimes(form,force=false){const plan=resourceTimePlan({kickoffAt:draft.match.kickoffAt,...readTiming(form)});for(const key of ['startsAt','endsAt']){if(force)draft.manualTimes[key]=false;if(!draft.manualTimes[key])form.elements[key].value=resourceLocalTime(plan[key]);}root.querySelector('[data-resource-plan]').innerHTML=timelineHtml(plan);showManualNote(form);updateConflictPreview(form);}
 
  async function calculate(fromCandidate=false){
   if(busy||!draft)return;const form=root.querySelector('[data-resource-form]'),token=draft.token,resource=data.resources[0];if(!resource){formStatus('Bus nicht verfügbar.',true);return;}
