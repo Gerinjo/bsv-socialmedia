@@ -73,6 +73,14 @@ export function createEditorialWorkspace(
     <dialog id="edNewsletterSourceDialog" aria-labelledby="edNewsletterSourceHeading"><div class="dialog-header"><h2 id="edNewsletterSourceHeading">Aus dem Stadionheft übernehmen</h2><button type="button" class="ghost" id="edNewsletterSourceClose" aria-label="Schließen">✕</button></div><form id="edNewsletterSourceForm"><label>Veröffentlichtes Stadionheft<select id="edNewsletterSourceIssue"></select></label><p class="small">Wähle die Artikel für deinen Newsletter. Die Vorschau unten zeigt die gekürzten Texte. Jeder Auszug erhält einen Link zur vollständigen Newsletter-Ausgabe.</p><p id="edNewsletterSourceInfo" class="small"></p><button type="button" class="ghost" id="edNewsletterSourceLatest" hidden>Aktuelle Heftfassung laden</button><div id="edNewsletterSourceArticles" class="ed-newsletter-source-list"></div><p id="edNewsletterSourceCount" class="small" aria-live="polite"></p><p id="edNewsletterSourceMessage" role="status"></p><div class="toolbar"><button id="edNewsletterSourceSave" type="submit">Artikelauswahl speichern</button></div></form></dialog>
     <dialog id="edPreviewDialog" aria-labelledby="edPreviewHeading"><div class="dialog-header"><h2 id="edPreviewHeading">Heftvorschau · Entwurf</h2><button class="ghost" id="edPreviewClose" type="button" aria-label="Vorschau schließen">✕</button></div><iframe id="edMagazineFrame" title="Stadionheft vor Veröffentlichung ansehen" sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"></iframe></dialog>`;
 
+  // The email frame intentionally disallows scripts. Mount the viewer from the
+  // parent; magazine frames keep their isolated, script-enabled sandbox.
+  $('#edMagazineFrame').addEventListener('load',()=>{
+    const frame=$('#edMagazineFrame');
+    if(frame.sandbox.contains('allow-same-origin')&&frame.contentDocument?.body)
+      createSuitePhotoPreview({window:frame.contentWindow,document:frame.contentDocument,styleText:SUITE_PHOTO_PREVIEW_CSS});
+  });
+
   const dictation = createEditorialDictation({
     button: $('#edDictate'), status: $('#edDictationStatus'), hint: $('#edDictationHint'), textarea: $('#edArticleForm').elements.body,
     canStart: () => !busy && !editing?.automatic_sports && editing?.status !== 'waived',
@@ -361,7 +369,7 @@ export function createEditorialWorkspace(
         readerSnapshot = {...snapshot,newsletter_selection:{...selection,articles:selection.articles.map(article => ({...article,body:source.articles.find(full => full.id === article.id)?.body || article.excerpt}))}};
       }
       if (newsletterPreviewReader) URL.revokeObjectURL(newsletterPreviewReader);
-      newsletterPreviewReader = URL.createObjectURL(new Blob([renderNewsletterReader(readerSnapshot,newsletterAssets.template,{stadiumIssues:current.issues})],{type:'text/html;charset=utf-8'}));
+      newsletterPreviewReader = URL.createObjectURL(new Blob([suitePhotoPreviewHtml(renderNewsletterReader(readerSnapshot,newsletterAssets.template,{stadiumIssues:current.issues}))],{type:'text/html;charset=utf-8'}));
       readerUrl = newsletterPreviewReader;
     }
     return renderEditorialNewsletter(snapshot, newsletterAssets.template, {readerUrl,
@@ -622,7 +630,7 @@ export function createEditorialWorkspace(
     const photo = teamPhotos.find(photo => photo.team_id === $('#edTeamPhotoSelect').value);
     const preview = $('#edTeamPhotoPreview');
     preview.hidden = !photo;
-    if (photo) { preview.src = photo.preview_url || photo.photo_url; preview.alt = `Mannschaftsbild ${photo.name}`; }
+    if (photo) { preview.src = photo.preview_url || photo.photo_url; preview.dataset.photoFull = photo.photo_url; preview.alt = `Mannschaftsbild ${photo.name}`; }
   };
   $('#edAddTeamPhoto').onclick = () => {
     const photo = teamPhotos.find(photo => photo.team_id === $('#edTeamPhotoSelect').value);
@@ -1163,7 +1171,7 @@ export function createEditorialWorkspace(
           version: selected.version,
         });
         const newsletter = selected.kind === 'newsletter';
-        const html = newsletter ? (await newsletterMail(result.snapshot)).html : renderEditorialMagazine(result.snapshot, true);
+        const html = newsletter ? (await newsletterMail(result.snapshot)).html : suitePhotoPreviewHtml(renderEditorialMagazine(result.snapshot, true));
         $('#edPreviewHeading').textContent = newsletter ? 'Newsletter · E-Mail-Entwurf' : 'Heftvorschau · Entwurf';
         $('#edMagazineFrame').title = newsletter ? 'Newsletter als E-Mail ansehen' : 'Stadionheft vor Veröffentlichung ansehen';
         $('#edMagazineFrame').setAttribute('sandbox', newsletter ? 'allow-same-origin allow-popups allow-popups-to-escape-sandbox' : 'allow-scripts allow-popups allow-popups-to-escape-sandbox');

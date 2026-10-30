@@ -786,6 +786,24 @@
 
 .brand-preview-card{position:relative}.brand-preview-card>.bsv-seasonal-snow{position:absolute;inset:0 0 auto;aspect-ratio:680/420;z-index:1}.brand-preview-stage{position:relative;margin:16px 0}.brand-preview-stage #brandPreviewLarge{margin:0}.brand-preview-stage>.bsv-seasonal-snow{position:absolute;inset:0;z-index:1}
 
+.suite-photo-trigger{cursor:zoom-in}
+.suite-photo-trigger:focus-visible{outline:3px solid #29774e;outline-offset:4px;border-radius:8px}
+#suitePhotoDialog{box-sizing:border-box;width:min(1120px,94vw);max-width:94vw;max-height:94vh;max-height:94dvh;margin:auto;padding:0;border:1px solid #d5e0da;border-radius:20px;background:#fff;color:#20352a;box-shadow:0 24px 90px #071b2c50;overflow:auto}
+#suitePhotoDialog::backdrop{background:rgba(12,28,22,.78);backdrop-filter:blur(5px)}
+#suitePhotoDialog .suite-photo-header{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:20px 24px;border-bottom:1px solid #dfe8e2;background:#fff}
+#suitePhotoDialog .suite-photo-header p{margin:0 0 4px;color:#5c7365;font:700 11px/1.4 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase}
+#suitePhotoDialog h2{margin:0;font:700 clamp(18px,2.5vw,24px)/1.3 system-ui,sans-serif;color:#20352a;overflow-wrap:anywhere}
+#suitePhotoDialog .suite-photo-close{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;padding:10px;border:1px solid #d5e0da;border-radius:50%;background:#f0f5f1;color:#254a35;cursor:pointer}
+#suitePhotoDialog .suite-photo-close:hover{background:#dfece3}
+#suitePhotoDialog .suite-photo-close:focus-visible{outline:3px solid #29774e;outline-offset:3px}
+#suitePhotoDialog .suite-photo-close svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+#suitePhotoDialog .suite-photo-stage{display:grid;place-items:center;position:relative;height:min(70vh,calc((min(1120px,94vw) - 32px)/var(--suite-photo-ratio,1.5) + 32px));height:min(70dvh,calc((min(1120px,94vw) - 32px)/var(--suite-photo-ratio,1.5) + 32px));min-height:160px;padding:16px;box-sizing:border-box;background:radial-gradient(ellipse at center,#fff,#edf2ee)}
+#suitePhotoDialog .suite-photo-stage img{display:block;width:100%;height:100%;min-height:0;max-width:100%;max-height:100%;object-fit:contain;border:0;border-radius:6px;cursor:default}
+#suitePhotoDialog .suite-photo-stage img[hidden],#suitePhotoDialog .suite-photo-status[hidden]{display:none}
+#suitePhotoDialog .suite-photo-status{position:absolute;inset:0;display:grid;place-items:center;margin:0;padding:24px;text-align:center;color:#52685a;font:500 15px/1.5 system-ui,sans-serif}
+@media(max-width:600px){#suitePhotoDialog{border-radius:14px}#suitePhotoDialog .suite-photo-header{padding:14px;gap:12px}#suitePhotoDialog .suite-photo-stage{padding:8px;height:min(65vh,calc((94vw - 16px)/var(--suite-photo-ratio,1.5) + 16px));height:min(65dvh,calc((94vw - 16px)/var(--suite-photo-ratio,1.5) + 16px))}}
+@media print{#suitePhotoDialog{display:none!important}}
+
 .activity-filters{display:grid;grid-template-columns:minmax(180px,1.4fr) minmax(170px,1fr) repeat(2,minmax(140px,.8fr));gap:12px;margin:22px 0 12px;align-items:end}.activity-filters label{min-width:0}.activity-filters select,.activity-filters input{min-width:0;min-height:44px}.activity-filter-actions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}.activity-status{margin:12px 0}.activity-status:empty{display:none}.activity-status.error{padding:12px;border-radius:8px}.activity-table-wrap{overflow-x:auto;border:1px solid var(--outline);border-radius:12px}.activity-table-wrap:empty{border:0}.activity-table-wrap>.empty{margin:0;padding:20px}.activity-table{width:100%;border-collapse:collapse;font-size:13px;text-align:left}.activity-table th{padding:12px 14px;background:var(--accent-subtle);color:var(--mint);font-size:12px;white-space:nowrap}.activity-table td{padding:14px;vertical-align:top;border-top:1px solid var(--outline);line-height:1.5;overflow-wrap:anywhere}.activity-table td strong{color:var(--ink);display:block}.activity-table td small,.activity-table td>span{display:block;color:var(--mint)}.activity-table td small{margin-top:4px}.activity-table time{white-space:nowrap}.activity-amount{font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right;font-weight:700}.activity-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px}.activity-note{line-height:1.6;margin:24px 0 0;padding-top:16px;border-top:1px solid var(--outline)}
 @media(max-width:1100px){.activity-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){.activity-filters{grid-template-columns:1fr 1fr}.activity-filters>label:nth-child(-n+2){grid-column:1/-1}.activity-table-wrap{border:0;border-radius:0}.activity-table,.activity-table tbody,.activity-table tr,.activity-table td{display:block;width:100%}.activity-table thead{display:none}.activity-table tr{border:1px solid var(--outline);border-radius:12px;padding:12px}.activity-table tr+tr{margin-top:12px}.activity-table td{padding:6px 0;border:0}.activity-table td::before{content:attr(data-label);display:block;font-size:11px;color:var(--mint);font-weight:600;margin-bottom:3px}.activity-table td.activity-amount{text-align:left}.activity-footer{flex-wrap:wrap}}
@@ -1332,6 +1350,90 @@ function createSuiteInstaller({ window: target, document: doc }) {
 }
 
 createSuiteInstaller({window,document});</script>
+  <script>const SUITE_PHOTO_PREVIEW_CSS=".suite-photo-trigger{cursor:zoom-in}\n.suite-photo-trigger:focus-visible{outline:3px solid #29774e;outline-offset:4px;border-radius:8px}\n#suitePhotoDialog{box-sizing:border-box;width:min(1120px,94vw);max-width:94vw;max-height:94vh;max-height:94dvh;margin:auto;padding:0;border:1px solid #d5e0da;border-radius:20px;background:#fff;color:#20352a;box-shadow:0 24px 90px #071b2c50;overflow:auto}\n#suitePhotoDialog::backdrop{background:rgba(12,28,22,.78);backdrop-filter:blur(5px)}\n#suitePhotoDialog .suite-photo-header{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:20px 24px;border-bottom:1px solid #dfe8e2;background:#fff}\n#suitePhotoDialog .suite-photo-header p{margin:0 0 4px;color:#5c7365;font:700 11px/1.4 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase}\n#suitePhotoDialog h2{margin:0;font:700 clamp(18px,2.5vw,24px)/1.3 system-ui,sans-serif;color:#20352a;overflow-wrap:anywhere}\n#suitePhotoDialog .suite-photo-close{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;padding:10px;border:1px solid #d5e0da;border-radius:50%;background:#f0f5f1;color:#254a35;cursor:pointer}\n#suitePhotoDialog .suite-photo-close:hover{background:#dfece3}\n#suitePhotoDialog .suite-photo-close:focus-visible{outline:3px solid #29774e;outline-offset:3px}\n#suitePhotoDialog .suite-photo-close svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}\n#suitePhotoDialog .suite-photo-stage{display:grid;place-items:center;position:relative;height:min(70vh,calc((min(1120px,94vw) - 32px)/var(--suite-photo-ratio,1.5) + 32px));height:min(70dvh,calc((min(1120px,94vw) - 32px)/var(--suite-photo-ratio,1.5) + 32px));min-height:160px;padding:16px;box-sizing:border-box;background:radial-gradient(ellipse at center,#fff,#edf2ee)}\n#suitePhotoDialog .suite-photo-stage img{display:block;width:100%;height:100%;min-height:0;max-width:100%;max-height:100%;object-fit:contain;border:0;border-radius:6px;cursor:default}\n#suitePhotoDialog .suite-photo-stage img[hidden],#suitePhotoDialog .suite-photo-status[hidden]{display:none}\n#suitePhotoDialog .suite-photo-status{position:absolute;inset:0;display:grid;place-items:center;margin:0;padding:24px;text-align:center;color:#52685a;font:500 15px/1.5 system-ui,sans-serif}\n@media(max-width:600px){#suitePhotoDialog{border-radius:14px}#suitePhotoDialog .suite-photo-header{padding:14px;gap:12px}#suitePhotoDialog .suite-photo-stage{padding:8px;height:min(65vh,calc((94vw - 16px)/var(--suite-photo-ratio,1.5) + 16px));height:min(65dvh,calc((94vw - 16px)/var(--suite-photo-ratio,1.5) + 16px))}}\n@media print{#suitePhotoDialog{display:none!important}}\n";
+// One viewer for existing photos and dynamically rendered/uploaded previews.
+function createSuitePhotoPreview({window,document,styleText=''}) {
+  const existing=document.getElementById('suitePhotoDialog');
+  if(existing)return;
+  if(styleText){const style=document.createElement('style');style.textContent=styleText;document.head.append(style);}
+  const selector='img[data-suite-photo],img.trainer-avatar,img.trainer-team-thumb,.trainer-team-photo-preview img,.employee-portrait img,.employee-photo-preview img,#personPreview img,img.birthday-photo,img#edTeamPhotoPreview,.ed-gallery-image img,.editorial-person-photo img,.sports-team-photo img,.team-photo-spread img,.newsletter-portrait img';
+  const dialog=document.createElement('dialog');
+  dialog.id='suitePhotoDialog';
+  dialog.setAttribute('aria-labelledby','suitePhotoTitle');
+  dialog.innerHTML='<header class="suite-photo-header"><div><p>Bildvorschau</p><h2 id="suitePhotoTitle"></h2></div><button type="button" class="suite-photo-close" aria-label="Bildvorschau schließen" autofocus><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><div class="suite-photo-stage"><img alt="" hidden><p class="suite-photo-status" role="status"></p></div>';
+  document.body.append(dialog);
+  const image=dialog.querySelector('img'),status=dialog.querySelector('[role=status]'),closeButton=dialog.querySelector('button');
+  let opener=null,previousOverflow='',outsideStart=false;
+  const label=photo=>photo.alt.trim()||'Personen- oder Mannschaftsbild';
+  function enhance(node){
+    if(node.nodeType!==1)return;
+    const photos=[...(node.matches(selector)?[node]:[]),...node.querySelectorAll(selector)];
+    for(const photo of photos){
+      if(photo.closest('button,a'))continue;
+      photo.setAttribute('role','button');photo.tabIndex=0;
+      photo.setAttribute('aria-haspopup','dialog');photo.setAttribute('aria-controls',dialog.id);
+      photo.setAttribute('aria-label',label(photo)+' groß ansehen');
+      photo.title='Bild vergrößern';photo.classList.add('suite-photo-trigger');
+    }
+  }
+  function open(photo){
+    const src=photo.dataset.photoFull||photo.currentSrc||photo.getAttribute('src');
+    if(!src||photo.hidden||photo.closest('[hidden]'))return;
+    opener=photo;
+    dialog.style.removeProperty('--suite-photo-ratio');
+    dialog.querySelector('h2').textContent=label(photo);
+    image.hidden=true;image.alt=label(photo);
+    status.hidden=false;status.textContent='Bild wird geladen …';
+    dialog.setAttribute('aria-busy','true');
+    image.onload=()=>{dialog.style.setProperty('--suite-photo-ratio',String(image.naturalWidth/image.naturalHeight));image.hidden=false;status.hidden=true;dialog.removeAttribute('aria-busy');};
+    image.onerror=()=>{image.hidden=true;status.textContent='Das Bild konnte nicht geladen werden.';dialog.removeAttribute('aria-busy');};
+    image.src=src;
+    previousOverflow=document.documentElement.style.overflow;
+    document.documentElement.style.overflow='hidden';
+    dialog.showModal();closeButton.focus({preventScroll:true});
+  }
+  function activate(event){
+    if(dialog.open||!(event.target instanceof window.Element))return;
+    const photo=event.target.closest(selector);
+    if(!photo||photo.closest('button,a'))return;
+    if(event.type==='keydown'&&!['Enter',' '].includes(event.key))return;
+    if(event.type==='click'&&(event.button!==0||event.ctrlKey||event.metaKey||event.altKey||event.shiftKey))return;
+    event.preventDefault();event.stopPropagation();open(photo);
+  }
+  function keydown(event){
+    if(dialog.open){if(['Escape','ArrowLeft','ArrowRight'].includes(event.key))event.stopPropagation();return;}
+    activate(event);
+  }
+  function outside(event){const r=dialog.getBoundingClientRect();return event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom;}
+  closeButton.onclick=()=>dialog.close();
+  dialog.addEventListener('pointerdown',event=>{outsideStart=event.target===dialog&&outside(event);});
+  dialog.addEventListener('click',event=>{if(outsideStart&&event.target===dialog&&outside(event))dialog.close();outsideStart=false;});
+  dialog.addEventListener('close',()=>{
+    image.onload=image.onerror=null;image.removeAttribute('src');image.hidden=true;
+    dialog.removeAttribute('aria-busy');
+    document.documentElement.style.overflow=previousOverflow;
+    if(opener?.isConnected)opener.focus({preventScroll:true});opener=null;
+  });
+  enhance(document.body);
+  const observer=new window.MutationObserver(records=>{
+    for(const record of records){
+      if(record.type==='attributes')enhance(record.target);
+      else for(const node of record.addedNodes)enhance(node);
+    }
+  });
+  observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['src','alt','data-suite-photo']});
+  document.addEventListener('click',activate,true);
+  document.addEventListener('keydown',keydown,true);
+  return {dialog,destroy(){if(dialog.open)dialog.close();observer.disconnect();document.removeEventListener('click',activate,true);document.removeEventListener('keydown',keydown,true);dialog.remove();}};
+}
+
+// Private editorial browser previews use the same viewer inside their frame.
+function suitePhotoPreviewHtml(html){
+  const script='('+createSuitePhotoPreview.toString()+')({window,document,styleText:'+JSON.stringify(SUITE_PHOTO_PREVIEW_CSS)+'});';
+  return html.replace('</body>','<script>'+script.replaceAll('<\/script','<\\/script')+'<\/script></body>');
+}
+
+createSuitePhotoPreview({window,document});</script>
   <script>(function exposeCrestCutout(root) {
   function colorDistance(data, offset, color) {
     const red = data[offset] - color.red;
@@ -4156,6 +4258,14 @@ export function createEditorialWorkspace(
     <dialog id="edNewsletterSourceDialog" aria-labelledby="edNewsletterSourceHeading"><div class="dialog-header"><h2 id="edNewsletterSourceHeading">Aus dem Stadionheft übernehmen</h2><button type="button" class="ghost" id="edNewsletterSourceClose" aria-label="Schließen">✕</button></div><form id="edNewsletterSourceForm"><label>Veröffentlichtes Stadionheft<select id="edNewsletterSourceIssue"></select></label><p class="small">Wähle die Artikel für deinen Newsletter. Die Vorschau unten zeigt die gekürzten Texte. Jeder Auszug erhält einen Link zur vollständigen Newsletter-Ausgabe.</p><p id="edNewsletterSourceInfo" class="small"></p><button type="button" class="ghost" id="edNewsletterSourceLatest" hidden>Aktuelle Heftfassung laden</button><div id="edNewsletterSourceArticles" class="ed-newsletter-source-list"></div><p id="edNewsletterSourceCount" class="small" aria-live="polite"></p><p id="edNewsletterSourceMessage" role="status"></p><div class="toolbar"><button id="edNewsletterSourceSave" type="submit">Artikelauswahl speichern</button></div></form></dialog>
     <dialog id="edPreviewDialog" aria-labelledby="edPreviewHeading"><div class="dialog-header"><h2 id="edPreviewHeading">Heftvorschau · Entwurf</h2><button class="ghost" id="edPreviewClose" type="button" aria-label="Vorschau schließen">✕</button></div><iframe id="edMagazineFrame" title="Stadionheft vor Veröffentlichung ansehen" sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"></iframe></dialog>`;
 
+  // The email frame intentionally disallows scripts. Mount the viewer from the
+  // parent; magazine frames keep their isolated, script-enabled sandbox.
+  $('#edMagazineFrame').addEventListener('load',()=>{
+    const frame=$('#edMagazineFrame');
+    if(frame.sandbox.contains('allow-same-origin')&&frame.contentDocument?.body)
+      createSuitePhotoPreview({window:frame.contentWindow,document:frame.contentDocument,styleText:SUITE_PHOTO_PREVIEW_CSS});
+  });
+
   const dictation = createEditorialDictation({
     button: $('#edDictate'), status: $('#edDictationStatus'), hint: $('#edDictationHint'), textarea: $('#edArticleForm').elements.body,
     canStart: () => !busy && !editing?.automatic_sports && editing?.status !== 'waived',
@@ -4444,7 +4554,7 @@ export function createEditorialWorkspace(
         readerSnapshot = {...snapshot,newsletter_selection:{...selection,articles:selection.articles.map(article => ({...article,body:source.articles.find(full => full.id === article.id)?.body || article.excerpt}))}};
       }
       if (newsletterPreviewReader) URL.revokeObjectURL(newsletterPreviewReader);
-      newsletterPreviewReader = URL.createObjectURL(new Blob([renderNewsletterReader(readerSnapshot,newsletterAssets.template,{stadiumIssues:current.issues})],{type:'text/html;charset=utf-8'}));
+      newsletterPreviewReader = URL.createObjectURL(new Blob([suitePhotoPreviewHtml(renderNewsletterReader(readerSnapshot,newsletterAssets.template,{stadiumIssues:current.issues}))],{type:'text/html;charset=utf-8'}));
       readerUrl = newsletterPreviewReader;
     }
     return renderEditorialNewsletter(snapshot, newsletterAssets.template, {readerUrl,
@@ -4705,7 +4815,7 @@ export function createEditorialWorkspace(
     const photo = teamPhotos.find(photo => photo.team_id === $('#edTeamPhotoSelect').value);
     const preview = $('#edTeamPhotoPreview');
     preview.hidden = !photo;
-    if (photo) { preview.src = photo.preview_url || photo.photo_url; preview.alt = `Mannschaftsbild ${photo.name}`; }
+    if (photo) { preview.src = photo.preview_url || photo.photo_url; preview.dataset.photoFull = photo.photo_url; preview.alt = `Mannschaftsbild ${photo.name}`; }
   };
   $('#edAddTeamPhoto').onclick = () => {
     const photo = teamPhotos.find(photo => photo.team_id === $('#edTeamPhotoSelect').value);
@@ -5246,7 +5356,7 @@ export function createEditorialWorkspace(
           version: selected.version,
         });
         const newsletter = selected.kind === 'newsletter';
-        const html = newsletter ? (await newsletterMail(result.snapshot)).html : renderEditorialMagazine(result.snapshot, true);
+        const html = newsletter ? (await newsletterMail(result.snapshot)).html : suitePhotoPreviewHtml(renderEditorialMagazine(result.snapshot, true));
         $('#edPreviewHeading').textContent = newsletter ? 'Newsletter · E-Mail-Entwurf' : 'Heftvorschau · Entwurf';
         $('#edMagazineFrame').title = newsletter ? 'Newsletter als E-Mail ansehen' : 'Stadionheft vor Veröffentlichung ansehen';
         $('#edMagazineFrame').setAttribute('sandbox', newsletter ? 'allow-same-origin allow-popups allow-popups-to-escape-sandbox' : 'allow-scripts allow-popups allow-popups-to-escape-sandbox');
@@ -6445,7 +6555,7 @@ export function validateExpenseSubmission(body) {
       const side=game.is_home===false?'Auswärtsspiel':'Heimspiel';
       return '<details class="card game-card '+(historical?'historical-card':'')+'" data-game-id="'+esc(game.id)+'" '+(isOpen?'open':'')+'><summary><span class="game-summary-main">'+(isPast?'<span class="past-badge">Vergangenes Spiel</span>':'')+'<strong class="game-fixture">'+esc(game.home_team)+' – '+esc(game.away_team)+'</strong><span class="game-summary-meta">'+esc(meta)+'</span></span><span class="game-summary-side"><span class="game-location">'+esc(side)+'</span>'+state+'<span class="game-chevron" aria-hidden="true">⌄</span></span></summary><div class="game-card-body">'+historyNote(game)+'<div class="jobs">'+orderedJobs.map(j=>jobHtml(j,'game')).join('')+'</div><div class="workflow-list">'+lineup+result+'</div>'+actions+'<div class="toolbar">'+historyAction('game',game)+'</div></div></details>';
     }
-    function birthdayHtml(item){const photo=item.person?.source_photo_url;return '<article class="card">'+(photo?'<img loading="lazy" decoding="async" class="birthday-photo" src="'+esc(photo)+'" alt="">':'')+'<h3>'+esc(item.person_name)+'</h3><div class="meta">'+esc(new Date(item.birth_date+'T12:00:00').toLocaleDateString('de-DE'))+' · '+esc(item.publish_time)+'</div><p>'+esc(item.message)+'</p><div class="jobs">'+(item.jobs||[]).map(j=>jobHtml(j,'birthday')).join('')+'</div></article>'}
+    function birthdayHtml(item){const photo=item.person?.source_photo_url;return '<article class="card">'+(photo?'<img loading="lazy" decoding="async" class="birthday-photo" src="'+esc(photo)+'" alt="'+esc(item.person_name)+'">':'')+'<h3>'+esc(item.person_name)+'</h3><div class="meta">'+esc(new Date(item.birth_date+'T12:00:00').toLocaleDateString('de-DE'))+' · '+esc(item.publish_time)+'</div><p>'+esc(item.message)+'</p><div class="jobs">'+(item.jobs||[]).map(j=>jobHtml(j,'birthday')).join('')+'</div></article>'}
     function fileDataUrl(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(new Error('Die Datei konnte nicht gelesen werden.'));reader.readAsDataURL(file)})}
     function imageFromUrl(url){return new Promise((resolve,reject)=>{const image=new Image();if(/^https?:/i.test(url))image.crossOrigin='anonymous';image.onload=()=>resolve(image);image.onerror=()=>reject(new Error('Das Bild konnte nicht geöffnet werden.'));image.src=url})}
     async function safeSvgDataUrl(file){
