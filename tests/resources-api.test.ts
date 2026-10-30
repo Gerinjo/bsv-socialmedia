@@ -61,3 +61,8 @@ Deno.test('actual admin API books named free events without a team or match look
   const calls=setup();const response=await post('resource_book',{bookingKind:'event',resourceId:'bus',startsAt:'2027-01-01T08:00Z',endsAt:'2027-01-01T18:00Z',event:{title:'Trainerfortbildung',category:'training',organizer:'BSV Trainerteam',contact:'Erika Muster'}});
   assert.equal(response.status,200,JSON.stringify(await response.json()));assert.deepEqual(calls.map(p=>p.action),['authorize','book']);assert.ok(!Object.hasOwn(calls[0],'teamId'));assert.equal(calls[1].teamId,null);assert.equal(calls[1].event.title,'Trainerfortbildung');
 });
+
+Deno.test('actual admin API submits time changes with an expected original period', async () => {
+  const calls=setup();const response=await post('resource_reschedule',{resourceId:'bus',bookingId:'booking',startsAt:'2027-01-01T12:00Z',endsAt:'2027-01-01T20:00Z',expectedStartsAt:'2027-01-01T13:00Z',expectedEndsAt:'2027-01-01T19:00Z'});
+  assert.equal(response.status,200,JSON.stringify(await response.json()));assert.deepEqual(calls.map(p=>p.action),['authorize','reschedule']);assert.equal(calls[1].startsAt,'2027-01-01T12:00:00.000Z');assert.equal(calls[1].expectedEndsAt,'2027-01-01T19:00:00.000Z');
+});

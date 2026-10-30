@@ -1,4 +1,4 @@
-import {BUS_ORIGIN,resourceTeamGroup,resourceMatchMinutes,validateResourceBooking} from '../../../src/resources.mjs';
+import {BUS_ORIGIN,resourceTeamGroup,resourceMatchMinutes,validateResourceBooking,validateResourceTimeChange} from '../../../src/resources.mjs';
 import {discoverSportsWidget} from '../../../src/editorial-sports.mjs';
 import {extractWidgetPageProps,parseNextMatches} from './fussball-de-widget-parser.mjs';
 import {refereeYouthSources} from '../../../src/referee-source.mjs';
@@ -63,10 +63,11 @@ export async function resourceRoute(db,actor,{resource,query,coordinates},{fetch
  await resourceRpc(db,actor,{action:'_route_put',key,route});return {route};
 }
 export async function handleResources(db,actor,body,{parseFont,load,fetcher=fetch,geocoder,router}={}){
- const action=String(body.action||'').replace(/^resource_/,'');if(!['list','sync','match','route','book','cancel'].includes(action))throw new Error('Unbekannte Ressourcen-Aktion.');
+ const action=String(body.action||'').replace(/^resource_/,'');if(!['list','sync','match','route','book','cancel','reschedule'].includes(action))throw new Error('Unbekannte Ressourcen-Aktion.');
  await resourceRpc(db,actor,{action:'authorize',...(['route','book'].includes(action)&&body.teamId?{teamId:body.teamId}:{})});
  if(action==='list'){if(body.month&&!/^\d{4}-(0[1-9]|1[0-2])$/.test(body.month))throw new Error('Ungültiger Kalendermonat.');return resourceRpc(db,actor,{action,month:body.month});}
  if(action==='sync')return syncResourceMatches(db,actor,{parseFont,fetcher});
+ if(action==='reschedule')return resourceRpc(db,actor,{action,...validateResourceTimeChange(body)});
  if(action==='book'){
   const booking=validateResourceBooking(body);
   if(booking.bookingKind==='event')return resourceRpc(db,actor,{action,...booking});

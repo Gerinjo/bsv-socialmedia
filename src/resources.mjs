@@ -1,6 +1,14 @@
 export const BUS_ORIGIN={name:'BSV Nordstern',address:'Schlesierstraße 43, 78315 Radolfzell am Bodensee',coordinates:[8.9700514,47.7543133]};
 export const RESOURCE_EVENT_CATEGORIES={training:'Trainerweiterbildung',supporters:'Förderverein',city_event:'Stadtevent / Verkauf',other:'Sonstiges'};
 export function resourceBookingLabel(booking){return booking.bookingKind==='event'?booking.event?.title||'Freies Event':booking.teamName||'Mannschaft';}
+export function resourceCalendarMatches(matches,teamId=''){return matches.filter(match=>match.isHome===false&&(!teamId||match.teamId===teamId));}
+export function validateResourceTimeChange(body){
+ const result={resourceId:body.resourceId,bookingId:body.bookingId};
+ if(typeof result.resourceId!=='string'||!result.resourceId||typeof result.bookingId!=='string'||!result.bookingId)throw new Error('Bitte eine Busbuchung auswählen.');
+ for(const key of ['startsAt','endsAt','expectedStartsAt','expectedEndsAt']){if(!body[key]||!Number.isFinite(Date.parse(body[key])))throw new Error('Bitte gültige Buchungszeiten eingeben.');result[key]=new Date(body[key]).toISOString();}
+ if(Date.parse(result.endsAt)<=Date.parse(result.startsAt)||Date.parse(result.endsAt)-Date.parse(result.startsAt)>72*3600000)throw new Error('Bitte einen Zeitraum von höchstens 72 Stunden mit Rückgabe nach Beginn eingeben.');
+ return result;
+}
 export function resourceTeamGroup(team){
  const text=[team.slug,team.name,team.website_path].filter(Boolean).join(' ').toLowerCase();
  const age=text.match(/\bu(19|18|17|16|15|14|13|12|11|10|9|8|7|6)\b/)?.[1];

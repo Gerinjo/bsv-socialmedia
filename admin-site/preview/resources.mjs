@@ -1,5 +1,5 @@
 import {previewSuiteProfile} from '/preview-suite-users.mjs';
-import {resourceOverlap,validateResourceBooking} from '/resources-model.mjs';
+import {resourceOverlap,validateResourceBooking,validateResourceTimeChange} from '/resources-model.mjs';
 const key='bsv-resource-preview-v3';
 const teams=[{id:'demo-resource-c1',name:'U15 C1-Junioren',slug:'u15-c1-junioren'},{id:'demo-resource-d1',name:'U13 D1-Junioren',slug:'u13-d1-junioren'},{id:'demo-resource-h1',name:'1. Herren',slug:'herren-1'},{id:'demo-resource-e1',name:'U11 E1-Junioren',slug:'u11-e1-junioren'}];
 function initial(){const date=new Date();date.setDate(date.getDate()+2);date.setHours(16,0,0,0);return {bookings:[],lastSync:new Date().toISOString(),matches:[{id:'demo-resource-match-c1',teamId:teams[0].id,kickoffAt:date.toISOString(),home:'FC Beispiel',away:'BSV Nordstern',isHome:false,status:'scheduled',venue:'Sportstraße 12, 78315 Radolfzell',matchMinutes:85},{id:'demo-resource-match-h1',teamId:teams[2].id,kickoffAt:new Date(date.getTime()+7200000).toISOString(),home:'SC Beispiel',away:'BSV Nordstern',isHome:false,status:'scheduled',venue:'Schlesierstraße 43, Radolfzell',matchMinutes:105},{id:'demo-resource-match-d1-home',teamId:teams[1].id,kickoffAt:new Date(date.getTime()+3600000).toISOString(),home:'BSV Nordstern',away:'FC Beispiel',isHome:true,status:'scheduled',matchMinutes:70}]};}
@@ -22,6 +22,12 @@ export async function resourcePreviewApi(body,persona){
   body={...body,...validateResourceBooking(body)};
   if(state.bookings.some(b=>!b.cancelled&&resourceOverlap(b,body)))fail('Der Bus ist in diesem Zeitraum bereits reserviert.');
   state.bookings.push({...body,id:crypto.randomUUID(),createdBy:persona,teamName:teams.find(t=>t.id===body.teamId)?.name||null,matchKickoff:body.expectedKickoff,trainerName:user.name});
+ }else if(action==='reschedule'){
+  const booking=state.bookings.find(b=>b.id===body.bookingId&&!b.cancelled);if(!booking||!(admin||(booking.bookingKind==='event'?booking.createdBy===persona:own.includes(booking.teamId))))fail('Keine Berechtigung.',403);
+  const times=validateResourceTimeChange(body);if(Date.parse(times.expectedStartsAt)!==Date.parse(booking.startsAt)||Date.parse(times.expectedEndsAt)!==Date.parse(booking.endsAt))fail('Die Buchung wurde inzwischen geändert. Bitte neu öffnen.');
+  if(booking.matchId){const match=state.matches.find(m=>m.id===booking.matchId);if(!match||match.isHome||Date.parse(times.startsAt)>Date.parse(match.kickoffAt)||Date.parse(times.endsAt)<Date.parse(match.kickoffAt))fail('Der Zeitraum muss die Anstoßzeit eines Auswärtsspiels einschließen.',400);}
+  if(state.bookings.some(b=>b.id!==booking.id&&!b.cancelled&&resourceOverlap(b,times)))fail('Der Bus ist in diesem Zeitraum bereits reserviert.');
+  booking.startsAt=times.startsAt;booking.endsAt=times.endsAt;
  }else if(action==='cancel'){
   const booking=state.bookings.find(b=>b.id===body.bookingId);if(!booking||!(admin||(booking.bookingKind==='event'?booking.createdBy===persona:own.includes(booking.teamId))))fail('Keine Berechtigung.',403);booking.cancelled=true;
  }else fail('Unbekannte Ressourcen-Aktion.',400);

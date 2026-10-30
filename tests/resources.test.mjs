@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {load} from 'cheerio';
-import {resourceTeamGroup,resourceMatchMinutes,resourceTimeSuggestion,resourceTimePlan,resourceCanBookMatch,resourceBookingLabel,resourceOverlap,resourceMonthDays,resourceLocalTime,resourceUtcTime,validateResourceBooking} from '../src/resources.mjs';
+import {resourceTeamGroup,resourceMatchMinutes,resourceTimeSuggestion,resourceTimePlan,resourceCanBookMatch,resourceBookingLabel,resourceCalendarMatches,validateResourceTimeChange,resourceOverlap,resourceMonthDays,resourceLocalTime,resourceUtcTime,validateResourceBooking} from '../src/resources.mjs';
 import {parseResourceVenue,resourceRoute,handleResources} from '../supabase/functions/_shared/resources.mjs';
 test('D through active teams use match durations and the detailed arrival and return buffers across midnight and DST',()=>{
  for(const [slug,group,minutes] of [['u13-d1-junioren','D',70],['u15-c1-junioren','C',85],['u17-juniorinnen','B',95],['u19-junioren','A',105],['herren-2','senior',105],['frauen-1','senior',105]]){assert.equal(resourceTeamGroup({slug}),group);assert.equal(resourceMatchMinutes({slug}),minutes);}
@@ -29,6 +29,15 @@ test('home games are rejected before venue fetching and before booking reaches t
  await assert.rejects(()=>handleResources(db,'actor',{action:'resource_match',matchId:'home'},options),/Heimspiele/);
  await assert.rejects(()=>handleResources(db,'actor',{action:'resource_book',matchId:'home',teamId:'team',resourceId:'bus',expectedKickoff:'2027-01-01T15:00:00Z',startsAt:'2027-01-01T13:00:00Z',endsAt:'2027-01-01T19:00:00Z'},options),/Heimspiele/);
  assert.ok(!actions.includes('book'));
+});
+test('bus calendar contains only away games and time changes preserve the originally loaded booking period',async()=>{
+ const matches=[{id:'home',isHome:true,teamId:'A'},{id:'away',isHome:false,teamId:'A'},{id:'other',isHome:false,teamId:'B'},{id:'unknown',teamId:'A'}];
+ assert.deepEqual(resourceCalendarMatches(matches).map(m=>m.id),['away','other']);assert.deepEqual(resourceCalendarMatches(matches,'A').map(m=>m.id),['away']);
+ const body={resourceId:'bus',bookingId:'booking',startsAt:'2027-01-01T12:00Z',endsAt:'2027-01-01T20:00Z',expectedStartsAt:'2027-01-01T13:00Z',expectedEndsAt:'2027-01-01T19:00Z'};
+ const normalized=validateResourceTimeChange(body);assert.equal(normalized.startsAt,'2027-01-01T12:00:00.000Z');assert.equal(normalized.expectedStartsAt,'2027-01-01T13:00:00.000Z');
+ for(const values of [{expectedStartsAt:null},{startsAt:'invalid'},{endsAt:body.startsAt},{endsAt:'2027-01-10T00:00Z'}])assert.throws(()=>validateResourceTimeChange({...body,...values}));
+ const calls=[];const db={rpc:async(_,{payload})=>{calls.push(payload);return {data:{ok:true}};}};
+ await handleResources(db,'actor',{action:'resource_reschedule',...body});assert.deepEqual(calls.map(p=>p.action),['authorize','reschedule']);assert.equal(calls[1].expectedEndsAt,normalized.expectedEndsAt);
 });
 test('free club events need a title and responsible person, work without a team and cannot masquerade as match bookings',async()=>{
  const input={bookingKind:'event',resourceId:'bus',startsAt:'2027-01-01T08:00Z',endsAt:'2027-01-01T18:00Z',event:{title:' Stadtfest – Getränkestand ',category:'city_event',organizer:'Förderverein',contact:'Erika Muster'}};
