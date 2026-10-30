@@ -1,0 +1,5 @@
+{
+  "imports": {
+    "npm:@supabase/server@1.4.1": "./support/resource-api-auth.ts"
+  }
+}

@@ -1,5 +1,6 @@
 import {handleResources} from '../_shared/resources.mjs';
 import {load as loadResourceHtml} from 'npm:cheerio@1.2.0';
+import opentype from 'npm:opentype.js@1.3.4';
 import {handleClubCrestTools} from '../_shared/club-crest-tools.mjs';
 import {handleHallTraining} from '../_shared/hall-training.mjs';
 import {handleEmployeeManagement} from '../_shared/employee-management.mjs';

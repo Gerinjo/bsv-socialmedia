@@ -25,3 +25,5 @@ Geänderte Anstoßzeiten oder Spielabsagen ändern bestehende Reservierungen nic
 - Die lokale Vorschau arbeitet mit ausdrücklich gekennzeichneten Spielen, Adressen und Fahrzeiten. Sie verändert keine Live-Buchungen.
 
 Validierung: Node-Tests für Mannschaftsgruppen, Zeitvorschläge, Sommer-/Winterzeit, Überschneidungen, Spielortauswertung, Zugriffsschutz und Routencache; isolierte PostgreSQL-17-Tests für Rechte, Kalender, Spielplanänderungen, Buchungen und Stornierungen; parallele Reservierungen mit genau einer erfolgreichen Buchung; Browserprüfung für Trainerablauf, Wiederladen, Konflikt, Stornierung und 390-Pixel-Ansicht.
+
+`npm run test:resources:api` prüft zusätzlich den tatsächlichen Admin-API-Einstieg einschließlich Kalenderabruf, Spielplansynchronisierung mit einer echten TTF-Schrift und Bereichsschutz. Nur der Auth-Wrapper wird über eine ausschließlich für diesen Test verwendete Import-Map ersetzt; Router und Schriftbibliothek entsprechen der Produktion. Diese Prüfung reproduziert den früheren Fehler `opentype is not defined`, der in der Browser-Vorschau mit ihren Beispieldaten nicht auftrat.
