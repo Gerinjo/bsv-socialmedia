@@ -33,6 +33,7 @@ async function previewHtml() {
   return html;
 }
 const files = new Map([
+  ['/preview-club-crests.mjs','admin-site/preview/club-crests.mjs'],
   ['/hall-training-model.mjs','src/hall-training.mjs'],
   ['/preview-hall-training.mjs','admin-site/preview/hall-training.mjs'],
   ['/editorial-contacts.mjs','src/editorial-contacts.mjs'],
@@ -88,6 +89,7 @@ const server = createServer(async (request, response) => {
   }
   const path = new URL(request.url, "http://localhost").pathname;
   try {
+    if (path === '/preview-club-crest.png') {response.setHeader('Content-Type','image/png');response.end(await readFile(new URL('admin-site/assets/bsv-nordstern.png',root)));return;}
     if (path === '/newsletter/abmelden') {
       response.setHeader('Content-Type','text/html; charset=utf-8');
       response.setHeader('Referrer-Policy','no-referrer');

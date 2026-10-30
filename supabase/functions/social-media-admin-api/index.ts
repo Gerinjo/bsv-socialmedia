@@ -1,3 +1,4 @@
+import {handleClubCrestTools} from '../_shared/club-crest-tools.mjs';
 import {handleHallTraining} from '../_shared/hall-training.mjs';
 import {handleEmployeeManagement} from '../_shared/employee-management.mjs';
 import {handleTrainerManagement} from '../_shared/trainer-management.mjs';
@@ -40,6 +41,7 @@ const actionAreas: Record<string, SuiteArea> = {
   suite_activity_list: 'user_management',
   test_instagram_connection: 'social_media_admin', save_cleanup_settings: 'social_media_admin', purge_historical_data: 'social_media_admin',
   save_bsv_standard:'corporate_identity', save_team_settings: 'corporate_identity', save_team_color_group: 'corporate_identity', save_club_crest: 'club_crests',
+  fetch_club_crest_source:'club_crests',reuse_club_crest:'club_crests',
   discard_club_crest: 'club_crests', approve_club_crest: 'club_crests', reject_club_crest: 'club_crests',
   save_suite_role:'user_management',save_suite_member:'user_management',bulk_suite_users:'user_management',set_team_member_access: 'user_management', update_team_member_permissions: 'user_management', delete_team_member: 'user_management', create_team_member: 'user_management',
   save_game: 'social_media', save_lineup: 'social_media', set_game_status: 'social_media', save_result: 'social_media',
@@ -1957,6 +1959,14 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       if (error) throw error;
       const automation = await invalidateSponsorPreviews(context.supabaseAdmin, sponsorId, previousContexts);
       return json({ ok: true, automation });
+    }
+
+    if (action === 'fetch_club_crest_source' || action === 'reuse_club_crest') {
+      if (raw.length > 8192) return json({error:'Die Anfrage ist zu groß.'},413);
+      const result = await handleClubCrestTools(context.supabaseAdmin,userId,body);
+      const automation = action === 'reuse_club_crest' && result.club?.crest_status === 'approved'
+        ? await rerenderUpcomingClubGames(context.supabaseAdmin,result.club.id) : null;
+      return json({ok:true,...result,automation});
     }
 
     if (action === 'save_club_crest') {

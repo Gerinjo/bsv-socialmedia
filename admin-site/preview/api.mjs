@@ -1,3 +1,4 @@
+import {previewClubCrests,previewClubCrestAction} from '/preview-club-crests.mjs';
 import {hallTrainingPreviewApi} from '/preview-hall-training.mjs';
 import {editorialContactDirectory} from '/editorial-contacts.mjs';
 import {employeePreviewApi} from '/preview-employee-management.mjs';
@@ -272,10 +273,12 @@ export async function editorialPreviewApi(method = "GET", body = {}, query = {})
     return {
       user:previewSuiteProfile(previewPersona),suiteRoles:previewPersona==='admin'?previewSuiteRoles():[],brandSettings:previewSuiteBrand(),
       testMode: true,
+      clubs:previewAreas().includes('club_crests')?previewClubCrests():[],
       members: previewPersona==='admin'?previewSuiteMembers():[],
       teamSettings:previewAreas().includes('corporate_identity')?teams.map(team=>({...team,competition:'Beispiel',family_key:'youth',color_source:'global',color_scheme:previewSuiteBrand().color_scheme,active:false,content_enabled:false,publishing_mode:'manual'})):[],
       teamColorGroups:previewAreas().includes('corporate_identity')?[{key:'youth',label:'Jugend',color_scheme:previewSuiteBrand().color_scheme}]:[],
     };
+  if(['fetch_club_crest_source','reuse_club_crest','save_club_crest','approve_club_crest','reject_club_crest','discard_club_crest'].includes(body.action)){if(!previewAreas().includes('club_crests'))throw new Error('Keine Berechtigung für Wappen.');return previewClubCrestAction(body);}
   if(body.action==='suite_activity_list'){if(previewPersona!=='admin')throw new Error('Nur Super-Admins dürfen das Aktivitätsprotokoll ansehen.');return previewSuiteActivity(body,previewSuiteMembers());}
   if(['save_suite_role','save_suite_member','bulk_suite_users','create_team_member'].includes(body.action))return previewSuiteMutation(body,previewPersona);
   if(body.action==='save_bsv_standard'){if(!previewAreas().includes('corporate_identity'))throw new Error('Keine Berechtigung');return previewSetBrand(body.colorScheme,body.themeKey);}

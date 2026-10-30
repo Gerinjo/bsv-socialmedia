@@ -81,6 +81,8 @@ for (const [placeholder, source] of [
   ['__REFEREE_SCRIPT__', await readFile(resolve(adminDir, 'referees.mjs'), 'utf8')],
   ['__REFEREE_CSS__', await readFile(resolve(adminDir, 'referees.css'), 'utf8')],
   ['__EDITORIAL_CSS__', await readFile(resolve(adminDir, 'editorial.css'), 'utf8')],
+  ['__CLUB_CREST_TOOLS_SCRIPT__', (await readFile(resolve(repoDir,'src/club-crests.mjs'),'utf8'))+'\n'+(await readFile(resolve(adminDir,'club-crest-tools.mjs'),'utf8')).replace(/^import .*;\n/gm,'')],
+  ['__CLUB_CREST_TOOLS_CSS__', await readFile(resolve(adminDir,'club-crest-tools.css'),'utf8')],
   ['__CREST_CUTOUT_SCRIPT__', crestCutout],
   ['__RICH_TEXT_EDITOR_SCRIPT__', richTextEditor],
   ['__VISION_OCR_SCRIPT__', visionOcr],
