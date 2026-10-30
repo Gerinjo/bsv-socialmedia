@@ -209,3 +209,49 @@ test('all selected personnel portraits reach direct newsletter mail and frozen m
  assert.ok(renderEditorialNewsletter({...snapshot,demo:true,articles:[{...article,people:[local]}]},template).html.includes(local.photo_url));
  assert.throws(()=>renderEditorialNewsletter({...snapshot,demo:true,articles:[{...article,people:[local]}]},template,{preview:false}),/dauerhaften öffentlichen Link/);
 });
+
+test('word-limited articles always end in a button to the pinned complete newsletter; reading keeps the full body', async () => {
+ const {newsletterWordExcerpt,renderNewsletterReader,newsletterReaderUrl}=await import('../src/newsletter.mjs');
+ const body=Array.from({length:150},(_,i)=>`Wort${i+1}`).join(' ')+'\n\nDer vollständige Abschluss.';
+ const issue={...snapshot,id:'10000000-0000-4000-8000-000000000001',version:12,newsletter_settings:{...newsletterDefaults(snapshot),maxWords:20,preheader:'Neuigkeiten'},articles:[{id:'article-1',title:'Langer Beitrag',status:'ready',body}]};
+ assert.equal(newsletterWordExcerpt(body,20).split(/\s+/).length,20);
+ assert.ok(newsletterWordExcerpt(body,20).endsWith('Wort20…'));
+ assert.equal(newsletterWordExcerpt('Kurz.\n\nZwei Absätze.',20),'Kurz.\n\nZwei Absätze.');
+ const mail=renderEditorialNewsletter(issue,template,{preview:false});
+ for(const output of [mail.html,mail.text]) {assert.ok(output.includes('Wort20…'));assert.ok(!output.includes('Wort21'));assert.ok(output.includes(newsletterReaderUrl(issue,'article-1')));}
+ assert.match(mail.html,/target="_blank"/);
+ const reader=renderNewsletterReader(issue,template);
+ assert.ok(reader.includes('Wort150'));assert.ok(reader.includes('Der vollständige Abschluss.'));
+ assert.match(reader,/id="artikel-article-1"/);
+ assert.doesNotMatch(reader,/<script|<button|<iframe|Weiterlesen →|RESEND_UNSUBSCRIBE_URL/);
+ for(const maxWords of [0,19,501,'120',NaN,1.5]) assert.throws(()=>normalizeNewsletterSettings({...newsletterDefaults(snapshot),maxWords}));
+ const portrait=renderEditorialNewsletter({...issue,articles:[{...issue.articles[0],people:[{name:'Anna',role:'Jugendleiterin',photo_url:'https://example.org/anna.jpg'}]}]},template);
+ assert.match(portrait.html,/class="newsletter-portrait" style="float:left/);
+});
+
+test('sponsor blocks count direct and imported articles together and draw four unique youth partners stably', async () => {
+ const {newsletterSponsorSelection}=await import('../src/newsletter.mjs');
+ const pool=Array.from({length:9},(_,i)=>({id:`s${i}`,name:`Jugendpartner ${i}`,logo:`https://example.org/${i}.png`,website:`https://example.org/${i}`}));
+ const general=pool.map(p=>({...p,id:'general-'+p.id,name:'Allgemein '+p.name}));
+ const issue={...snapshot,id:'issue-a',version:1,advertising:{newsletterSponsors:{general,youth:pool}},articles:[
+  {id:'one',title:'Allgemein',kind:'free',body:'Verein',status:'ready'},
+  {id:'two',title:'Jugend',kind:'free',department_group:'youth_department',body:'Junge Sterne',status:'ready'},
+  {id:'three',title:'Weiter',body:'Verein',status:'ready'},
+ ],newsletter_selection:{title:'Heft',articles:[{id:'four',title:'Heftartikel',excerpt:'Aus dem Heft'}]}};
+ const mail=renderEditorialNewsletter(issue,template,{preview:false});
+ assert.equal((mail.html.match(/data-newsletter-sponsors=/g)||[]).length,2);
+ assert.ok(mail.html.indexOf('Junge Sterne')<mail.html.indexOf('data-newsletter-sponsors="youth"'));
+ assert.ok(mail.html.indexOf('data-newsletter-sponsors="youth"')<mail.html.indexOf('>Weiter</h2>'));
+ assert.ok(mail.html.indexOf('Heftartikel')<mail.html.indexOf('data-newsletter-sponsors="general"'));
+ const youthBlock=mail.html.split('data-newsletter-sponsors="youth"')[1].split('data-newsletter-article')[0];
+ assert.equal((youthBlock.match(/<img /g)||[]).length,4);
+ assert.ok(!youthBlock.includes('Allgemein Jugendpartner'));
+ assert.equal(mail.html,renderEditorialNewsletter(issue,template,{preview:false}).html);
+ const chosen=newsletterSponsorSelection([...pool,pool[0]],'issue-a:0:youth');
+ assert.equal(chosen.length,4);assert.equal(new Set(chosen.map(p=>p.id)).size,4);
+ assert.deepEqual(chosen,newsletterSponsorSelection(pool.toReversed(),'issue-a:0:youth'));
+ assert.notDeepEqual(chosen,newsletterSponsorSelection(pool,'issue-b:0:youth'));
+ const single={...issue,articles:[{...issue.articles[1],kind:'youth'}],newsletter_selection:null};
+ assert.equal((renderEditorialNewsletter(single,template).html.match(/data-newsletter-sponsors="youth"/g)||[]).length,1);
+ assert.throws(()=>renderEditorialNewsletter({...single,advertising:{newsletterSponsors:{general,youth:pool.slice(0,3)}}},template,{preview:false}),/vier freigegebene Jugendsponsoren/);
+});

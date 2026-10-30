@@ -11,6 +11,7 @@ export function createEditorialWorkspace(
     editorialCoverDefaults,
     renderEditorialMagazine,
     renderEditorialNewsletter,
+    renderNewsletterReader,
     newsletterDefaults,
     newsletterAssets,
     editorialPersonCandidates,
@@ -69,7 +70,7 @@ export function createEditorialWorkspace(
     <dialog id="edIssueDialog" aria-labelledby="edIssueHeading"><div class="dialog-header"><h2 id="edIssueHeading">Ausgabe anlegen</h2><button type="button" class="ghost" id="edIssueClose" aria-label="Schließen">✕</button></div><form id="edIssueForm" class="fields"><label>Ausgabeart<select name="kind"><option value="stadium">Stadionheft</option><option value="newsletter">Newsletter</option></select></label><label>Titel<input name="title" required maxlength="180" placeholder="Zum Beispiel: Nordstern · Heimspielausgabe 01"></label><label>Redaktionsstart<input name="starts_on" type="date" required></label><label>Redaktionsschluss<input name="closes_on" type="date" required></label><label>Erscheinungsdatum<input name="publishes_on" type="date" required></label><p class="small">Im Stadionheft werden Grußworte, Trainerbegrüßungen und Sportdaten als feste Beiträge angelegt. Newsletter starten mit einem freien Inhaltsplan.</p><div class="wide toolbar"><button type="submit">Ausgabe speichern</button><span id="edIssueMessage" role="status"></span></div></form></dialog>
     <dialog id="edArticleDialog" aria-labelledby="edArticleHeading"><div class="dialog-header"><div><span class="editorial-eyebrow">TEXTREDAKTION</span><h2 id="edArticleHeading">Beitrag bearbeiten</h2></div><button type="button" class="ghost" id="edArticleClose" aria-label="Editor schließen">✕</button></div><form id="edArticleForm"><div class="fields"><label class="wide">Titel<input name="title" required maxlength="180"></label><label>Abteilung<select name="department_id"></select></label><label>Autor / Verantwortlich<input name="author" maxlength="180" placeholder="Name"></label><div><span class="small">Freigabestatus</span><p id="edApprovalStatus"></p><input type="hidden" name="status" value="draft"></div><div class="small" id="edSource"></div><fieldset class="wide ed-person-selection" id="edPersonSelection"><legend>Personen zum Beitrag auswählen</legend><p class="small">Bis zu vier Personen auswählen. Die passenden Bilder aus der Mitarbeiterverwaltung erscheinen beim Beitrag.</p><div id="edPersonCandidates"></div></fieldset><div class="wide ed-dictation" id="edDictation"><button type="button" class="ghost" id="edDictate" aria-pressed="false" aria-controls="edBody" aria-describedby="edDictationHint"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg><span>Diktieren</span></button><p class="small" id="edDictationHint"></p><p class="small" id="edDictationStatus" role="status" aria-live="polite"></p></div><label class="wide">Beitrag<textarea id="edBody" name="body" maxlength="30000" rows="15" spellcheck="true" lang="de" placeholder="Hier ist Platz für euren Beitrag …"></textarea></label><fieldset class="wide ed-gallery-editor" id="edGalleryEditor"><legend>Bildgruppen zum Beitrag</legend><p class="small">Jeder Upload bildet eine eigene Gruppe. Wähle je Gruppe ein Titelbild für die Heftseite. Ein Klick darauf öffnet alle Bilder der Gruppe.</p><div class="ed-team-photo-picker"><label>Mannschaftsbild auswählen<select id="edTeamPhotoSelect"><option value="">Mannschaftsbilder werden geladen …</option></select></label><p id="edTeamPhotoStatus" class="small" role="status"></p><img id="edTeamPhotoPreview" alt="" hidden style="max-width:100%;max-height:220px;object-fit:contain"><button id="edAddTeamPhoto" type="button" class="ghost">Mannschaftsbild zum Beitrag hinzufügen</button></div><div id="edGalleryGroups"></div><label>Neue Bildgruppe hinzufügen (bis 20 Bilder)<input id="edGalleryFiles" type="file" accept="image/jpeg,image/png,image/webp" multiple></label><p class="small">Bis zu 6 Gruppen. JPG, PNG oder WebP, bis 5 MB je Original. Fotos werden auf höchstens 1600 Pixel verkleinert.</p></fieldset></div><p class="small" id="edRewriteHint"></p><div class="toolbar"><button type="submit" id="edSaveArticle">Speichern & überarbeiten</button><button type="submit" class="ghost" id="edRetryRewrite" data-rewrite="true">Erneut überarbeiten</button><button type="button" class="ghost" id="edHistory">Original & Verlauf</button><button type="button" class="ghost hidden" id="edDeleteArticle">Beitrag löschen</button><button type="button" class="ghost hidden" id="edWaiveArticle">Verzicht</button><button type="button" class="primary-action" id="edApproveArticle">Beitrag freigeben</button><span class="small" id="edWordCount"></span></div><p id="edArticleMessage" role="status" aria-live="polite"></p><div id="edRevisionList"></div></form></dialog>
     <dialog id="edEventDialog" aria-labelledby="edEventHeading"><div class="dialog-header"><h2 id="edEventHeading">Veranstaltung ins Heft aufnehmen</h2><button class="ghost" id="edEventClose" type="button" aria-label="Schließen">✕</button></div><form id="edEventForm" class="fields"><label class="wide">Termin auswählen<select id="edEventSource"><option value="">Eigene Veranstaltung</option></select></label><label class="wide">Titel<input name="title" maxlength="180" required></label><label>Datum<input type="date" name="date" required></label><label>Uhrzeit<input type="time" name="time"></label><label class="wide">Ort<input name="location" maxlength="200"></label><label class="wide">Beschreibung im Heft<textarea name="description" required maxlength="30000" rows="6"></textarea></label><p class="small wide">Der Termin erscheint als eigener Beitrag im Heft und lässt sich in der Titelblatt-Karte für das Cover auswählen. Bitte bei wiederkehrenden Stories das gewünschte Veranstaltungsdatum prüfen. Der Beitrag muss anschließend freigegeben werden.</p><div class="toolbar wide"><button type="submit">Veranstaltung aufnehmen</button><span id="edEventMessage" role="status"></span></div></form></dialog>
-    <dialog id="edNewsletterSourceDialog" aria-labelledby="edNewsletterSourceHeading"><div class="dialog-header"><h2 id="edNewsletterSourceHeading">Aus dem Stadionheft übernehmen</h2><button type="button" class="ghost" id="edNewsletterSourceClose" aria-label="Schließen">✕</button></div><form id="edNewsletterSourceForm"><label>Veröffentlichtes Stadionheft<select id="edNewsletterSourceIssue"></select></label><p class="small">Wähle die Artikel für deinen Newsletter. Die Vorschau unten zeigt die gekürzten Texte. Jeder Auszug erhält einen Link zum vollständigen Artikel im Stadionheft.</p><p id="edNewsletterSourceInfo" class="small"></p><button type="button" class="ghost" id="edNewsletterSourceLatest" hidden>Aktuelle Heftfassung laden</button><div id="edNewsletterSourceArticles" class="ed-newsletter-source-list"></div><p id="edNewsletterSourceCount" class="small" aria-live="polite"></p><p id="edNewsletterSourceMessage" role="status"></p><div class="toolbar"><button id="edNewsletterSourceSave" type="submit">Artikelauswahl speichern</button></div></form></dialog>
+    <dialog id="edNewsletterSourceDialog" aria-labelledby="edNewsletterSourceHeading"><div class="dialog-header"><h2 id="edNewsletterSourceHeading">Aus dem Stadionheft übernehmen</h2><button type="button" class="ghost" id="edNewsletterSourceClose" aria-label="Schließen">✕</button></div><form id="edNewsletterSourceForm"><label>Veröffentlichtes Stadionheft<select id="edNewsletterSourceIssue"></select></label><p class="small">Wähle die Artikel für deinen Newsletter. Die Vorschau unten zeigt die gekürzten Texte. Jeder Auszug erhält einen Link zur vollständigen Newsletter-Ausgabe.</p><p id="edNewsletterSourceInfo" class="small"></p><button type="button" class="ghost" id="edNewsletterSourceLatest" hidden>Aktuelle Heftfassung laden</button><div id="edNewsletterSourceArticles" class="ed-newsletter-source-list"></div><p id="edNewsletterSourceCount" class="small" aria-live="polite"></p><p id="edNewsletterSourceMessage" role="status"></p><div class="toolbar"><button id="edNewsletterSourceSave" type="submit">Artikelauswahl speichern</button></div></form></dialog>
     <dialog id="edPreviewDialog" aria-labelledby="edPreviewHeading"><div class="dialog-header"><h2 id="edPreviewHeading">Heftvorschau · Entwurf</h2><button class="ghost" id="edPreviewClose" type="button" aria-label="Vorschau schließen">✕</button></div><iframe id="edMagazineFrame" title="Stadionheft vor Veröffentlichung ansehen" sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"></iframe></dialog>`;
 
   const dictation = createEditorialDictation({
@@ -281,10 +282,10 @@ export function createEditorialWorkspace(
     };
   }
   function newsletterCard(release) {
-    return `<section class="ed-context-card"><h4>${esc(newsletterDefaults(selected).name || "Newsletter")}</h4><p class="small">E-Mail-Layout im gespeicherten BSV-Standard mit Vereinswappen, saisonalem Motiv, Textalternative und Abmeldelink. Name, Ausgabenummer, Kopfbereich und E-Mail-Angaben lassen sich unten je Ausgabe anpassen.</p><div class="toolbar"><button id="edNewsletterHtml" ${release.ready && release.reviewed ? '' : 'disabled'}>E-Mail-HTML exportieren</button><button class="ghost" id="edNewsletterText" ${release.ready && release.reviewed ? '' : 'disabled'}>E-Mail-Text exportieren</button><button class="secondary" id="edCompleteNewsletter" ${release.ready && release.reviewed && !release.currentPublication ? '' : 'disabled'}>Als veröffentlicht markieren</button></div><p class="small">Die exportierten Dateien sind für einen Resend-Broadcast bestimmt. Der Abmeldelink öffnet eine Bestätigungsseite. Nach der Abmeldung erhält der Empfänger eine Bestätigungsmail. Der feste Abschnitt „Unsere Stadionhefte“ verlinkt automatisch die veröffentlichten Hefte und das bestehende digitale Stadionheft.</p></section>
+    return `<section class="ed-context-card"><h4>${esc(newsletterDefaults(selected).name || "Newsletter")}</h4><p class="small">E-Mail-Layout im gespeicherten BSV-Standard mit Vereinswappen, saisonalem Motiv, Textalternative und Abmeldelink. Name, Ausgabenummer, Kopfbereich und E-Mail-Angaben lassen sich unten je Ausgabe anpassen.</p><div class="toolbar"><button id="edNewsletterHtml" ${release.ready && release.reviewed ? '' : 'disabled'}>E-Mail-HTML exportieren</button><button class="ghost" id="edNewsletterText" ${release.ready && release.reviewed ? '' : 'disabled'}>E-Mail-Text exportieren</button><button class="secondary" id="edCompleteNewsletter" ${release.ready && release.reviewed && !release.currentPublication ? '' : 'disabled'}>Als veröffentlicht markieren</button></div><p class="small">Die exportierten Dateien sind für einen Resend-Broadcast bestimmt. Vor dem Versand „Als veröffentlicht markieren“ verwenden, damit die Weiterlesen-Links erreichbar sind. Der Abmeldelink öffnet eine Bestätigungsseite. Nach der Abmeldung erhält der Empfänger eine Bestätigungsmail. Der feste Abschnitt „Unsere Stadionhefte“ verlinkt automatisch die veröffentlichten Hefte und das bestehende digitale Stadionheft.</p></section>
       <p><a href="/newsletter/abmelden?vorschau=1" target="_blank" rel="noopener">Abmeldung & Bestätigungsmail ansehen ↗</a></p>
       ${newsletterSettingsCard()}
-      <section class="ed-context-card"><h4>Aus dem Stadionheft übernehmen</h4><p class="small">Heft auswählen und Artikel ankreuzen. Im Newsletter erscheinen kurze Auszüge mit einem Link zum vollständigen Artikel im Stadionheft.</p>${selected.newsletter_selection?.articles?.length ? `<p><strong>${esc(selected.newsletter_selection.title)}</strong> · ${selected.newsletter_selection.articles.length} Artikel ausgewählt</p><ul>${selected.newsletter_selection.articles.map(article=>`<li>${esc(article.title)}</li>`).join('')}</ul>` : '<p class="small">Noch keine Artikel aus einem Stadionheft ausgewählt.</p>'}<button class="ghost" id="edNewsletterSelectArticles">Heft & Artikel auswählen</button></section>`;
+      <section class="ed-context-card"><h4>Aus dem Stadionheft übernehmen</h4><p class="small">Heft auswählen und Artikel ankreuzen. Im Newsletter erscheinen kurze Auszüge mit einem Link zur vollständigen Newsletter-Ausgabe.</p>${selected.newsletter_selection?.articles?.length ? `<p><strong>${esc(selected.newsletter_selection.title)}</strong> · ${selected.newsletter_selection.articles.length} Artikel ausgewählt</p><ul>${selected.newsletter_selection.articles.map(article=>`<li>${esc(article.title)}</li>`).join('')}</ul>` : '<p class="small">Noch keine Artikel aus einem Stadionheft ausgewählt.</p>'}<button class="ghost" id="edNewsletterSelectArticles">Heft & Artikel auswählen</button></section>`;
   }
 
   function newsletterSettingsCard() {
@@ -298,6 +299,7 @@ export function createEditorialWorkspace(
         <div class="ed-cover-field"><label class="ed-cover-check"><input type="checkbox" name="showDate" ${settings.showDate ? 'checked' : ''}> Erscheinungsmonat anzeigen</label><span>${dateLabel(selected.publishes_on)}</span><small>Änderbar unter „Planung & Termine“.</small></div>
         <div class="ed-cover-field"><label for="edNewsletterSubject">E-Mail-Betreff</label><input id="edNewsletterSubject" name="subject" maxlength="180" value="${esc(settings.subject)}" placeholder="${esc(selected.title)}"><small>Leer: Ausgabentitel verwenden.</small></div>
         <div class="ed-cover-field"><label for="edNewsletterPreheader">E-Mail-Vorschautext</label><input id="edNewsletterPreheader" name="preheader" maxlength="200" value="${esc(settings.preheader)}" placeholder="Kurze Vorschau im Posteingang"><small>Leer: Anfang des ersten Beitrags verwenden.</small></div>
+        <div class="ed-cover-field"><label for="edNewsletterMaxWords">Maximale Wörter je Artikel in der E-Mail</label><input id="edNewsletterMaxWords" name="maxWords" type="number" min="20" max="500" step="1" required value="${settings.maxWords}"><small>Vorgabe: 120 Wörter. „Weiterlesen“ öffnet die vollständige Newsletter-Ausgabe.</small></div>
       </div><p class="small">Die Ausgabenummer wird manuell vergeben. Die Stadionheft-Links sind immer enthalten.</p><p id="edNewsletterSettingsMessage" class="small" role="status"></p><div class="toolbar ed-card-actions"><button type="submit">Newsletter-Angaben speichern</button><button type="button" class="ghost" id="edNewsletterDiscard">Änderungen verwerfen</button></div></form></details>`;
   }
   function wireNewsletterSettings() {
@@ -318,6 +320,7 @@ export function createEditorialWorkspace(
       for (const name of ['showName','showNumber','showDate','showHeadline','showKicker','showIntro']) settings[name] = form.elements[name].checked;
       lock(form, true);
       try {
+        settings.maxWords = Number(form.elements.maxWords.value);
         await call('save_newsletter_settings', {issueId:selected.id, version:selected.version, settings});
         coverDirty = false;
         await refresh();
@@ -343,12 +346,25 @@ export function createEditorialWorkspace(
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
+  let newsletterPreviewReader = null;
   async function newsletterMail(snapshot, preview = true) {
     // Refresh the publication list for each preview/export, including issues
     // published by another editor since this workspace was opened.
     // Local demo publications have no public Suite URL.
     const current = snapshot.demo ? {issues:[]} : await call('list');
-    return renderEditorialNewsletter(snapshot, newsletterAssets.template, {
+    let readerUrl = null;
+    if (preview) {
+      let readerSnapshot = snapshot;
+      if (snapshot.newsletter_selection?.articles?.length) {
+        const selection = snapshot.newsletter_selection;
+        const {source} = await call('newsletter_source',{sourceIssueId:selection.issue_id,sourceVersion:selection.issue_version,full:true});
+        readerSnapshot = {...snapshot,newsletter_selection:{...selection,articles:selection.articles.map(article => ({...article,body:source.articles.find(full => full.id === article.id)?.body || article.excerpt}))}};
+      }
+      if (newsletterPreviewReader) URL.revokeObjectURL(newsletterPreviewReader);
+      newsletterPreviewReader = URL.createObjectURL(new Blob([renderNewsletterReader(readerSnapshot,newsletterAssets.template,{stadiumIssues:current.issues})],{type:'text/html;charset=utf-8'}));
+      readerUrl = newsletterPreviewReader;
+    }
+    return renderEditorialNewsletter(snapshot, newsletterAssets.template, {readerUrl,
       preview,
       stadiumIssues: current.issues,
       ...(snapshot.demo ? {stadiumOrigin:location.origin,unsubscribePreviewUrl:location.origin+'/newsletter/abmelden?vorschau=1'} : {}),
@@ -359,13 +375,13 @@ export function createEditorialWorkspace(
     wireNewsletterSettings();
     $('#edCompleteNewsletter').onclick = async () => {
       if (busy || !canLeaveCover()) return;
-      if (!window.confirm('Newsletter als veröffentlicht markieren und ins Archiv verschieben? Der Versand in Resend erfolgt separat.')) return;
+      if (!window.confirm('Newsletter als veröffentlicht markieren und ins Archiv verschieben? Damit wird auch die vollständige Lesefassung öffentlich erreichbar. Der Versand in Resend erfolgt separat.')) return;
       busy = true;
       try {
         await call('complete_newsletter', {issueId:selected.id, version:selected.version});
         selected = null;
         await refresh();
-        show('Newsletter als veröffentlicht markiert.');
+        show('Newsletter veröffentlicht. Die vollständige Lesefassung ist jetzt über die Weiterlesen-Links erreichbar.');
       } catch (error) { show(error.message, true); }
       finally { busy = false; }
     };
@@ -573,7 +589,7 @@ export function createEditorialWorkspace(
     $('#edPersonSelection').hidden = Boolean(article && !['board', 'youth', 'coach', 'free'].includes(article.kind));
     const options = [...candidates];
     for (const person of chosen) if (!options.some(candidate => candidate.id === person.person_id)) options.push({ id: person.person_id, display_name: person.name, role: person.role + ' · Zuordnung nicht mehr verfügbar', unavailable: true });
-    $('#edPersonCandidates').innerHTML = options.map(person => `<label class="ed-person-option"><input type="checkbox" name="person_ids" value="${esc(person.id)}" ${chosen.some(saved => saved.person_id === person.id) ? 'checked' : ''}><span><strong>${esc(person.display_name)}</strong><small>${esc(person.role)}${person.photo_url || person.has_photo ? '' : ' · Kein Bild hinterlegt'}</small></span></label>`).join('') || '<p class="small">Für diese Funktion ist noch keine Person im Katalog zugeordnet.</p>';
+    mountPersonAutocomplete(options, chosen.map(person => person.person_id));
     $('#edGalleryEditor legend').textContent = selected.kind === 'newsletter' ? 'Bilder zum Newsletter-Beitrag' : 'Bildgruppen zum Beitrag';
     $('#edGalleryEditor p').textContent = selected.kind === 'newsletter' ? 'Mannschaftsbilder aus der zentralen Verwaltung können direkt verwendet und als E-Mail exportiert werden. Eigene Uploads benötigen für den Versand weiterhin dauerhafte öffentliche Bildadressen.' : 'Jeder Upload bildet eine eigene Gruppe. Wähle je Gruppe ein Titelbild für die Heftseite. Ein Klick darauf öffnet alle Bilder der Gruppe.';
     editingGalleries = structuredClone(article?.gallery_groups || []);
@@ -702,6 +718,64 @@ export function createEditorialWorkspace(
     form
       .querySelectorAll("input,textarea,select,button")
       .forEach((node) => (node.disabled = value));
+  }
+  function mountPersonAutocomplete(options, chosenIds) {
+    const host = $('#edPersonCandidates');
+    const selectedIds = new Set(chosenIds);
+    host.innerHTML = `<div class="ed-person-chips" id="edPersonChips"></div><div class="ed-person-combobox"><label for="edPersonSearch">Person suchen oder auswählen</label><input id="edPersonSearch" type="text" role="combobox" aria-autocomplete="list" aria-haspopup="listbox" aria-expanded="false" aria-controls="edPersonList" autocomplete="off" placeholder="Name oder Funktion eingeben …"><div id="edPersonList" role="listbox" aria-label="Personenvorschläge" aria-multiselectable="true" hidden></div></div><p class="small" id="edPersonCount" role="status" aria-live="polite"></p>`;
+    const search = $('#edPersonSearch'), list = $('#edPersonList');
+    let active = -1, matches = [];
+    const normalize = value => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('de');
+    const close = () => { list.hidden = true; search.setAttribute('aria-expanded','false'); search.removeAttribute('aria-activedescendant'); active = -1; };
+    const highlight = () => {
+      list.querySelectorAll('[role="option"]').forEach((option,index) => option.classList.toggle('active',index === active));
+      if (active >= 0) { search.setAttribute('aria-activedescendant',`edPersonOption${active}`); list.children[active]?.scrollIntoView({block:'nearest'}); }
+      else search.removeAttribute('aria-activedescendant');
+    };
+    const renderList = () => {
+      const terms = normalize(search.value).split(/\s+/).filter(Boolean);
+      matches = options.filter(person => terms.every(term => normalize(person.display_name + ' ' + person.role).includes(term)));
+      list.innerHTML = matches.map((person,index) => `<div role="option" id="edPersonOption${index}" data-person-index="${index}" aria-selected="${selectedIds.has(person.id)}" aria-disabled="${!selectedIds.has(person.id) && (selectedIds.size >= 4 || person.unavailable) ? 'true' : 'false'}"><span aria-hidden="true">${selectedIds.has(person.id) ? '✓' : '+'}</span><span><strong>${esc(person.display_name)}</strong><small>${esc(person.role)}${person.photo_url || person.has_photo ? '' : ' · Kein Bild hinterlegt'}</small></span></div>`).join('') || '<p class="small">Keine passende Person gefunden.</p>';
+      list.hidden = false;
+      search.setAttribute('aria-expanded','true');
+      active = -1; highlight();
+    };
+    const renderChips = () => {
+      $('#edPersonChips').innerHTML = options.filter(person => selectedIds.has(person.id)).map(person => `<span class="ed-person-chip"><input type="checkbox" name="person_ids" value="${esc(person.id)}" checked hidden><span>${esc(person.display_name)}</span><button type="button" class="ghost" data-remove-person="${esc(person.id)}" aria-label="${esc(person.display_name)} entfernen">×</button></span>`).join('');
+      $('#edPersonCount').textContent = `${selectedIds.size} von 4 Personen ausgewählt.`;
+    };
+    const changed = () => {
+      renderChips();
+      host.dispatchEvent(new Event('change',{bubbles:true}));
+      host.dispatchEvent(new Event('input',{bubbles:true}));
+    };
+    const choose = index => {
+      const person = matches[index];
+      if (!person) return;
+      if (selectedIds.has(person.id)) selectedIds.delete(person.id);
+      else if (selectedIds.size < 4 && !person.unavailable) selectedIds.add(person.id);
+      else return;
+      changed(); search.value = ''; close(); search.focus(); close();
+    };
+    search.onfocus = renderList;
+    search.onclick = () => { if (list.hidden) renderList(); };
+    search.oninput = event => { event.stopPropagation(); renderList(); };
+    search.onkeydown = event => {
+      if (event.key === 'Escape' && !list.hidden) { event.preventDefault(); event.stopPropagation(); close(); }
+      else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault(); if (list.hidden) renderList();
+        active = matches.length ? active < 0 ? (event.key === 'ArrowDown' ? 0 : matches.length - 1) : (active + (event.key === 'ArrowDown' ? 1 : -1) + matches.length) % matches.length : -1; highlight();
+      } else if (event.key === 'Enter') { event.preventDefault(); if (!list.hidden && active >= 0) choose(active); }
+      else if (event.key === 'Tab') close();
+    };
+    list.onmousedown = event => event.preventDefault();
+    list.onclick = event => { const option = event.target.closest('[data-person-index]'); if (option) choose(Number(option.dataset.personIndex)); };
+    host.onclick = event => {
+      const remove = event.target.closest('[data-remove-person]');
+      if (remove) { selectedIds.delete(remove.dataset.removePerson); changed(); search.focus(); close(); }
+    };
+    host.onfocusout = event => { if (!host.contains(event.relatedTarget)) close(); };
+    renderChips();
   }
   $("#edIssueForm").oninput = () => (dirty = true);
   $("#edArticleForm").oninput = () => {
@@ -1092,6 +1166,7 @@ export function createEditorialWorkspace(
         const html = newsletter ? (await newsletterMail(result.snapshot)).html : renderEditorialMagazine(result.snapshot, true);
         $('#edPreviewHeading').textContent = newsletter ? 'Newsletter · E-Mail-Entwurf' : 'Heftvorschau · Entwurf';
         $('#edMagazineFrame').title = newsletter ? 'Newsletter als E-Mail ansehen' : 'Stadionheft vor Veröffentlichung ansehen';
+        $('#edMagazineFrame').setAttribute('sandbox', newsletter ? 'allow-same-origin allow-popups allow-popups-to-escape-sandbox' : 'allow-scripts allow-popups allow-popups-to-escape-sandbox');
         if (previewUrl) URL.revokeObjectURL(previewUrl);
         previewUrl = URL.createObjectURL(
           new Blob([html], { type: "text/html" }),

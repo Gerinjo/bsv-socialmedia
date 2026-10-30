@@ -104,6 +104,9 @@ ${(await readFile(resolve(repoDir,'src/suite-brand.mjs'),'utf8')).replace(/^expo
 ${(await readFile(resolve(repoDir,'src/brand-theme-assets.mjs'),'utf8')).replace(/^export /gm,'')}
 ${(await readFile(resolve(repoDir,'src/brand-themes.mjs'),'utf8')).replace(/^import .*;\n/gm,'').replace(/^export /gm,'')}
 const renderEditorialMagazine = ${renderEditorialMagazine.toString()};
+const NEWSLETTER_UNSUBSCRIBE_LINK = ${JSON.stringify(NEWSLETTER_UNSUBSCRIBE_LINK)};
+const newsletterTemplate = ${JSON.stringify(await readFile(resolve(repoDir,'templates/newsletter.html'),'utf8'))};
+${(await readFile(resolve(repoDir,'src/newsletter.mjs'),'utf8')).replace(/^import .*;\n/gm,'').replace(/^export /gm,'')}
 
 export default {
   async fetch(request) {
@@ -115,6 +118,17 @@ export default {
     const asset = cashbookAssets[path];
     if (asset) return new Response(asset.base64 ? Uint8Array.from(atob(asset.body),char=>char.charCodeAt(0)) : asset.body,{headers:{'content-type':asset.type,'cache-control':path.endsWith('.png')?'public, max-age=86400':'no-cache','x-content-type-options':'nosniff'}});
     if (new URL(request.url).pathname === '/newsletter/abmelden') return new Response(unsubscribeHtml,{headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-store','referrer-policy':'no-referrer','x-robots-tag':'noindex, nofollow','x-content-type-options':'nosniff','content-security-policy':"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; frame-src about:; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"}});
+    const newsletterMatch = path.match(/^\\/newsletter\\/([0-9a-f-]{36})$/i);
+    if (newsletterMatch) {
+      try {
+        const version = new URL(request.url).searchParams.get('version');
+        const feed = await fetch('https://maejihwjzxkmthjavgnx.supabase.co/functions/v1/editorial-publications?kind=newsletter&id=' + newsletterMatch[1] + (version === null ? '' : '&version=' + encodeURIComponent(version)),{headers:{apikey:'sb_publishable_a3DnmtbBycRR4mWV4Jmz-w_RJobGli9'}});
+        if (!feed.ok) return new Response(feed.status === 404 ? 'Dieser Newsletter ist noch nicht veröffentlicht.' : 'Der Newsletter ist vorübergehend nicht verfügbar.',{status:feed.status,headers:{'cache-control':'no-store'}});
+        const snapshot = await feed.json();
+        if (snapshot.kind !== 'newsletter') return new Response('Newsletter nicht gefunden.',{status:404});
+        return new Response(renderNewsletterReader(snapshot,newsletterTemplate),{headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff','referrer-policy':'no-referrer','content-security-policy':"default-src 'none'; style-src 'unsafe-inline'; img-src https: data:; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"}});
+      } catch { return new Response('Der Newsletter ist vorübergehend nicht verfügbar.',{status:503,headers:{'cache-control':'no-store'}}); }
+    }
     const match = new URL(request.url).pathname.match(/^\\/stadionheft\\/([0-9a-f-]{36})$/i);
     if (match) {
       try {

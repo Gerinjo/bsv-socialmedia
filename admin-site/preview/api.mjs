@@ -23,6 +23,7 @@ import {
 } from "/editorial-publication.mjs";
 import { previewSports } from '/preview-sports.mjs';
 import { editorialSportsBody } from '/editorial-sports-format.mjs';
+import { previewNewsletterSponsors } from '/preview-newsletter-sponsors.mjs';
 import { previewAdvertising } from '/preview-sponsors.mjs';
 function withPreviewAdvertisements(snapshot) {
   if (!snapshot.advertising) return snapshot;
@@ -42,7 +43,7 @@ const legacyPeople = previewPeople.map(person => ({ ...person, photo_url: person
 let people = legacyPeople;
 const departments = [
   { id: "demo-fussball", label: "Fußballabteilung" },
-  { id: "demo-jugend", label: "Jugendabteilung" },
+  { id: "demo-jugend", label: "Jugendabteilung", audience_group:"youth_department" },
   { id: "demo-turnen", label: "Turnen" },
 ];
 async function localEditorialPeople() {
@@ -308,6 +309,12 @@ export async function editorialPreviewApi(method = "GET", body = {}, query = {})
         if (!release.ready || !release.reviewed) throw new Error('Bitte alle Beiträge freigeben und die aktuelle E-Mail-Vorschau prüfen.');
         issue.published_version = issue.version;
         issue.published_at = new Date().toISOString();
+        const frozen = {...editorialPublicSnapshot(issue,state.articles.filter(article => article.issue_id === issue.id),teams),brand:issue.brand_settings,demo:true,published_at:issue.published_at};
+        if (frozen.newsletter_selection?.articles?.length) {
+          const source = localNewsletterSource(state,frozen.newsletter_selection.issue_id,frozen.newsletter_selection.issue_version,true);
+          frozen.newsletter_selection.articles = frozen.newsletter_selection.articles.map(article => ({...article,body:source.articles.find(full => full.id === article.id)?.body || article.excerpt}));
+        }
+        if (!(state.publications || []).some(snapshot => snapshot.id === frozen.id && snapshot.version === frozen.version)) (state.publications ||= []).push(frozen);
         result = {issue};
       }
       break;
@@ -356,7 +363,7 @@ export async function editorialPreviewApi(method = "GET", body = {}, query = {})
       break;
     }
     case 'editorial_newsletter_source': {
-      result = {source:localNewsletterSource(state, body.sourceIssueId, body.sourceVersion)};
+      result = {source:localNewsletterSource(state, body.sourceIssueId, body.sourceVersion, body.full === true)};
       break;
     }
     case 'editorial_save_newsletter_selection': {
@@ -588,13 +595,17 @@ export async function editorialPreviewApi(method = "GET", body = {}, query = {})
         issue.advertising = structuredClone(previewAdvertising);
         touch(state, issue.id);
       }
+      if (issue.kind === 'newsletter' && !issue.advertising?.newsletterSponsors) {
+        issue.advertising = {issueDate:issue.publishes_on,ads:[],newsletterSponsors:previewNewsletterSponsors};
+        touch(state,issue.id);
+      }
       issue.brand_settings=previewSuiteBrand();
       issue.previewed_version = issue.version;
       result = {
         snapshot: withPreviewAdvertisements({
           ...editorialPublicSnapshot(
             issue,
-            state.articles.filter((a) => a.issue_id === issue.id),
+            state.articles.filter((a) => a.issue_id === issue.id).map(article => ({...article,department_group:departments.find(audience => audience.id === article.department_id)?.audience_group})),
             teams,
           ),
           brand: issue.brand_settings,
@@ -713,10 +724,10 @@ export function createClient() {
   };
 }
 
-function localNewsletterSource(state, id, version) {
+function localNewsletterSource(state, id, version, full = false) {
   if (version !== undefined && (!Number.isInteger(version) || version < 1)) throw new Error('Ungültige Heftfassung.');
   const snapshot = state.publications.filter(p => p.id === id && (version === undefined || p.version === version)).at(-1);
-  return newsletterSource(snapshot && {issue_id:snapshot.id,issue_version:snapshot.version,published_at:snapshot.published_at,snapshot});
+  return newsletterSource(snapshot && {issue_id:snapshot.id,issue_version:snapshot.version,published_at:snapshot.published_at,snapshot},{full});
 }
 export async function editorialPreviewPublication(id, version = null) {
   if (version !== null && (!/^[1-9][0-9]{0,9}$/.test(version) || Number(version)>2147483647)) throw new Error('Diese Heftfassung ist nicht verfügbar.');

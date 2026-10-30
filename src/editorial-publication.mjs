@@ -109,7 +109,7 @@ export function editorialPublicSnapshot(issue, articles, teams = []) {
     advertising: issue.advertising || null,
     coverMatches: editorialCoverMatches(issue, articles, teams),
     articles: visible.map(
-      ({ id, title, body, author, kind, status, event_snapshot, automatic_sports, people_snapshot, gallery_groups, team_id, source_snapshot }) => ({
+      ({ id, title, body, author, kind, status, event_snapshot, automatic_sports, people_snapshot, gallery_groups, team_id, department_group, source_snapshot }) => ({
         id,
         title,
         body,
@@ -117,6 +117,7 @@ export function editorialPublicSnapshot(issue, articles, teams = []) {
         kind,
         status,
         automatic_sports: Boolean(automatic_sports),
+        department_group: department_group || null,
         team_slug: teams.find(team => team.id === team_id)?.slug || null,
         galleries: gallery_groups || [],
         team_photo: source_snapshot?.teamPhoto ? {alt:source_snapshot.teamPhoto.alt, photo_path:source_snapshot.teamPhoto.photo_path || null, photo_url:source_snapshot.teamPhoto.photo_url || null} : null,

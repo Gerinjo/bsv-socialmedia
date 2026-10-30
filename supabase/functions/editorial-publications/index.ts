@@ -20,12 +20,14 @@ const handler = withSupabase(
     const id = new URL(request.url).searchParams.get("id") || "";
     if (!/^[0-9a-f-]{36}$/i.test(id))
       return Response.json({ error: "not_found" }, { status: 404, headers });
+    const kind = new URL(request.url).searchParams.get('kind') || 'stadium';
+    if (!['stadium','newsletter'].includes(kind)) return Response.json({error:'not_found'},{status:404,headers});
     const version = new URL(request.url).searchParams.get('version');
     if (version !== null && (!/^[1-9][0-9]{0,9}$/.test(version) || Number(version) > 2147483647)) return Response.json({error:'not_found'},{status:404,headers});
     let query = context.supabaseAdmin
       .from("editorial_publications")
       .select("snapshot")
-      .eq("issue_id", id);
+      .eq("issue_id", id).eq("snapshot->>kind",kind);
     if (version !== null) query = query.eq("issue_version", Number(version));
     const {data,error} = await query
       .order("issue_version", { ascending: false })
@@ -42,18 +44,15 @@ const handler = withSupabase(
       snapshot: { cover_path: string; [key: string]: unknown };
     };
     const { cover_path, ...snapshot } = publication.snapshot;
-    const { data: cover, error: coverError } =
-      await context.supabaseAdmin.storage
-        .from("editorial-covers")
-        .createSignedUrl(cover_path, 3600);
-    if (coverError)
-      return Response.json(
-        { error: "cover_unavailable" },
-        { status: 503, headers },
-      );
+    let coverUrl = null;
+    if (cover_path) {
+      const {data:cover,error:coverError} = await context.supabaseAdmin.storage.from('editorial-covers').createSignedUrl(cover_path,3600);
+      if (coverError || !cover?.signedUrl) return Response.json({error:'cover_unavailable'},{status:503,headers});
+      coverUrl = cover.signedUrl;
+    }
     try {
       return Response.json(
-        await withEditorialContacts(context.supabaseAdmin, await withEditorialTeamPhotos(context.supabaseAdmin, await withEditorialGalleries(context.supabaseAdmin, await withEditorialPeople(context.supabaseAdmin, await withEditorialAdvertising(context.supabaseAdmin, { ...snapshot, cover_url: cover.signedUrl }))))),
+        await withEditorialContacts(context.supabaseAdmin, await withEditorialTeamPhotos(context.supabaseAdmin, await withEditorialGalleries(context.supabaseAdmin, await withEditorialPeople(context.supabaseAdmin, await withEditorialAdvertising(context.supabaseAdmin, { ...snapshot, cover_url: coverUrl }))))),
         { headers },
       );
     } catch {

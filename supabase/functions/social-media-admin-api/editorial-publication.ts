@@ -1,3 +1,4 @@
+import {prepareNewsletterSponsors} from '../_shared/newsletter-sponsors.ts';
 import {withEditorialContacts} from '../_shared/editorial-contacts.ts';
 import { withEditorialTeamPhotos } from '../_shared/editorial-team-photo.ts';
 import { withEditorialGalleries, withArticleGalleries } from '../_shared/editorial-galleries.ts';
@@ -205,7 +206,7 @@ export async function handleEditorialPublication(
       }
       version = saved.version;
     } else {
-      const saved = await row(db.from('editorial_issues').update({brand_settings:brand}).eq('id',issue.id).eq('version',version).select().maybeSingle());
+      const saved = await row(db.from('editorial_issues').update({brand_settings:brand,advertising:await prepareNewsletterSponsors(db,issue)}).eq('id',issue.id).eq('version',version).select().maybeSingle());
       if (!saved) throw new Error('Die Ausgabe wurde geändert. Bitte erneut öffnen.');
       version = saved.version;
     }

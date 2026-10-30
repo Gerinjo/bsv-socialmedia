@@ -26,7 +26,7 @@ begin
     raise exception 'ASSERT: stale deletion accepted';
   exception when others then if sqlerrm like 'ASSERT:%' then raise; end if; end;
   -- Legacy newsletter snapshots must not block deleting the issue.
-  insert into public.editorial_publications(issue_id,issue_version,snapshot,published_by) values(i.id,n,'{}','00000000-0000-0000-0000-000000000001');
+  insert into public.editorial_publications(issue_id,issue_version,snapshot,published_by) values(i.id,n-1,'{}','00000000-0000-0000-0000-000000000001');
   perform public.manage_editorial_newsletter(i.id,n,'delete');
   if exists(select 1 from public.editorial_issues where id=i.id)
     or exists(select 1 from public.editorial_articles where issue_id=i.id)

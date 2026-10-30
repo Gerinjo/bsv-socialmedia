@@ -57,6 +57,8 @@ const files = new Map([
   ["/referee-model.mjs", "src/referees.mjs"],
   ["/preview-referees.mjs", "admin-site/preview/referees.mjs"],
   ["/newsletter-unsubscribe.mjs", "src/newsletter-unsubscribe.mjs"],
+  ['/newsletter-template.html','templates/newsletter.html'],
+  ['/preview-newsletter-sponsors.mjs','admin-site/preview/newsletter-sponsors.mjs'],
   ["/newsletter.mjs", "src/newsletter.mjs"],
   ["/newsletter-example.mjs", "src/newsletter-example.mjs"],
   ["/preview-team-photos.mjs", "admin-site/preview/team-photos.mjs"],
@@ -115,6 +117,11 @@ const server = createServer(async (request, response) => {
       response.end(await readFile(new URL('admin-site/preview/sponsors/' + path.split('/').pop(), root)));
       return;
     }
+    if (/^\/newsletter\/[a-z0-9-]+$/.test(path)) {
+      response.setHeader('Content-Type','text/html; charset=utf-8');
+      response.end(`<!doctype html><html lang="de"><meta charset="utf-8"><title>Newsletter</title><body><p id="message">Newsletter wird geladen …</p><script type="module">import {editorialPreviewPublication} from '/preview-api.mjs';import {renderNewsletterReader} from '/newsletter.mjs';try{const snapshot=await editorialPreviewPublication(location.pathname.split('/').pop(),new URLSearchParams(location.search).get('version'));if(snapshot.kind!=='newsletter')throw new Error('Newsletter nicht gefunden.');const template=await (await fetch('/newsletter-template.html')).text();document.open();document.write(renderNewsletterReader(snapshot,template));document.close();}catch(error){document.querySelector('#message').textContent=error.message;}</script></body></html>`);
+      return;
+    }
     if (/^\/stadionheft\/[a-z0-9-]+$/.test(path)) {
       response.setHeader("Content-Type", "text/html; charset=utf-8");
       response.end(
@@ -150,7 +157,7 @@ const server = createServer(async (request, response) => {
       response.end("Not found");
       return;
     }
-    response.setHeader("Content-Type", "application/javascript; charset=utf-8");
+    response.setHeader("Content-Type", path.endsWith(".html") ? "text/html; charset=utf-8" : "application/javascript; charset=utf-8");
     response.end(await readFile(new URL(file, root)));
   } catch (error) {
     response.writeHead(500);

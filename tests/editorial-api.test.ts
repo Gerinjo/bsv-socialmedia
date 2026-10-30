@@ -488,7 +488,7 @@ Deno.test('newsletter draft previews stay private and public portrait copies req
  const photo={name:'Anna',role:'Vorstand',photo_path:'issue/frozen.png'};
  const draft={kind:'newsletter',articles:[{title:'Beitrag',body:'Unser Text',status:'review',people:[photo]}]};
  const request={action:'editorial_preview_issue',issueId:'issue',version:1,forExport:true};
- const setup=(snapshot:any)=>database([{id:'issue',kind:'newsletter',version:1},[],{}, {version:2},snapshot]);
+ const setup=(snapshot:any)=>database([{id:'issue',kind:'newsletter',version:1,advertising:{newsletterSponsors:{general:[],youth:[]}}},[],{}, {version:2},snapshot]);
  let copies=0,signs=0;
  const storage={from:(bucket:string)=>({copy:async()=>{copies++;return {error:null};},getPublicUrl:()=>({data:{publicUrl:'https://example.org/public/frozen.png'}}),createSignedUrl:async()=>{signs++;return {data:{signedUrl:'https://example.org/sign/frozen.png?token=private'},error:null};}})};
  const blocked=setup(draft);(blocked.db as any).storage=storage;

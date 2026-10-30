@@ -50,14 +50,14 @@ const departments = [
   "department",
 ];
 
-async function loadNewsletterSource(db: any, sourceIssueId: unknown, sourceVersion?: unknown) {
+async function loadNewsletterSource(db: any, sourceIssueId: unknown, sourceVersion?: unknown, full = false) {
   if (typeof sourceIssueId !== 'string' || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(sourceIssueId)) fail('Bitte ein veröffentlichtes Stadionheft auswählen.');
   if (sourceVersion != null && (!Number.isInteger(sourceVersion) || Number(sourceVersion) < 1)) fail('Ungültige Heftfassung.');
   let query = db.from('editorial_publications').select('issue_id,issue_version,published_at,snapshot').eq('issue_id', sourceIssueId);
   if (sourceVersion != null) query = query.eq('issue_version', sourceVersion);
   const publication = await row(query.order('issue_version',{ascending:false}).limit(1).maybeSingle());
   if (publication?.snapshot) publication.snapshot = await withEditorialPeople(db,withNewsletterGalleryImages(db, publication.snapshot),{permanent:true});
-  return newsletterSource(publication);
+  return newsletterSource(publication,{full});
 }
 
 export async function handleEditorial(db: any, userId: string, body: any) {
@@ -160,7 +160,7 @@ export async function handleEditorial(db: any, userId: string, body: any) {
     return {articles:await Promise.all(articles.map((article: any)=>withArticleGalleries(db,article)))};
   }
   if (action === 'editorial_newsletter_source') {
-    return {source:await loadNewsletterSource(db, body.sourceIssueId, body.sourceVersion)};
+    return {source:await loadNewsletterSource(db, body.sourceIssueId, body.sourceVersion, body.full === true)};
   }
   if (action === 'editorial_save_newsletter_selection') {
     const issue = await row(db.from('editorial_issues').select('*').eq('id', body.issueId).single());

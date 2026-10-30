@@ -6,7 +6,7 @@ export function newsletterDefaults(issue) {
     name: 'NORDSTERN POST', number: '', headline: issue.title,
     kicker: 'GEMEINSAM. STARK. SEIT 1956.',
     intro: 'Neuigkeiten, Menschen und Geschichten aus dem BSV Nordstern Radolfzell.',
-    subject: '', preheader: '',
+    subject: '', preheader: '', maxWords: 120,
     showName: true, showNumber: true, showDate: true,
     showHeadline: true, showKicker: true, showIntro: true,
     ...issue.newsletter_settings,
@@ -23,6 +23,8 @@ export function normalizeNewsletterSettings(value) {
     if (typeof value[name] !== 'boolean') throw new Error('Ungültiger Newsletter-Schalter.');
     settings[name] = value[name];
   }
+  settings.maxWords = value.maxWords ?? 120;
+  if (!Number.isInteger(settings.maxWords) || settings.maxWords < 20 || settings.maxWords > 500) throw new Error('Bitte ein Wortlimit zwischen 20 und 500 eingeben.');
   if (settings.showName && !settings.name) throw new Error('Bitte einen Newsletter-Namen eingeben oder die Anzeige ausschalten.');
   return settings;
 }
@@ -35,18 +37,35 @@ export function newsletterExcerpt(body) {
   const end = sentence && sentence.index >= 200 ? sentence.index + 1 : prefix.lastIndexOf(' ');
   return prefix.slice(0, end > 0 ? end : 419).trimEnd() + '…';
 }
+export function newsletterWordExcerpt(body, maxWords = 120) {
+  const text = String(body || '').trim();
+  const words = [...text.matchAll(/\S+/gu)];
+  return words.length <= maxWords ? text : text.slice(0, words[maxWords - 1].index + words[maxWords - 1][0].length).trimEnd() + '…';
+}
+export function newsletterReaderUrl(snapshot, articleId, origin = 'https://bsv-story-automatik.jerome-ernsberger.chatgpt.site') {
+  return `${origin}/newsletter/${encodeURIComponent(snapshot.id)}?version=${encodeURIComponent(snapshot.version)}#artikel-${encodeURIComponent(articleId)}`;
+}
+// An issue UUID gives each block an independent, stable random ordering.
+export function newsletterSponsorSelection(pool, seed, count = 4) {
+  const hash = value => { let h = 2166136261; for (const c of value) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return h >>> 0; };
+  return [...new Map((pool || []).map(sponsor => [sponsor.id,sponsor])).values()]
+    .sort((a,b) => hash(`${seed}:${a.id}`) - hash(`${seed}:${b.id}`) || a.id.localeCompare(b.id)).slice(0,count);
+}
+export function newsletterYouthArticle(article) {
+  return article.kind === 'youth' || ['youth_department','youth_team'].includes(article.department_group) || /^(?:[a-g]-junior|junior|jugend)/i.test(article.team_slug || '');
+}
 function durableNewsletterPhoto(image) {
   const url = image?.photo_url || '';
   return /^https:\/\//.test(url) && !/\/object\/sign\/|[?&](token|signature|expires)=/i.test(url);
 }
-export function newsletterSource(publication) {
+export function newsletterSource(publication, {full = false} = {}) {
   const snapshot = publication?.snapshot;
   if (!snapshot || snapshot.kind !== 'stadium' || !publication.published_at || !Number.isInteger(publication.issue_version) || publication.issue_version < 1) throw new Error('Dieses Stadionheft ist noch nicht veröffentlicht.');
   return {
     issue_id: publication.issue_id, issue_version: publication.issue_version,
     title: snapshot.title, published_at: publication.published_at,
     articles: (snapshot.articles || []).filter(article => article.status === 'ready' && article.body?.trim()).map(article => ({
-      id: article.id, title: article.title, author: article.author || '', excerpt: newsletterExcerpt(article.body),
+      id: article.id, kind: article.kind, department_group: article.department_group, team_slug: article.team_slug, title: article.title, author: article.author || '', ...(full ? {body:article.body} : {}), excerpt: newsletterExcerpt(article.body),
       images: (article.galleries || []).flatMap(group => group.images || []).filter(durableNewsletterPhoto).map(image => ({photo_url:image.photo_url,alt:image.alt || article.title})),
       people: (article.people || []).filter(durableNewsletterPhoto).map(person => ({name:person.name,role:person.role,photo_url:person.photo_url})),
     })),
@@ -55,7 +74,7 @@ export function newsletterSource(publication) {
 export function newsletterSelection(source, articleIds) {
   if (!Array.isArray(articleIds) || articleIds.length > 30 || new Set(articleIds).size !== articleIds.length || articleIds.some(id => typeof id !== 'string' || !source.articles.some(article => article.id === id))) throw new Error('Bitte bis zu 30 verfügbare Artikel aus diesem Heft auswählen.');
   if (!articleIds.length) return null;
-  return {...source, articles:structuredClone(source.articles.filter(article => articleIds.includes(article.id)))};
+  return {...source, articles:structuredClone(source.articles.filter(article => articleIds.includes(article.id)).map(({body: _body, ...article}) => article))};
 }
 export function newsletterArticleUrl(selection, article, origin = 'https://bsv-story-automatik.jerome-ernsberger.chatgpt.site') {
   return `${origin}/stadionheft/${encodeURIComponent(selection.issue_id)}?version=${encodeURIComponent(selection.issue_version)}#artikel/${encodeURIComponent(article.id)}`;
@@ -63,7 +82,7 @@ export function newsletterArticleUrl(selection, article, origin = 'https://bsv-s
 
 // The mail shell is derived from the Nordstern Post website edition.
 // No browser scripts or stadium reader assets are included in a newsletter.
-export function renderEditorialNewsletter(snapshot, template, { preview = true, stadiumIssues = [], stadiumOrigin = 'https://bsv-story-automatik.jerome-ernsberger.chatgpt.site', unsubscribePreviewUrl = 'https://bsv-story-automatik.jerome-ernsberger.chatgpt.site/newsletter/abmelden?vorschau=1' } = {}) {
+export function renderEditorialNewsletter(snapshot, template, { preview = true, stadiumIssues = [], stadiumOrigin = 'https://bsv-story-automatik.jerome-ernsberger.chatgpt.site', unsubscribePreviewUrl = 'https://bsv-story-automatik.jerome-ernsberger.chatgpt.site/newsletter/abmelden?vorschau=1', full = false, readerUrl = null } = {}) {
   if (snapshot.kind !== 'newsletter') throw new Error('Bitte eine Newsletter-Ausgabe auswählen.');
   const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const articles = (snapshot.articles || []).filter(article => article.status !== 'waived');
@@ -95,24 +114,50 @@ export function renderEditorialNewsletter(snapshot, template, { preview = true, 
     return `<img src="${escape(url)}" alt="${escape(image.alt || title)}" width="${width}" style="display:block;width:100%;max-width:${width}px;height:auto;border:0;" />`;
   };
   const renderPhotos = (images, title) => images.map(image => `<p>${imageMarkup(image,title,632)}</p>`).join('');
-  const renderPortraits = people => (people || []).filter(person => person.photo_url).map(person =>
-    `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 24px;"><tr><td width="112" style="width:112px;vertical-align:top;">${imageMarkup({photo_url:person.photo_url,alt:person.name},person.name,112)}</td><td style="padding:0 0 0 16px;vertical-align:middle;overflow-wrap:anywhere;"><strong>${escape(person.name)}</strong><br /><span style="font-size:13px;line-height:20px;">${escape(person.role)}</span></td></tr></table>`
-  ).join('');
-  const rows = articles.map((article, index) => {
-    const state = preview && article.status !== 'ready' ? '<p style="color:#865700;font-size:13px;">Entwurf · noch nicht freigegeben</p>' : '';
-    const body = String(article.body || '').split(/\n\s*\n/).map(paragraph => `<p style="margin:0 0 16px;font-size:16px;line-height:26px;">${linkText(paragraph)}</p>`).join('');
-    const images = (article.galleries || []).flatMap(group => group.images || []);
+  const renderPortraits = people => {
+    const portraits = (people || []).filter(person => person.photo_url).map(person =>
+      `<div style="margin:0 0 12px;">${imageMarkup({photo_url:person.photo_url,alt:person.name},person.name,112)}<p style="margin:6px 0 0;font-size:12px;line-height:18px;"><strong>${escape(person.name)}</strong><br />${escape(person.role)}</p></div>`
+    ).join('');
+    return portraits ? `<div class="newsletter-portrait" style="float:left;width:112px;max-width:40%;margin:0 20px 12px 0;">${portraits}</div>` : '';
+  };
+  const rows = [];
+  const combined = [...articles.map(article => ({...article, imported:false})), ...imported.map(article => ({...article, imported:true}))];
+  let youthInBlock = false;
+  const sponsorPools = snapshot.advertising?.newsletterSponsors;
+  for (const [index, article] of combined.entries()) {
+    const state = preview && !article.imported && article.status !== 'ready' ? '<p style="color:#865700;font-size:13px;">Entwurf · noch nicht freigegeben</p>' : '';
+    const content = article.imported ? (full ? article.body || article.excerpt : article.excerpt) : article.body;
+    const excerpt = full ? content : newsletterWordExcerpt(content, settings.maxWords);
+    const body = String(excerpt || '').split(/\n\s*\n/).map(paragraph => `<p style="margin:0 0 16px;font-size:16px;line-height:26px;">${linkText(paragraph)}</p>`).join('');
+    const images = article.imported ? article.images || [] : (article.galleries || []).flatMap(group => group.images || []);
     const photos = renderPhotos(images,article.title);
     const portraits = renderPortraits(article.people);
-    text.push(`\n${article.title}\n${article.author ? article.author + '\n' : ''}\n${article.body || ''}`);
-    return `<tr><td class="section" style="padding:36px 40px;background-color:${index % 2 ? '#edf0e9' : '#ffffff'};">${state}<h2 style="margin:0 0 18px;color:#17613a;font-size:28px;line-height:34px;">${escape(article.title)}</h2>${article.author ? `<p style="font-size:13px;">${escape(article.author)}</p>` : ''}${portraits}${body}${photos}</td></tr>`;
-  });
-  for (const article of imported) {
-    const url = newsletterArticleUrl(selection, article, stadiumOrigin);
-    const photos = renderPhotos(article.images || [],article.title);
-    const portraits = renderPortraits(article.people);
-    rows.push(`<tr><td class="section" data-newsletter-excerpt="${escape(article.id)}" style="padding:36px 40px;border-top:1px solid #dce4d9;background-color:#ffffff;"><p style="margin:0 0 12px;color:#17613a;font-size:12px;line-height:18px;font-weight:bold;">AUS DEM STADIONHEFT · ${escape(selection.title)}</p><h2 style="margin:0 0 18px;color:#17613a;font-size:28px;line-height:34px;">${escape(article.title)}</h2>${portraits}<p style="margin:0 0 20px;font-size:16px;line-height:26px;">${escape(article.excerpt)}</p>${photos}<p style="margin:0;font-size:16px;line-height:26px;"><a href="${escape(url)}" style="color:#17613a;font-weight:bold;">Weiterlesen im Stadionheft →</a></p></td></tr>`);
-    text.push(`\nAUS DEM STADIONHEFT · ${selection.title}\n\n${article.title}\n\n${article.excerpt}\n\nWeiterlesen im Stadionheft: ${url}`);
+    const id = article.id || `beitrag-${index + 1}`;
+    const url = readerUrl ? `${readerUrl}#artikel-${encodeURIComponent(id)}` : snapshot.id ? newsletterReaderUrl(snapshot,id,stadiumOrigin) : article.imported ? newsletterArticleUrl(selection,article,stadiumOrigin) : '#artikel-' + encodeURIComponent(id);
+    const button = full ? '' : `<p style="clear:both;margin:20px 0 0;font-size:16px;line-height:26px;"><a href="${escape(url)}" target="_blank" rel="noopener" style="display:inline-block;padding:12px 20px;background-color:#17613a;color:#ffffff;font-weight:bold;text-decoration:none;border-radius:4px;">Weiterlesen →</a></p>`;
+    const source = article.imported ? `<p style="margin:0 0 12px;color:#17613a;font-size:12px;line-height:18px;font-weight:bold;">AUS DEM STADIONHEFT · ${escape(selection.title)}</p>` : '';
+    rows.push(`<tr><td class="section" id="artikel-${escape(id)}" ${article.imported ? `data-newsletter-excerpt="${escape(id)}"` : 'data-newsletter-article'} style="padding:36px 40px;background-color:${index % 2 ? '#edf0e9' : '#ffffff'};">${source}${state}<h2 style="margin:0 0 18px;color:#17613a;font-size:28px;line-height:34px;">${escape(article.title)}</h2>${article.author ? `<p style="font-size:13px;">${escape(article.author)}</p>` : ''}${portraits}${body}<div style="clear:both;"></div>${photos}${button}</td></tr>`);
+    text.push(`\n${article.imported ? 'AUS DEM STADIONHEFT · ' + selection.title + '\n\n' : ''}${article.title}\n${article.author ? article.author + '\n' : ''}\n${excerpt || ''}${full ? '' : '\n\nWeiterlesen: ' + url}`);
+    youthInBlock ||= newsletterYouthArticle(article);
+    // A final single youth article also receives its youth partner block.
+    if ((index + 1) % 2 === 0 || index === combined.length - 1 && youthInBlock) {
+      const slot = youthInBlock ? 'youth' : 'general';
+      const sponsors = newsletterSponsorSelection(sponsorPools?.[slot], `${snapshot.id}:${Math.floor(index / 2)}:${slot}`);
+      if (!preview && sponsorPools && sponsors.length < 4) throw new Error(`Für diesen Block werden vier freigegebene ${youthInBlock ? 'Jugendsponsoren' : 'Sponsoren'} benötigt. Bitte die Zuordnungen prüfen.`);
+      if (sponsors.length) {
+        const heading = youthInBlock ? 'Danke an unsere Jugendsponsoren' : 'Danke an unsere Sponsoren';
+        const cells = sponsors.map(sponsor => {
+          const website = /^https?:\/\//i.test(sponsor.website || '') ? sponsor.website : 'https://bsvnordstern.de/werbepartner';
+          const logo = /^https:\/\//i.test(sponsor.logo || '') ? `<img src="${escape(sponsor.logo)}" alt="${escape(sponsor.name)}" width="128" style="display:block;width:100%;max-width:128px;height:auto;max-height:80px;object-fit:contain;margin:0 auto 10px;border:0;" />` : '';
+          return `<td width="50%" align="center" style="padding:16px;background:#ffffff;vertical-align:middle;"><a href="${escape(website)}" style="color:#17613a;font-size:13px;text-decoration:none;">${logo}${escape(sponsor.name)}</a></td>`;
+        });
+        rows.push(`<tr><td class="section" data-newsletter-sponsors="${slot}" style="padding:24px 40px;background:#edf0e9;"><h3 style="margin:0 0 16px;color:#17613a;font-size:18px;">${heading}</h3><table role="presentation" width="100%" cellpadding="0" cellspacing="4" style="table-layout:fixed;"><tr>${cells.slice(0,2).join('')}</tr>${cells.length > 2 ? '<tr>'+cells.slice(2).join('')+'</tr>' : ''}</table></td></tr>`);
+        text.push('\n' + heading.toUpperCase() + '\n' + sponsors.map(sponsor => `${sponsor.name}: ${sponsor.website || 'https://bsvnordstern.de/werbepartner'}`).join('\n'));
+      } else if (preview && sponsorPools) {
+        rows.push(`<tr><td class="section" style="padding:24px 40px;color:#865700;">Keine freigegebenen ${youthInBlock ? 'Jugendsponsoren' : 'Sponsoren'} für diesen Block verfügbar.</td></tr>`);
+      }
+      youthInBlock = false;
+    }
   }
   // This section is mandatory, even for an empty draft. Use publication dates
   // instead of editable issue titles so later draft changes stay out of the mail.
@@ -151,4 +196,9 @@ export function renderEditorialNewsletter(snapshot, template, { preview = true, 
     .replace(/bgcolor="#092f20"/g,`bgcolor="${colors.background}"`) : generated;
 
   return { html, text: text.join('\n\n'), subject: title, preheader };
+}
+
+export function renderNewsletterReader(snapshot, template, options = {}) {
+  // Reuse the mail design, showing complete text without editor or reader controls.
+  return renderEditorialNewsletter(snapshot, template, {...options, preview:true, full:true}).html;
 }
