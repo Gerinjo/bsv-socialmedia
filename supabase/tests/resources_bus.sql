@@ -1,7 +1,7 @@
 begin;
 set local role service_role;
 do $$
-declare actor uuid:=gen_random_uuid();other uuid:=gen_random_uuid();person uuid:=gen_random_uuid();team uuid:=gen_random_uuid();other_team uuid:=gen_random_uuid();bus uuid;result jsonb;book uuid;start_value timestamptz:=now()+interval '10 days';
+declare actor uuid:=gen_random_uuid();other uuid:=gen_random_uuid();person uuid:=gen_random_uuid();team uuid:=gen_random_uuid();other_team uuid:=gen_random_uuid();bus uuid;result jsonb;book uuid;event_book uuid;event_payload jsonb;start_value timestamptz:=now()+interval '10 days';
 begin
  insert into public.social_admins(user_id,role,is_active,is_blocked,person_id,first_name,last_name,username,access_areas) values(actor,'sm-team',true,false,person,'Trainer','Test','test',array['resources']), (other,'sm-team',true,false,null,'Andere','Person','andere',array['resources']);
  insert into private.trainer_profiles(person_id,active) values(person,true);
@@ -20,6 +20,20 @@ begin
  result:=public.resource_request(actor,jsonb_build_object('action','book','resourceId',bus,'teamId',team,'matchId','test-match','expectedKickoff',start_value+interval '1 hour','startsAt',start_value-interval '1 hour','endsAt',start_value+interval '4 hours'));
  if result->>'status' is distinct from '409' then raise exception 'ASSERT: changed kickoff accepted';end if;
 
+
+ -- A resource-area member with no team can reserve an independent club event.
+ event_payload:=jsonb_build_object('action','book','bookingKind','event','resourceId',bus,'startsAt',start_value-interval '1 hour','endsAt',start_value+interval '1 hour','event',jsonb_build_object('title','Stadtfest – Getränkestand','category','city_event','organizer','Förderverein','contact','Erika Muster'));
+ result:=public.resource_request(other,event_payload);
+ if result->>'ok' is distinct from 'true' then raise exception 'ASSERT: unassigned member event failed: %',result;end if;event_book:=(result->>'bookingId')::uuid;
+ if not exists(select 1 from private.resource_bookings where id=event_book and team_id is null and match_id is null and booking_kind='event' and event->>'organizer'='Förderverein') then raise exception 'ASSERT: free event details lost';end if;
+ result:=public.resource_request(other,jsonb_build_object('action','list','month',to_char(start_value at time zone 'Europe/Berlin','YYYY-MM')));
+ if not exists(select 1 from jsonb_array_elements(result->'bookings') b where b->>'id'=event_book::text and (b->>'canManage')::boolean and b->>'bookingKind'='event') then raise exception 'ASSERT: free event omitted from calendar';end if;
+ result:=public.resource_request(actor,event_payload);if result->>'status' is distinct from '409' then raise exception 'ASSERT: event overlap accepted';end if;
+ result:=public.resource_request(actor,jsonb_build_object('action','book','resourceId',bus,'teamId',team,'matchId','test-match','expectedKickoff',start_value,'startsAt',start_value,'endsAt',start_value+interval '4 hours'));if result->>'status' is distinct from '409' then raise exception 'ASSERT: match overlaps free event';end if;
+ result:=public.resource_request(actor,jsonb_build_object('action','cancel','resourceId',bus,'bookingId',event_book));if result->>'status' is distinct from '403' then raise exception 'ASSERT: another trainer cancelled free event';end if;
+ result:=public.resource_request(other,event_payload||jsonb_build_object('matchId','test-home'));if result->>'status' is distinct from '400' then raise exception 'ASSERT: home match disguised as free event';end if;
+ result:=public.resource_request(other,event_payload||jsonb_build_object('event',jsonb_build_object('title','Missing contact','category','other')));if result->>'status' is distinct from '400' then raise exception 'ASSERT: invalid event accepted';end if;
+ result:=public.resource_request(other,jsonb_build_object('action','cancel','resourceId',bus,'bookingId',event_book));if result->>'ok' is distinct from 'true' then raise exception 'ASSERT: event creator cannot release reservation';end if;
  result:=public.resource_request(actor,jsonb_build_object('action','book','resourceId',bus,'teamId',other_team,'startsAt',start_value,'endsAt',start_value+interval '4 hours'));
  if result->>'status' is distinct from '403' then raise exception 'ASSERT: trainer booked another team';end if;
  result:=public.resource_request(actor,jsonb_build_object('action','book','resourceId',bus,'teamId',team,'matchId','test-match','expectedKickoff',start_value,'planning',jsonb_build_object('example','timing-snapshot'),'startsAt',start_value,'endsAt',start_value+interval '4 hours'));
@@ -34,6 +48,10 @@ begin
  if result->>'status' is distinct from '403' then raise exception 'ASSERT: foreign cancellation';end if;
  result:=public.resource_request(actor,jsonb_build_object('action','cancel','resourceId',bus,'bookingId',book));
  if result->>'ok' is distinct from 'true' or not exists(select 1 from private.resource_bookings where id=book and cancelled_at is not null) then raise exception 'ASSERT: cancellation not recorded';end if;
+
+ result:=public.resource_request(actor,event_payload);if result->>'ok' is distinct from 'true' then raise exception 'ASSERT: trainer free event failed';end if;event_book:=(result->>'bookingId')::uuid;
+ update public.social_admins set role='admin' where user_id=other;
+ result:=public.resource_request(other,jsonb_build_object('action','cancel','resourceId',bus,'bookingId',event_book));if result->>'ok' is distinct from 'true' then raise exception 'ASSERT: admin cannot cancel another member event';end if;
  update private.trainer_profiles set active=false where person_id=person;
  result:=public.resource_request(actor,jsonb_build_object('action','authorize','teamId',team));if result->>'status' is distinct from '403' then raise exception 'ASSERT: inactive trainer accepted';end if;
  update public.social_admins set is_blocked=true where user_id=actor;

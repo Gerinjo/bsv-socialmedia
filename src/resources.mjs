@@ -1,4 +1,6 @@
 export const BUS_ORIGIN={name:'BSV Nordstern',address:'Schlesierstraße 43, 78315 Radolfzell am Bodensee',coordinates:[8.9700514,47.7543133]};
+export const RESOURCE_EVENT_CATEGORIES={training:'Trainerweiterbildung',supporters:'Förderverein',city_event:'Stadtevent / Verkauf',other:'Sonstiges'};
+export function resourceBookingLabel(booking){return booking.bookingKind==='event'?booking.event?.title||'Freies Event':booking.teamName||'Mannschaft';}
 export function resourceTeamGroup(team){
  const text=[team.slug,team.name,team.website_path].filter(Boolean).join(' ').toLowerCase();
  const age=text.match(/\bu(19|18|17|16|15|14|13|12|11|10|9|8|7|6)\b/)?.[1];
@@ -39,9 +41,19 @@ export function resourceUtcTime(local){
 export function validateResourceBooking(body){
  const startsAt=new Date(body.startsAt),endsAt=new Date(body.endsAt);
  if(!Number.isFinite(startsAt.getTime())||!Number.isFinite(endsAt.getTime())||endsAt<=startsAt||endsAt-startsAt>72*3600000)throw new Error('Bitte einen Zeitraum von höchstens 72 Stunden mit Rückgabe nach Abfahrt eingeben.');
- if(typeof body.teamId!=='string'||!body.teamId||typeof body.resourceId!=='string'||!body.resourceId)throw new Error('Bitte Bus und Mannschaft auswählen.');
- if(typeof body.matchId!=='string'||!body.matchId||!Number.isFinite(Date.parse(body.expectedKickoff)))throw new Error('Bitte ein zukünftiges Auswärtsspiel im Kalender auswählen.');
+ if(typeof body.resourceId!=='string'||!body.resourceId)throw new Error('Bitte einen Bus auswählen.');
+ const bookingKind=body.bookingKind??'match';if(!['match','event'].includes(bookingKind))throw new Error('Ungültige Buchungsart.');
+ if(bookingKind==='match'&&(typeof body.teamId!=='string'||!body.teamId))throw new Error('Bitte eine Mannschaft auswählen.');
+ if(bookingKind==='match'&&(typeof body.matchId!=='string'||!body.matchId||!Number.isFinite(Date.parse(body.expectedKickoff))))throw new Error('Bitte ein zukünftiges Auswärtsspiel im Kalender auswählen.');
+ let event=null;
+ if(bookingKind==='event'){
+  if(body.matchId||body.teamId)throw new Error('Ein freies Event wird unabhängig von einem Spiel oder einer Mannschaft gebucht.');
+  const value=body.event;
+  if(!value||!Object.hasOwn(RESOURCE_EVENT_CATEGORIES,value.category))throw new Error('Bitte eine Veranstaltungsart auswählen.');
+  event=Object.fromEntries(['title','organizer','contact','category'].map(key=>[key,String(value[key]??'').trim()]));
+  if(!event.title||event.title.length>160||!event.contact||event.contact.length>160||event.organizer.length>120)throw new Error('Bitte Anlass und verantwortliche Person angeben (höchstens 160 Zeichen; Gruppe höchstens 120 Zeichen).');
+ }
  const note=String(body.note||'').trim();if(note.length>500)throw new Error('Der Hinweis darf höchstens 500 Zeichen enthalten.');
- const planning=body.timing?resourceTimePlan({...body.timing,kickoffAt:body.expectedKickoff}):null;
- return {resourceId:body.resourceId,teamId:body.teamId,matchId:body.matchId,expectedKickoff:body.expectedKickoff,startsAt:startsAt.toISOString(),endsAt:endsAt.toISOString(),destination:String(body.destination||'').slice(0,400),routeKey:body.routeKey||null,planning,timing:planning?.timing||null,note};
+ const planning=bookingKind==='match'&&body.timing?resourceTimePlan({...body.timing,kickoffAt:body.expectedKickoff}):null;
+ return {bookingKind,event,resourceId:body.resourceId,teamId:bookingKind==='event'?null:body.teamId,matchId:bookingKind==='event'?null:body.matchId,expectedKickoff:bookingKind==='event'?null:body.expectedKickoff,startsAt:startsAt.toISOString(),endsAt:endsAt.toISOString(),destination:String(body.destination||'').slice(0,400),routeKey:bookingKind==='match'?body.routeKey||null:null,planning,timing:planning?.timing||null,note};
 }

@@ -56,3 +56,8 @@ Deno.test('actual admin API blocks home bookings and stores the detailed away-ga
   assert.equal(response.status,200,JSON.stringify(await response.json()));
   const saved=allowed.find(p=>p.action==='book');assert.equal(saved.planning.startsAt,'2027-01-01T13:15:00.000Z');assert.equal(saved.planning.endsAt,'2027-01-01T18:20:00.000Z');assert.equal(saved.planning.events.length,10);
 });
+
+Deno.test('actual admin API books named free events without a team or match lookup', async () => {
+  const calls=setup();const response=await post('resource_book',{bookingKind:'event',resourceId:'bus',startsAt:'2027-01-01T08:00Z',endsAt:'2027-01-01T18:00Z',event:{title:'Trainerfortbildung',category:'training',organizer:'BSV Trainerteam',contact:'Erika Muster'}});
+  assert.equal(response.status,200,JSON.stringify(await response.json()));assert.deepEqual(calls.map(p=>p.action),['authorize','book']);assert.ok(!Object.hasOwn(calls[0],'teamId'));assert.equal(calls[1].teamId,null);assert.equal(calls[1].event.title,'Trainerfortbildung');
+});

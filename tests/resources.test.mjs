@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {load} from 'cheerio';
-import {resourceTeamGroup,resourceMatchMinutes,resourceTimeSuggestion,resourceTimePlan,resourceCanBookMatch,resourceOverlap,resourceMonthDays,resourceLocalTime,resourceUtcTime,validateResourceBooking} from '../src/resources.mjs';
+import {resourceTeamGroup,resourceMatchMinutes,resourceTimeSuggestion,resourceTimePlan,resourceCanBookMatch,resourceBookingLabel,resourceOverlap,resourceMonthDays,resourceLocalTime,resourceUtcTime,validateResourceBooking} from '../src/resources.mjs';
 import {parseResourceVenue,resourceRoute,handleResources} from '../supabase/functions/_shared/resources.mjs';
 test('D through active teams use match durations and the detailed arrival and return buffers across midnight and DST',()=>{
  for(const [slug,group,minutes] of [['u13-d1-junioren','D',70],['u15-c1-junioren','C',85],['u17-juniorinnen','B',95],['u19-junioren','A',105],['herren-2','senior',105],['frauen-1','senior',105]]){assert.equal(resourceTeamGroup({slug}),group);assert.equal(resourceMatchMinutes({slug}),minutes);}
@@ -29,6 +29,13 @@ test('home games are rejected before venue fetching and before booking reaches t
  await assert.rejects(()=>handleResources(db,'actor',{action:'resource_match',matchId:'home'},options),/Heimspiele/);
  await assert.rejects(()=>handleResources(db,'actor',{action:'resource_book',matchId:'home',teamId:'team',resourceId:'bus',expectedKickoff:'2027-01-01T15:00:00Z',startsAt:'2027-01-01T13:00:00Z',endsAt:'2027-01-01T19:00:00Z'},options),/Heimspiele/);
  assert.ok(!actions.includes('book'));
+});
+test('free club events need a title and responsible person, work without a team and cannot masquerade as match bookings',async()=>{
+ const input={bookingKind:'event',resourceId:'bus',startsAt:'2027-01-01T08:00Z',endsAt:'2027-01-01T18:00Z',event:{title:' Stadtfest – Getränkestand ',category:'city_event',organizer:'Förderverein',contact:'Erika Muster'}};
+ const event=validateResourceBooking(input);assert.equal(event.teamId,null);assert.equal(event.matchId,null);assert.equal(event.planning,null);assert.equal(event.event.title,'Stadtfest – Getränkestand');assert.equal(resourceBookingLabel(event),'Stadtfest – Getränkestand');
+ for(const changed of [{event:{...input.event,title:''}},{event:{...input.event,contact:''}},{event:{...input.event,category:'__proto__'}},{teamId:'foreign'},{matchId:'home'},{bookingKind:'bogus'}])assert.throws(()=>validateResourceBooking({...input,...changed}));
+ const calls=[];const db={rpc:async(_,{payload})=>{calls.push(payload);return {data:{ok:true}};}};
+ await handleResources(db,'actor',{action:'resource_book',...input});assert.deepEqual(calls.map(p=>p.action),['authorize','book']);assert.ok(!Object.hasOwn(calls[0],'teamId'));assert.equal(calls[1].bookingKind,'event');
 });
 test('venue extraction reads only the actual official location link and decodes the street address',()=>{
  const venue=parseResourceVenue('<nav><a href="https://google.com/">Other</a></nav><a class="location" href="https://www.google.de/maps?q=Sportgel%C3%A4nde+8%2C+78247+Hilzingen">Kunstrasenplatz, Sportgelände 8</a>',load);

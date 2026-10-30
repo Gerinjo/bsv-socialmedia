@@ -64,11 +64,12 @@ export async function resourceRoute(db,actor,{resource,query,coordinates},{fetch
 }
 export async function handleResources(db,actor,body,{parseFont,load,fetcher=fetch,geocoder,router}={}){
  const action=String(body.action||'').replace(/^resource_/,'');if(!['list','sync','match','route','book','cancel'].includes(action))throw new Error('Unbekannte Ressourcen-Aktion.');
- await resourceRpc(db,actor,{action:'authorize',...(['route','book'].includes(action)?{teamId:body.teamId}:{})});
+ await resourceRpc(db,actor,{action:'authorize',...(['route','book'].includes(action)&&body.teamId?{teamId:body.teamId}:{})});
  if(action==='list'){if(body.month&&!/^\d{4}-(0[1-9]|1[0-2])$/.test(body.month))throw new Error('Ungültiger Kalendermonat.');return resourceRpc(db,actor,{action,month:body.month});}
  if(action==='sync')return syncResourceMatches(db,actor,{parseFont,fetcher});
  if(action==='book'){
   const booking=validateResourceBooking(body);
+  if(booking.bookingKind==='event')return resourceRpc(db,actor,{action,...booking});
   const {match}=await resourceRpc(db,actor,{action:'_match',matchId:booking.matchId});
   if(match.is_home!==false)throw Object.assign(new Error('Für Heimspiele ist der Bus nicht reservierbar.'),{status:409});
   return resourceRpc(db,actor,{action,...booking});
