@@ -79,10 +79,19 @@ function createResourcesWorkspace(root,{request}){
    }catch(error){formStatus(error.message,true);}finally{busy=false;lockDialog(false);}
   };
   dialog.showModal();
-  if(match){(async()=>{try{busy=true;lockDialog(true);formStatus('Spieladresse wird geladen …');const result=await request({action:'match',matchId:match.id});if(sequence!==token)return;form.elements.destination.value=result.match.venue||'';formStatus(result.warning||'Spieladresse geladen.');if(!form.elements.destination.value)root.querySelector('[data-resource-options]').open=true;}catch(error){formStatus(error.message,true);}finally{busy=false;lockDialog(false);}if(sequence===token&&form.elements.destination.value)await calculate();})();}
+  if(match){(async()=>{try{busy=true;lockDialog(true,'Spieladresse wird geladen');formStatus('Spieladresse wird geladen …');const result=await request({action:'match',matchId:match.id});if(sequence!==token)return;form.elements.destination.value=result.match.venue||'';formStatus(result.warning||'Spieladresse geladen.');if(!form.elements.destination.value)root.querySelector('[data-resource-options]').open=true;}catch(error){formStatus(error.message,true);}finally{busy=false;lockDialog(false);}if(sequence===token&&form.elements.destination.value)await calculate();})();}
  }
  function formStatus(text,error=false){const node=root.querySelector('[data-resource-form-status]');if(node){node.textContent=text;node.className=error?'error':'';}}
- function lockDialog(locked){root.querySelectorAll('[data-resource-dialog] button,[data-resource-dialog] input,[data-resource-dialog] select').forEach(node=>node.disabled=locked);const team=root.querySelector('[data-resource-form] [name=teamId]');if(team&&draft?.match)team.disabled=true;}
+ function lockDialog(locked,loadingText=''){
+  const dialog=root.querySelector('[data-resource-dialog]');if(!dialog)return;
+  dialog.querySelectorAll('button,input,select').forEach(node=>node.disabled=locked);const team=dialog.querySelector('[data-resource-form] [name=teamId]');if(team&&draft?.match)team.disabled=true;
+  if(locked&&loadingText){
+   let overlay=dialog.querySelector('[data-resource-loading]');if(!overlay){overlay=document.createElement('div');overlay.className='resource-loading';overlay.dataset.resourceLoading='';overlay.setAttribute('role','status');overlay.setAttribute('aria-live','polite');overlay.setAttribute('aria-atomic','true');overlay.innerHTML='<div class="resource-loading-card"><span class="spinner" aria-hidden="true"></span><strong></strong><p>Bitte warten …</p></div>';dialog.append(overlay);}
+   overlay.querySelector('strong').textContent=loadingText;
+   for(const child of dialog.children)if(child!==overlay)child.inert=true;
+   dialog.querySelector('form')?.setAttribute('aria-busy','true');
+  }else if(!locked){dialog.querySelector('[data-resource-loading]')?.remove();for(const child of dialog.children)child.inert=false;dialog.querySelector('form')?.removeAttribute('aria-busy');}
+ }
  function timingInputs(fields){return fields.map(([key,label])=>`<label>${label}<input data-resource-timing name="${key}" type="number" required min="0" max="1440" value="${RESOURCE_TIMING_DEFAULTS[key]??''}"></label>`).join('');}
  function readTiming(form){return Object.fromEntries([...Object.keys(RESOURCE_TIMING_DEFAULTS),'travelMinutes','returnMinutes'].map(key=>[key,form.elements[key].value===''?NaN:Number(form.elements[key].value)]));}
  function timelineHtml(plan){return plan?.events?.length?`<h4>Zeitscheiben · berechneter Ablauf</h4><ol class="resource-plan">${plan.events.map(event=>`<li><time datetime="${e(event.at)}">${dateTime(event.at)}</time><span>${e(event.label)}${event.duration!==null?' · '+e(event.duration)+' Min.':''}</span></li>`).join('')}</ol>`:'';}
@@ -92,7 +101,7 @@ function createResourcesWorkspace(root,{request}){
  async function calculate(fromCandidate=false){
   if(busy||!draft)return;const form=root.querySelector('[data-resource-form]'),token=draft.token,resource=data.resources[0];if(!resource){formStatus('Bus nicht verfügbar.',true);return;}
   const teamId=draft.match?.teamId||form.elements.teamId.value;if(!teamId){formStatus('Bitte eine Mannschaft auswählen.',true);return;}
-  busy=true;lockDialog(true);formStatus('Route wird berechnet …');
+  busy=true;lockDialog(true,'Route wird berechnet');formStatus('Route wird berechnet …');
   try{
    let place=fromCandidate?draft.candidates[Number(root.querySelector('[data-resource-place]').value)]:null;
    let result=await request({action:'route',resourceId:resource.id,teamId,destination:place?.label||form.elements.destination.value,...(place?{coordinates:place.coordinates}:{})});
