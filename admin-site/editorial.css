@@ -168,6 +168,12 @@
   background: var(--accent-soft);
   border-color: var(--accent-border);
 }
+.ed-newsletter-archive { margin-top: 18px; border-top: 1px solid var(--accent-border); padding-top: 16px; }
+.ed-newsletter-archive > summary { cursor: pointer; font-weight: 700; padding: 8px 0; }
+.ed-archive-row { display: flex; align-items: center; gap: 8px; }
+.ed-archive-row .ed-issue { flex: 1; min-width: 0; padding: 10px; }
+.ed-archive-row .ed-issue strong { overflow-wrap: anywhere; }
+.ed-delete-newsletter { color: #a32b2b; flex-shrink: 0; }
 .ed-issue > span:last-child {
   font-size: 12px;
   font-weight: 400;

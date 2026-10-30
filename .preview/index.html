@@ -235,6 +235,12 @@
   background: var(--accent-soft);
   border-color: var(--accent-border);
 }
+.ed-newsletter-archive { margin-top: 18px; border-top: 1px solid var(--accent-border); padding-top: 16px; }
+.ed-newsletter-archive > summary { cursor: pointer; font-weight: 700; padding: 8px 0; }
+.ed-archive-row { display: flex; align-items: center; gap: 8px; }
+.ed-archive-row .ed-issue { flex: 1; min-width: 0; padding: 10px; }
+.ed-archive-row .ed-issue strong { overflow-wrap: anywhere; }
+.ed-delete-newsletter { color: #a32b2b; flex-shrink: 0; }
 .ed-issue > span:last-child {
   font-size: 12px;
   font-weight: 400;
@@ -3872,6 +3878,7 @@ export function createEditorialWorkspace(
     selectionRequest = 0,
     rewriteAvailable = false;
   const expandedPlanGroups = new Set();
+  let newsletterArchiveOpen = false;
   const $ = (selector) => root.querySelector(selector);
   const kindLabel = (kind) =>
     kind === "stadium" ? "Stadionheft" : "Newsletter";
@@ -3917,7 +3924,7 @@ export function createEditorialWorkspace(
     $("#edMonth").textContent = new Date(
       `${month}-01T12:00:00`,
     ).toLocaleDateString("de-DE", { month: "long", year: "numeric" });
-    const visible = issues.filter((issue) => !filter || issue.kind === filter);
+    const visible = issues.filter((issue) => (!filter || issue.kind === filter) && !(issue.kind === 'newsletter' && issue.published_at));
     const today = new Date().toLocaleDateString("sv-SE", {
       timeZone: "Europe/Berlin",
     });
@@ -3954,14 +3961,15 @@ export function createEditorialWorkspace(
   }
   function issueList() {
     const visible = issues.filter((issue) => !filter || issue.kind === filter);
-    $("#edIssues").innerHTML = visible.length
-      ? visible
-          .map(
-            (issue) =>
-              `<button class="ed-issue ${selected?.id === issue.id ? "selected" : ""}" data-issue="${esc(issue.id)}"><span class="editorial-eyebrow">${kindLabel(issue.kind)}</span><strong>${esc(issue.title)}</strong><span>${dateLabel(issue.publishes_on)} · ${issue.closes_on < new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" }) ? "Redaktionsschluss erreicht" : "In Planung"}</span></button>`,
-          )
-          .join("")
-      : '<p class="empty">Noch keine Ausgaben. Mit „Ausgabe anlegen“ beginnt euer Redaktionsplan.</p>';
+    const archived = visible.filter(issue => issue.kind === 'newsletter' && issue.published_at);
+    const active = visible.filter(issue => !archived.includes(issue));
+    const card = issue => `<button class="ed-issue ${selected?.id === issue.id ? 'selected' : ''}" data-issue="${esc(issue.id)}"><span class="editorial-eyebrow">${kindLabel(issue.kind)}</span><strong>${esc(issue.title)}</strong><span>${dateLabel(issue.publishes_on)} · ${issue.published_at ? 'Veröffentlicht' : issue.closes_on < new Date().toLocaleDateString('sv-SE', {timeZone:'Europe/Berlin'}) ? 'Redaktionsschluss erreicht' : 'In Planung'}</span></button>`;
+    $("#edIssues").innerHTML = active.map(card).join('') + (archived.length ? `<details class="ed-newsletter-archive" ${newsletterArchiveOpen ? 'open' : ''}><summary>Veröffentlichte Newsletter <span>(${archived.length})</span></summary>${archived.map(issue => `<div class="ed-archive-row">${card(issue)}<button class="ghost ed-delete-newsletter" data-delete-newsletter="${esc(issue.id)}" aria-label="Newsletter ${esc(issue.title)} löschen">Löschen</button></div>`).join('')}</details>` : '') + (!visible.length ? '<p class="empty">Noch keine Ausgaben. Mit „Ausgabe anlegen“ beginnt euer Redaktionsplan.</p>' : '');
+    const archive = $('#edIssues details');
+    if (archive) archive.ontoggle = () => { newsletterArchiveOpen = archive.open; };
+    $('#edIssues').querySelectorAll('[data-delete-newsletter]').forEach(button => {
+      button.onclick = () => deleteNewsletter(issues.find(issue => issue.id === button.dataset.deleteNewsletter));
+    });
     $("#edIssues")
       .querySelectorAll("[data-issue]")
       .forEach(
@@ -4067,13 +4075,14 @@ export function createEditorialWorkspace(
     ).length;
     const waived = manual.filter(article => article.kind === "coach" && article.status === "waived").length;
     $("#edDetail").innerHTML =
-      `<div class="list-heading"><div><span class="editorial-eyebrow">${kindLabel(selected.kind)}</span><h3>${esc(selected.title)}</h3></div></div>
+      `<div class="list-heading"><div><span class="editorial-eyebrow">${kindLabel(selected.kind)}</span><h3>${esc(selected.title)}</h3></div>${selected.kind === 'newsletter' ? '<button class="ghost ed-delete-newsletter" id="edDeleteNewsletter">Newsletter löschen</button>' : ''}</div>
       <section class="ed-context-card" id="edPublicationCard"><h4>${selected.kind === 'newsletter' ? 'E-Mail-Vorschau & Export' : 'Vorschau & Veröffentlichung'}</h4><div class="ed-progress"><progress max="${Math.max(1, manual.length + imported)}" value="${ready + waived + imported}" aria-label="Erledigte Beiträge"></progress><span>${ready + waived} von ${manual.length} redaktionellen Beiträgen erledigt · ${ready} freigegeben${waived ? ` · ${waived} Verzicht` : ''}${imported ? ` · ${imported} Artikel aus dem Stadionheft` : ''}</span></div><div class="ed-release" role="status"><strong>${release.currentPublication ? 'Veröffentlicht' : selected.published_at ? 'Neue Fassung in Bearbeitung' : release.ready ? (selected.kind === 'newsletter' ? 'Bereit für E-Mail-Export' : 'Bereit für Veröffentlichung') : 'In Bearbeitung'}</strong><p>${release.pending ? release.pending + ' Beiträge warten auf Freigabe. ' : ''}${release.automaticPending ? release.automaticPending + ' Sportübersichten benötigen einen Datenabruf. ' : ''}${release.missingCover ? 'Ein Titelbild fehlt noch. ' : ''}${!release.reviewed ? (selected.kind === 'newsletter' ? 'Bitte die aktuelle E-Mail-Vorschau prüfen.' : 'Bitte vor Veröffentlichung die aktuelle Vorschau prüfen.') : ''}</p><p class="small">${selected.kind === 'newsletter' ? 'Der Newsletter wird als Nordstern Post gestaltet. Versand und Empfänger werden in Resend verwaltet; das Datum löst keinen Versand aus.' : 'Termine steuern die Planung. Veröffentlicht wird nur über den Button.'}</p></div>
       ${selected.kind === 'stadium' ? `<p class="small" id="edAdvertisingStatus">${selected.advertising ? `${selected.advertising.ads.length} Sponsorenanzeigen übernommen. ` : 'Die Sponsorenanzeigen werden beim Öffnen der Vorschau übernommen. '}Freigegebene Anzeigen mit gültiger Laufzeit werden im Heft verteilt.</p>` : ''}
       ${selected.kind === 'stadium' && selected.published_at ? `<p><a target="_blank" rel="noopener" href="/stadionheft/${encodeURIComponent(selected.id)}">Veröffentlichte Ausgabe öffnen</a></p>` : ''}<div class="toolbar ed-publication-actions ed-card-actions"><button class="ghost" id="edExport">Texte exportieren</button><button id="edPreviewIssue" class="secondary">${selected.kind === 'stadium' ? 'Heft vorab ansehen' : 'E-Mail vorab ansehen'}</button>${selected.kind === 'stadium' ? `<button id="edPublishIssue" class="primary-action" ${release.canPublish ? '' : 'disabled'}>${selected.published_at ? 'Neue Fassung veröffentlichen' : 'Heft veröffentlichen'}</button>` : ''}</div></section>
       ${selected.kind === 'stadium' ? coverCard() : newsletterCard(release)}
       <details class="ed-context-card ed-plan-group" id="edPlanningCard" data-plan-group="edPlanningCard" ${expandedPlanGroups.has(`${selected.id}:edPlanningCard`) ? 'open' : ''}><summary><strong>Planung & Termine</strong></summary><div class="ed-timeline"><span><small>Start</small>${dateLabel(selected.starts_on)}</span><span><small>Schluss</small>${dateLabel(selected.closes_on)}</span><span><small>Erscheinung</small>${dateLabel(selected.publishes_on)}</span></div><div class="toolbar ed-card-actions"><button class="ghost" id="edEditIssue">Termine bearbeiten</button></div></details>
       ${articlePlan(manual, automatic)}`;
+    if ($('#edDeleteNewsletter')) $('#edDeleteNewsletter').onclick = () => deleteNewsletter(selected);
     wireCoverSettings();
     wireNewsletterActions();
     $("#edDetail").querySelectorAll('[data-plan-group]').forEach(group => {
@@ -4111,7 +4120,7 @@ export function createEditorialWorkspace(
     };
   }
   function newsletterCard(release) {
-    return `<section class="ed-context-card"><h4>${esc(newsletterDefaults(selected).name || "Newsletter")}</h4><p class="small">E-Mail-Layout im gespeicherten BSV-Standard mit Vereinswappen, saisonalem Motiv, Textalternative und Abmeldelink. Name, Ausgabenummer, Kopfbereich und E-Mail-Angaben lassen sich unten je Ausgabe anpassen.</p><div class="toolbar"><button id="edNewsletterHtml" ${release.ready && release.reviewed ? '' : 'disabled'}>E-Mail-HTML exportieren</button><button class="ghost" id="edNewsletterText" ${release.ready && release.reviewed ? '' : 'disabled'}>E-Mail-Text exportieren</button></div><p class="small">Die exportierten Dateien sind für einen Resend-Broadcast bestimmt. Der Abmeldelink öffnet eine Bestätigungsseite. Nach der Abmeldung erhält der Empfänger eine Bestätigungsmail. Der feste Abschnitt „Unsere Stadionhefte“ verlinkt automatisch die veröffentlichten Hefte und das bestehende digitale Stadionheft.</p></section>
+    return `<section class="ed-context-card"><h4>${esc(newsletterDefaults(selected).name || "Newsletter")}</h4><p class="small">E-Mail-Layout im gespeicherten BSV-Standard mit Vereinswappen, saisonalem Motiv, Textalternative und Abmeldelink. Name, Ausgabenummer, Kopfbereich und E-Mail-Angaben lassen sich unten je Ausgabe anpassen.</p><div class="toolbar"><button id="edNewsletterHtml" ${release.ready && release.reviewed ? '' : 'disabled'}>E-Mail-HTML exportieren</button><button class="ghost" id="edNewsletterText" ${release.ready && release.reviewed ? '' : 'disabled'}>E-Mail-Text exportieren</button><button class="secondary" id="edCompleteNewsletter" ${release.ready && release.reviewed && !release.currentPublication ? '' : 'disabled'}>Als veröffentlicht markieren</button></div><p class="small">Die exportierten Dateien sind für einen Resend-Broadcast bestimmt. Der Abmeldelink öffnet eine Bestätigungsseite. Nach der Abmeldung erhält der Empfänger eine Bestätigungsmail. Der feste Abschnitt „Unsere Stadionhefte“ verlinkt automatisch die veröffentlichten Hefte und das bestehende digitale Stadionheft.</p></section>
       <p><a href="/newsletter/abmelden?vorschau=1" target="_blank" rel="noopener">Abmeldung & Bestätigungsmail ansehen ↗</a></p>
       ${newsletterSettingsCard()}
       <section class="ed-context-card"><h4>Aus dem Stadionheft übernehmen</h4><p class="small">Heft auswählen und Artikel ankreuzen. Im Newsletter erscheinen kurze Auszüge mit einem Link zum vollständigen Artikel im Stadionheft.</p>${selected.newsletter_selection?.articles?.length ? `<p><strong>${esc(selected.newsletter_selection.title)}</strong> · ${selected.newsletter_selection.articles.length} Artikel ausgewählt</p><ul>${selected.newsletter_selection.articles.map(article=>`<li>${esc(article.title)}</li>`).join('')}</ul>` : '<p class="small">Noch keine Artikel aus einem Stadionheft ausgewählt.</p>'}<button class="ghost" id="edNewsletterSelectArticles">Heft & Artikel auswählen</button></section>`;
@@ -4187,6 +4196,18 @@ export function createEditorialWorkspace(
   function wireNewsletterActions() {
     if (selected.kind !== 'newsletter') return;
     wireNewsletterSettings();
+    $('#edCompleteNewsletter').onclick = async () => {
+      if (busy || !canLeaveCover()) return;
+      if (!window.confirm('Newsletter als veröffentlicht markieren und ins Archiv verschieben? Der Versand in Resend erfolgt separat.')) return;
+      busy = true;
+      try {
+        await call('complete_newsletter', {issueId:selected.id, version:selected.version});
+        selected = null;
+        await refresh();
+        show('Newsletter als veröffentlicht markiert.');
+      } catch (error) { show(error.message, true); }
+      finally { busy = false; }
+    };
     for (const [selector, format] of [['#edNewsletterHtml','html'],['#edNewsletterText','text']]) {
       $(selector).onclick = async () => {
         if (busy || !canLeaveCover()) return;
@@ -4273,6 +4294,18 @@ export function createEditorialWorkspace(
     } catch (error) { $('#edNewsletterSourceMessage').textContent = error.message; }
     finally { lock(form,false); updateNewsletterSourceCount(); }
   };
+  async function deleteNewsletter(issue) {
+    if (!issue || busy || !canLeaveCover()) return;
+    if (!window.confirm(`Newsletter „${issue.title}“ einschließlich aller Beiträge und gespeicherten Fassungen endgültig löschen? Bereits versendete E-Mails bleiben bei den Empfängern erhalten.`)) return;
+    busy = true;
+    try {
+      await call('delete_newsletter', {issueId:issue.id, version:issue.version});
+      if (selected?.id === issue.id) { selected = null; articles = []; }
+      await refresh();
+      show('Newsletter gelöscht.');
+    } catch (error) { show(error.message, true); }
+    finally { busy = false; }
+  }
   async function selectIssue(id, force = false) {
     if (!force && (busy || !canLeaveCover())) return;
     const request = ++selectionRequest;
@@ -4304,7 +4337,13 @@ export function createEditorialWorkspace(
     issueList();
     if (selected && issues.some((i) => i.id === selected.id))
       await selectIssue(selected.id, true);
-    else if (issues.length) await selectIssue(issues[0].id, true);
+    else {
+      selected = null;
+      articles = [];
+      const next = issues.find(issue => !(issue.kind === 'newsletter' && issue.published_at));
+      if (next) await selectIssue(next.id, true);
+      else $('#edDetail').innerHTML = '<p class="empty">Wähle eine Ausgabe aus oder lege eine neue an.</p>';
+    }
   }
   function openIssue(issue = null) {
     if (busy || !canLeaveCover()) return;

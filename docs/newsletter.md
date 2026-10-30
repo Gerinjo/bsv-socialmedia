@@ -30,6 +30,14 @@ Neue Ausgaben können diese Reihenfolge als Orientierung nutzen; die vorhandene 
 
 ## Arbeit in der Suite
 
+Veröffentlichte Newsletter stehen in der Ausgabenliste unter **Veröffentlichte Newsletter**. Dieser Archivbereich ist beim Öffnen eingeklappt; die Ausgaben erscheinen nicht mehr im Planungskalender und werden nicht automatisch im Editor geöffnet. Aufklappen und eine Ausgabe auswählen öffnet sie weiterhin zur Ansicht und Bearbeitung.
+
+Nach Freigabe aller Beiträge und Prüfung der aktuellen E-Mail-Vorschau lässt sich die Ausgabe mit **Als veröffentlicht markieren** ins Archiv verschieben. Das dokumentiert den redaktionellen Abschluss; der tatsächliche Versand erfolgt weiterhin separat in Resend. Der Button verschickt keine E-Mails. Änderungen an einer archivierten Ausgabe verlangen vor einem erneuten Abschluss wieder Freigaben und Vorschau.
+
+**Newsletter löschen** in der Ausgabe beziehungsweise **Löschen** im Archiv entfernt nach Bestätigung die Ausgabe, ihre Beiträge, Revisionen und gegebenenfalls gespeicherte Newsletter-Fassungen. Bereits versendete E-Mails werden dadurch nicht zurückgerufen. Die serverseitige Transaktion prüft die Ausgabeart und die Versionsnummer; Stadionhefte lassen sich über diese Aktion nicht löschen. Gemeinsame Bilddateien bleiben erhalten. Benötigt werden die Migration `20261030102401_newsletter_archive.sql` und die aktualisierte `social-media-admin-api`.
+
+Als bearbeitbarer Gestaltungsvorschlag ist **Nordstern Post · November 2026 (Beispiel)** mit fünf ausgearbeiteten Beiträgen angelegt: Begrüßung, Jugend, Heimspielbesuch, Ehrenamt und Abschluss. Die Inhalte sind ausdrücklich erfunden, stehen zur Prüfung und wurden nicht versendet. Die Vorlage für die lokale Vorschau liegt in `src/newsletter-example.mjs`; eigenständige HTML- und Textvorschauen liegen unter `previews/nordstern-post-november-2026-beispiel.*`.
+
 Unter **Redaktion → Newsletter** eine Ausgabe auswählen oder anlegen, Texte bearbeiten und Beiträge freigeben. Ohne eigene E-Mail-Angaben dient der Ausgabentitel als Betreff und der Anfang des ersten nicht leeren Beitrags als Vorschautext. Links im Beitrag werden in der HTML-Mail anklickbar. Die Gestaltung verwendet die aus der Website-Vorlage abgeleitete Datei `templates/newsletter.html`.
 
 **E-Mail vorab ansehen** zeigt auch Entwürfe und kennzeichnet offene Beiträge. **E-Mail-HTML exportieren** und **E-Mail-Text exportieren** sind nach Freigabe aller Beiträge und Öffnen der aktuellen Vorschau verfügbar. Diese Exporte enthalten den aktuellen Redaktionsstand; sie sind getrennt vom allgemeinen Arbeitsstand-Export **Texte exportieren**.

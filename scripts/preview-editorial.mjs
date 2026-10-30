@@ -58,6 +58,7 @@ const files = new Map([
   ["/preview-referees.mjs", "admin-site/preview/referees.mjs"],
   ["/newsletter-unsubscribe.mjs", "src/newsletter-unsubscribe.mjs"],
   ["/newsletter.mjs", "src/newsletter.mjs"],
+  ["/newsletter-example.mjs", "src/newsletter-example.mjs"],
   ["/preview-team-photos.mjs", "admin-site/preview/team-photos.mjs"],
   ["/preview-people.mjs", "admin-site/preview/people.mjs"],
   ["/editorial-people.mjs", "src/editorial-people.mjs"],

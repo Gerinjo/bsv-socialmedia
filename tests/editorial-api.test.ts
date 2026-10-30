@@ -53,6 +53,18 @@ const request = {
   body: "Neu",
   status: "draft",
 };
+Deno.test('newsletter archive mutations use a service-only atomic RPC with the expected version', async () => {
+  for (const [action,operation] of [['editorial_complete_newsletter','complete'],['editorial_delete_newsletter','delete']]) {
+    const {db,calls}=database([{removed:true}]);
+    await handleEditorial(db,'user',{action,issueId:'newsletter',version:7});
+    assert.deepEqual(calls,[{rpc:'manage_editorial_newsletter',args:{target:'newsletter',expected_version:7,operation}}]);
+    for (const version of [null,0,-1,'7',1.5]) {
+      const invalid=database([]);
+      await assert.rejects(handleEditorial(invalid.db,'user',{action,issueId:'newsletter',version}));
+      assert.equal(invalid.calls.length,0);
+    }
+  }
+});
 Deno.test('waiver is an explicit versioned coach-only action that keeps text and can be reversed', async () => {
   const coach = {...current, kind:'coach', status:'ready'};
   const {db,calls}=database([coach,{...coach,status:'waived',version:3}]);

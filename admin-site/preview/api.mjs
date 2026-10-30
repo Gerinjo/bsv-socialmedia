@@ -7,6 +7,7 @@ import {previewSuiteMembers,previewSuiteProfile,previewSuiteRoles,previewSuiteBr
 import { refereePreviewApi } from '/preview-referees.mjs';
 import { cashbookPreviewApi,cashbookPreviewAdmin,cashbookPreviewMembers } from '/preview-cashbook.mjs';
 import { normalizeNewsletterSettings, newsletterSource, newsletterSelection } from '/newsletter.mjs';
+import { newsletterExample } from '/newsletter-example.mjs';
 import { previewTeamPhotos } from '/preview-team-photos.mjs';
 import { previewPeople } from '/preview-people.mjs';
 import { selectEditorialPeople } from '/editorial-people.mjs';
@@ -215,6 +216,16 @@ function load() {
     state.newsletterSourceExampleAdded = true;
     upgraded = true;
   }
+  if (!state.newsletterNovemberExampleAdded) {
+    const {articles:copy,...fields} = structuredClone(newsletterExample);
+    const issue = {...fields,id:crypto.randomUUID(),version:1};
+    const examples = copy.map((item,position) => ({...article({title:item.title,kind:'free',position},issue.id),body:item.body,original_body:item.body,status:'review',author:'Nordstern-Redaktion (Beispiel)'}));
+    state.issues.unshift(issue);
+    state.articles.push(...examples);
+    examples.forEach(saved => revision(state,saved));
+    state.newsletterNovemberExampleAdded = true;
+    upgraded = true;
+  }
   if (upgraded) localStorage.setItem(storageKey, JSON.stringify(state));
   return state;
 }
@@ -280,6 +291,27 @@ export async function editorialPreviewApi(method = "GET", body = {}, query = {})
   const state = load();
   let result;
   switch (body.action) {
+    case 'editorial_complete_newsletter':
+    case 'editorial_delete_newsletter': {
+      const issue = state.issues.find(issue => issue.id === body.issueId);
+      if (!issue || issue.kind !== 'newsletter') throw new Error('Diese Aktion ist nur für Newsletter verfügbar.');
+      if (!Number.isInteger(body.version) || issue.version !== body.version) throw new Error('Die Ausgabe wurde zwischenzeitlich geändert. Bitte neu laden.');
+      if (body.action === 'editorial_delete_newsletter') {
+        const ids = new Set(state.articles.filter(article => article.issue_id === issue.id).map(article => article.id));
+        state.articles = state.articles.filter(article => article.issue_id !== issue.id);
+        state.revisions = state.revisions.filter(revision => !ids.has(revision.article_id));
+        state.publications = (state.publications || []).filter(snapshot => snapshot.id !== issue.id);
+        state.issues = state.issues.filter(saved => saved.id !== issue.id);
+        result = {removed:true};
+      } else {
+        const release = editorialReleaseState(issue,state.articles.filter(article => article.issue_id === issue.id));
+        if (!release.ready || !release.reviewed) throw new Error('Bitte alle Beiträge freigeben und die aktuelle E-Mail-Vorschau prüfen.');
+        issue.published_version = issue.version;
+        issue.published_at = new Date().toISOString();
+        result = {issue};
+      }
+      break;
+    }
     case "editorial_list":
       people = await localEditorialPeople();
       result = {

@@ -62,6 +62,13 @@ async function loadNewsletterSource(db: any, sourceIssueId: unknown, sourceVersi
 
 export async function handleEditorial(db: any, userId: string, body: any) {
   const action = body.action;
+  if (action === 'editorial_complete_newsletter' || action === 'editorial_delete_newsletter') {
+    if (!Number.isInteger(body.version) || body.version < 1) fail('Bitte die Ausgabe neu laden.');
+    return await row(db.rpc('manage_editorial_newsletter', {
+      target: body.issueId, expected_version: body.version,
+      operation: action === 'editorial_delete_newsletter' ? 'delete' : 'complete',
+    }));
+  }
   if (action === 'editorial_team_photos') return {photos:await loadEditorialTeamPhotos(db)};
   if (
     [
