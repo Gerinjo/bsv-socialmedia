@@ -28,7 +28,7 @@ test('all four examples reflect the draft palette without mutating it',()=>{
 test('email uses the snapshot palette and a durable PNG seasonal motif, keeping text untouched',async()=>{
  const snapshot={kind:'newsletter',title:'Farbe #092f20',publishes_on:'2026-12-01',brand:{color_scheme:colors,theme_key:'christmas'},articles:[{title:'Weihnachten',body:'Unser Text nennt #17613a.',status:'ready'}]};
  const mail=renderEditorialNewsletter(snapshot,await readFile(new URL('../templates/newsletter.html',import.meta.url),'utf8'),{preview:false});
- assert.match(mail.html,/christmas-v2\.png/);assert.match(mail.html,/background-color:#204870|border:4px solid #204870/);assert.match(mail.html,/Unser Text nennt #17613a\./);assert.match(mail.html,/Farbe #092f20/);assert.match(mail.html,/RESEND_UNSUBSCRIBE_URL/);assert.doesNotMatch(mail.html,/data:image|<svg|<script/);
+ assert.match(mail.html,/christmas-v3\.png/);assert.match(mail.html,/background-color:#204870|border:4px solid #204870/);assert.match(mail.html,/Unser Text nennt #17613a\./);assert.match(mail.html,/Farbe #092f20/);assert.match(mail.html,/RESEND_UNSUBSCRIBE_URL/);assert.doesNotMatch(mail.html,/data:image|<svg|<script/);
 });
 test('magazine renders frozen brand without relying on the live feed',()=>{
  const html=renderEditorialMagazine({id:'design-test',title:'Weihnachtsausgabe',publishes_on:'2026-12-01',brand:{color_scheme:colors,theme_key:'christmas'},articles:[]},false);

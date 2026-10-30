@@ -16,3 +16,5 @@
 .brand-footer{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:18px}.brand-footer p{flex:1 1 230px;margin:0;font-size:12px;color:var(--mint)}
 #brandPreviewDialog{width:min(980px,calc(100vw - 24px));max-height:90dvh;padding:20px}#brandPreviewLarge{width:100%;height:auto;display:block;border:1px solid var(--outline);border-radius:10px;margin:16px 0}
 @media(max-width:650px){.brand-themes{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.brand-theme{padding:10px}.brand-theme-art svg{height:90px}.brand-preview-grid{grid-template-columns:1fr}.brand-footer button{width:100%}#brandPreviewDialog{padding:12px}}
+
+.brand-preview-card{position:relative}.brand-preview-card>.bsv-seasonal-snow{position:absolute;inset:0 0 auto;aspect-ratio:680/420;z-index:1}.brand-preview-stage{position:relative;margin:16px 0}.brand-preview-stage #brandPreviewLarge{margin:0}.brand-preview-stage>.bsv-seasonal-snow{position:absolute;inset:0;z-index:1}

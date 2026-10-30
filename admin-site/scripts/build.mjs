@@ -2,6 +2,7 @@ import '../../scripts/build-stadium-reader.mjs';
 import './build-suite-brand.mjs';
 import { renderNewsletterUnsubscribePage, NEWSLETTER_UNSUBSCRIBE_LINK } from '../../src/newsletter-unsubscribe.mjs';
 import { editorialCanDeleteArticle } from '../../src/editorial.mjs';
+import {BRAND_THEME_VERSIONS} from '../../src/brand-theme-versions.mjs';
 import { cashbookManifest, cashbookOfflineHtml } from '../../src/cashbook-pwa.mjs';
 const { renderEditorialMagazine } = await import('../../src/stadium-reader.mjs');
 const { stadiumReaderAssets } = await import('../../src/stadium-reader-assets.mjs');
@@ -25,7 +26,7 @@ const visionOcr = await readFile(resolve(adminDir, 'vision-ocr.mjs'), 'utf8');
 const tesseract = await readFile(resolve(repoDir, 'node_modules/tesseract.js/dist/tesseract.min.js'), 'utf8');
 let coachHtml = await readFile(resolve(adminDir, 'referee-coach.html'), 'utf8');
 const brandAssets = {};
-for(const key of ['football','christmas','easter','summer'])for(const version of [1,2])brandAssets[`/brand/themes/${key}-v${version}.png`]={type:'image/png',base64:true,body:(await readFile(resolve(adminDir,`assets/brand-themes/${key}-v${version}.png`))).toString('base64')};
+for(const key of ['football','christmas','easter','summer'])for(const version of [...new Set([1,2,BRAND_THEME_VERSIONS[key]])])brandAssets[`/brand/themes/${key}-v${version}.png`]={type:'image/png',base64:true,body:(await readFile(resolve(adminDir,`assets/brand-themes/${key}-v${version}.png`))).toString('base64')};
 const cashbookAssets = {
   ...brandAssets,
   '/kassenbuch/manifest.webmanifest': {type:'application/manifest+json',body:JSON.stringify(cashbookManifest)},
@@ -66,10 +67,10 @@ for (const [placeholder, source] of [
   ['__TRAINER_CSS__', await readFile(resolve(adminDir,'trainer-management.css'),'utf8')],
   ['__CASHBOOK_MODEL__', await readFile(resolve(repoDir, 'src/cashbook.mjs'), 'utf8')],
   ['__SUITE_ACCESS_MODEL__', await readFile(resolve(repoDir,'src/suite-access.mjs'),'utf8')],
-  ['__BRAND_THEMES_MODEL__', (await readFile(resolve(repoDir,'src/brand-theme-assets.mjs'),'utf8'))+'\n'+(await readFile(resolve(repoDir,'src/brand-themes.mjs'),'utf8')).replace(/^import .*;\n/gm,'')],
+  ['__BRAND_THEMES_MODEL__', (await readFile(resolve(repoDir,'src/brand-theme-versions.mjs'),'utf8'))+'\n'+(await readFile(resolve(repoDir,'src/brand-theme-assets.mjs'),'utf8'))+'\n'+(await readFile(resolve(repoDir,'src/brand-themes.mjs'),'utf8')).replace(/^import .*;\n/gm,'')],
   ['__BRAND_PREVIEW_MODEL__', (await readFile(resolve(repoDir,'src/brand-preview.mjs'),'utf8')).replace(/^import .*;\n/gm,'')],
-  ['__BRAND_PREVIEW_SCRIPT__', await readFile(resolve(adminDir,'brand-preview.mjs'),'utf8')],
-  ['__BRAND_PREVIEW_CSS__', await readFile(resolve(adminDir,'brand-preview.css'),'utf8')],
+  ['__BRAND_PREVIEW_SCRIPT__', (await readFile(resolve(repoDir,'src/seasonal-snow.mjs'),'utf8')).replace(/^export /gm,'')+'\n'+await readFile(resolve(adminDir,'brand-preview.mjs'),'utf8')],
+  ['__BRAND_PREVIEW_CSS__', (await readFile(resolve(adminDir,'seasonal-snow.css'),'utf8'))+'\n'+await readFile(resolve(adminDir,'brand-preview.css'),'utf8')],
   ['__SUITE_BRAND_MODEL__', await readFile(resolve(repoDir,'src/suite-brand.mjs'),'utf8')],
   ['__SUITE_ACTIVITY_MODEL__', (await readFile(resolve(repoDir,'src/suite-activity.mjs'),'utf8')).replace(/^import .*;\n/gm,'')],
   ['__SUITE_ACTIVITY_SCRIPT__', await readFile(resolve(adminDir,'suite-activity.mjs'),'utf8')],
@@ -105,6 +106,7 @@ const coachHtml = ${JSON.stringify(coachHtml)};
 const cashbookAssets = ${JSON.stringify(cashbookAssets)};
 const stadiumReaderAssets = ${JSON.stringify(stadiumReaderAssets)};
 ${(await readFile(resolve(repoDir,'src/suite-brand.mjs'),'utf8')).replace(/^export /gm,'')}
+${(await readFile(resolve(repoDir,'src/brand-theme-versions.mjs'),'utf8')).replace(/^export /gm,'')}
 ${(await readFile(resolve(repoDir,'src/brand-theme-assets.mjs'),'utf8')).replace(/^export /gm,'')}
 ${(await readFile(resolve(repoDir,'src/brand-themes.mjs'),'utf8')).replace(/^import .*;\n/gm,'').replace(/^export /gm,'')}
 const renderEditorialMagazine = ${renderEditorialMagazine.toString()};

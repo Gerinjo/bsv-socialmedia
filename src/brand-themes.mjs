@@ -2,8 +2,8 @@ import {BRAND_THEME_ASSETS} from './brand-theme-assets.mjs';
 // Photographic cutouts shared by Suite previews, exports and editorial media.
 export const BSV_THEMES = [
   {key:'football',label:'Fußball',description:'Unser Standard · das ganze Jahr'},
-  {key:'christmas',label:'Weihnachten',description:'Weihnachtsbaum · Advent & Festtage'},
-  {key:'easter',label:'Ostern',description:'Osterhase · Frühlingszeit'},
+  {key:'christmas',label:'Weihnachten',description:'Weihnachtsbaum mit Krippe & Geschenken'},
+  {key:'easter',label:'Ostern',description:'Osterhase mit Ostereiern & Glocken'},
   {key:'summer',label:'Sommerferien',description:'Surferboy · Sommer am See'},
 ];
 export function suiteBrandTheme(value = 'football') {
