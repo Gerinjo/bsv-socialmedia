@@ -94,7 +94,7 @@ const secretHandler = withSupabase({ auth: 'secret' }, async (request, context) 
       websiteUrl: partner.website_url,
       instagramHandle: partner.instagram_handle,
       logoUrl: signed.signedUrl,
-      teamAudienceSlugs: teamAssignments.map((assignment) => assignment.audienceSlug),
+      teamAudienceSlugs: [...new Set(teamAssignments.map((assignment) => assignment.audienceSlug))],
       teamAssignments,
       audienceAssignments,
       sortOrder: partner.sort_order,

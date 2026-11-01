@@ -65,3 +65,55 @@ Deno.test('actual API reveals no existing sponsor and performs no insert without
   assert.deepEqual(await response.json(), { error: 'area_forbidden', area: 'sponsoring' });
   assert.deepEqual(writes, []);
 });
+
+function setupServices(rpcError: any = null) {
+  const saves: any[] = [];
+  setResourceApiContext({ userClaims: { sub: 'sponsor-editor' }, supabaseAdmin: {
+    from(table: string) {
+      if (table === 'social_admins') {
+        const q: any = { select: () => q, eq: () => q, maybeSingle: async () => ({ data: { role: 'sm-team', is_active: true, access_areas: ['sponsoring'] } }) };
+        return q;
+      }
+      const rows: any[] = table === 'social_post_audiences' ? [{ id: 'club', audience_group: 'club' }]
+        : table === 'social_sponsor_types' ? [{ id: 'boards', slug: 'bandensponsor' }, { id: 'stadium', slug: 'stadionheft' }] : [];
+      assert.ok(['social_post_audiences', 'social_sponsor_types', 'social_sponsor_assignments'].includes(table));
+      let selectedIds: any[] | null = null;
+      const q: any = { select: () => q, eq: () => q, in: (_column: string, values: any[]) => {
+        assert.equal(values.length, new Set(values).size); selectedIds = values; return q;
+      }, then: (resolve: any) => resolve({ data: selectedIds ? rows.filter(row => selectedIds!.includes(row.id)) : rows }) };
+      return q;
+    },
+    rpc: async (name: string, payload: any) => {
+      assert.equal(name, 'save_social_sponsor_assignments'); saves.push(payload); return { error: rpcError };
+    },
+  } });
+  return saves;
+}
+const services = [
+  { audienceId: 'club', sponsorTypeId: 'boards', description: 'Bande' },
+  { audienceId: 'club', sponsorTypeId: 'stadium', pageSize: '1/3', description: 'Anzeige' },
+];
+const saveServices = (websiteAssignments: any[]) => api.fetch(new Request('https://example.test/admin', {
+  method: 'POST', body: JSON.stringify({ action: 'save_sponsor_assignments', sponsorId: 'graf', assignments: [], websiteAssignments, assignmentsSchemaVersion: 2 }),
+}));
+Deno.test('actual API saves Bandenwerbung and a third-page advertisement for the same club atomically', async () => {
+  const saves = setupServices(); const response = await saveServices(services); const body = await response.json();
+  assert.equal(response.status, 200, JSON.stringify(body)); assert.equal(saves.length, 1);
+  assert.equal(saves[0].p_schema_version, 2); assert.equal(saves[0].p_website.length, 2);
+  assert.deepEqual(body.websiteAssignments.map((row: any) => [row.sponsor_type_id, row.page_size, row.description]), [['boards', null, 'Bande'], ['stadium', '1/3', 'Anzeige']]);
+});
+Deno.test('actual API rejects duplicate services, unspecified mixed services and missing magazine formats before saving', async () => {
+  for (const [rows, pattern] of [
+    [[services[0], services[0]], /doppelt/],
+    [[services[0], { audienceId: 'club' }], /Sponsorart/],
+    [[{ ...services[1], pageSize: '' }], /Seitengröße/],
+  ] as const) {
+    const saves = setupServices(); const response = await saveServices([...rows]);
+    assert.equal(response.status, 400); assert.match((await response.json()).error, pattern); assert.deepEqual(saves, []);
+  }
+});
+Deno.test('actual API preserves the transaction conflict response and tells stale clients to reload', async () => {
+  setupServices({ code: 'PT409', message: 'Mehrere Sponsorleistungen. Bitte die Seite neu laden.' });
+  const response = await saveServices(services); assert.equal(response.status, 409);
+  assert.match((await response.json()).error, /neu laden/);
+});

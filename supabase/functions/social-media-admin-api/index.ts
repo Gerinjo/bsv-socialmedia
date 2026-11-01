@@ -1854,8 +1854,12 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
           description,
         };
       });
-      const websiteAudienceIds = normalizedWebsiteAssignments.map((assignment: any) => assignment.audience_id);
-      if (new Set(websiteAudienceIds).size !== websiteAudienceIds.length) throw new Error('Eine Website-Einheit wurde doppelt zugeordnet.');
+      const websiteAudienceIds = [...new Set(normalizedWebsiteAssignments.map((assignment: any) => assignment.audience_id))];
+      const websiteKeys = normalizedWebsiteAssignments.map((assignment: any) => `${assignment.audience_id}:${assignment.sponsor_type_id || ''}`);
+      if (new Set(websiteKeys).size !== websiteKeys.length) throw new Error('Eine Sponsorart wurde derselben Einheit doppelt zugeordnet.');
+      if (normalizedWebsiteAssignments.some((assignment: any) => !assignment.sponsor_type_id && normalizedWebsiteAssignments.some((other: any) => other !== assignment && other.audience_id === assignment.audience_id))) {
+        throw new Error('Bitte für jede Sponsorleistung eine eigene Sponsorart auswählen.');
+      }
       const normalized = assignments.map((assignment: any) => ({
         sponsor_id: sponsorId,
         audience_id: required(assignment?.audienceId, 'Einheit'),
@@ -1918,27 +1922,17 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       } else {
         for (const assignment of normalizedWebsiteAssignments) assignment.page_size = null;
       }
-      const { error: deleteError } = await context.supabaseAdmin
-        .from('social_sponsor_assignments')
-        .delete()
-        .eq('sponsor_id', sponsorId);
-      if (deleteError) throw deleteError;
-      if (normalized.length) {
-        const { error: insertError } = await context.supabaseAdmin
-          .from('social_sponsor_assignments')
-          .insert(normalized);
-        if (insertError) throw insertError;
-      }
-      const { error: deleteWebsiteError } = await context.supabaseAdmin
-        .from('social_sponsor_website_assignments')
-        .delete()
-        .eq('sponsor_id', sponsorId);
-      if (deleteWebsiteError) throw deleteWebsiteError;
-      if (normalizedWebsiteAssignments.length) {
-        const { error: insertWebsiteError } = await context.supabaseAdmin
-          .from('social_sponsor_website_assignments')
-          .insert(normalizedWebsiteAssignments);
-        if (insertWebsiteError) throw insertWebsiteError;
+      const { error: saveError } = await context.supabaseAdmin.rpc('save_social_sponsor_assignments', {
+        p_sponsor_id: sponsorId,
+        p_social: normalized,
+        p_website: normalizedWebsiteAssignments,
+        p_schema_version: body.assignmentsSchemaVersion === 2 ? 2 : 1,
+      });
+      if (saveError) {
+        const conflict = ['PT409', '23505'].includes(saveError.code);
+        throw Object.assign(new Error(saveError.code === '23505'
+          ? 'Ein ausgewählter Platz wurde zwischenzeitlich belegt. Bitte neu laden und die Zuordnung prüfen.'
+          : saveError.message), { status: conflict ? 409 : 400 });
       }
       const automation = await invalidateSponsorPreviews(context.supabaseAdmin, sponsorId, previousContexts);
       return json({ ok: true, assignments: normalized, websiteAssignments: normalizedWebsiteAssignments, automation });

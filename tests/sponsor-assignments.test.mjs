@@ -116,3 +116,16 @@ test('result uses the colored transparent sponsor logo at a larger size', () => 
   assert.match(svg, /y="1405"[^>]+height="250"/);
   assert.doesNotMatch(svg, /<rect/);
 });
+
+test('several services retain their own description while team audiences remain unique', () => {
+  const audiences = [{ id: 'team', slug: 'herren-1', audience_group: 'mens_team' }];
+  const websiteAssignments = [
+    { sponsor_id: 'graf', audience_id: 'team', sponsor_type_id: 'boards', description: 'Bande' },
+    { sponsor_id: 'graf', audience_id: 'team', sponsor_type_id: 'stadium', description: 'Anzeige', page_size: '1/3' },
+  ];
+  const options = { sponsorId: 'graf', audiences, websiteAssignments };
+  assert.deepEqual(websiteTeamAudienceSlugs(options), ['herren-1']);
+  const assignments = websiteAudienceAssignments(options);
+  assert.equal(assignments.length, 2);
+  assert.deepEqual(assignments.map(row => [row.sponsorTypeId, row.pageSize, row.description]), [['boards', null, 'Bande'], ['stadium', '1/3', 'Anzeige']]);
+});

@@ -16,6 +16,8 @@
     "test:auth": "npx --yes deno@2.9.6 test --allow-env --no-check supabase/tests/suite-login-auth.test.ts",
     "test:resources:api": "npx --yes deno@2.9.6 test --allow-env --allow-read --no-check --import-map=tests/resources-api-imports.json tests/resources-api.test.ts",
     "test:cashbook:db": "node scripts/test-cashbook-db.mjs",
+    "test:sponsors:db": "node scripts/test-sponsor-db.mjs",
+    "test:sponsors:api": "npx --yes deno@2.9.6 test --allow-env --allow-read --no-check --import-map=tests/resources-api-imports.json tests/sponsor-api.test.ts",
     "check": "node scripts/check-project.mjs && npm test",
     "preview": "npm run build && node scripts/preview-editorial.mjs"
   },

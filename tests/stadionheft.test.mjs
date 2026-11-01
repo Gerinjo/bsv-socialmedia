@@ -37,34 +37,31 @@ test('dropdown offers all five formats and restores the saved selection', () => 
   assert.match(html, /value="1\/4" selected/);
 });
 
-test('page size is required only for enabled Stadionheft assignments and cleared on type changes', () => {
-  const type = { value: 'heft', dataset: {} };
-  const size = { value: '1/2', dataset: {} };
+test('each service requires a page size only for its own enabled Stadionheft type', () => {
+  const type = { value: 'heft' };
+  const size = { value: '1/2' };
   let hidden;
-  const label = { classList: { toggle: (_name, value) => { hidden = value; } } };
-  const container = {
-    classList: { toggle() {} },
-    querySelector: selector => ({ '.websiteSponsorType': type, '.stadiumPageSize': size, '.stadiumPageSizeLabel': label, '.assignment-unit': {} })[selector],
-    querySelectorAll: () => [type, size],
-  };
-  const input = { checked: true, closest: () => container };
-  uiFunction('wireWebsiteAssignmentControls', {
-    document: { querySelectorAll: () => [input] },
-    appData: { sponsorTypes: [{ id: 'heft', slug: 'stadionheft' }, { id: 'team', slug: 'teamsponsor' }] },
-  })();
+  const service = { querySelector: selector => ({
+    '.websiteSponsorType': type, '.stadiumPageSize': size,
+    '.stadiumPageSizeLabel': { classList: { toggle: (_name, value) => { hidden = value; } } },
+  })[selector] };
+  const update = uiFunction('updateSponsorServiceControls', {
+    appData: { sponsorTypes: [{ id: 'heft', slug: 'stadionheft' }, { id: 'boards', slug: 'bandensponsor' }] },
+  });
+  update(service, true, true);
   assert.equal(hidden, false);
   assert.equal(size.required, true);
+  assert.equal(type.required, true);
   assert.equal(size.disabled, false);
   assert.equal(size.value, '1/2');
-  input.checked = false;
-  input.onchange();
+  update(service, false, true);
   assert.equal(size.required, false);
+  assert.equal(type.required, false);
   assert.equal(size.disabled, true);
-  input.checked = true;
-  input.onchange();
+  update(service, true, true);
   assert.equal(size.value, '1/2');
-  type.value = 'team';
-  type.onchange();
+  type.value = 'boards';
+  update(service, true, true);
   assert.equal(hidden, true);
   assert.equal(size.required, false);
   assert.equal(size.disabled, true);

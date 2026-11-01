@@ -62,7 +62,7 @@ export function websiteTeamAssignments(options) {
 
 /** @param {{websiteAssignments?: any[], audiences?: any[], sponsorId: string}} options */
 export function websiteTeamAudienceSlugs(options) {
-  return websiteTeamAssignments(options).map((assignment) => assignment.audienceSlug);
+  return [...new Set(websiteTeamAssignments(options).map((assignment) => assignment.audienceSlug))];
 }
 
 /** @param {{sponsors?: any[], assignments?: any[], audiences?: any[], audience: any, context: string}} options */
