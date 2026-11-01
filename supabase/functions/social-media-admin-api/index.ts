@@ -18,6 +18,7 @@ import { handleEditorial } from './editorial.ts';
 import { DOMParser, XMLSerializer } from 'npm:@xmldom/xmldom@0.9.12';
 import { prepareSvgSource } from '../../../src/svg-upload.mjs';
 import { normalizeSponsorPageSize } from '../../../src/sponsor-assignments.mjs';
+import { createSponsor, SponsorExistsError } from '../_shared/sponsor-create.mjs';
 import { withSupabase } from 'npm:@supabase/server@1.4.1';
 import { runtimeConfig } from '../_shared/config.ts';
 import { CLUB_CREST_SEEDS } from '../_shared/club-crest-seeds.ts';
@@ -1618,13 +1619,15 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         await invalidateSponsorPreviews(context.supabaseAdmin, sponsorId);
         return json({ ok: true, sponsor: data });
       }
-      const { data, error } = await context.supabaseAdmin
-        .from('social_sponsors')
-        .insert({ ...payload, slug: sponsorSlug(name) })
-        .select()
-        .single();
-      if (error) throw error;
-      return json({ ok: true, sponsor: data });
+      try {
+        const sponsor = await createSponsor(context.supabaseAdmin, { ...payload, slug: sponsorSlug(name) });
+        return json({ ok: true, sponsor });
+      } catch (error) {
+        if (error instanceof SponsorExistsError) {
+          return json({ error: error.message, code: 'sponsor_exists', existingSponsor: error.existingSponsor }, 409);
+        }
+        throw error;
+      }
     }
 
     if (action === 'save_sponsor_logo') {
