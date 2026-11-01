@@ -1,3 +1,4 @@
+import { handleSponsorMagazineArtwork, sponsorArtworkPaths } from '../_shared/sponsor-magazine-artwork.mjs';
 import {handleResources} from '../_shared/resources.mjs';
 import {load as loadResourceHtml} from 'npm:cheerio@1.2.0';
 import opentype from 'npm:opentype.js@1.3.4';
@@ -53,6 +54,7 @@ const actionAreas: Record<string, SuiteArea> = {
   save_independent_story: 'social_media', upload_independent_story_image: 'social_media', preview_independent_story: 'social_media',
   schedule_independent_story: 'social_media', delete_independent_story: 'social_media', save_post: 'social_media',
   upload_post_image: 'social_media', approve_post: 'social_media', delete_post: 'social_media', save_birthday: 'social_media', retry_job: 'social_media',
+  save_sponsor_magazine_ad:'sponsoring',approve_sponsor_magazine_ad:'sponsoring',reject_sponsor_magazine_ad:'sponsoring',discard_sponsor_magazine_ad:'sponsoring',
   save_sponsor_type: 'sponsoring', save_sponsor: 'sponsoring', save_sponsor_logo: 'sponsoring',
   save_sponsor_white_logo: 'sponsoring', approve_sponsor_logo: 'sponsoring', reject_sponsor_logo: 'sponsoring',
   discard_sponsor_logo: 'sponsoring', save_sponsor_assignments: 'sponsoring', delete_sponsor: 'sponsoring',
@@ -526,6 +528,8 @@ async function freshSponsorUrls(admin: any, rows: any[]): Promise<any[]> {
     logo_original_url: await signedAssetUrl(admin, sponsor.logo_original_path),
     logo_transparent_url: await signedAssetUrl(admin, sponsor.logo_transparent_path),
     logo_white_url: await signedAssetUrl(admin, sponsor.logo_white_path),
+    magazine_ad_url: await signedAssetUrl(admin, sponsor.magazine_ad_path),
+    magazine_ad_original_url: await signedAssetUrl(admin, sponsor.magazine_ad_original_path),
   })));
 }
 
@@ -1630,6 +1634,9 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       }
     }
 
+    const magazineArtworkResult = await handleSponsorMagazineArtwork({ action, body, admin:context.supabaseAdmin, userId, parseDataUrl, DOMParser, XMLSerializer });
+    if (magazineArtworkResult) return json(magazineArtworkResult);
+
     if (action === 'save_sponsor_logo') {
       const sponsorId = required(body.sponsorId, 'Werbepartner');
       const { data: sponsor, error: sponsorError } = await context.supabaseAdmin
@@ -1650,9 +1657,10 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       if (!pngHasAlpha(transparent.bytes) || !pngHasAlpha(white.bytes)) {
         throw new Error('Freistellung und weiße Variante müssen PNG-Dateien mit Alphakanal sein.');
       }
-      const originalPath = `sponsors/${sponsor.slug}/original.${originalMimeTypes.get(original.mime)}`;
-      const transparentPath = `sponsors/${sponsor.slug}/transparent.png`;
-      const whitePath = `sponsors/${sponsor.slug}/white-v2.png`;
+      const digitalRevision = `sponsors/${sponsor.slug}/digital/${crypto.randomUUID()}`;
+      const originalPath = `${digitalRevision}/original.${originalMimeTypes.get(original.mime)}`;
+      const transparentPath = `${digitalRevision}/transparent.png`;
+      const whitePath = `${digitalRevision}/white.png`;
       const processing = body.processing && typeof body.processing === 'object' ? body.processing : {};
       const processingMode = String(processing.mode ?? 'auto') === 'preserve' ? 'preserve' : 'auto';
       const processingMethod = String(processing.method ?? 'edge-connected-background').slice(0, 80);
@@ -1802,16 +1810,12 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       const sponsorId = required(body.sponsorId, 'Werbepartner');
       const { data: sponsor, error: sponsorError } = await context.supabaseAdmin
         .from('social_sponsors')
-        .select('id, logo_original_path, logo_transparent_path, logo_white_path')
+        .select('id, logo_original_path, logo_transparent_path, logo_white_path, magazine_ad_original_path, magazine_ad_path')
         .eq('id', sponsorId)
         .maybeSingle();
       if (sponsorError) throw sponsorError;
       if (!sponsor) throw new Error('Der Werbepartner wurde nicht gefunden.');
-      const paths = [...new Set([
-        sponsor.logo_original_path,
-        sponsor.logo_transparent_path,
-        sponsor.logo_white_path,
-      ].map((path) => String(path ?? '').trim()).filter((path) => path.startsWith('sponsors/')))];
+      const paths = sponsorArtworkPaths(sponsor,'digital');
       if (paths.length) {
         const { error: removeError } = await context.supabaseAdmin.storage.from(bucket).remove(paths);
         if (removeError) throw new Error(`Partnerlogo-Dateien konnten nicht gelöscht werden: ${removeError.message}`);
@@ -1942,7 +1946,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       const sponsorId = required(body.sponsorId, 'Werbepartner');
       const { data: sponsor, error: sponsorError } = await context.supabaseAdmin
         .from('social_sponsors')
-        .select('logo_original_path, logo_transparent_path, logo_white_path')
+        .select('logo_original_path, logo_transparent_path, logo_white_path, magazine_ad_original_path, magazine_ad_path')
         .eq('id', sponsorId)
         .maybeSingle();
       if (sponsorError) throw sponsorError;
@@ -1953,11 +1957,7 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
         .eq('sponsor_id', sponsorId);
       if (previousAssignmentsError) throw previousAssignmentsError;
       const previousContexts = (previousAssignments ?? []).map((assignment: any) => String(assignment.context ?? ''));
-      const paths = [...new Set([
-        sponsor.logo_original_path,
-        sponsor.logo_transparent_path,
-        sponsor.logo_white_path,
-      ].map((path) => String(path ?? '').trim()).filter((path) => path.startsWith('sponsors/')))];
+      const paths = sponsorArtworkPaths(sponsor,'all');
       if (paths.length) {
         const { error: removeError } = await context.supabaseAdmin.storage.from(bucket).remove(paths);
         if (removeError) throw removeError;

@@ -1,3 +1,4 @@
+import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -30,7 +31,12 @@ test('opening Sponsoring defaults to the sponsor overview section', () => {
 });
 
 test('sponsor overview prioritizes incomplete partners and collapses approved partners', () => {
-  assert.match(adminSource, /function sponsorNeedsAttention\(sponsor\)\{return sponsor\.logo_status!=='approved'\}/);
+  const predicate = adminSource.split('\n').find(line => line.trimStart().startsWith('function sponsorNeedsAttention('));
+  const needsAttention = vm.runInNewContext(predicate + '; sponsorNeedsAttention');
+  assert.equal(needsAttention({logo_status:'approved',magazine_ad_status:'missing'}),false);
+  assert.equal(needsAttention({logo_status:'approved',magazine_ad_status:'needs_review'}),true);
+  assert.equal(needsAttention({logo_status:'approved',magazine_ad_status:'approved'}),false);
+  assert.equal(needsAttention({logo_status:'missing',magazine_ad_status:'approved'}),true);
   assert.match(adminSource, /<details class="sponsor-card"[^]*\(expanded\?'open':''\)/);
   assert.match(adminSource, /sponsorGroupHtml\('Noch zu bearbeiten',incomplete,true\)/);
   assert.match(adminSource, /sponsorGroupHtml\('Freigegebene Partner',approved,false\)/);

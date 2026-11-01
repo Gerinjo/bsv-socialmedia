@@ -117,3 +117,39 @@ Deno.test('actual API preserves the transaction conflict response and tells stal
   const response = await saveServices(services); assert.equal(response.status, 409);
   assert.match((await response.json()).error, /neu laden/);
 });
+
+const artworkPng = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==';
+function setupArtwork(areas=['sponsoring']) {
+  const state: any = {id:'graf',slug:'garten-graf',logo_original_path:'sponsors/graf/original.png',logo_transparent_path:'sponsors/graf/transparent.png',logo_white_path:'sponsors/graf/white.png',logo_status:'approved',magazine_ad_original_path:'sponsors/graf/original.png',magazine_ad_path:'sponsors/graf/transparent.png',magazine_ad_status:'approved'};
+  const removed: string[] = [],uploaded: string[] = [];
+  setResourceApiContext({userClaims:{sub:'sponsor-editor'},supabaseAdmin:{
+    storage:{from:()=>({upload:async(path:string)=>{uploaded.push(path);return {error:null};},remove:async(paths:string[])=>{removed.push(...paths);return {error:null};}})},
+    from(table:string){
+      if(table==='social_admins'){
+        const q:any={select:()=>q,eq:()=>q,maybeSingle:async()=>({data:{role:'sm-team',is_active:true,access_areas:areas}})};return q;
+      }
+      if(table==='social_sponsor_assignments'){
+        const q:any={select:()=>q,eq:()=>q,then:(resolve:any)=>resolve({data:[]})};return q;
+      }
+      assert.equal(table,'social_sponsors');let patch:any;
+      const q:any={select:()=>q,eq:()=>q,maybeSingle:async()=>({data:structuredClone(state)}),update:(value:any)=>{patch=value;return q;},single:async()=>{Object.assign(state,patch);return {data:structuredClone(state)};},then:(resolve:any)=>{if(patch)Object.assign(state,patch);resolve({data:structuredClone(state)});}};return q;
+    },
+  }});
+  return {state,removed,uploaded};
+}
+const artworkRequest=(action:string,body={})=>api.fetch(new Request('https://example.test/admin',{method:'POST',body:JSON.stringify({action,sponsorId:'graf',...body})}));
+Deno.test('actual API keeps the magazine advertisement when replacing or discarding the digital logo',async()=>{
+  const f=setupArtwork();const before=f.state.magazine_ad_path;
+  const response=await artworkRequest('save_sponsor_logo',{originalDataUrl:artworkPng,transparentDataUrl:artworkPng,whiteDataUrl:artworkPng,processing:{mode:'preserve',method:'preserve-original'}});
+  assert.equal(response.status,200,JSON.stringify(await response.json()));assert.equal(f.state.magazine_ad_path,before);assert.equal(f.state.magazine_ad_status,'approved');assert.ok(f.uploaded.every(path=>path.includes('/digital/')));
+  const legacy=setupArtwork();const discarded=await artworkRequest('discard_sponsor_logo');assert.equal(discarded.status,200);
+  assert.deepEqual(legacy.removed,['sponsors/graf/white.png']);assert.equal(legacy.state.magazine_ad_path,'sponsors/graf/transparent.png');assert.equal(legacy.state.magazine_ad_status,'approved');assert.equal(legacy.state.logo_transparent_path,null);
+});
+Deno.test('actual API accepts and independently approves a magazine image without changing digital artwork',async()=>{
+  const f=setupArtwork();const response=await artworkRequest('save_sponsor_magazine_ad',{originalDataUrl:artworkPng,imageDataUrl:artworkPng});
+  assert.equal(response.status,200,JSON.stringify(await response.json()));assert.equal(f.state.logo_status,'approved');assert.equal(f.state.logo_transparent_path,'sponsors/graf/transparent.png');assert.equal(f.state.magazine_ad_status,'needs_review');
+  const approved=await artworkRequest('approve_sponsor_magazine_ad');assert.equal(approved.status,200);assert.equal(f.state.magazine_ad_status,'approved');
+});
+Deno.test('actual API checks sponsoring permissions before reading or uploading magazine artwork',async()=>{
+  const f=setupArtwork([]);const response=await artworkRequest('save_sponsor_magazine_ad',{originalDataUrl:artworkPng,imageDataUrl:artworkPng});assert.equal(response.status,403);assert.deepEqual(f.uploaded,[]);
+});

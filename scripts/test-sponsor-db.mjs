@@ -44,6 +44,14 @@ try {
   const save = (website, placements = social, version = 2) => sql(`set role service_role;select public.save_social_sponsor_assignments(${quote(ids.graf)},${quote(JSON.stringify(placements))},${quote(JSON.stringify(website))},${version});`);
   await save(services);
   assert.equal(await sql(`select count(*) from public.social_sponsor_website_assignments where sponsor_id=${quote(ids.graf)} and audience_id=${quote(ids.club)}`), '2');
+  await sql(`set role service_role;update public.social_sponsors set logo_original_path='sponsors/graf/original.svg',logo_transparent_path='sponsors/graf/transparent.png',logo_status='approved' where id=${quote(ids.graf)};`);
+  await sql(await readFile(new URL('supabase/migrations/20261101121629_sponsor_magazine_artwork.sql',root),'utf8'));
+  const preservedAd = JSON.parse(await sql(`select jsonb_build_object('original',magazine_ad_original_path,'image',magazine_ad_path,'status',magazine_ad_status) from public.social_sponsors where id=${quote(ids.graf)}`));
+  assert.deepEqual(preservedAd,{original:'sponsors/graf/original.svg',image:'sponsors/graf/transparent.png',status:'approved'});
+  await sql(`set role service_role;update public.social_sponsors set logo_original_path='sponsors/graf/digital/new/original.svg',logo_transparent_path='sponsors/graf/digital/new/transparent.png',logo_status='needs_review' where id=${quote(ids.graf)}`);
+  assert.equal(await sql(`select magazine_ad_path from public.social_sponsors where id=${quote(ids.graf)}`),'sponsors/graf/transparent.png');
+  assert.equal(await sql(`select magazine_ad_status from public.social_sponsors where id=${quote(ids.graf)}`),'approved');
+  for (const role of ['anon','authenticated']) assert.equal(await sql(`select has_table_privilege('${role}','public.social_sponsors','update')`),'f');
   const snapshot = () => sql(`select jsonb_build_object('website',(select jsonb_agg(w order by w.id) from public.social_sponsor_website_assignments w where sponsor_id=${quote(ids.graf)}),'social',(select jsonb_agg(a) from public.social_sponsor_assignments a where sponsor_id=${quote(ids.graf)}));`);
   const expected = await snapshot();
   await assert.rejects(save([services[0]], social, 1), /neu laden/);

@@ -2,13 +2,13 @@ import assert from 'node:assert/strict';
 import { prepareEditorialAdvertising, withEditorialAdvertising } from '../supabase/functions/_shared/editorial-advertising.ts';
 import { loadMagazineSponsors } from '../supabase/functions/_shared/magazine-sponsors.ts';
 const png = Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aG1kAAAAASUVORK5CYII='), c => c.charCodeAt(0));
-function database({ format = '1/2', failUpload = false, source = png, slug = 'partner' } = {}) {
+function database({ format = '1/2', failUpload = false, source = png, slug = 'partner', magazinePath = null, magazineStatus = 'missing', logoStatus = 'approved' } = {}) {
   const calls: any[] = [], uploads: any[] = [], removed: any[] = [];
   const replies: any = {
     social_sponsor_types: { id: 'type' },
     social_sponsor_website_assignments: [{ sponsor_id: 'sponsor', audience_id: 'audience', page_size: format }],
     social_post_audiences: [{ id: 'audience', slug: 'club' }],
-    social_sponsors: [{ id: 'sponsor', slug, name: 'Partner', website_url: 'https://example.org', logo_transparent_path: 'sponsors/approved.png', updated_at: '2026-09-20' }],
+    social_sponsors: [{ id: 'sponsor', slug, name: 'Partner', website_url: 'https://example.org', logo_transparent_path: 'sponsors/approved.png', logo_status:logoStatus, magazine_ad_path:magazinePath, magazine_ad_status:magazineStatus, updated_at: '2026-09-20' }],
   };
   const db = { from(table: string) {
     const query: any = new Proxy({}, { get(_target, key) {
@@ -28,10 +28,19 @@ Deno.test('preview and feed select active approved magazine assignments valid on
   const result = await loadMagazineSponsors(db, '2026-09-27');
   assert.equal(result.length, 1);
   assert.ok(calls.some(call => call[1] === 'eq' && call[2] === 'active' && call[3] === true));
-  assert.ok(calls.some(call => call[1] === 'eq' && call[2] === 'logo_status' && call[3] === 'approved'));
+  assert.equal(result[0].sourcePath,'sponsors/approved.png');
   assert.ok(calls.some(call => call[1] === 'or' && call[2].includes('contract_end_date.gte.2026-09-27')));
   assert.ok(calls.some(call => call[1] === 'or' && call[2].includes('contract_start_date.lte.2026-09-27')));
 });
+Deno.test('magazine selection and editorial freezing use the dedicated ad even while the digital logo awaits approval', async () => {
+  const { db, calls } = database({magazinePath:'sponsors/print/advertisement.png',magazineStatus:'approved',logoStatus:'needs_review'});
+  const sponsors = await loadMagazineSponsors(db,'2026-09-27');
+  assert.equal(sponsors[0].sourcePath,'sponsors/print/advertisement.png');
+  assert.ok(!calls.some(call => call[1] === 'eq' && call[2] === 'logo_status'));
+  const pending = database({magazinePath:'sponsors/print/draft.png',magazineStatus:'needs_review'});
+  assert.deepEqual(await loadMagazineSponsors(pending.db,'2026-09-27'),[]);
+});
+
 Deno.test('advertising copies approved bytes and freezes only public advertisement fields', async () => {
   const { db, uploads, removed } = database();
   const { snapshot, cleanup } = await prepareEditorialAdvertising(db, { id: 'issue', publishes_on: '2026-09-27' });
