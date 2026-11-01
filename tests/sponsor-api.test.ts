@@ -153,3 +153,12 @@ Deno.test('actual API accepts and independently approves a magazine image withou
 Deno.test('actual API checks sponsoring permissions before reading or uploading magazine artwork',async()=>{
   const f=setupArtwork([]);const response=await artworkRequest('save_sponsor_magazine_ad',{originalDataUrl:artworkPng,imageDataUrl:artworkPng});assert.equal(response.status,403);assert.deepEqual(f.uploaded,[]);
 });
+
+Deno.test('actual API creates new partners with today in Berlin, an open contract and automatic renewal',async()=>{
+  setup(false);const response=await post('Neuer Vertragspartner');const body=await response.json();
+  assert.equal(response.status,200,JSON.stringify(body));
+  const parts=new Intl.DateTimeFormat('en',{timeZone:'Europe/Berlin',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+  const value=(type:string)=>parts.find(part=>part.type===type)!.value;
+  assert.equal(body.sponsor.contract_start_date,`${value('year')}-${value('month')}-${value('day')}`);
+  assert.equal(body.sponsor.contract_end_date,null);assert.equal(body.sponsor.automatic_renewal,true);assert.equal(body.sponsor.active,true);
+});

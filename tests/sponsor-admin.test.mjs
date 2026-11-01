@@ -1,4 +1,5 @@
 import vm from 'node:vm';
+import {createSponsorEditor} from '../admin-site/sponsor-editor.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -37,7 +38,10 @@ test('sponsor overview prioritizes incomplete partners and collapses approved pa
   assert.equal(needsAttention({logo_status:'approved',magazine_ad_status:'needs_review'}),true);
   assert.equal(needsAttention({logo_status:'approved',magazine_ad_status:'approved'}),false);
   assert.equal(needsAttention({logo_status:'missing',magazine_ad_status:'approved'}),true);
-  assert.match(adminSource, /<details class="sponsor-card"[^]*\(expanded\?'open':''\)/);
+  const editor=createSponsorEditor({esc:value=>String(value),contractStatus:()=>({label:'Offen'})});
+  const clean=editor.html({id:'partner',name:'Partner',logo_status:'approved'},false);
+  assert.doesNotMatch(clean.match(/<details[^>]+>/)[0],/ open/);
+  assert.match(editor.html({id:'partner',name:'Partner',logo_status:'approved'},true).match(/<details[^>]+>/)[0],/ open/);
   assert.match(adminSource, /sponsorGroupHtml\('Noch zu bearbeiten',incomplete,true\)/);
   assert.match(adminSource, /sponsorGroupHtml\('Freigegebene Partner',approved,false\)/);
   assert.match(adminSource, /sort\(\(a,b\)=>a\.name\.localeCompare\(b\.name,'de'/);

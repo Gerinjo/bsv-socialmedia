@@ -870,7 +870,11 @@
 
     .assignment-services{display:grid;gap:12px;margin-bottom:12px}.sponsor-service-card{padding:12px;border:1px solid var(--outline);border-radius:12px;background:#fff}.sponsor-service-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;font-size:12px}.sponsor-service-head button{padding:5px 8px;font-size:11px}.sponsor-service-description{display:grid;gap:5px;margin:10px 0 0;font-size:11px;letter-spacing:0;text-transform:none;color:var(--mint)}.assignment-grid .sponsor-service-description textarea{height:54px;min-height:54px}.assignment-grid .addSponsorService{padding:8px 12px;font-size:12px}
     .team-assignment-details{margin-top:18px;padding:0;border:1px solid var(--outline);border-radius:14px;overflow:hidden}.team-assignment-details>summary{display:flex;align-items:center;gap:12px;padding:15px 16px;list-style:none;color:var(--ink);background:var(--paper)}.team-assignment-details>summary::-webkit-details-marker{display:none}.team-assignment-details>summary::after{content:'⌄';font-size:20px;transition:transform .18s ease}.team-assignment-details[open]>summary::after{transform:rotate(180deg)}.team-assignment-details>summary:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}.team-assignment-count{margin-left:auto;color:var(--mint);font-size:12px;font-weight:500}.team-assignment-details>.assignment-wrap{margin:12px}
-    .sponsor-asset-title{margin:20px 0 12px}.sponsor-magazine-section{margin-top:24px;padding-top:20px;border-top:1px solid var(--outline)}.sponsor-magazine-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.sponsor-magazine-heading h4{margin:0}.sponsor-magazine-preview{display:flex;justify-content:center;margin:14px 0;padding:12px;background:#fff;border:1px solid var(--outline);border-radius:12px}.sponsor-magazine-preview img{max-width:100%;max-height:260px;object-fit:contain}.sponsorMagazineForm{display:grid;gap:12px;margin-top:16px}
+.sponsor-editor-fields{min-width:0;margin:0;padding:0;border:0}.sponsor-metadata-fields{padding-top:20px}.sponsor-upload-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin:24px 0}.sponsor-upload-panel{min-width:0;padding:18px;border:1px solid var(--outline);border-radius:16px;background:#fff}.sponsor-upload-heading{display:flex;justify-content:space-between;align-items:start;gap:12px;flex-wrap:wrap}.sponsor-upload-heading h4{margin:0;font-size:18px}.sponsor-upload-heading p{margin:5px 0 12px;color:var(--mint);font-size:13px}.sponsor-image-status{font-size:11px;color:var(--mint);font-weight:700}.sponsor-upload-image{display:flex;align-items:center;justify-content:center;height:200px;padding:14px;border-radius:12px;border:1px solid var(--outline);background:var(--paper)}.sponsor-upload-image img{display:block;max-width:100%;max-height:100%;object-fit:contain}.sponsor-upload-image img[hidden],.sponsor-image-empty[hidden]{display:none}.sponsor-image-empty{color:var(--mint);font-size:13px}.sponsor-image-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0 18px}.sponsor-image-filename{overflow-wrap:anywhere;font-size:12px;color:var(--mint)}.sponsor-image-tools button{padding:7px 12px;font-size:12px}.sponsor-upload-label{margin:0 0 8px;color:var(--ink);font-size:13px;text-transform:none;letter-spacing:0}.sponsor-processing-label{display:grid;gap:6px;margin-top:16px;font-size:12px;text-transform:none;letter-spacing:0}.sponsor-image-message:empty{display:none}.sponsor-editor-actions{position:sticky;bottom:12px;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:16px;margin:16px -2px 0;border:1px solid var(--outline);border-radius:14px;background:#fff;box-shadow:0 4px 18px #173d2c14}.sponsor-secondary-actions,.sponsor-primary-actions{display:flex;gap:10px;flex-wrap:wrap}.sponsor-primary-actions{margin-left:auto}.sponsor-save-notice{flex-basis:100%;margin:0;color:#7a4f01;font-size:13px;font-weight:700}.sponsor-save-notice:empty{display:none}.sponsorSave.sponsor-save-dirty{background:#ffda73;border:1px solid #d39812;color:#3e310d;box-shadow:0 0 0 3px #ffda734d}.sponsor-editor-actions button:disabled{opacity:.5;box-shadow:none}.sponsor-upload-panel .small{display:block;font-size:12px;text-transform:none;letter-spacing:0}.sponsor-upload-panel .error{padding:8px;border-radius:8px}@media(max-width:850px){.sponsor-upload-grid{grid-template-columns:1fr}.sponsor-editor-actions{bottom:8px}.sponsor-secondary-actions,.sponsor-primary-actions{flex:1;justify-content:space-between}.sponsor-editor-actions button{flex:1}}@media(prefers-reduced-motion:reduce){.sponsorSave{transition:none}}
+
+.sponsor-upload-image.is-white-variant{background:#173d2c}body:has([data-suite-area="sponsoring"].active) .status-toast{top:16px;bottom:auto}
+@media(max-width:850px){.sponsor-secondary-actions,.sponsor-primary-actions{flex:1 1 100%;width:100%;margin-left:0}.sponsor-editor-actions button{white-space:nowrap;flex:1 1 auto}}
+
 </style>
 </head>
 <body>
@@ -1195,7 +1199,7 @@
     <dialog id="newSponsorDialog" aria-labelledby="newSponsorTitle">
       <div class="dialog-header"><h2 id="newSponsorTitle">Sponsor anlegen</h2><button id="closeNewSponsor" type="button" class="ghost dialog-close">Schließen</button></div>
       <p class="dialog-intro">Partnerdaten erfassen. Das Logo kannst du anschließend beim neuen Werbepartner hochladen.</p>
-      <form id="newSponsorForm" class="fields"><label>Name<input name="name" maxlength="120" required></label><label>Sortierung<input name="sortOrder" type="number" min="0" value="100"></label><label>Website<input name="websiteUrl" type="url" placeholder="https://…"></label><label>Instagram<input name="instagramHandle" placeholder="@partner"></label><label>Vertragsbeginn<input name="contractStartDate" type="date"></label><label>Vertragsende<input name="contractEndDate" type="date"></label><label class="wide permission-option"><input name="automaticRenewal" type="checkbox"> Verlängert sich automatisch (kein Enddatum)</label><label class="wide">Logo-Quelle<input name="sourceUrl" type="url" placeholder="https://…"></label><label class="wide permission-option"><input name="active" type="checkbox" checked> Aktiv</label><p id="newSponsorMessage" class="wide small" role="status" aria-live="polite"></p><div class="wide"><button type="button" id="openExistingSponsor" class="secondary hidden">Vorhandenen Werbepartner öffnen</button></div><div class="wide sponsor-dialog-actions"><button type="button" class="ghost" id="cancelNewSponsor">Abbrechen</button><button type="submit">Werbepartner anlegen</button></div></form>
+      <form id="newSponsorForm" class="fields"><label>Name<input name="name" maxlength="120" required></label><label>Sortierung<input name="sortOrder" type="number" min="0" value="100"></label><label>Website<input name="websiteUrl" type="url" placeholder="https://…"></label><label>Instagram<input name="instagramHandle" placeholder="@partner"></label><label>Vertragsbeginn<input name="contractStartDate" type="date"></label><label>Vertragsende<input name="contractEndDate" type="date"></label><label class="wide permission-option"><input name="automaticRenewal" type="checkbox"> Verlängert sich automatisch (kein Enddatum)</label><label class="wide">Logo-Quelle<input name="sourceUrl" type="url" placeholder="https://…"></label><p id="newSponsorMessage" class="wide small" role="status" aria-live="polite"></p><div class="wide"><button type="button" id="openExistingSponsor" class="secondary hidden">Vorhandenen Werbepartner öffnen</button></div><div class="wide sponsor-dialog-actions"><button type="button" class="ghost" id="cancelNewSponsor">Verwerfen</button><button type="submit">Speichern</button></div></form>
     </dialog>
     <dialog id="sponsorTypesDialog">
       <div class="dialog-header"><h2>Sponsorarten verwalten</h2><button id="closeSponsorTypes" type="button" class="ghost dialog-close" aria-label="Sponsorarten schließen">Schließen</button></div>
@@ -1206,7 +1210,7 @@
         <label>Gewichtung der Übersicht<select name="displayWeight" required><option value="1">Standard</option><option value="2">Hervorgehoben</option><option value="3">Premium</option></select><span class="small">Höhere Gewichtungen erscheinen zuerst und erhalten mehr visuelle Präsenz.</span></label>
         <label class="wide">Erklärung<textarea name="description" rows="3" maxlength="500" placeholder="Wofür wird diese Sponsorart verwendet?"></textarea></label>
         <label class="wide"><input name="active" type="checkbox" checked> Aktiv und für neue Zuordnungen auswählbar</label>
-        <div class="wide"><button type="submit">Sponsorart anlegen</button></div>
+        <div class="wide"><button type="submit">Speichern</button></div>
       </form>
       <div id="sponsorTypeStatus" class="small"></div>
       <div id="sponsorTypeList" class="sponsor-type-list"></div>
@@ -3356,11 +3360,235 @@ export function prepareSvgSource(source, parser, serializer) {
   return serializer.serializeToString(root);
 }
 
+export function sponsorToday(now = new Date()) {
+  const parts = new Intl.DateTimeFormat('en', { timeZone:'Europe/Berlin', year:'numeric', month:'2-digit', day:'2-digit' }).formatToParts(now);
+  const value = kind => parts.find(part => part.type === kind).value;
+  return `${value('year')}-${value('month')}-${value('day')}`;
+}
+
+export function sponsorContractDefaults(now = new Date()) {
+  return {contractStartDate:sponsorToday(now),contractEndDate:'',automaticRenewal:true,active:true};
+}
+
+export function sponsorEditorMetadata(sponsor) {
+  return {name:sponsor.name || '',sortOrder:String(sponsor.sort_order ?? 100),websiteUrl:sponsor.website_url || '',
+    instagramHandle:sponsor.instagram_handle || '',sourceUrl:sponsor.logo_source_url || '',
+    contractStartDate:sponsor.contract_start_date || '',contractEndDate:sponsor.contract_end_date || '',
+    automaticRenewal:Boolean(sponsor.automatic_renewal),active:sponsor.active !== false};
+}
+
+export function createSponsorEditState(sponsor) {
+  const asset = () => ({prepared:null,file:null,discard:false,pending:false,error:'',preview:null,revision:0});
+  const values = sponsorEditorMetadata(sponsor);
+  return {sponsor:{...sponsor},values,baseline:JSON.stringify(values),digital:asset(),magazine:asset(),busy:false,mode:'preserve'};
+}
+
+export function sponsorEditIsDirty(state) {
+  return state.baseline !== JSON.stringify(state.values) || ['digital','magazine'].some(channel => state[channel].prepared || state[channel].file || state[channel].pending || state[channel].discard);
+}
+
+export function sponsorEditHasImage(state, channel) {
+  const draft = state[channel];
+  if (draft.discard) return false;
+  if (draft.prepared || draft.preview) return true;
+  return channel === 'digital'
+    ? Boolean(state.sponsor.logo_original_path || state.sponsor.logo_transparent_path || state.sponsor.logo_white_path || state.sponsor.logo_original_url || state.sponsor.logo_transparent_url || state.sponsor.logo_white_url)
+    : Boolean(state.sponsor.magazine_ad_path || state.sponsor.magazine_ad_url);
+}
+
+// A single UI action saves all pending changes. Each successful step updates
+// the draft immediately, so retrying a later failure never uploads saved files
+// again or discards the remaining edits.
+export async function persistSponsorEdits(state, {api,approve=false,prepareWhite,onCommit=()=>{}}) {
+  const request = async (action, body, commit) => {
+    const result = await api('POST',{action,sponsorId:state.sponsor.id,...body});
+    if (result.sponsor) state.sponsor = {...state.sponsor,...result.sponsor};
+    commit?.(result);
+    onCommit();
+    return result;
+  };
+  if (state.baseline !== JSON.stringify(state.values)) {
+    const submitted = {...state.values};
+    await request('save_sponsor', submitted, () => { state.baseline = JSON.stringify(submitted); });
+  }
+  for (const channel of ['digital','magazine']) {
+    const draft = state[channel];
+    if (draft.discard) {
+      await request(channel === 'digital' ? 'discard_sponsor_logo' : 'discard_sponsor_magazine_ad', {}, () => {
+        if (channel === 'digital') Object.assign(state.sponsor,{logo_original_path:null,logo_transparent_path:null,logo_white_path:null,logo_original_url:null,logo_transparent_url:null,logo_white_url:null,logo_status:'missing'});
+        else Object.assign(state.sponsor,{magazine_ad_path:null,magazine_ad_original_path:null,magazine_ad_url:null,magazine_ad_original_url:null,magazine_ad_status:'missing'});
+        Object.assign(draft,{discard:false,prepared:null,file:null,preview:null});
+      });
+    } else if (draft.prepared) {
+      const prepared = draft.prepared;
+      await request(channel === 'digital' ? 'save_sponsor_logo' : 'save_sponsor_magazine_ad', prepared, () => {
+        draft.preview = channel === 'digital' ? prepared.transparentDataUrl : prepared.imageDataUrl;
+        state.sponsor[channel === 'digital' ? 'logo_status' : 'magazine_ad_status'] = 'needs_review';
+        Object.assign(draft,{prepared:null,file:null});
+      });
+    }
+  }
+  if (approve) {
+    if (sponsorEditHasImage(state,'digital') && state.sponsor.logo_status !== 'approved') {
+      if (!state.sponsor.logo_white_path && state.sponsor.logo_transparent_url && prepareWhite) {
+        const whiteDataUrl = await prepareWhite(state.sponsor);
+        await request('save_sponsor_white_logo',{whiteDataUrl});
+      }
+      await request('approve_sponsor_logo',{},()=>{state.sponsor.logo_status='approved';});
+    }
+    if (sponsorEditHasImage(state,'magazine') && state.sponsor.magazine_ad_status !== 'approved') {
+      await request('approve_sponsor_magazine_ad',{},()=>{state.sponsor.magazine_ad_status='approved';});
+    }
+  }
+  return state.sponsor;
+}
+
+
+export function createSponsorEditor({document,api,esc,show,runBusy,prepareSponsorLogo,prepareMagazineArtwork,prepareWhite,contractStatus,reload}) {
+  const states = new Map();
+  const statusLabels = {missing:'Kein Bild',needs_review:'Freigabe ausstehend',approved:'Freigegeben',rejected:'Nicht freigegeben'};
+  const stateFor = sponsor => {
+    if (!states.has(sponsor.id)) states.set(sponsor.id,createSponsorEditState(sponsor));
+    return states.get(sponsor.id);
+  };
+  function imagePanel(state,channel) {
+    const digital = channel === 'digital';
+    const title = digital ? 'Firmenlogo' : 'Heftanzeige';
+    return `<section class="sponsor-upload-panel" data-channel="${channel}" aria-label="${title}">
+      <div class="sponsor-upload-heading"><div><h4>${title}</h4><p>${digital?'Für Homepage und Social Media':'Fertige Anzeige für das Stadionheft'}</p></div><span class="sponsor-image-status"></span></div>
+      <div class="sponsor-upload-image"><img alt="${title} von ${esc(state.values.name)}"><span class="sponsor-image-empty">Kein Bild ausgewählt</span></div>
+      <div class="sponsor-image-tools"><span class="sponsor-image-filename"></span><button type="button" class="ghost sponsorDiscard" aria-label="${title} verwerfen">Verwerfen</button></div>
+      <label class="sponsor-upload-label">${title} hochladen<input type="file" class="${digital?'sponsorFile':'sponsorMagazineFile'}" accept="image/png,image/jpeg,image/webp,image/svg+xml,.svg"></label>
+      <span class="small">PNG, JPG, WebP oder SVG · maximal 5 MB</span>
+      ${digital?`<label class="sponsor-processing-label">Verarbeitung für neue Dateien<select class="sponsorLogoMode"><option value="preserve" ${state.mode==='preserve'?'selected':''}>Farben und Hintergrund beibehalten</option><option value="auto" ${state.mode==='auto'?'selected':''}>Neutralen Hintergrund entfernen</option></select></label>`:'<p class="small">Die Anzeige bleibt mit Text, Farben und Hintergrund erhalten.</p>'}
+      <p class="sponsor-image-message small" role="status" aria-live="polite"></p>
+    </section>`;
+  }
+  function html(sponsor,expanded=false) {
+    const state = stateFor(sponsor),v=state.values,contract=contractStatus(state.sponsor);
+    const input=(name,label,type='text',extra='')=>`<label>${label}<input name="${name}" type="${type}" value="${esc(v[name])}" ${extra}></label>`;
+    return `<details class="sponsor-card" data-sponsor-id="${esc(sponsor.id)}" ${(expanded||sponsorEditIsDirty(state))?'open':''}>
+      <summary><div class="crest-head"><div><h3>${esc(v.name)}</h3><div class="small">${esc([v.instagramHandle,v.websiteUrl,v.active?'Aktiv':'Inaktiv'].filter(Boolean).join(' · '))}</div><span class="sponsor-contract-state ${contract.expired?'expired':''}">${esc(contract.label)}</span></div><span class="crest-state ${esc(state.sponsor.logo_status)}">${esc(statusLabels[state.sponsor.logo_status]||'Kein Bild')}</span></div></summary>
+      <div class="sponsor-card-body"><form class="sponsorForm sponsor-editor-form" data-id="${esc(sponsor.id)}">
+        <fieldset class="sponsor-editor-fields"><legend class="visually-hidden">Werbepartner bearbeiten</legend><div class="fields sponsor-metadata-fields">
+          ${input('name','Name','text','maxlength="120" required')}${input('sortOrder','Sortierung','number','min="0" max="32767" required')}
+          ${input('websiteUrl','Website','url')}${input('instagramHandle','Instagram')}
+          ${input('contractStartDate','Vertragsbeginn','date')}${input('contractEndDate','Vertragsende','date')}
+          <label class="wide permission-option"><input name="automaticRenewal" type="checkbox" ${v.automaticRenewal?'checked':''}> Automatische Verlängerung · Ende offen</label>
+          ${input('sourceUrl','Quelle des Firmenlogos (optional)','url')}
+        </div><div class="sponsor-upload-grid">${imagePanel(state,'digital')}${imagePanel(state,'magazine')}</div></fieldset>
+        <div class="sponsor-editor-actions"><p class="sponsor-save-notice" role="status" aria-live="polite"></p>
+          <div class="sponsor-secondary-actions"><button type="button" class="secondary toggleSponsorActive"></button><button type="button" class="danger deleteSponsor">Löschen</button></div>
+          <div class="sponsor-primary-actions"><button type="submit" class="secondary sponsorSave">Speichern</button><button type="button" class="sponsorApprove">Freigeben</button></div>
+        </div></form></div></details>`;
+  }
+  function wireForm(form) {
+    const state=states.get(form.dataset.id);
+    const save=form.querySelector('.sponsorSave'),approve=form.querySelector('.sponsorApprove');
+    const toggle=form.querySelector('.toggleSponsorActive'),fields=form.querySelector('fieldset');
+    const hasPending=()=>['digital','magazine'].some(channel=>state[channel].pending||state[channel].error);
+    function syncImage(channel) {
+      const draft=state[channel],digital=channel==='digital',panel=form.querySelector(`[data-channel="${channel}"]`);
+      const image=panel.querySelector('img');
+      const url=draft.discard?'':draft.prepared?(digital?draft.prepared.transparentDataUrl:draft.prepared.imageDataUrl):draft.preview||(digital?(state.sponsor.logo_original_url||state.sponsor.logo_transparent_url||state.sponsor.logo_white_url):state.sponsor.magazine_ad_url)||'';
+      image.hidden=!url;panel.querySelector('.sponsor-image-empty').hidden=Boolean(url);
+      if(url&&image.getAttribute('src')!==url)image.src=url;
+      if(!url)image.removeAttribute('src');
+      panel.querySelector('.sponsor-upload-image').classList.toggle('is-white-variant',Boolean(digital&&url===state.sponsor.logo_white_url&&!state.sponsor.logo_original_url&&!state.sponsor.logo_transparent_url));
+      if(!draft.file&&!draft.pending)panel.querySelector('input[type=file]').value='';
+      const status=digital?state.sponsor.logo_status:state.sponsor.magazine_ad_status;
+      panel.querySelector('.sponsor-image-status').textContent=draft.discard?'Wird verworfen':draft.prepared?'Ungespeichert':statusLabels[status]||'Kein Bild';
+      panel.querySelector('.sponsor-image-filename').textContent=draft.file?.name||'';
+      panel.querySelector('.sponsorDiscard').disabled=state.busy||!(url||draft.file||draft.pending);
+      const message=panel.querySelector('.sponsor-image-message');message.classList.toggle('error',Boolean(draft.error));
+      message.textContent=draft.error||(draft.pending?'Bild wird vorbereitet …':draft.discard?'Das Bild wird beim Speichern verworfen.':draft.prepared?(digital?'Firmenlogo vorbereitet.':`${draft.prepared.width} × ${draft.prepared.height} Pixel · unverändert vorbereitet.`):(!digital&&!url?'Ohne eigene Heftanzeige wird das freigegebene Firmenlogo als Ersatz verwendet.':''));
+    }
+    function sync() {
+      if(!form.isConnected)return;
+      const dirty=Boolean(sponsorEditIsDirty(state));
+      fields.disabled=state.busy;toggle.disabled=state.busy;form.querySelector('.deleteSponsor').disabled=state.busy;
+      form.elements.contractEndDate.disabled=state.values.automaticRenewal;
+      form.elements.contractEndDate.min=state.values.contractStartDate;
+      save.classList.toggle('sponsor-save-dirty',dirty);save.disabled=state.busy||hasPending()||!dirty;
+      save.setAttribute('aria-label',dirty?'Speichern · ungespeicherte Änderungen':'Speichern');
+      const imageChannels=['digital','magazine'].filter(channel=>sponsorEditHasImage(state,channel));
+      const pendingApproval=imageChannels.some(channel=>state[channel].prepared||state.sponsor[channel==='digital'?'logo_status':'magazine_ad_status']!=='approved');
+      approve.disabled=state.busy||hasPending()||!imageChannels.length||(!dirty&&!pendingApproval);
+      toggle.textContent=state.values.active?'Deaktivieren':'Aktivieren';
+      form.querySelector('.sponsor-save-notice').textContent=state.busy?'Änderungen werden übernommen …':hasPending()?'Bitte die Bildvorbereitung abschließen.':dirty?'Ungespeicherte Änderungen':'';
+      for(const channel of ['digital','magazine'])syncImage(channel);
+    }
+    state.notify=sync;
+    function readMetadata() {
+      const values={...state.values};
+      for(const name of ['name','sortOrder','websiteUrl','instagramHandle','sourceUrl','contractStartDate','contractEndDate'])values[name]=form.elements[name].value;
+      values.automaticRenewal=form.elements.automaticRenewal.checked;
+      state.values=values;
+    }
+    form.addEventListener('input',event=>{if(event.target.name){readMetadata();sync();}});
+    form.elements.automaticRenewal.onchange=()=>{
+      if(form.elements.automaticRenewal.checked)form.elements.contractEndDate.value='';
+      readMetadata();sync();
+    };
+    toggle.onclick=()=>{state.values.active=!state.values.active;sync();};
+    async function prepareFile(channel,file) {
+      const draft=state[channel],revision=++draft.revision;
+      Object.assign(draft,{file,prepared:null,pending:true,error:'',discard:false});state.notify?.();
+      try {
+        const prepared=channel==='digital'?await prepareSponsorLogo(file,state.mode):await prepareMagazineArtwork(file);
+        if(draft.revision!==revision)return;
+        if(prepared.processing?.safetyBlocked)throw new Error('Die Hintergrundentfernung würde das Logo beschädigen. Bitte Farben und Hintergrund beibehalten.');
+        draft.prepared=prepared;
+      } catch(error) {if(draft.revision===revision)draft.error=error.message;}
+      finally {if(draft.revision===revision){draft.pending=false;state.notify?.();}}
+    }
+    for(const channel of ['digital','magazine']) {
+      const panel=form.querySelector(`[data-channel="${channel}"]`),input=panel.querySelector('input[type=file]');
+      input.onchange=()=>{const file=input.files?.[0];if(file)prepareFile(channel,file);};
+      panel.querySelector('.sponsorDiscard').onclick=()=>{
+        const draft=state[channel];draft.revision++;
+        const persisted=channel==='digital'?Boolean(state.sponsor.logo_original_path||state.sponsor.logo_transparent_path||state.sponsor.logo_white_path||state.sponsor.logo_original_url||state.sponsor.logo_transparent_url||state.sponsor.logo_white_url):Boolean(state.sponsor.magazine_ad_path||state.sponsor.magazine_ad_url);
+        Object.assign(draft,{file:null,prepared:null,pending:false,error:'',discard:persisted,preview:null});input.value='';sync();
+      };
+    }
+    form.querySelector('.sponsorLogoMode').onchange=event=>{state.mode=event.target.value;if(state.digital.file)prepareFile('digital',state.digital.file);};
+    async function persist(shouldApprove) {
+      readMetadata();
+      const end=form.elements.contractEndDate;
+      end.setCustomValidity(state.values.active&&!state.values.automaticRenewal&&state.values.contractEndDate&&state.values.contractEndDate<sponsorToday()?'Für einen aktiven Partner darf das Vertragsende nicht in der Vergangenheit liegen.':'');
+      if(state.busy||hasPending()||!form.reportValidity())return;
+      if(!shouldApprove&&!sponsorEditIsDirty(state))return;
+      const button=shouldApprove?approve:save;
+      state.busy=true;sync();
+      await runBusy(button,{busyText:shouldApprove?'Gibt frei …':'Speichert …',pendingText:shouldApprove?'Änderungen werden gespeichert und Bilder freigegeben …':'Änderungen werden gespeichert …',successText:shouldApprove?'Gespeichert und freigegeben.':'Gespeichert.',errorText:shouldApprove?'Freigeben fehlgeschlagen: ':'Speichern fehlgeschlagen: '},async()=>{
+        try {
+          await persistSponsorEdits(state,{api,approve:shouldApprove,prepareWhite,onCommit:()=>state.notify?.()});
+          states.delete(form.dataset.id);
+          try {await reload(form.dataset.id,state.values.name);} catch(error) {states.set(form.dataset.id,state);throw error;}
+        } finally {state.busy=false;state.notify?.();}
+      });
+      state.notify?.();
+    }
+    form.onsubmit=event=>{event.preventDefault();persist(false);};
+    approve.onclick=()=>persist(true);
+    form.querySelector('.deleteSponsor').onclick=async()=>{
+      if(state.busy||!globalThis.confirm(`„${state.values.name}“ wirklich löschen? Alle Bilder und Zuordnungen dieses Partners werden gelöscht.`))return;
+      state.busy=true;sync();
+      await runBusy(form.querySelector('.deleteSponsor'),{busyText:'Löscht …',pendingText:'Werbepartner wird gelöscht …',successText:'Gelöscht.',errorText:'Löschen fehlgeschlagen: '},async()=>{
+        try {await api('POST',{action:'delete_sponsor',sponsorId:form.dataset.id});states.delete(form.dataset.id);await reload();}
+        finally {state.busy=false;state.notify?.();}
+      });state.notify?.();
+    };
+    sync();
+  }
+  return {html,wire:()=>document.querySelectorAll('.sponsor-editor-form').forEach(wireForm),clear:()=>states.clear()};
+}
+
     wireRichTextEditors(document);
     const supabase = createClient('https://maejihwjzxkmthjavgnx.supabase.co', 'sb_publishable_a3DnmtbBycRR4mWV4Jmz-w_RJobGli9');
     const apiUrl = 'https://maejihwjzxkmthjavgnx.supabase.co/functions/v1/social-media-admin-api';
     const login = document.querySelector('#login'); const app = document.querySelector('#app'); const status = document.querySelector('#status'); const authMessage = document.querySelector('#authMessage'); const suiteHeaderActions=document.querySelector('#suiteHeaderActions');
-    let catalog={teams:[],people:[],venues:[],postAudiences:[],websiteAudiences:[],storyCategories:[]};let appData={games:[],posts:[],independentStories:[],birthdays:[],clubs:[],members:[],teamSettings:[],teamColorGroups:[],sponsors:[],sponsorTypes:[],sponsorAssignments:[],sponsorWebsiteAssignments:[]};let activeTab='games';let activeAdminSection='members';let activeSuiteArea='';let currentUserRole='';let currentAccessAreas=[];let currentUserId='';let currentUserProfile={};let globalTestMode=true;let editingPostId='';let editingStoryId='';let storyImage=null;let expandedGameId='';let postImages=[];let cleanupSettings={retentionDays:30};let cleanupOverview={game:{historical:0,eligible:0},post:{historical:0,eligible:0},story:{historical:0,eligible:0}};let instagramConfiguration={accountIdConfigured:false,accessTokenConfigured:false,graphApiVersion:'v26.0'};let hideHistorical=localStorage.getItem('bsv-hide-historical')==='true';const preparedCrests=new Map();const preparedSponsors=new Map();const reportImageState=new Map();const searchTerms={games:'',posts:'',stories:'',birthdays:'',admin:''};
+    let catalog={teams:[],people:[],venues:[],postAudiences:[],websiteAudiences:[],storyCategories:[]};let appData={games:[],posts:[],independentStories:[],birthdays:[],clubs:[],members:[],teamSettings:[],teamColorGroups:[],sponsors:[],sponsorTypes:[],sponsorAssignments:[],sponsorWebsiteAssignments:[]};let activeTab='games';let activeAdminSection='members';let activeSuiteArea='';let currentUserRole='';let currentAccessAreas=[];let currentUserId='';let currentUserProfile={};let globalTestMode=true;let editingPostId='';let editingStoryId='';let storyImage=null;let expandedGameId='';let postImages=[];let cleanupSettings={retentionDays:30};let cleanupOverview={game:{historical:0,eligible:0},post:{historical:0,eligible:0},story:{historical:0,eligible:0}};let instagramConfiguration={accountIdConfigured:false,accessTokenConfigured:false,graphApiVersion:'v26.0'};let hideHistorical=localStorage.getItem('bsv-hide-historical')==='true';const preparedCrests=new Map();const reportImageState=new Map();const searchTerms={games:'',posts:'',stories:'',birthdays:'',admin:''};
     const allSuiteAreas=SUITE_AREAS;
     const suiteAreaLabels=SUITE_AREA_LABELS;
     const adminSectionAreas={cashbook:'cashbook',members:'user_management',roles:'user_management',activity:'user_management',teams:'corporate_identity',crests:'club_crests',sponsors:'sponsoring',assignments:'sponsoring',instagram:'social_media_admin',cleanup:'social_media_admin'};
@@ -6613,54 +6841,24 @@ export function validateExpenseSubmission(body) {
       document.querySelectorAll('.rejectCrest').forEach(button=>button.onclick=async()=>{if(!window.confirm('Diesen Wappen-Vorschlag wirklich ablehnen?'))return;button.disabled=true;try{await api('POST',{action:'reject_club_crest',clubId:button.dataset.id});await load();switchAdminSection('crests');document.querySelector('#crestStatus').textContent='Vorschlag abgelehnt. Das Original kann jederzeit ersetzt werden.'}catch(error){document.querySelector('#crestStatus').textContent=error.message}finally{button.disabled=false}})
       document.querySelectorAll('.discardCrest').forEach(button=>button.onclick=async()=>{if(!window.confirm('Diesen Wappen-Upload vollständig verwerfen? Original und Freistellung werden dauerhaft gelöscht.'))return;button.disabled=true;try{await api('POST',{action:'discard_club_crest',clubId:button.dataset.id});preparedCrests.delete(button.dataset.id);await load();switchAdminSection('crests');document.querySelector('#crestStatus').textContent='Wappen-Upload verworfen. Der Verein steht wieder auf „Wappen fehlt“.'}catch(error){document.querySelector('#crestStatus').textContent='Wappen konnte nicht verworfen werden: '+error.message}finally{button.disabled=false}})
     }
-    function sponsorContractStatus(sponsor){const today=new Date().toISOString().slice(0,10);if(sponsor.automatic_renewal)return {label:(sponsor.contract_start_date?'Seit '+new Date(sponsor.contract_start_date+'T00:00:00').toLocaleDateString('de-DE')+' · ':'')+'Verlängert sich automatisch',expired:false};if(sponsor.contract_end_date){const expired=sponsor.contract_end_date<today;const period=[sponsor.contract_start_date&&new Date(sponsor.contract_start_date+'T00:00:00').toLocaleDateString('de-DE'),new Date(sponsor.contract_end_date+'T00:00:00').toLocaleDateString('de-DE')].filter(Boolean).join(' bis ');return {label:(expired?'Abgelaufen: ':'Vertrag: ')+period,expired}}return {label:sponsor.contract_start_date?'Vertragsbeginn '+new Date(sponsor.contract_start_date+'T00:00:00').toLocaleDateString('de-DE')+' · Ende fehlt':'Vertragsdaten fehlen',expired:false}}
+    function sponsorContractStatus(sponsor){const today=sponsorToday();if(sponsor.automatic_renewal)return {label:(sponsor.contract_start_date?'Seit '+new Date(sponsor.contract_start_date+'T00:00:00').toLocaleDateString('de-DE')+' · ':'')+'Verlängert sich automatisch',expired:false};if(sponsor.contract_end_date){const expired=sponsor.contract_end_date<today;const period=[sponsor.contract_start_date&&new Date(sponsor.contract_start_date+'T00:00:00').toLocaleDateString('de-DE'),new Date(sponsor.contract_end_date+'T00:00:00').toLocaleDateString('de-DE')].filter(Boolean).join(' bis ');return {label:(expired?'Abgelaufen: ':'Vertrag: ')+period,expired}}return {label:sponsor.contract_start_date?'Vertragsbeginn '+new Date(sponsor.contract_start_date+'T00:00:00').toLocaleDateString('de-DE')+' · Ende fehlt':'Vertragsdaten fehlen',expired:false}}
     function sponsorNeedsAttention(sponsor){return sponsor.logo_status!=='approved'||['needs_review','rejected'].includes(sponsor.magazine_ad_status)}
-    const preparedSponsorMagazineAds=new Map();
-    function sponsorMagazineHtml(sponsor){const labels={missing:'Keine eigene Heftanzeige',needs_review:'Freigabe ausstehend',approved:'Freigegeben',rejected:'Abgelehnt'};const status=sponsor.magazine_ad_status||'missing';const preview=sponsor.magazine_ad_url?'<div class="sponsor-magazine-preview"><img loading="lazy" decoding="async" src="'+esc(sponsor.magazine_ad_url)+'" alt="Heftanzeige von '+esc(sponsor.name)+'"></div>':'';const actions=status==='needs_review'?'<button type="button" class="secondary approveMagazineAd" data-id="'+esc(sponsor.id)+'">Heftanzeige freigeben</button><button type="button" class="ghost rejectMagazineAd" data-id="'+esc(sponsor.id)+'">Ablehnen</button>':'';return '<section class="sponsor-magazine-section"><div class="sponsor-magazine-heading"><h4>Anzeige für das Stadionheft</h4><span class="crest-state '+esc(status)+'">'+esc(labels[status])+'</span></div><p class="small">Eigenes Anzeigenmotiv mit Text und Kontaktdaten. Farben, Hintergrund und Bildformat bleiben erhalten. Homepage und Social Media verwenden das Digitallogo.</p>'+preview+(sponsor.magazine_ad_original_url?'<a class="small" href="'+esc(sponsor.magazine_ad_original_url)+'" target="_blank" rel="noopener" download>Original der Heftanzeige herunterladen</a>':'<p class="small">Ohne eigene Heftanzeige wird das freigegebene Digitallogo als Ersatz verwendet.</p>')+'<form class="sponsorMagazineForm" data-id="'+esc(sponsor.id)+'"><label>Neue Heftanzeige<input class="sponsorMagazineFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,.svg"><span class="small">PNG, JPG, WebP oder SVG · maximal 5 MB · keine automatische Freistellung</span></label><div class="sponsorMagazineLocalPreview sponsor-magazine-preview hidden"><img alt="Vorschau der neuen Heftanzeige"></div><p class="sponsorMagazineMessage small" role="status" aria-live="polite"></p><div class="crest-actions"><button type="submit" class="saveMagazineAd" disabled>Heftanzeige speichern</button>'+actions+(sponsor.magazine_ad_url?'<button type="button" class="ghost discardMagazineAd" data-id="'+esc(sponsor.id)+'">Heftanzeige entfernen</button>':'')+'</div></form></section>'}
-    function sponsorHtml(sponsor,expanded=false){
-      const labels={missing:'Logo fehlt',needs_review:'Prüfung nötig',approved:'Freigegeben',rejected:'Abgelehnt'};const hasUpload=Boolean(sponsor.logo_original_url||sponsor.logo_transparent_url||sponsor.logo_white_url);const keepsOriginalColors=sponsor.processing_metadata?.whiteVariantMode==='original-colors';const previews=hasUpload?'<div class="sponsor-preview">'+[['Original',sponsor.logo_original_url,''],['Einsatzvariante',sponsor.logo_transparent_url,'checkerboard'],[keepsOriginalColors?'Originalfarben':'Weiß',sponsor.logo_white_url,'dark']].map(([label,url,className])=>'<div class="crest-image '+className+'"><div>'+(url?'<img loading="lazy" decoding="async" src="'+esc(url)+'" alt="'+esc(label)+'">':'<span>Fehlt</span>')+'<span>'+esc(label)+'</span></div></div>').join('')+'</div>':'';const review=sponsor.logo_status==='needs_review'?'<button type="button" class="secondary approveSponsor" data-id="'+esc(sponsor.id)+'">Freigeben</button><button type="button" class="ghost rejectSponsor" data-id="'+esc(sponsor.id)+'">Ablehnen</button>':'';const repair=sponsor.logo_transparent_url&&Number(sponsor.processing_metadata?.whiteVariantVersion||0)<2?'<button type="button" class="secondary repairSponsorWhite" data-id="'+esc(sponsor.id)+'" aria-label="Weiße Logo-Variante reparieren">Weiß reparieren</button>':'';const discard=hasUpload&&String(sponsor.logo_original_path||'').startsWith('sponsors/')?'<button type="button" class="danger discardSponsor" data-id="'+esc(sponsor.id)+'">Logo verwerfen</button>':'';const contract=sponsorContractStatus(sponsor);
-      return '<details class="sponsor-card" data-sponsor-id="'+esc(sponsor.id)+'" '+(expanded?'open':'')+'><summary><div class="crest-head"><div><h3>'+esc(sponsor.name)+'</h3><div class="small">'+esc([sponsor.instagram_handle,sponsor.website_url,sponsor.active?'aktiv':'passiv'].filter(Boolean).join(' · '))+'</div><span class="sponsor-contract-state '+(contract.expired?'expired':'')+'">'+esc(contract.label)+'</span></div><span class="crest-state '+esc(sponsor.logo_status)+'">'+esc(labels[sponsor.logo_status]||sponsor.logo_status)+'</span></div></summary><div class="sponsor-card-body"><h4 class="sponsor-asset-title">Logo für Homepage &amp; Social Media</h4>'+previews+'<form class="sponsorForm fields" data-id="'+esc(sponsor.id)+'"><label>Name<input name="name" maxlength="120" value="'+esc(sponsor.name)+'" required></label><label>Sortierung<input name="sortOrder" type="number" min="0" value="'+esc(sponsor.sort_order??100)+'"></label><label>Website<input name="websiteUrl" type="url" value="'+esc(sponsor.website_url||'')+'"></label><label>Instagram<input name="instagramHandle" value="'+esc(sponsor.instagram_handle||'')+'"></label><label>Vertragsbeginn<input name="contractStartDate" type="date" value="'+esc(sponsor.contract_start_date||'')+'"></label><label>Vertragsende<input name="contractEndDate" type="date" value="'+esc(sponsor.contract_end_date||'')+'" '+(sponsor.automatic_renewal?'disabled':'')+'></label><label class="wide permission-option"><input name="automaticRenewal" type="checkbox" '+(sponsor.automatic_renewal?'checked':'')+'> Verlängert sich automatisch (kein Enddatum)</label><label class="wide">Logo-Quelle<input name="sourceUrl" type="url" value="'+esc(sponsor.logo_source_url||'')+'"></label><label class="wide"><input name="active" type="checkbox" '+(sponsor.active?'checked':'')+'> Aktiv</label><label class="wide">Logo-Verarbeitung<select class="sponsorLogoMode"><option value="preserve" selected>Originalfarben und Hintergrund beibehalten</option><option value="auto">Neutralen Hintergrund automatisch entfernen</option></select><span class="small">Kräftige Markenfarben am Bildrand werden niemals automatisch entfernt.</span></label><label class="wide">Neues Logo für Homepage &amp; Social Media<input class="sponsorFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,.svg"><span class="small">PNG, JPG, WebP oder SVG · maximal 5 MB</span></label><div class="sponsorLocalPreview sponsor-preview hidden wide"><div class="crest-image"><div><img loading="lazy" decoding="async" class="localOriginal" alt="Original"><span>Original</span></div></div><div class="crest-image checkerboard"><div><img loading="lazy" decoding="async" class="localTransparent" alt="Einsatzvariante"><span>Einsatzvariante</span></div></div><div class="crest-image dark"><div><img loading="lazy" decoding="async" class="localWhite" alt="Variante für dunkle Flächen"><span>Dunkle Flächen</span></div></div></div><div class="small sponsorLocalMeta wide"></div><div class="crest-actions wide"><button type="submit" class="secondary">Daten speichern</button><button type="button" class="saveSponsorLogo">Digitallogo speichern</button>'+repair+review+discard+'<button type="button" class="danger deleteSponsor">Partner löschen</button></div></form>'+sponsorMagazineHtml(sponsor)+'</div></details>'}
+    const sponsorEditor=createSponsorEditor({document,api,esc,show,runBusy,prepareSponsorLogo,prepareMagazineArtwork,contractStatus:sponsorContractStatus,
+      prepareWhite:sponsor=>whiteLogoDataUrl(sponsor.logo_transparent_url,sponsor.processing_metadata||{}),
+      reload:async(id,name)=>{await load({throwOnError:true});switchSuiteArea('sponsoring');switchAdminSection('sponsors');if(id){let card=[...document.querySelectorAll('[data-sponsor-id]')].find(item=>item.dataset.sponsorId===id);if(!card){document.querySelector('#sponsorSearch').value=name||'';renderSponsors();card=[...document.querySelectorAll('[data-sponsor-id]')].find(item=>item.dataset.sponsorId===id)}if(card)card.open=true;}}
+    });
+    function sponsorHtml(sponsor,expanded=false){return sponsorEditor.html(sponsor,expanded)}
     function sponsorGroupHtml(title,sponsors,expanded){return sponsors.length?'<section class="sponsor-group"><div class="sponsor-group-heading"><h3>'+esc(title)+'</h3><span class="sponsor-group-count">'+sponsors.length+'</span></div>'+sponsors.map(sponsor=>sponsorHtml(sponsor,expanded)).join('')+'</section>':''}
-    function renderSponsors(){const query=document.querySelector('#sponsorSearch')?.value||'';const allSponsors=appData.sponsors||[];const sponsors=allSponsors.filter(sponsor=>matchesSearch(query,[sponsor.name,sponsor.website_url,sponsor.instagram_handle,sponsor.logo_status,sponsorContractStatus(sponsor).label,sponsor.active?'aktiv':'passiv'])).sort((a,b)=>a.name.localeCompare(b.name,'de',{sensitivity:'base'}));const incomplete=sponsors.filter(sponsorNeedsAttention);const approved=sponsors.filter(sponsor=>!sponsorNeedsAttention(sponsor));const attention=allSponsors.filter(sponsorNeedsAttention).length;document.querySelector('#sponsorAttentionCount').textContent=attention?'('+attention+')':'';document.querySelector('#sponsorStatus').textContent=query?sponsors.length+' von '+allSponsors.length+' Partnern angezeigt':allSponsors.length+' Partner · '+attention+' noch zu bearbeiten';document.querySelector('#sponsorList').innerHTML=sponsors.length?sponsorGroupHtml('Noch zu bearbeiten',incomplete,true)+sponsorGroupHtml('Freigegebene Partner',approved,false):'<div class="empty">'+(query?'Keine Werbepartner passen zum Filter.':'Noch keine Werbepartner angelegt.')+'</div>';wireSponsorForms();renderAssignmentSponsorOptions()}
-    async function refreshSponsorLogoPreview(form){
-      const input=form.querySelector('.sponsorFile');const file=input.files?.[0];if(!file)return;
-      const mode=form.querySelector('.sponsorLogoMode').value;const meta=form.querySelector('.sponsorLocalMeta');const save=form.querySelector('.saveSponsorLogo');
-      meta.textContent=mode==='preserve'?'Original wird unverändert für alle Einsatzflächen vorbereitet …':'Neutraler Hintergrund wird geprüft …';save.disabled=true;
-      try{
-        const prepared=await prepareSponsorLogo(file,mode);const info=prepared.processing;
-        form.querySelector('.localOriginal').src=prepared.originalDataUrl;form.querySelector('.localTransparent').src=prepared.transparentDataUrl;form.querySelector('.localWhite').src=prepared.whiteDataUrl;form.querySelector('.sponsorLocalPreview').classList.remove('hidden');
-        if(info.safetyBlocked){preparedSponsors.delete(form.dataset.id);const percentage=Math.round(Number(info.candidateRemovedRatio||0)*100);meta.textContent=info.safetyReason==='colored-border'?'Automatik gestoppt: Am Bildrand liegt eine kräftige Markenfarbe. Bitte „Originalfarben und Hintergrund beibehalten“ wählen oder eine bereits transparente PNG-Datei hochladen.':'Automatik gestoppt: Sie würde '+percentage+' % des Bildes entfernen. Bitte Original beibehalten oder eine bereits transparente PNG-Datei hochladen.';return}
-        preparedSponsors.set(form.dataset.id,prepared);save.disabled=false;
-        if(info.sourceFormat==='svg')meta.textContent='SVG sicher geprüft und hochwertig in PNG-Einsatzvarianten umgewandelt. Bitte Darstellung und Farben prüfen.';
-        else if(info.method==='preserve-original')meta.textContent='Originalfarben und Hintergrund bleiben vollständig erhalten. Für dunkle Flächen wird ebenfalls die farbige Originalvariante verwendet.';
-        else if(info.method==='source-alpha')meta.textContent='Vorhandene Transparenz wurde unverändert übernommen; die Variante für dunkle Flächen wurde getrennt erzeugt.';
-        else meta.textContent=Math.round(Number(info.removedRatio||0)*100)+' % neutraler, randverbundener Hintergrund entfernt. Bitte die Einsatzvarianten prüfen.';
-      }catch(error){preparedSponsors.delete(form.dataset.id);save.disabled=true;meta.textContent=error.message}
-    }
+    function renderSponsors(){const query=document.querySelector('#sponsorSearch')?.value||'';const allSponsors=appData.sponsors||[];const sponsors=allSponsors.filter(sponsor=>matchesSearch(query,[sponsor.name,sponsor.website_url,sponsor.instagram_handle,sponsor.logo_status,sponsorContractStatus(sponsor).label,sponsor.active?'aktiv':'inaktiv'])).sort((a,b)=>a.name.localeCompare(b.name,'de',{sensitivity:'base'}));const incomplete=sponsors.filter(sponsorNeedsAttention);const approved=sponsors.filter(sponsor=>!sponsorNeedsAttention(sponsor));const attention=allSponsors.filter(sponsorNeedsAttention).length;document.querySelector('#sponsorAttentionCount').textContent=attention?'('+attention+')':'';document.querySelector('#sponsorStatus').textContent=query?sponsors.length+' von '+allSponsors.length+' Partnern angezeigt':allSponsors.length+' Partner · '+attention+' noch zu bearbeiten';document.querySelector('#sponsorList').innerHTML=sponsors.length?sponsorGroupHtml('Noch zu bearbeiten',incomplete,true)+sponsorGroupHtml('Freigegebene Partner',approved,false):'<div class="empty">'+(query?'Keine Werbepartner passen zum Filter.':'Noch keine Werbepartner angelegt.')+'</div>';wireSponsorForms();renderAssignmentSponsorOptions()}
     async function prepareMagazineArtwork(file){
       const svg=file.type==='image/svg+xml'||file.name.toLowerCase().endsWith('.svg');if(!svg&&!['image/png','image/jpeg','image/webp'].includes(file.type))throw new Error('Bitte PNG, JPG, WebP oder SVG auswählen.');if(file.size>5*1024*1024)throw new Error('Die Originaldatei darf höchstens 5 MB groß sein.');
       const originalDataUrl=svg?await safeSvgDataUrl(file):await fileDataUrl(file);const image=await imageFromUrl(originalDataUrl);const width=image.naturalWidth,height=image.naturalHeight;if(!width||!height||width>8192||height>8192||width*height>20000000)throw new Error('Bitte eine Anzeige mit höchstens 20 Megapixeln und 8192 Pixeln pro Seite wählen.');
       const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;canvas.getContext('2d').drawImage(image,0,0);const imageDataUrl=canvas.toDataURL('image/png');if(imageDataUrl.length>Math.ceil(5*1024*1024/3)*4+64)throw new Error('Die PNG-Ausgabe überschreitet 5 MB. Bitte eine kleinere Bilddatei wählen.');return {originalDataUrl,imageDataUrl,fileName:file.name,width,height};
     }
-    function wireSponsorMagazineForms(){
-      document.querySelectorAll('.sponsorMagazineForm').forEach(form=>{const input=form.querySelector('.sponsorMagazineFile');const save=form.querySelector('.saveMagazineAd');const message=form.querySelector('.sponsorMagazineMessage');input.onchange=async()=>{const file=input.files?.[0];preparedSponsorMagazineAds.delete(form.dataset.id);save.disabled=true;form.querySelector('.sponsorMagazineLocalPreview').classList.add('hidden');if(!file){message.textContent='';return}message.textContent='Heftanzeige wird vorbereitet …';try{const prepared=await prepareMagazineArtwork(file);if(input.files?.[0]!==file)return;preparedSponsorMagazineAds.set(form.dataset.id,prepared);form.querySelector('.sponsorMagazineLocalPreview img').src=prepared.imageDataUrl;form.querySelector('.sponsorMagazineLocalPreview').classList.remove('hidden');message.textContent=prepared.width+' × '+prepared.height+' Pixel · Farben und Hintergrund unverändert.';save.disabled=false}catch(error){if(input.files?.[0]===file)message.textContent=error.message}};
-        form.onsubmit=async event=>{event.preventDefault();const prepared=preparedSponsorMagazineAds.get(form.dataset.id);if(!prepared)return;await runBusy(save,{busyText:'Speichert …',pendingText:'Heftanzeige wird gespeichert …',successText:'Heftanzeige gespeichert. Bitte prüfen und freigeben.',errorText:'Heftanzeige konnte nicht gespeichert werden: '},async()=>{await api('POST',{action:'save_sponsor_magazine_ad',sponsorId:form.dataset.id,...prepared});preparedSponsorMagazineAds.delete(form.dataset.id);await load();switchAdminSection('sponsors')})};
-      });
-      document.querySelectorAll('.approveMagazineAd,.rejectMagazineAd,.discardMagazineAd').forEach(button=>button.onclick=async()=>{const discard=button.classList.contains('discardMagazineAd');if(discard&&!window.confirm('Die eigene Heftanzeige entfernen? Das Digitallogo bleibt erhalten.'))return;const action=discard?'discard_sponsor_magazine_ad':button.classList.contains('approveMagazineAd')?'approve_sponsor_magazine_ad':'reject_sponsor_magazine_ad';await runBusy(button,{busyText:'Übernimmt …',pendingText:'Heftanzeige wird aktualisiert …',successText:'Heftanzeige aktualisiert.',errorText:'Heftanzeige konnte nicht aktualisiert werden: '},async()=>{await api('POST',{action,sponsorId:button.dataset.id});await load();switchAdminSection('sponsors')})});
-    }
-    function wireSponsorForms(){
-      wireSponsorMagazineForms();
-      document.querySelectorAll('.sponsorForm').forEach(form=>{const automatic=form.elements.automaticRenewal;const end=form.elements.contractEndDate;const syncContractEnd=()=>{end.disabled=automatic.checked;if(automatic.checked)end.value=''};automatic.onchange=syncContractEnd;syncContractEnd();const input=form.querySelector('.sponsorFile');const mode=form.querySelector('.sponsorLogoMode');input.onchange=()=>refreshSponsorLogoPreview(form);mode.onchange=()=>refreshSponsorLogoPreview(form)});
-      document.querySelectorAll('.sponsorForm').forEach(form=>form.onsubmit=async event=>{event.preventDefault();const data=formObject(form);const button=event.submitter||form.querySelector('button');await runBusy(button,{busyText:'Speichert …',pendingText:'Partnerdaten werden gespeichert …',successText:'Partnerdaten gespeichert.',errorText:'Partnerdaten konnten nicht gespeichert werden: '},async()=>{await api('POST',{action:'save_sponsor',sponsorId:form.dataset.id,...data,active:data.active==='on',automaticRenewal:data.automaticRenewal==='on'});await load();switchTab('admin');switchAdminSection('sponsors')})});
-      document.querySelectorAll('.saveSponsorLogo').forEach(button=>button.onclick=async()=>{const form=button.closest('.sponsorForm');const prepared=preparedSponsors.get(form.dataset.id);if(!prepared||prepared.processing.safetyBlocked){show('Bitte zuerst eine sichere Logo-Variante vorbereiten.',true);return}await runBusy(button,{busyText:'Speichert …',pendingText:'Drei Logovarianten werden gespeichert …',successText:'Logo-Vorschlag gespeichert. Bitte prüfen und freigeben.',errorText:'Logo konnte nicht gespeichert werden: '},async()=>{await api('POST',{action:'save_sponsor_logo',sponsorId:form.dataset.id,...prepared});preparedSponsors.delete(form.dataset.id);await load();switchTab('admin');switchAdminSection('sponsors')})});
-      document.querySelectorAll('.repairSponsorWhite').forEach(button=>button.onclick=async()=>{const sponsor=(appData.sponsors||[]).find(item=>item.id===button.dataset.id);if(!sponsor?.logo_transparent_url)return;await runBusy(button,{busyText:'Repariert …',pendingText:'Weiße Variante wird neu berechnet …',successText:'Weiße Variante repariert. Bitte prüfen und freigeben.',errorText:'Weiße Variante konnte nicht repariert werden: '},async()=>{const whiteDataUrl=await whiteLogoDataUrl(sponsor.logo_transparent_url,sponsor.processing_metadata||{});await api('POST',{action:'save_sponsor_white_logo',sponsorId:sponsor.id,whiteDataUrl});await load();switchTab('admin');switchAdminSection('sponsors')})});
-      document.querySelectorAll('.approveSponsor,.rejectSponsor').forEach(button=>button.onclick=async()=>{const approve=button.classList.contains('approveSponsor');await api('POST',{action:approve?'approve_sponsor_logo':'reject_sponsor_logo',sponsorId:button.dataset.id});await load();switchTab('admin');switchAdminSection('sponsors')});
-      document.querySelectorAll('.discardSponsor').forEach(button=>button.onclick=async()=>{if(!window.confirm('Das Digitallogo mit allen Einsatzvarianten entfernen? Die Heftanzeige bleibt erhalten.'))return;await api('POST',{action:'discard_sponsor_logo',sponsorId:button.dataset.id});await load();switchTab('admin');switchAdminSection('sponsors')});
-      document.querySelectorAll('.deleteSponsor').forEach(button=>button.onclick=async()=>{if(!window.confirm('Werbepartner und alle Zuordnungen wirklich löschen?'))return;await api('POST',{action:'delete_sponsor',sponsorId:button.closest('.sponsorForm').dataset.id});await load();switchTab('admin');switchAdminSection('sponsors')})
-    }
+    function wireSponsorForms(){sponsorEditor.wire()}
     const sponsorContextLabels={announcement:'Ankündigung',lineup:'Aufstellung',result:'Ergebnis',report:'Spielbericht',birthday:'Geburtstag',post:'Beitrag',story:'Freie Story'};
     function sponsorTypeOptions(currentId=''){return '<option value="">Noch nicht festgelegt</option>'+(appData.sponsorTypes||[]).filter(item=>item.active||item.id===currentId).sort((a,b)=>(a.sort_order??100)-(b.sort_order??100)||a.label.localeCompare(b.label,'de')).map(item=>'<option value="'+esc(item.id)+'" '+(item.id===currentId?'selected':'')+'>'+esc(item.label)+(item.active?'':' · inaktiv')+'</option>').join('')}
-    function sponsorTypeHtml(item){return '<form class="sponsorTypeForm sponsor-type-card" data-id="'+esc(item.id)+'"><div class="fields"><label>Bezeichnung<input name="label" maxlength="80" value="'+esc(item.label)+'" required></label><label>Sortierung<input name="sortOrder" type="number" min="0" max="32767" value="'+esc(item.sort_order??100)+'" required><span class="small">Kleinere Werte stehen innerhalb derselben Gewichtung weiter oben.</span></label><label>Gewichtung der Übersicht<select name="displayWeight"><option value="1" '+(Number(item.display_weight||1)===1?'selected':'')+'>Standard</option><option value="2" '+(Number(item.display_weight||1)===2?'selected':'')+'>Hervorgehoben</option><option value="3" '+(Number(item.display_weight||1)===3?'selected':'')+'>Premium</option></select><span class="small">Höhere Gewichtungen erscheinen zuerst und größer.</span></label><label class="wide">Erklärung<textarea name="description" rows="3" maxlength="500">'+esc(item.description||'')+'</textarea></label><label class="wide"><input name="active" type="checkbox" '+(item.active?'checked':'')+'> Aktiv und für neue Zuordnungen auswählbar</label><div class="wide"><button type="submit" class="secondary">Sponsorart speichern</button></div></div></form>'}
+    function sponsorTypeHtml(item){return '<form class="sponsorTypeForm sponsor-type-card" data-id="'+esc(item.id)+'"><div class="fields"><label>Bezeichnung<input name="label" maxlength="80" value="'+esc(item.label)+'" required></label><label>Sortierung<input name="sortOrder" type="number" min="0" max="32767" value="'+esc(item.sort_order??100)+'" required><span class="small">Kleinere Werte stehen innerhalb derselben Gewichtung weiter oben.</span></label><label>Gewichtung der Übersicht<select name="displayWeight"><option value="1" '+(Number(item.display_weight||1)===1?'selected':'')+'>Standard</option><option value="2" '+(Number(item.display_weight||1)===2?'selected':'')+'>Hervorgehoben</option><option value="3" '+(Number(item.display_weight||1)===3?'selected':'')+'>Premium</option></select><span class="small">Höhere Gewichtungen erscheinen zuerst und größer.</span></label><label class="wide">Erklärung<textarea name="description" rows="3" maxlength="500">'+esc(item.description||'')+'</textarea></label><label class="wide"><input name="active" type="checkbox" '+(item.active?'checked':'')+'> Aktiv und für neue Zuordnungen auswählbar</label><div class="wide"><button type="submit" class="secondary">Speichern</button></div></div></form>'}
     function renderSponsorTypes(){const target=document.querySelector('#sponsorTypeList');if(!target)return;const types=[...(appData.sponsorTypes||[])].sort((a,b)=>(a.sort_order??100)-(b.sort_order??100)||a.label.localeCompare(b.label,'de'));target.innerHTML=types.length?types.map(sponsorTypeHtml).join(''):'<div class="empty">Noch keine Sponsorarten angelegt.</div>';wireSponsorTypeForms()}
     function wireSponsorTypeForms(){document.querySelectorAll('.sponsorTypeForm').forEach(form=>form.onsubmit=async event=>{event.preventDefault();const data=formObject(form);const button=event.submitter||form.querySelector('button');await runBusy(button,{busyText:'Speichert …',pendingText:'Sponsorart wird gespeichert …',successText:'Sponsorart gespeichert.',errorText:'Sponsorart konnte nicht gespeichert werden: '},async()=>{await api('POST',{action:'save_sponsor_type',sponsorTypeId:form.dataset.id,...data,active:data.active==='on'});await load();renderSponsorTypes();renderAssignmentGrid()})})}
     let sponsorSearchResults=[],sponsorSearchIndex=-1;
@@ -6743,6 +6941,7 @@ export function validateExpenseSubmission(body) {
     function renderInstagramConfiguration(){const configured=instagramConfiguration.accountIdConfigured&&instagramConfiguration.accessTokenConfigured;const items=[['Konto-ID',instagramConfiguration.accountIdConfigured?'gesetzt':'fehlt'],['Access Token',instagramConfiguration.accessTokenConfigured?'gesetzt':'fehlt'],['Graph API',instagramConfiguration.graphApiVersion||'v26.0']];document.querySelector('#instagramConfigurationSummary').innerHTML=items.map(([label,value])=>'<article><span>'+esc(label)+'</span><strong style="font-size:18px">'+esc(value)+'</strong></article>').join('');const button=document.querySelector('#instagramConnectionForm button');button.disabled=!configured;document.querySelector('#instagramConnectionResult').className='status '+(configured?'':'error');if(!configured)document.querySelector('#instagramConnectionResult').textContent='Bitte zuerst INSTAGRAM_ACCOUNT_ID und INSTAGRAM_ACCESS_TOKEN in Supabase setzen.'}
     let loadedSuiteArea='',pendingSuiteArea='',suiteLoadSequence=0;
     function applySuiteIdentity(data){
+      if(currentUserId&&currentUserId!==String(data.user?.userId||''))sponsorEditor.clear();
       currentUserId=String(data.user?.userId||'');globalTestMode=data.testMode!==false;updateSuiteMode();
       if(data.brandSettings?.color_scheme)applySuiteBrand(data.brandSettings.color_scheme);
       defaultBrandTheme=data.brandSettings?.theme_key||'football';
@@ -6914,17 +7113,18 @@ export function validateExpenseSubmission(body) {
     const sponsorTypesDialog=document.querySelector('#sponsorTypesDialog');document.querySelector('#manageSponsorTypes').onclick=()=>{renderSponsorTypes();sponsorTypesDialog.showModal()};document.querySelector('#closeSponsorTypes').onclick=()=>sponsorTypesDialog.close();sponsorTypesDialog.onclick=event=>{if(event.target===sponsorTypesDialog)sponsorTypesDialog.close()};
     document.querySelector('#hideHistorical').checked=hideHistorical;document.querySelector('#hideHistorical').onchange=event=>{hideHistorical=event.target.checked;localStorage.setItem('bsv-hide-historical',String(hideHistorical));renderGames();renderPosts();renderIndependentStories()};
     document.querySelector('#gamesTabButton').onclick=()=>switchTab('games');document.querySelector('#postsTabButton').onclick=()=>switchTab('posts');document.querySelector('#storiesTabButton').onclick=()=>switchTab('stories');document.querySelector('#birthdaysTabButton').onclick=()=>switchTab('birthdays');document.querySelector('#adminTabButton').onclick=()=>switchTab('admin');document.querySelectorAll('[data-suite-area]').forEach(button=>button.onclick=()=>switchSuiteArea(button.dataset.suiteArea));document.querySelectorAll('[data-admin-section]').forEach(button=>button.onclick=()=>switchAdminSection(button.dataset.adminSection));document.querySelector('#workspaceSearch').oninput=event=>{searchTerms[activeTab]=event.target.value;if(activeTab==='games')renderGames();else if(activeTab==='posts')renderPosts();else if(activeTab==='stories')renderIndependentStories();else renderBirthdays()};document.querySelector('#teamSettingsSearch').oninput=renderTeamSettings;document.querySelector('#crestSearch').oninput=renderCrests;document.querySelector('#sponsorSearch').oninput=renderSponsors;wireAssignmentSponsorSearch();document.querySelector('#teamFilter').onchange=event=>{localStorage.setItem('bsv-team-filter',event.target.value);document.querySelector('#teamSelect').value=event.target.value;updateTeam();renderGames()};document.querySelector('#matchType').onchange=updateMatchType;document.querySelector('#personSearch').oninput=updatePerson;document.querySelector('#personSearch').onchange=updatePerson;
-    const newSponsorForm=document.querySelector('#newSponsorForm');const newSponsorAutomatic=newSponsorForm.elements.automaticRenewal;const syncNewSponsorEnd=()=>{newSponsorForm.elements.contractEndDate.disabled=newSponsorAutomatic.checked;if(newSponsorAutomatic.checked)newSponsorForm.elements.contractEndDate.value=''};newSponsorAutomatic.onchange=syncNewSponsorEnd;syncNewSponsorEnd();
+    const newSponsorForm=document.querySelector('#newSponsorForm');const newSponsorAutomatic=newSponsorForm.elements.automaticRenewal;const syncNewSponsorEnd=()=>{newSponsorForm.elements.contractEndDate.disabled=newSponsorAutomatic.checked;if(newSponsorAutomatic.checked)newSponsorForm.elements.contractEndDate.value=''};const applyNewSponsorDefaults=()=>{const defaults=sponsorContractDefaults();newSponsorForm.elements.contractStartDate.value=defaults.contractStartDate;newSponsorAutomatic.checked=true;newSponsorForm.elements.contractEndDate.value='';syncNewSponsorEnd()};newSponsorAutomatic.onchange=syncNewSponsorEnd;applyNewSponsorDefaults();
     const newSponsorDialog=document.querySelector('#newSponsorDialog');let creatingSponsor=false;let existingSponsorToOpen=null;const openExistingSponsor=document.querySelector('#openExistingSponsor');
+    const newSponsorSave=newSponsorForm.querySelector('button[type=submit]');let newSponsorBaseline=JSON.stringify(formObject(newSponsorForm));const markNewSponsorDirty=()=>{newSponsorSave.classList.toggle('sponsor-save-dirty',JSON.stringify(formObject(newSponsorForm))!==newSponsorBaseline);newSponsorSave.disabled=creatingSponsor||!newSponsorForm.elements.name.value.trim()};newSponsorSave.classList.add('sponsorSave');newSponsorForm.addEventListener('input',markNewSponsorDirty);newSponsorForm.addEventListener('change',markNewSponsorDirty);
     const closeNewSponsor=()=>{if(!creatingSponsor)newSponsorDialog.close()};
-    document.querySelector('#openNewSponsor').onclick=()=>{document.querySelector('#newSponsorMessage').textContent='';existingSponsorToOpen=null;openExistingSponsor.classList.add('hidden');newSponsorDialog.showModal();newSponsorForm.elements.name.focus()};
+    document.querySelector('#openNewSponsor').onclick=()=>{newSponsorForm.reset();applyNewSponsorDefaults();document.querySelector('#newSponsorMessage').textContent='';existingSponsorToOpen=null;openExistingSponsor.classList.add('hidden');newSponsorBaseline=JSON.stringify(formObject(newSponsorForm));markNewSponsorDirty();newSponsorDialog.showModal();newSponsorForm.elements.name.focus()};
     document.querySelector('#closeNewSponsor').onclick=closeNewSponsor;document.querySelector('#cancelNewSponsor').onclick=closeNewSponsor;
     newSponsorDialog.addEventListener('cancel',event=>{if(creatingSponsor)event.preventDefault()});
     newSponsorForm.onsubmit=async event=>{event.preventDefault();if(creatingSponsor)return;const data=formObject(newSponsorForm);const button=event.submitter||newSponsorForm.querySelector('button[type="submit"]');const message=document.querySelector('#newSponsorMessage');creatingSponsor=true;existingSponsorToOpen=null;openExistingSponsor.classList.add('hidden');message.textContent='Werbepartner wird angelegt …';document.querySelector('#closeNewSponsor').disabled=true;document.querySelector('#cancelNewSponsor').disabled=true;
       try{await runBusy(button,{busyText:'Legt an …',pendingText:'Werbepartner wird angelegt …',successText:'Werbepartner angelegt. Jetzt kann das Logo hochgeladen werden.',errorText:'Werbepartner konnte nicht angelegt werden: '},async()=>{
-        try{await api('POST',{action:'save_sponsor',...data,active:data.active==='on',automaticRenewal:data.automaticRenewal==='on'})}catch(error){message.textContent=error.payload?.code==='sponsor_exists'?error.message:'Werbepartner konnte nicht angelegt werden: '+error.message;if(error.payload?.code==='sponsor_exists'&&error.payload.existingSponsor?.id){existingSponsorToOpen=error.payload.existingSponsor;openExistingSponsor.classList.remove('hidden')}throw error}
-        newSponsorForm.reset();syncNewSponsorEnd();newSponsorDialog.close();document.querySelector('#sponsorSearch').value='';await load();switchSuiteArea('sponsoring');
-      })}finally{creatingSponsor=false;document.querySelector('#closeNewSponsor').disabled=false;document.querySelector('#cancelNewSponsor').disabled=false}
+        try{await api('POST',{action:'save_sponsor',...data,active:true,automaticRenewal:data.automaticRenewal==='on'})}catch(error){message.textContent=error.payload?.code==='sponsor_exists'?error.message:'Werbepartner konnte nicht angelegt werden: '+error.message;if(error.payload?.code==='sponsor_exists'&&error.payload.existingSponsor?.id){existingSponsorToOpen=error.payload.existingSponsor;openExistingSponsor.classList.remove('hidden')}throw error}
+        newSponsorForm.reset();applyNewSponsorDefaults();newSponsorDialog.close();document.querySelector('#sponsorSearch').value='';await load();switchSuiteArea('sponsoring');
+      })}finally{creatingSponsor=false;document.querySelector('#closeNewSponsor').disabled=false;document.querySelector('#cancelNewSponsor').disabled=false;markNewSponsorDirty()}
     };
     openExistingSponsor.onclick=async()=>{if(!existingSponsorToOpen||creatingSponsor)return;const sponsor=existingSponsorToOpen;await runBusy(openExistingSponsor,{busyText:'Öffnet …',pendingText:'Vorhandener Werbepartner wird geladen …',successText:'Vorhandener Werbepartner geöffnet.',errorText:'Werbepartner konnte nicht geöffnet werden: '},async()=>{
       await load();switchSuiteArea('sponsoring');document.querySelector('#sponsorSearch').value=sponsor.name;renderSponsors();const card=[...document.querySelectorAll('[data-sponsor-id]')].find(element=>element.dataset.sponsorId===sponsor.id);if(!card)throw new Error('Der Eintrag ist nicht mehr verfügbar. Bitte prüfe die Partnerliste.');card.open=true;newSponsorDialog.close();requestAnimationFrame(()=>{card.scrollIntoView({behavior:'smooth',block:'start'});card.querySelector('summary').focus({preventScroll:true})});

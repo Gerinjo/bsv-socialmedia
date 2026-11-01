@@ -1,3 +1,4 @@
+import { sponsorToday } from '../../../src/sponsor-editor.mjs';
 import { handleSponsorMagazineArtwork, sponsorArtworkPaths } from '../_shared/sponsor-magazine-artwork.mjs';
 import {handleResources} from '../_shared/resources.mjs';
 import {load as loadResourceHtml} from 'npm:cheerio@1.2.0';
@@ -1594,13 +1595,13 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       if (name.length > 120) throw new Error('Der Partnername darf höchstens 120 Zeichen lang sein.');
       const sortOrder = Number(body.sortOrder ?? 100);
       if (!Number.isInteger(sortOrder) || sortOrder < 0 || sortOrder > 32767) throw new Error('Die Sortierung ist ungültig.');
-      const contractStartDate = optionalDate(body.contractStartDate, 'Vertragsbeginn');
-      const automaticRenewal = body.automaticRenewal === true;
+      const contractStartDate = optionalDate(body.contractStartDate || (!sponsorId ? sponsorToday() : null), 'Vertragsbeginn');
+      const automaticRenewal = body.automaticRenewal === undefined ? !sponsorId : body.automaticRenewal === true;
       const contractEndDate = automaticRenewal ? null : optionalDate(body.contractEndDate, 'Vertragsende');
       if (contractStartDate && contractEndDate && contractEndDate < contractStartDate) {
         throw new Error('Das Vertragsende darf nicht vor dem Vertragsbeginn liegen.');
       }
-      const contractExpired = Boolean(contractEndDate && contractEndDate < new Date().toISOString().slice(0, 10));
+      const contractExpired = Boolean(contractEndDate && contractEndDate < sponsorToday());
       const payload = {
         name,
         website_url: validHttpUrl(body.websiteUrl),

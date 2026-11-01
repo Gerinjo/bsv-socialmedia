@@ -92,6 +92,8 @@ for (const [placeholder, source] of [
   ['__RICH_TEXT_EDITOR_SCRIPT__', richTextEditor],
   ['__VISION_OCR_SCRIPT__', visionOcr],
   ['__SVG_UPLOAD_SCRIPT__', svgUpload],
+  ['__SPONSOR_EDITOR_SCRIPT__', (await readFile(resolve(repoDir,'src/sponsor-editor.mjs'),'utf8'))+'\n'+(await readFile(resolve(adminDir,'sponsor-editor.mjs'),'utf8')).replace(/^import .*;\n/gm,'')],
+  ['__SPONSOR_EDITOR_CSS__', await readFile(resolve(adminDir,'sponsor-editor.css'),'utf8')],
   ['__TESSERACT_SCRIPT__', tesseract.replaceAll('</script', '<\\/script')],
 ]) {
   html = html.replaceAll(placeholder, () => source);
