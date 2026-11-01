@@ -54,3 +54,16 @@ test('discarding the digital image leaves the magazine image and its approval in
   const {state,calls,api}=fixture();state.digital.discard=true;await persistSponsorEdits(state,{api});
   assert.deepEqual(calls.map(call=>call.action),['discard_sponsor_logo']);assert.equal(sponsorEditHasImage(state,'digital'),false);assert.equal(sponsorEditHasImage(state,'magazine'),true);assert.equal(state.sponsor.magazine_ad_status,'approved');
 });
+
+test('all three previews keep the newly accepted logo after a later upload failure',async()=>{
+  const {sponsorLogoVariantImages}=await import('../admin-site/sponsor-editor.mjs');
+  const {state,api}=fixture('save_sponsor_magazine_ad');
+  Object.assign(state.sponsor,{logo_original_url:'old-original',logo_transparent_url:'old-transparent',logo_white_url:'old-white'});
+  state.digital.prepared={...digital,processing:{whiteVariantMode:'original-colors'}};state.magazine.prepared=magazine;
+  await assert.rejects(persistSponsorEdits(state,{api}),/Connection/);
+  assert.equal(state.digital.prepared,null);
+  const variants=sponsorLogoVariantImages(state);
+  assert.deepEqual(variants.map(variant=>variant.url),['original','digital','white']);
+  assert.match(variants[2].label,/Originalfarben/);
+  state.digital.discard=true;assert.ok(sponsorLogoVariantImages(state).every(variant=>!variant.url));
+});

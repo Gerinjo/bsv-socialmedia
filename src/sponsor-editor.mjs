@@ -16,7 +16,7 @@ export function sponsorEditorMetadata(sponsor) {
 }
 
 export function createSponsorEditState(sponsor) {
-  const asset = () => ({prepared:null,file:null,discard:false,pending:false,error:'',preview:null,revision:0});
+  const asset = () => ({prepared:null,file:null,discard:false,pending:false,error:'',preview:null,variants:null,revision:0});
   const values = sponsorEditorMetadata(sponsor);
   return {sponsor:{...sponsor},values,baseline:JSON.stringify(values),digital:asset(),magazine:asset(),busy:false,mode:'preserve'};
 }
@@ -55,12 +55,13 @@ export async function persistSponsorEdits(state, {api,approve=false,prepareWhite
       await request(channel === 'digital' ? 'discard_sponsor_logo' : 'discard_sponsor_magazine_ad', {}, () => {
         if (channel === 'digital') Object.assign(state.sponsor,{logo_original_path:null,logo_transparent_path:null,logo_white_path:null,logo_original_url:null,logo_transparent_url:null,logo_white_url:null,logo_status:'missing'});
         else Object.assign(state.sponsor,{magazine_ad_path:null,magazine_ad_original_path:null,magazine_ad_url:null,magazine_ad_original_url:null,magazine_ad_status:'missing'});
-        Object.assign(draft,{discard:false,prepared:null,file:null,preview:null});
+        Object.assign(draft,{discard:false,prepared:null,file:null,preview:null,variants:null});
       });
     } else if (draft.prepared) {
       const prepared = draft.prepared;
       await request(channel === 'digital' ? 'save_sponsor_logo' : 'save_sponsor_magazine_ad', prepared, () => {
         draft.preview = channel === 'digital' ? prepared.transparentDataUrl : prepared.imageDataUrl;
+        if (channel === 'digital') draft.variants = prepared;
         state.sponsor[channel === 'digital' ? 'logo_status' : 'magazine_ad_status'] = 'needs_review';
         Object.assign(draft,{prepared:null,file:null});
       });

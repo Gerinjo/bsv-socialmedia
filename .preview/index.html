@@ -874,6 +874,7 @@
 
 .sponsor-upload-image.is-white-variant{background:#173d2c}body:has([data-suite-area="sponsoring"].active) .status-toast{top:16px;bottom:auto}
 @media(max-width:850px){.sponsor-secondary-actions,.sponsor-primary-actions{flex:1 1 100%;width:100%;margin-left:0}.sponsor-editor-actions button{white-space:nowrap;flex:1 1 auto}}
+.sponsor-logo-variants{margin:0 0 18px;padding:0;border:1px solid var(--outline);border-radius:12px;overflow:hidden}.sponsor-logo-variants>summary{padding:11px 12px;color:var(--ink);font-size:13px}.sponsor-logo-variants>summary:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}.sponsor-variant-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:12px}.sponsor-variant-grid figure{min-width:0;margin:0}.sponsor-variant-image{display:flex;align-items:center;justify-content:center;height:120px;padding:8px;border:1px solid var(--outline);border-radius:8px;background:#fff}.sponsor-variant-image.transparent{background-color:#fff;background-image:conic-gradient(#e4e8e5 25%,transparent 0 50%,#e4e8e5 0 75%,transparent 0);background-size:16px 16px}.sponsor-variant-image.dark{background:#173d2c;color:#fff}.sponsor-variant-image img{display:block;max-width:100%;max-height:100%;object-fit:contain}.sponsor-variant-image img[hidden],.sponsor-variant-image span[hidden]{display:none}.sponsor-variant-image span{font-size:11px;text-align:center;color:inherit}.sponsor-variant-grid figcaption{margin-top:6px;font-size:11px;line-height:1.4;color:var(--mint);overflow-wrap:anywhere}.sponsor-logo-variants>p{margin:0;padding:0 12px 12px}@media(max-width:520px){.sponsor-variant-grid{grid-template-columns:1fr}.sponsor-variant-image{height:150px}}
 
 </style>
 </head>
@@ -3378,7 +3379,7 @@ export function sponsorEditorMetadata(sponsor) {
 }
 
 export function createSponsorEditState(sponsor) {
-  const asset = () => ({prepared:null,file:null,discard:false,pending:false,error:'',preview:null,revision:0});
+  const asset = () => ({prepared:null,file:null,discard:false,pending:false,error:'',preview:null,variants:null,revision:0});
   const values = sponsorEditorMetadata(sponsor);
   return {sponsor:{...sponsor},values,baseline:JSON.stringify(values),digital:asset(),magazine:asset(),busy:false,mode:'preserve'};
 }
@@ -3417,12 +3418,13 @@ export async function persistSponsorEdits(state, {api,approve=false,prepareWhite
       await request(channel === 'digital' ? 'discard_sponsor_logo' : 'discard_sponsor_magazine_ad', {}, () => {
         if (channel === 'digital') Object.assign(state.sponsor,{logo_original_path:null,logo_transparent_path:null,logo_white_path:null,logo_original_url:null,logo_transparent_url:null,logo_white_url:null,logo_status:'missing'});
         else Object.assign(state.sponsor,{magazine_ad_path:null,magazine_ad_original_path:null,magazine_ad_url:null,magazine_ad_original_url:null,magazine_ad_status:'missing'});
-        Object.assign(draft,{discard:false,prepared:null,file:null,preview:null});
+        Object.assign(draft,{discard:false,prepared:null,file:null,preview:null,variants:null});
       });
     } else if (draft.prepared) {
       const prepared = draft.prepared;
       await request(channel === 'digital' ? 'save_sponsor_logo' : 'save_sponsor_magazine_ad', prepared, () => {
         draft.preview = channel === 'digital' ? prepared.transparentDataUrl : prepared.imageDataUrl;
+        if (channel === 'digital') draft.variants = prepared;
         state.sponsor[channel === 'digital' ? 'logo_status' : 'magazine_ad_status'] = 'needs_review';
         Object.assign(draft,{prepared:null,file:null});
       });
@@ -3444,6 +3446,17 @@ export async function persistSponsorEdits(state, {api,approve=false,prepareWhite
 }
 
 
+export function sponsorLogoVariantImages(state) {
+  const prepared=state.digital.prepared||state.digital.variants;
+  const discarded=state.digital.discard;
+  const processing=prepared?.processing||state.sponsor.processing_metadata||{};
+  return [
+    {key:'original',label:'Original',url:discarded?null:prepared?.originalDataUrl||state.sponsor.logo_original_url},
+    {key:'transparent',label:'Transparent / Einsatzvariante',url:discarded?null:prepared?.transparentDataUrl||state.sponsor.logo_transparent_url},
+    {key:'dark',label:processing.whiteVariantMode==='original-colors'?'Dunkle Flächen · Originalfarben':'Dunkle Flächen · Weiß',url:discarded?null:prepared?.whiteDataUrl||state.sponsor.logo_white_url},
+  ];
+}
+
 export function createSponsorEditor({document,api,esc,show,runBusy,prepareSponsorLogo,prepareMagazineArtwork,prepareWhite,contractStatus,reload}) {
   const states = new Map();
   const statusLabels = {missing:'Kein Bild',needs_review:'Freigabe ausstehend',approved:'Freigegeben',rejected:'Nicht freigegeben'};
@@ -3458,6 +3471,7 @@ export function createSponsorEditor({document,api,esc,show,runBusy,prepareSponso
       <div class="sponsor-upload-heading"><div><h4>${title}</h4><p>${digital?'Für Homepage und Social Media':'Fertige Anzeige für das Stadionheft'}</p></div><span class="sponsor-image-status"></span></div>
       <div class="sponsor-upload-image"><img alt="${title} von ${esc(state.values.name)}"><span class="sponsor-image-empty">Kein Bild ausgewählt</span></div>
       <div class="sponsor-image-tools"><span class="sponsor-image-filename"></span><button type="button" class="ghost sponsorDiscard" aria-label="${title} verwerfen">Verwerfen</button></div>
+      ${digital?`<details class="sponsor-logo-variants" ${state.showLogoVariants?'open':''}><summary>Logovarianten</summary><div class="sponsor-variant-grid">${sponsorLogoVariantImages(state).map(variant=>`<figure data-variant="${variant.key}"><div class="sponsor-variant-image ${variant.key}"><img alt="${esc(variant.label)}" hidden><span>Noch nicht vorhanden</span></div><figcaption>${esc(variant.label)}</figcaption></figure>`).join('')}</div><p class="small">Bei „Farben und Hintergrund beibehalten“ bleibt auch die Einsatzvariante unverändert.</p></details>`:''}
       <label class="sponsor-upload-label">${title} hochladen<input type="file" class="${digital?'sponsorFile':'sponsorMagazineFile'}" accept="image/png,image/jpeg,image/webp,image/svg+xml,.svg"></label>
       <span class="small">PNG, JPG, WebP oder SVG · maximal 5 MB</span>
       ${digital?`<label class="sponsor-processing-label">Verarbeitung für neue Dateien<select class="sponsorLogoMode"><option value="preserve" ${state.mode==='preserve'?'selected':''}>Farben und Hintergrund beibehalten</option><option value="auto" ${state.mode==='auto'?'selected':''}>Neutralen Hintergrund entfernen</option></select></label>`:'<p class="small">Die Anzeige bleibt mit Text, Farben und Hintergrund erhalten.</p>'}
@@ -3502,6 +3516,13 @@ export function createSponsorEditor({document,api,esc,show,runBusy,prepareSponso
       panel.querySelector('.sponsorDiscard').disabled=state.busy||!(url||draft.file||draft.pending);
       const message=panel.querySelector('.sponsor-image-message');message.classList.toggle('error',Boolean(draft.error));
       message.textContent=draft.error||(draft.pending?'Bild wird vorbereitet …':draft.discard?'Das Bild wird beim Speichern verworfen.':draft.prepared?(digital?'Firmenlogo vorbereitet.':`${draft.prepared.width} × ${draft.prepared.height} Pixel · unverändert vorbereitet.`):(!digital&&!url?'Ohne eigene Heftanzeige wird das freigegebene Firmenlogo als Ersatz verwendet.':''));
+      if(digital)for(const variant of sponsorLogoVariantImages(state)){
+        const figure=panel.querySelector(`[data-variant="${variant.key}"]`),variantImage=figure.querySelector('img');
+        variantImage.hidden=!variant.url;figure.querySelector('.sponsor-variant-image span').hidden=Boolean(variant.url);
+        if(variant.url&&variantImage.getAttribute('src')!==variant.url)variantImage.src=variant.url;
+        if(!variant.url)variantImage.removeAttribute('src');
+        figure.querySelector('figcaption').textContent=variant.label;variantImage.alt=variant.label;
+      }
     }
     function sync() {
       if(!form.isConnected)return;
@@ -3519,6 +3540,7 @@ export function createSponsorEditor({document,api,esc,show,runBusy,prepareSponso
       for(const channel of ['digital','magazine'])syncImage(channel);
     }
     state.notify=sync;
+    form.querySelector('.sponsor-logo-variants').ontoggle=event=>{state.showLogoVariants=event.currentTarget.open;};
     function readMetadata() {
       const values={...state.values};
       for(const name of ['name','sortOrder','websiteUrl','instagramHandle','sourceUrl','contractStartDate','contractEndDate'])values[name]=form.elements[name].value;
