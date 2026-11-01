@@ -143,6 +143,9 @@ try {
   await sql(await readFile(new URL('supabase/migrations/20261029164137_suite_trainer_accounts.sql',root),'utf8'));
   await sql(await readFile(new URL('supabase/tests/suite-trainer-accounts.sql',root),'utf8'));
   console.log('Trainerzugänge: Kassenbuchrechte erhalten, neue Trainer ohne Kasse, direkte Identität, Mannschaften und einmalige Kontoanlage geprüft.');
+  await sql(await readFile(new URL('supabase/migrations/20261101103659_suite_cashbook_permission_sync.sql',root),'utf8'));
+  await sql(await readFile(new URL('supabase/tests/suite-cashbook-permission-sync.sql',root),'utf8'));
+  console.log('Kassenbuch-Freigabe: automatische Profile, Rollenrechte, eindeutige Identitäten, Widerruf, Sperren und unverändertes Logbuch geprüft.');
   const hallRace=JSON.parse(await sql(`set role service_role;insert into private.hall_training_days(date) values('2038-02-01') returning jsonb_build_object('dayId',id,'version',version);`));
   const hallActors=JSON.parse(await sql(`select jsonb_agg(jsonb_build_object('actor',user_id,'teamId',teams->0->>'id')) from (select m.user_id,private.hall_training_teams(a.person_id) as teams from public.social_admins m join private.cashbook_accounts a on a.suite_user_id=m.user_id where m.suite_role_key='trainer' and m.is_active and not m.is_blocked and jsonb_array_length(private.hall_training_teams(a.person_id))>0 order by m.user_id limit 2) m;`));
   const raceBook=({actor,teamId})=>sql(`set role service_role;select public.hall_training_request(${quote(actor)},${quote(JSON.stringify({action:'book',...hallRace,startMinute:480,teamId}))}::jsonb);`).then(JSON.parse);
