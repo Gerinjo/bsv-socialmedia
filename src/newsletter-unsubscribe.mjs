@@ -1,4 +1,4 @@
-export const NEWSLETTER_UNSUBSCRIBE_PAGE = 'https://bsv-story-automatik.jerome-ernsberger.chatgpt.site/newsletter/abmelden';
+export const NEWSLETTER_UNSUBSCRIBE_PAGE = 'https://suite.bsvnordstern.de/newsletter/abmelden';
 export const NEWSLETTER_UNSUBSCRIBE_LINK = `${NEWSLETTER_UNSUBSCRIBE_PAGE}#{{{RESEND_UNSUBSCRIBE_URL}}}`;
 
 // The personal provider URL stays in the fragment: it is never sent to the Suite server.

@@ -4,7 +4,7 @@ Der Footer neuer Suite-Newsletter führt auf `/newsletter/abmelden`. Erst **Abme
 
 ## Ablauf und Vorschau
 
-1. Der HTML-/Text-Export enthält `https://bsv-story-automatik.jerome-ernsberger.chatgpt.site/newsletter/abmelden#{{{RESEND_UNSUBSCRIBE_URL}}}`. Resend ersetzt den Platzhalter beim Broadcast-Versand pro Empfänger.
+1. Der HTML-/Text-Export enthält `https://suite.bsvnordstern.de/newsletter/abmelden#{{{RESEND_UNSUBSCRIBE_URL}}}`. Resend ersetzt den Platzhalter beim Broadcast-Versand pro Empfänger.
 2. Die Suite-Seite liest den persönlichen Link aus dem URL-Fragment. Er wird nicht an den Suite-Server übertragen. Beim Öffnen lädt die Seite weder den Link noch weitere externe Ressourcen. Sie benötigt keine Anmeldung und keine erneute Eingabe der E-Mail-Adresse.
 3. **Abmeldung bestätigen** öffnet den HTTPS-Link von Resend. Die Seite akzeptiert ausschließlich `resend.com` und dessen Subdomains. **Newsletter behalten** führt zur Vereinswebsite, ohne den Abmeldelink aufzurufen.
 4. Nach erfolgter Abmeldung erhält `newsletter-unsubscribe-webhook` das Resend-Ereignis `contact.updated` mit `unsubscribed: true` für einen Kontakt des Segments **Nordstern Post**.
@@ -18,7 +18,7 @@ Der in Mailprogrammen separat angebotene Abmeldeknopf (List-Unsubscribe) bleibt 
 
 Am 24.09.2026 wurden die Migration und die Edge Function im Suite-Projekt bereitgestellt, die benötigten Secrets gesetzt und der Resend-Webhook `d63c213c-221f-4502-90c7-c028396c40c1` für `contact.updated` aktiviert. Der Live-Endpunkt nahm einen korrekt signierten, wirkungslosen Prüfaufruf mit HTTP 200 an und wies einen unsignierten Aufruf mit HTTP 400 ab. Bei der Freigabe wurden keine Abonnenten geändert und keine E-Mails verschickt.
 
-Produktionsadresse der Bestätigungsseite: `https://bsv-story-automatik.jerome-ernsberger.chatgpt.site/newsletter/abmelden`. Die folgende Liste dokumentiert die Einrichtung und kann bei einer erneuten Bereitstellung verwendet werden.
+Produktionsadresse der Bestätigungsseite: `https://suite.bsvnordstern.de/newsletter/abmelden`. Die folgende Liste dokumentiert die Einrichtung und kann bei einer erneuten Bereitstellung verwendet werden.
 
 1. Migration `supabase/migrations/20260924150101_newsletter_unsubscribe_receipts.sql` im Suite-Projekt anwenden.
 2. Die Funktion `newsletter-unsubscribe-webhook` bereitstellen. `verify_jwt=false` ist erforderlich, da Resend mit einer eigenen Svix-Signatur authentifiziert. Die Signatur wird vor jedem Datenbankzugriff geprüft. `index.ts` pinnt `@supabase/server@1.4.1` und `svix@2.5.0`; `deno.lock` liegt bei der Funktion.

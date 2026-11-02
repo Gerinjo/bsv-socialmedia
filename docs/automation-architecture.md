@@ -82,7 +82,7 @@ Bei neuen Supabase-Projekten kann die Data API zunächst deaktiviert sein. Da de
 
 Der aktive Cron-Job `bsv-social-worker` ruft den Worker alle fünf Minuten per HTTP auf. `bsv-fussball-de-match-sync` startet den Spielabgleich stündlich zur Minute 23. Ein eigenes zufälliges Cron-Geheimnis liegt verschlüsselt in Supabase Vault und zusätzlich als Edge Secret vor. Die Migration enthält nur den Namen des Vault-Eintrags, nie den Geheimniswert. Direkte Aufrufe ohne dieses Geheimnis werden abgewiesen.
 
-Die Admin-Oberfläche läuft owner-only unter <https://bsv-story-automatik.jerome-ernsberger.chatgpt.site>. Sie verwendet ausschließlich den öffentlichen Publishable Key im Browser. Schreib- und Lesezugriffe laufen über die JWT-geschützte Edge Function `social-media-admin-api`, die zusätzlich die Mitgliedschaft in `social_admins` prüft.
+Die Admin-Oberfläche läuft owner-only unter <https://suite.bsvnordstern.de>. Sie verwendet ausschließlich den öffentlichen Publishable Key im Browser. Schreib- und Lesezugriffe laufen über die JWT-geschützte Edge Function `social-media-admin-api`, die zusätzlich die Mitgliedschaft in `social_admins` prüft.
 
 ### Aufstellung und Torschützen aus Bildern
 

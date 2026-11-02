@@ -65,9 +65,9 @@ test('newsletter links published stadium issues newest first, including editions
   ];
   const preview = renderEditorialNewsletter(snapshot, template, {stadiumIssues});
   const exported = renderEditorialNewsletter(snapshot, template, {stadiumIssues,preview:false});
-  assert.equal(preview.html.replaceAll('https://bsv-story-automatik.jerome-ernsberger.chatgpt.site/newsletter/abmelden?vorschau=1', 'https://bsv-story-automatik.jerome-ernsberger.chatgpt.site/newsletter/abmelden#{{{RESEND_UNSUBSCRIBE_URL}}}'), exported.html);
+  assert.equal(preview.html.replaceAll('https://suite.bsvnordstern.de/newsletter/abmelden?vorschau=1', 'https://suite.bsvnordstern.de/newsletter/abmelden#{{{RESEND_UNSUBSCRIBE_URL}}}'), exported.html);
   for (const content of [exported.html, exported.text]) {
-    const prefix = 'https://bsv-story-automatik.jerome-ernsberger.chatgpt.site/stadionheft/';
+    const prefix = 'https://suite.bsvnordstern.de/stadionheft/';
     assert.ok(content.includes(prefix + older.id));
     assert.ok(content.includes(prefix + newer.id));
     assert.ok(content.indexOf(prefix + newer.id) < content.indexOf(prefix + older.id));

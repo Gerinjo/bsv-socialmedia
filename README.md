@@ -9,7 +9,7 @@ Der aktuelle Stand liefert:
 - einen lokalen und einen online betriebenen Renderer für Spielankündigung, Aufstellung, Ergebnis und Geburtstag,
 - Beispieldaten für die fussball.de-Spiel-ID `0316BRN2AC000000VS5489BTVU7GTVLE`,
 - eine aktive Supabase-Struktur mit Datenbank, privatem Storage, Edge Functions und Fünf-Minuten-Cron,
-- eine [private Admin-Oberfläche](https://bsv-story-automatik.jerome-ernsberger.chatgpt.site) für Spiele, freie Posts, geplante Stories und Geburtstage,
+- eine [private Admin-Oberfläche](https://suite.bsvnordstern.de) für Spiele, freie Posts, geplante Stories und Geburtstage,
 - einen zentralen, standardmäßig aktiven Testmodus.
 
 ## Vorschau
@@ -51,7 +51,7 @@ Für das Geburtstagsmotiv eignet sich ein freigestelltes PNG. Ohne `--photo` wir
 
 Die private Admin-Oberfläche läuft unter:
 
-<https://bsv-story-automatik.jerome-ernsberger.chatgpt.site>
+<https://suite.bsvnordstern.de>
 
 Sie ist auf freigeschaltete Social-Media-Nutzer beschränkt. Supabase Cron gleicht kommende Spiele stündlich mit den auf der BSV-Webseite eingebetteten FUSSBALL.DE-Widgets ab und startet den Vorschau-Worker alle fünf Minuten. Neue Spiele erzeugen automatisch Jobs für Ankündigung, Aufstellung und Ergebnis; Geburtstage erzeugen jährlich einen eigenen Job. Freie Stories können einmalig oder wöchentlich geplant und nach Kategorie und Zielgruppe gefiltert werden. Fällige Jobs werden als PNG gerendert und in einem privaten Storage-Bucket abgelegt. Über zeitlich begrenzte Links können die Vorschauen in der Admin-Oberfläche kontrolliert werden.
 

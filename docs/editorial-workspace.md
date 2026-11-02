@@ -183,7 +183,7 @@ Titelblatt-Standard: Die beiden Teile des großen Namens stehen zuerst in der Ti
 
 ## Live-Bereitstellung am 22.09.2026
 
-Die Redaktion ist in der bestehenden Suite unter https://bsv-story-automatik.jerome-ernsberger.chatgpt.site bereitgestellt (Sites-Version 69, Quellstand `b00e31efcacc506ad3baa7e535b1eabc9b726edd`). Alle 13 Redaktionsmigrationen einschließlich `editorial_cover_defaults` wurden im Projekt `maejihwjzxkmthjavgnx` angewendet. `social-media-admin-api` und `editorial-publications` wurden mit dem Docker-Build einschließlich der SVG-Anzeigen bereitgestellt. Die bestehende Anmeldung und die Bereichsrechte gelten weiterhin. Lokale Browserdaten und Beispielhefte wurden nicht in die Live-Datenbank importiert.
+Die Redaktion ist in der bestehenden Suite unter https://suite.bsvnordstern.de bereitgestellt (Sites-Version 69, Quellstand `b00e31efcacc506ad3baa7e535b1eabc9b726edd`). Alle 13 Redaktionsmigrationen einschließlich `editorial_cover_defaults` wurden im Projekt `maejihwjzxkmthjavgnx` angewendet. `social-media-admin-api` und `editorial-publications` wurden mit dem Docker-Build einschließlich der SVG-Anzeigen bereitgestellt. Die bestehende Anmeldung und die Bereichsrechte gelten weiterhin. Lokale Browserdaten und Beispielhefte wurden nicht in die Live-Datenbank importiert.
 
 Geprüft: 201 Projekttests, Live-Anlage und Standardübernahme innerhalb einer zurückgerollten Transaktion mit der Service-Rolle, sowie öffentlicher Feed mit 404 für nicht veröffentlichte Ausgaben. Die öffentlichen Leselinks verwenden `/stadionheft/<Ausgaben-ID>`.
 

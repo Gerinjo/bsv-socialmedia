@@ -43,7 +43,7 @@ export function newsletterWordExcerpt(body, maxWords = 120) {
   const words = [...text.matchAll(/\S+/gu)];
   return words.length <= maxWords ? text : text.slice(0, words[maxWords - 1].index + words[maxWords - 1][0].length).trimEnd() + '…';
 }
-export function newsletterReaderUrl(snapshot, articleId, origin = 'https://bsv-story-automatik.jerome-ernsberger.chatgpt.site') {
+export function newsletterReaderUrl(snapshot, articleId, origin = 'https://suite.bsvnordstern.de') {
   return `${origin}/newsletter/${encodeURIComponent(snapshot.id)}?version=${encodeURIComponent(snapshot.version)}#artikel-${encodeURIComponent(articleId)}`;
 }
 // An issue UUID gives each block an independent, stable random ordering.
@@ -77,13 +77,13 @@ export function newsletterSelection(source, articleIds) {
   if (!articleIds.length) return null;
   return {...source, articles:structuredClone(source.articles.filter(article => articleIds.includes(article.id)).map(({body: _body, ...article}) => article))};
 }
-export function newsletterArticleUrl(selection, article, origin = 'https://bsv-story-automatik.jerome-ernsberger.chatgpt.site') {
+export function newsletterArticleUrl(selection, article, origin = 'https://suite.bsvnordstern.de') {
   return `${origin}/stadionheft/${encodeURIComponent(selection.issue_id)}?version=${encodeURIComponent(selection.issue_version)}#artikel/${encodeURIComponent(article.id)}`;
 }
 
 // The mail shell is derived from the Nordstern Post website edition.
 // No browser scripts or stadium reader assets are included in a newsletter.
-export function renderEditorialNewsletter(snapshot, template, { preview = true, stadiumIssues = [], stadiumOrigin = 'https://bsv-story-automatik.jerome-ernsberger.chatgpt.site', unsubscribePreviewUrl = 'https://bsv-story-automatik.jerome-ernsberger.chatgpt.site/newsletter/abmelden?vorschau=1', full = false, readerUrl = null } = {}) {
+export function renderEditorialNewsletter(snapshot, template, { preview = true, stadiumIssues = [], stadiumOrigin = 'https://suite.bsvnordstern.de', unsubscribePreviewUrl = 'https://suite.bsvnordstern.de/newsletter/abmelden?vorschau=1', full = false, readerUrl = null } = {}) {
   if (snapshot.kind !== 'newsletter') throw new Error('Bitte eine Newsletter-Ausgabe auswählen.');
   const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const articles = (snapshot.articles || []).filter(article => article.status !== 'waived');
@@ -170,7 +170,7 @@ export function renderEditorialNewsletter(snapshot, template, { preview = true, 
     .sort((a, b) => Date.parse(b.published_at) - Date.parse(a.published_at) || a.id.localeCompare(b.id));
   const magazineLinks = published.map(issue => ({
     title: `Stadionheft · veröffentlicht am ${new Date(issue.published_at).toLocaleDateString('de-DE', {timeZone:'Europe/Berlin'})}`,
-    url: `https://bsv-story-automatik.jerome-ernsberger.chatgpt.site/stadionheft/${issue.id}`,
+    url: `https://suite.bsvnordstern.de/stadionheft/${issue.id}`,
   }));
   magazineLinks.push({title:'Digitales Stadionheft durchblättern',url:'https://gerinjo.github.io/bsv-stadionheft-pages/'});
   rows.push(`<tr><td class="section" data-newsletter-stadium-magazines style="padding:36px 40px;background-color:#edf0e9;"><p style="margin:0 0 12px;color:#17613a;font-size:12px;line-height:18px;font-weight:bold;letter-spacing:2px;">NORDSTERN NEWS</p><h2 style="margin:0 0 18px;color:#17613a;font-size:28px;line-height:34px;">Unsere Stadionhefte</h2><p style="margin:0 0 20px;font-size:16px;line-height:26px;">Mannschaften, Menschen und Geschichten aus dem Vereinsleben: Hier geht es zu unseren digitalen Stadionheften.</p>${magazineLinks.map(link => `<p style="margin:0 0 16px;font-size:16px;line-height:26px;"><a href="${escape(link.url)}" style="color:#17613a;font-weight:bold;">${escape(link.title)} →</a></p>`).join('')}</td></tr>`);
@@ -190,7 +190,7 @@ export function renderEditorialNewsletter(snapshot, template, { preview = true, 
   const theme = suiteBrandTheme(snapshot.brand?.theme_key || 'football');
   const palette = {'#092f20':colors.background,'#17613a':colors.panel,'#f4d638':colors.accent,'#edf0e9':colors.surface,'#193c2c':colors.ink,'#d7e5dc':colors.muted,'#c1d2c6':colors.muted,'#dce4d9':colors.muted};
   const rgba = [1,3,5].map(i=>parseInt(colors.background.slice(i,i+2),16)).join(',');
-  const shell = theme === 'football' ? template : template.replaceAll('https://bsvnordstern.de/images/fussball/teams-schuss.webp',`https://bsv-story-automatik.jerome-ernsberger.chatgpt.site/brand/themes/${theme}-v${BRAND_THEME_VERSIONS[theme]}.png`);
+  const shell = theme === 'football' ? template : template.replaceAll('https://bsvnordstern.de/images/fussball/teams-schuss.webp',`https://suite.bsvnordstern.de/brand/themes/${theme}-v${BRAND_THEME_VERSIONS[theme]}.png`);
   const generated = shell.replace(/\{\{(TITLE|PREHEADER|EDITION|BRAND|KICKER|HEADLINE|INTRO|CONTENT|UNSUBSCRIBE_URL)\}\}/g, (_, key) => values[key]);
   const html = snapshot.brand?.color_scheme ? generated
     .replace(/(style=")(.*?)(")/g,(_,open,style,close)=>open+style.replace(/#[0-9a-f]{6}/gi,hex=>palette[hex.toLowerCase()]||hex).replaceAll('rgba(9,47,32,',`rgba(${rgba},`)+close)
