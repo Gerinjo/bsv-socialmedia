@@ -1,3 +1,17 @@
+export function suiteInstallUsesSamsungBrowser(navigator) {
+  const agent=navigator.userAgent||'';
+  return /Android/i.test(agent)&&/SamsungBrowser\//i.test(agent);
+}
+
+export function suiteInstallChromeLink(location) {
+  if(!location?.href)return null;
+  const url=new URL('/',location.href);
+  if(url.protocol!=='https:')return null;
+  url.username='';url.password='';
+  // Install the public app entry, never forward login/reset tokens or private paths.
+  return {url:url.href,intent:`intent://${url.host}/#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(url.href)};end`};
+}
+
 export function suiteInstallInstructions(navigator, secureContext) {
   if (!secureContext) return {
     intro: 'Öffne die Suite über ihre HTTPS-Adresse, um sie als App zu installieren.',
@@ -7,6 +21,10 @@ export function suiteInstallInstructions(navigator, secureContext) {
   if (appleMobile) return {
     intro: 'Auf dem iPhone oder iPad fügst du die Suite über das Teilen-Menü hinzu.',
     steps: ['Öffne die Suite in Safari.', 'Tippe auf „Teilen“ und dann auf „Zum Home-Bildschirm“.', 'Aktiviere „Als Web-App öffnen“, falls angezeigt, und bestätige mit „Hinzufügen“.'],
+  };
+  if (suiteInstallUsesSamsungBrowser(navigator)) return {
+    intro:'Samsung Internet kann die App-Installation mit einer Play-Protect-Warnung blockieren. Öffne die Suite zum Installieren bitte in Chrome.',
+    steps:['Öffne die Suite in Google Chrome.','Wähle in Chrome „App installieren“ oder „Zum Startbildschirm hinzufügen“.','Bestätige die Installation. Play Protect kann aktiviert bleiben.'],
   };
   if (/Android/i.test(navigator.userAgent || '')) return {
     intro: 'Installiere die Suite über das Menü deines Browsers.',
@@ -27,6 +45,13 @@ export function createSuiteInstaller({ window: target, document: doc }) {
   const action = doc.querySelector('#suiteInstallAction');
   const actionLabel = doc.querySelector('#suiteInstallActionLabel');
   const guides = doc.querySelector('#suiteInstallGuides');
+  const chromePanel=doc.querySelector('#suiteInstallChrome');
+  const chromeLink=doc.querySelector('#suiteInstallOpenChrome');
+  const copyButton=doc.querySelector('#suiteInstallCopyUrl');
+  const urlField=doc.querySelector('#suiteInstallUrl');
+  const samsung=suiteInstallUsesSamsungBrowser(target.navigator);
+  const chrome=suiteInstallChromeLink(target.location);
+  if(chrome){chromeLink?.setAttribute('href',chrome.intent);if(urlField)urlField.value=chrome.url;}
   const displayMode = target.matchMedia('(display-mode: standalone)');
   const appleMobile = /iPad|iPhone|iPod/i.test(target.navigator.userAgent || '') || (target.navigator.platform === 'MacIntel' && target.navigator.maxTouchPoints > 1);
   const platform = appleMobile ? 'apple' : /Android/i.test(target.navigator.userAgent || '') ? 'android' : 'desktop';
@@ -41,15 +66,16 @@ export function createSuiteInstaller({ window: target, document: doc }) {
       button.setAttribute('aria-label', ready ? 'Installierte App' : 'App installieren');
       button.setAttribute('title', ready ? 'Installierte App' : 'App installieren');
     }
-    action.hidden = ready || !deferredPrompt;
+    action.hidden = ready || samsung || !deferredPrompt;
     action.classList.toggle('hidden', action.hidden);
     action.disabled = busy;
     action.setAttribute('aria-busy', String(busy));
     actionLabel.textContent = busy ? 'Installation läuft …' : 'Jetzt installieren';
     guides.hidden = ready;
     guides.classList.toggle('hidden', ready);
+    if(chromePanel){chromePanel.hidden=ready||!samsung||!chrome;chromePanel.classList.toggle('hidden',chromePanel.hidden);}
     doc.querySelector('#suiteInstallTitle').textContent = ready ? 'Deine BSV Suite' : 'BSV Suite als App installieren';
-    const text = ready ? 'Die BSV Suite ist bereit. Öffne sie über das grüne BSV-Symbol auf deinem Startbildschirm oder in deiner App-Liste.' : message || (!target.isSecureContext ? suiteInstallInstructions(target.navigator, false).intro : 'Wähle die Anleitung für dein Gerät. Öffne diese Seite dafür direkt im Browser, zum Beispiel außerhalb von WhatsApp oder Instagram.');
+    const text = ready ? 'Die BSV Suite ist bereit. Öffne sie über das grüne BSV-Symbol auf deinem Startbildschirm oder in deiner App-Liste.' : message || ((!target.isSecureContext||samsung) ? suiteInstallInstructions(target.navigator,target.isSecureContext).intro : 'Wähle die Anleitung für dein Gerät. Öffne diese Seite dafür direkt im Browser, zum Beispiel außerhalb von WhatsApp oder Instagram.');
     statusNodes.forEach(node => { node.textContent = text; });
   };
   const status = text => { message = text; update(); };
@@ -59,6 +85,7 @@ export function createSuiteInstaller({ window: target, document: doc }) {
   }
   async function install() {
     if (busy || standalone()) return;
+    if (samsung) { showInstructions(); return; }
     if (!deferredPrompt) { showInstructions(); return; }
     // Browsers permit this event to be used once, including after dismissal.
     const prompt = deferredPrompt;
@@ -73,16 +100,34 @@ export function createSuiteInstaller({ window: target, document: doc }) {
       showInstructions();
     } finally { busy = false; update(); }
   }
-  const onPrompt = event => { if (standalone()) return; event.preventDefault(); deferredPrompt = event; message = ''; update(); };
+  const onPrompt = event => { if (standalone()) return; event.preventDefault(); deferredPrompt = samsung?null:event; message = ''; update(); };
   const onInstalled = () => { installed = true; deferredPrompt = null; update(); };
   target.addEventListener('beforeinstallprompt', onPrompt);
   target.addEventListener('appinstalled', onInstalled);
   displayMode.addEventListener('change', update);
   buttons.forEach(button => button.addEventListener('click', showInstructions));
   action.addEventListener('click', install);
+  copyButton?.addEventListener('click',async()=>{
+    if(!chrome)return;
+    try {
+      if(!target.navigator.clipboard?.writeText)throw new Error('Clipboard unavailable');
+      await target.navigator.clipboard.writeText(chrome.url);
+      status('Adresse kopiert. Öffne Chrome und füge die Adresse dort ein.');
+    } catch {
+      urlField?.focus?.();urlField?.select?.();
+      status('Markiere und kopiere die angezeigte Adresse. Öffne sie anschließend in Chrome.');
+    }
+  });
   doc.querySelector('#closeSuiteInstall').addEventListener('click', () => dialog.close());
   dialog.addEventListener('click', event => { if (event.target === dialog) { const rect = dialog.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close(); } });
-  if (target.isSecureContext && 'serviceWorker' in target.navigator) target.navigator.serviceWorker.register('/suite-sw.js', { scope: '/' }).catch(() => {});
+  if (target.isSecureContext) {
+    // Sandboxed or restricted browsers can throw while reading the property,
+    // before register() has a chance to return its rejecting promise.
+    try {
+      const worker=target.navigator.serviceWorker;
+      if(worker)Promise.resolve(worker.register('/suite-sw.js',{scope:'/'})).catch(()=>{});
+    } catch {}
+  }
   update();
   return { install, showInstructions };
 }

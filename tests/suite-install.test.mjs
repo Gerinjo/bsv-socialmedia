@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {createSuiteInstaller,suiteInstallInstructions} from '../admin-site/suite-install.mjs';
+import {createSuiteInstaller,suiteInstallInstructions,suiteInstallUsesSamsungBrowser,suiteInstallChromeLink} from '../admin-site/suite-install.mjs';
 
 function fixture({standalone=false,navigator={userAgent:'Chrome'},secure=true}={}) {
   class Node extends EventTarget {
@@ -12,10 +12,10 @@ function fixture({standalone=false,navigator={userAgent:'Chrome'},secure=true}={
   }
   const buttons=[new Node(),new Node()],labels=[new Node(),new Node()],status=[new Node()];
   const guides=['apple','android','desktop'].map(platform=>Object.assign(new Node(),{dataset:{suiteInstallGuide:platform}}));
-  const nodes=Object.fromEntries(['#suiteInstallDialog','#suiteInstallIntro','#suiteInstallTitle','#suiteInstallGuides','#suiteInstallAction','#suiteInstallActionLabel','#closeSuiteInstall'].map(key=>[key,new Node()]));
+  const nodes=Object.fromEntries(['#suiteInstallDialog','#suiteInstallIntro','#suiteInstallTitle','#suiteInstallGuides','#suiteInstallAction','#suiteInstallActionLabel','#closeSuiteInstall','#suiteInstallChrome','#suiteInstallOpenChrome','#suiteInstallCopyUrl','#suiteInstallUrl'].map(key=>[key,new Node()]));
   const doc={querySelectorAll:selector=>({'[data-suite-install]':buttons,'[data-suite-install-title]':labels,'[data-suite-install-guide]':guides,'[data-suite-install-status]':status}[selector]),querySelector:selector=>nodes[selector],createElement:()=>new Node()};
   const mode=new EventTarget();mode.matches=standalone;
-  const target=new EventTarget();Object.assign(target,{navigator,isSecureContext:secure,matchMedia:()=>mode});
+  const target=new EventTarget();Object.assign(target,{navigator,isSecureContext:secure,location:new URL('https://suite.example/private?access_token=private#reset-token'),matchMedia:()=>mode});
   const installer=createSuiteInstaller({window:target,document:doc});
   return {buttons,labels,guides,status,nodes,target,mode,installer};
 }
@@ -61,4 +61,39 @@ test('iPhone and desktop-mode iPad receive Apple steps; Android and insecure ori
 test('a browser prompt error falls back to instructions without leaving buttons disabled',async()=>{
   const f=fixture(),prompt=promptEvent();prompt.event.prompt=async()=>{throw new Error('Unavailable');};f.target.dispatchEvent(prompt.event);await f.installer.install();
   assert.equal(f.nodes['#suiteInstallDialog'].open,true);assert.match(f.status[0].textContent,/Browsermenü/);assert.equal(f.buttons.some(button=>button.disabled),false);
+});
+
+const samsungAgent='Mozilla/5.0 (Linux; Android 16; SM-S938B) AppleWebKit/537.36 SamsungBrowser/30.0 Chrome/136.0.0.0 Mobile Safari/537.36';
+const chromeAgent='Mozilla/5.0 (Linux; Android 16; SM-S938B) AppleWebKit/537.36 Chrome/136.0.0.0 Mobile Safari/537.36';
+test('Samsung Internet gets a Chrome route while Chrome on the same Samsung phone keeps native installation',async()=>{
+  assert.equal(suiteInstallUsesSamsungBrowser({userAgent:samsungAgent}),true);
+  assert.equal(suiteInstallUsesSamsungBrowser({userAgent:chromeAgent}),false);
+  assert.match(suiteInstallInstructions({userAgent:samsungAgent},true).intro,/Samsung Internet.*Play-Protect.*Chrome/);
+  const samsung=fixture({navigator:{userAgent:samsungAgent}}),prompt=promptEvent();samsung.target.dispatchEvent(prompt.event);
+  assert.equal(prompt.event.defaultPrevented,true);await samsung.installer.install();assert.equal(prompt.calls,0);
+  assert.equal(samsung.nodes['#suiteInstallAction'].hidden,true);assert.equal(samsung.nodes['#suiteInstallChrome'].hidden,false);
+  assert.equal(samsung.nodes['#suiteInstallDialog'].open,true);assert.match(samsung.status[0].textContent,/Chrome/);
+  samsung.target.dispatchEvent(new Event('appinstalled'));assert.equal(samsung.nodes['#suiteInstallChrome'].hidden,true);
+  const chrome=fixture({navigator:{userAgent:chromeAgent}}),native=promptEvent();chrome.target.dispatchEvent(native.event);await chrome.installer.install();assert.equal(native.calls,1);assert.equal(chrome.nodes['#suiteInstallChrome'].hidden,true);
+});
+test('cross-browser links use the public HTTPS entry without credentials, login tokens or private paths',()=>{
+  const link=suiteInstallChromeLink(new URL('https://user:password@suite.example/private/reset?token=private#access_token'));
+  assert.equal(link.url,'https://suite.example/');assert.match(link.intent,/package=com.android.chrome;/);
+  assert.doesNotMatch(link.intent,/private|password|access_token|user:/);
+  assert.ok(link.intent.includes('S.browser_fallback_url='+encodeURIComponent(link.url)));
+  assert.equal(suiteInstallChromeLink(new URL('http://suite.example/')),null);
+});
+test('Samsung users can copy the public address or select it when clipboard permission is unavailable',async()=>{
+  let copied;
+  const success=fixture({navigator:{userAgent:samsungAgent,clipboard:{writeText:async value=>{copied=value;}}}});
+  success.nodes['#suiteInstallCopyUrl'].dispatchEvent(new Event('click'));await new Promise(resolve=>setTimeout(resolve,0));
+  assert.equal(copied,'https://suite.example/');assert.match(success.status[0].textContent,/Adresse kopiert/);
+  const denied=fixture({navigator:{userAgent:samsungAgent}});let selected=0;denied.nodes['#suiteInstallUrl'].select=()=>{selected++;};
+  denied.nodes['#suiteInstallCopyUrl'].dispatchEvent(new Event('click'));await new Promise(resolve=>setTimeout(resolve,0));
+  assert.equal(selected,1);assert.match(denied.status[0].textContent,/Markiere und kopiere/);
+});
+
+test('restricted service-worker access leaves the manual installation guidance usable',()=>{
+  const navigator={userAgent:samsungAgent};Object.defineProperty(navigator,'serviceWorker',{get(){throw new Error('Sandboxed context');}});
+  const f=fixture({navigator});assert.doesNotThrow(()=>f.installer.showInstructions());assert.equal(f.nodes['#suiteInstallDialog'].open,true);assert.equal(f.nodes['#suiteInstallChrome'].hidden,false);
 });
