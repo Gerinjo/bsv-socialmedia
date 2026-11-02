@@ -1,27 +1,60 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {load} from 'cheerio';
-import {resourceTeamGroup,resourceMatchMinutes,resourceTimeSuggestion,resourceTimePlan,resourceCanBookMatch,resourceBookingLabel,resourceBookingConflicts,resourceCalendarMatches,resourceCalendarBookings,resourceDayOccupancy,validateResourceTimeChange,resourceOverlap,resourceMonthDays,resourceLocalTime,resourceUtcTime,validateResourceBooking} from '../src/resources.mjs';
+import {resourceTeamGroup,resourceMatchMinutes,resourceTimeSuggestion,resourceTimePlan,resourceTimeRounding,resourceCanBookMatch,resourceBookingLabel,resourceBookingConflicts,resourceCalendarMatches,resourceCalendarBookings,resourceDayOccupancy,validateResourceTimeChange,resourceOverlap,resourceMonthDays,resourceLocalTime,resourceUtcTime,validateResourceBooking} from '../src/resources.mjs';
 import {parseResourceVenue,resourceRoute,handleResources} from '../supabase/functions/_shared/resources.mjs';
 test('D through active teams use match durations and the detailed arrival and return buffers across midnight and DST',()=>{
  for(const [slug,group,minutes] of [['u13-d1-junioren','D',70],['u15-c1-junioren','C',85],['u17-juniorinnen','B',95],['u19-junioren','A',105],['herren-2','senior',105],['frauen-1','senior',105]]){assert.equal(resourceTeamGroup({slug}),group);assert.equal(resourceMatchMinutes({slug}),minutes);}
  assert.equal(resourceTeamGroup({slug:'u11-e1-junioren'}),'younger');assert.equal(resourceTeamGroup({slug:'alte-herren'}),'other');
  const suggestion=resourceTimeSuggestion({kickoffAt:'2026-11-07T13:00:00Z',travelMinutes:30,returnMinutes:35,matchMinutes:70});
- assert.deepEqual(suggestion,{startsAt:'2026-11-07T11:15:00.000Z',endsAt:'2026-11-07T15:50:00.000Z'});
+ assert.deepEqual(suggestion,{startsAt:'2026-11-07T11:15:00.000Z',endsAt:'2026-11-07T16:00:00.000Z'});
  assert.equal(resourceUtcTime('2026-07-01T12:00'),'2026-07-01T10:00:00.000Z');assert.equal(resourceUtcTime('2026-12-01T12:00'),'2026-12-01T11:00:00.000Z');assert.throws(()=>resourceUtcTime('2027-03-28T02:30'));
  assert.equal(resourceLocalTime('2026-11-07T13:00:00Z'),'2026-11-07T14:00');assert.equal(resourceMonthDays('2026-11').length,42);assert.equal(new Date(resourceMonthDays('2026-11')[0]+'T12:00Z').getUTCDay(),1);
  assert.ok(resourceOverlap({startsAt:'2026-11-01T10:00Z',endsAt:'2026-11-01T12:00Z'},{startsAt:'2026-11-01T11:59Z',endsAt:'2026-11-01T14:00Z'}));
  assert.ok(!resourceOverlap({startsAt:'2026-11-01T10:00Z',endsAt:'2026-11-01T12:00Z'},{startsAt:'2026-11-01T12:00Z',endsAt:'2026-11-01T14:00Z'}));
  assert.throws(()=>validateResourceBooking({teamId:'x',resourceId:'b',startsAt:'2026-11-01',endsAt:'2026-11-10'}));
 });
-test('16:00 Konstanz example reserves from 14:15 until 19:20 with a 90-minute match and halftime',()=>{
+test('16:00 Konstanz example reserves until 19:30 while retaining the calculated 19:20 return deadline',()=>{
  const plan=resourceTimePlan({kickoffAt:'2026-11-07T15:00:00Z',travelMinutes:30,matchMinutes:105});
- assert.equal(resourceLocalTime(plan.startsAt),'2026-11-07T14:15');assert.equal(resourceLocalTime(plan.endsAt),'2026-11-07T19:20');
+ assert.equal(resourceLocalTime(plan.startsAt),'2026-11-07T14:15');assert.equal(resourceLocalTime(plan.endsAt),'2026-11-07T19:30');
+ assert.equal(resourceLocalTime(plan.rounding.endsAt.calculatedAt),'2026-11-07T19:20');
  assert.deepEqual(plan.events.map(e=>resourceLocalTime(e.at).slice(11)),['14:15','14:30','15:00','15:15','16:00','17:45','18:00','18:30','19:00','19:20']);
- assert.equal(resourceLocalTime(resourceTimePlan({kickoffAt:plan.kickoffAt,travelMinutes:30,returnMinutes:40,matchMinutes:70}).endsAt),'2026-11-07T18:55');
+ assert.equal(resourceLocalTime(resourceTimePlan({kickoffAt:plan.kickoffAt,travelMinutes:30,returnMinutes:40,matchMinutes:70}).endsAt),'2026-11-07T19:00');
  assert.throws(()=>resourceTimePlan({kickoffAt:plan.kickoffAt,travelMinutes:-1}));assert.throws(()=>resourceTimePlan({kickoffAt:plan.kickoffAt,travelMinutes:30,matchMinutes:0}));
  const match={canBook:true,isHome:false,status:'scheduled',kickoffAt:'2027-01-01T15:00:00Z'};assert.ok(resourceCanBookMatch(match,0));
  for(const change of [{isHome:true},{isHome:undefined},{canBook:false},{status:'cancelled'},{kickoffAt:'1970-01-01T00:00:00Z'}])assert.equal(resourceCanBookMatch({...match,...change},1),false);
  const booking={teamId:'team',resourceId:'bus',matchId:'away',expectedKickoff:plan.kickoffAt,startsAt:plan.startsAt,endsAt:plan.endsAt,timing:plan.timing};
  assert.deepEqual(validateResourceBooking(booking).planning,plan);assert.throws(()=>validateResourceBooking({...booking,matchId:null}));
+});
+test('quarter-hour rounding expands the period only inside the ten-minute catch window, including its exact limit',()=>{
+ const iso=value=>`2027-01-01T${value}Z`;
+ assert.deepEqual(resourceTimeRounding(iso('14:25:00'),'start'),{calculatedAt:iso('14:25:00.000'),earliestAt:iso('14:15:00.000'),latestAt:iso('14:25:00.000'),suggestedAt:iso('14:15:00.000')});
+ assert.equal(resourceTimeRounding(iso('14:25:01'),'start').suggestedAt,iso('14:25:01.000'));
+ assert.deepEqual(resourceTimeRounding(iso('19:20:00'),'end'),{calculatedAt:iso('19:20:00.000'),earliestAt:iso('19:20:00.000'),latestAt:iso('19:30:00.000'),suggestedAt:iso('19:30:00.000')});
+ assert.equal(resourceTimeRounding(iso('19:19:59'),'end').suggestedAt,iso('19:19:59.000'));
+ for(const boundary of ['start','end'])assert.equal(resourceTimeRounding(iso('14:15:00'),boundary).suggestedAt,iso('14:15:00.000'));
+ assert.throws(()=>resourceTimeRounding('invalid','start'));assert.throws(()=>resourceTimeRounding(iso('14:15:00'),'nearest'));
+});
+test('rounding preserves every calculated minute and handles midnight and Berlin daylight-saving transitions',()=>{
+ assert.equal(resourceTimeRounding('2027-01-01T23:56:00Z','end').suggestedAt,'2027-01-02T00:00:00.000Z');
+ assert.equal(resourceTimeRounding('2027-01-02T00:04:00Z','start').suggestedAt,'2027-01-02T00:00:00.000Z');
+ for(const kickoffAt of ['2027-03-28T01:00:00Z','2027-10-31T01:00:00Z'])for(let travelMinutes=0;travelMinutes<60;travelMinutes++){
+  const plan=resourceTimePlan({kickoffAt,travelMinutes});
+  for(const [key,direction] of [['startsAt',-1],['endsAt',1]]){
+   const raw=Date.parse(plan.rounding[key].calculatedAt),selected=Date.parse(plan[key]),difference=(selected-raw)*direction;
+   assert.ok(difference>=0&&difference<=10*60000);
+   assert.ok(selected===raw||new Date(selected).getUTCMinutes()%15===0);
+   assert.equal(resourceUtcTime(resourceLocalTime(selected)),new Date(selected).toISOString());
+  }
+ }
+});
+test('the rounded reservation blocks its additional buffer while explicit user times and free events remain exact',()=>{
+ const plan=resourceTimePlan({kickoffAt:'2026-11-07T15:00Z',travelMinutes:30});
+ const occupied={id:'next',resourceId:'bus',startsAt:'2026-11-07T18:25Z',endsAt:'2026-11-07T19:00Z'};
+ assert.equal(resourceBookingConflicts([occupied],{...plan,resourceId:'bus'})[0].overlap.minutes,5);
+ assert.deepEqual(resourceBookingConflicts([{...occupied,startsAt:plan.endsAt}],{...plan,resourceId:'bus'}),[]);
+ const body={resourceId:'bus',teamId:'team',matchId:'away',expectedKickoff:plan.kickoffAt,startsAt:'2026-11-07T13:17Z',endsAt:'2026-11-07T18:24Z',timing:plan.timing};
+ const saved=validateResourceBooking(body);assert.equal(saved.startsAt,'2026-11-07T13:17:00.000Z');assert.equal(saved.endsAt,'2026-11-07T18:24:00.000Z');assert.deepEqual(saved.planning,plan);
+ const event=validateResourceBooking({...body,bookingKind:'event',teamId:null,matchId:null,timing:undefined,event:{title:'Fortbildung',category:'training',organizer:'Trainerteam',contact:'Kontakt'}});
+ assert.equal(event.startsAt,saved.startsAt);assert.equal(event.endsAt,saved.endsAt);assert.equal(event.planning,null);
 });
 test('home games are rejected before venue fetching and before booking reaches the mutation RPC',async()=>{
  const actions=[];const db={rpc:async(_,{payload})=>{actions.push(payload.action);return {data:payload.action==='_match'?{match:{is_home:true}}:{ok:true}};}};

@@ -134,7 +134,12 @@ function createResourcesWorkspace(root,{request}){
  }
  function timingInputs(fields){return fields.map(([key,label])=>`<label>${label}<input data-resource-timing name="${key}" type="number" required min="0" max="1440" value="${RESOURCE_TIMING_DEFAULTS[key]??''}"></label>`).join('');}
  function readTiming(form){return Object.fromEntries([...Object.keys(RESOURCE_TIMING_DEFAULTS),'travelMinutes','returnMinutes'].map(key=>[key,form.elements[key].value===''?NaN:Number(form.elements[key].value)]));}
- function timelineHtml(plan){return plan?.events?.length?`<h4>Zeitscheiben · berechneter Ablauf</h4><ol class="resource-plan">${plan.events.map(event=>`<li><time datetime="${e(event.at)}">${dateTime(event.at)}</time><span>${e(event.label)}${event.duration!==null?' · '+e(event.duration)+' Min.':''}</span></li>`).join('')}</ol>`:'';}
+ function roundingHtml(plan){
+  if(!plan.rounding)return '';
+  const stamp=value=>`<time datetime="${e(value)}">${e(dateTime(value))}</time>`;
+  return `<div data-resource-rounding><h4>Buchungszeiten · berechneter Vorschlag</h4><p class="small">Beginn abrunden, Ende aufrunden: Viertelstundenraster mit höchstens ${e(plan.rounding.catchMinutes)} Minuten Verschiebung. Liegt die Viertelstunde außerhalb des Fangbereichs, bleibt die berechnete Uhrzeit unverändert.</p>${[['startsAt','Beginn'],['endsAt','Ende']].map(([key,label])=>{const entry=plan.rounding[key];return `<p class="small" data-resource-rounding-${key}><strong>${label}: ${stamp(entry.suggestedAt)}</strong><br>Berechnet: ${stamp(entry.calculatedAt)} · Fangbereich: ${stamp(entry.earliestAt)} bis ${stamp(entry.latestAt)}</p>`;}).join('')}</div>`;
+ }
+ function timelineHtml(plan){return plan?.events?.length?`${roundingHtml(plan)}<h4>Zeitscheiben · berechneter Ablauf</h4><ol class="resource-plan">${plan.events.map(event=>`<li><time datetime="${e(event.at)}">${dateTime(event.at)}</time><span>${e(event.label)}${event.duration!==null?' · '+e(event.duration)+' Min.':''}</span></li>`).join('')}</ol>`:'';}
  function showManualNote(form){const manual=Object.values(draft.manualTimes).some(Boolean);form.querySelector('[data-resource-manual-note]').textContent=manual?'Deine manuell gewählten Buchungszeiten werden gespeichert. Die Zeitscheiben zeigen den Berechnungsvorschlag.':'Beginn und Ende kannst du unabhängig vom berechneten Vorschlag ändern.';}
  function applyTimes(form,force=false){const plan=resourceTimePlan({kickoffAt:draft.match.kickoffAt,...readTiming(form)});for(const key of ['startsAt','endsAt']){if(force)draft.manualTimes[key]=false;if(!draft.manualTimes[key])form.elements[key].value=resourceLocalTime(plan[key]);}root.querySelector('[data-resource-plan]').innerHTML=timelineHtml(plan);showManualNote(form);updateConflictPreview(form);}
 

@@ -6146,6 +6146,15 @@ export function resourceTeamGroup(team){
 }
 export function resourceMatchMinutes(team){return ({D:70,C:85,B:95,A:105,senior:105})[resourceTeamGroup(team)]||105;}
 export const RESOURCE_TIMING_DEFAULTS={meetingMinutes:15,changeBeforeMinutes:15,warmupMinutes:45,matchMinutes:105,cooldownMinutes:15,changeAfterMinutes:30,toleranceMinutes:20};
+export const RESOURCE_TIME_ROUNDING={intervalMinutes:15,catchMinutes:10};
+export function resourceTimeRounding(value,boundary){
+ const calculated=Date.parse(value),start=boundary==='start';
+ if(!Number.isFinite(calculated)||!['start','end'].includes(boundary))throw new Error('Bitte eine gültige Zeit und Rundungsrichtung angeben.');
+ const interval=RESOURCE_TIME_ROUNDING.intervalMinutes*60000,limit=RESOURCE_TIME_ROUNDING.catchMinutes*60000;
+ const candidate=(start?Math.floor(calculated/interval):Math.ceil(calculated/interval))*interval;
+ const at=value=>new Date(value).toISOString();
+ return {calculatedAt:at(calculated),earliestAt:at(calculated-(start?limit:0)),latestAt:at(calculated+(start?0:limit)),suggestedAt:at(Math.abs(candidate-calculated)<=limit?candidate:calculated)};
+}
 export function resourceCanBookMatch(match,now=Date.now()){
  return Boolean(match?.canBook&&match.isHome===false&&match.status==='scheduled'&&Date.parse(match.kickoffAt)>now);
 }
@@ -6156,7 +6165,8 @@ export function resourceTimePlan({kickoffAt,travelMinutes,returnMinutes=travelMi
  const events=[
   ['Treffpunkt beim BSV · Packen',meeting,timing.meetingMinutes],['Abfahrt beim BSV · Hinfahrt',departure,travelMinutes],['Ankunft am Spielort · Umziehen',arrival,timing.changeBeforeMinutes],['Aufwärmen',-timing.warmupMinutes,timing.warmupMinutes],['Anpfiff',0,null],['Voraussichtliches Spielende · Auslaufen / Nachspiel',gameEnd,timing.cooldownMinutes],['Umziehen nach dem Spiel',changeAfter,timing.changeAfterMinutes],['Rückfahrt',returnDeparture,returnMinutes],['Ankunft beim BSV · Toleranz',back,timing.toleranceMinutes],['Bus zurückgeben',end,null],
  ].map(([label,minutes,duration])=>({label,at:at(minutes),duration}));
- return {startsAt:at(meeting),endsAt:at(end),kickoffAt:new Date(kickoff).toISOString(),timing,events};
+ const rounding={...RESOURCE_TIME_ROUNDING,startsAt:resourceTimeRounding(at(meeting),'start'),endsAt:resourceTimeRounding(at(end),'end')};
+ return {startsAt:rounding.startsAt.suggestedAt,endsAt:rounding.endsAt.suggestedAt,kickoffAt:new Date(kickoff).toISOString(),timing,events,rounding};
 }
 export function resourceTimeSuggestion(input){
  const {startsAt,endsAt}=resourceTimePlan(input);return {startsAt,endsAt};
@@ -6331,7 +6341,12 @@ function createResourcesWorkspace(root,{request}){
  }
  function timingInputs(fields){return fields.map(([key,label])=>`<label>${label}<input data-resource-timing name="${key}" type="number" required min="0" max="1440" value="${RESOURCE_TIMING_DEFAULTS[key]??''}"></label>`).join('');}
  function readTiming(form){return Object.fromEntries([...Object.keys(RESOURCE_TIMING_DEFAULTS),'travelMinutes','returnMinutes'].map(key=>[key,form.elements[key].value===''?NaN:Number(form.elements[key].value)]));}
- function timelineHtml(plan){return plan?.events?.length?`<h4>Zeitscheiben · berechneter Ablauf</h4><ol class="resource-plan">${plan.events.map(event=>`<li><time datetime="${e(event.at)}">${dateTime(event.at)}</time><span>${e(event.label)}${event.duration!==null?' · '+e(event.duration)+' Min.':''}</span></li>`).join('')}</ol>`:'';}
+ function roundingHtml(plan){
+  if(!plan.rounding)return '';
+  const stamp=value=>`<time datetime="${e(value)}">${e(dateTime(value))}</time>`;
+  return `<div data-resource-rounding><h4>Buchungszeiten · berechneter Vorschlag</h4><p class="small">Beginn abrunden, Ende aufrunden: Viertelstundenraster mit höchstens ${e(plan.rounding.catchMinutes)} Minuten Verschiebung. Liegt die Viertelstunde außerhalb des Fangbereichs, bleibt die berechnete Uhrzeit unverändert.</p>${[['startsAt','Beginn'],['endsAt','Ende']].map(([key,label])=>{const entry=plan.rounding[key];return `<p class="small" data-resource-rounding-${key}><strong>${label}: ${stamp(entry.suggestedAt)}</strong><br>Berechnet: ${stamp(entry.calculatedAt)} · Fangbereich: ${stamp(entry.earliestAt)} bis ${stamp(entry.latestAt)}</p>`;}).join('')}</div>`;
+ }
+ function timelineHtml(plan){return plan?.events?.length?`${roundingHtml(plan)}<h4>Zeitscheiben · berechneter Ablauf</h4><ol class="resource-plan">${plan.events.map(event=>`<li><time datetime="${e(event.at)}">${dateTime(event.at)}</time><span>${e(event.label)}${event.duration!==null?' · '+e(event.duration)+' Min.':''}</span></li>`).join('')}</ol>`:'';}
  function showManualNote(form){const manual=Object.values(draft.manualTimes).some(Boolean);form.querySelector('[data-resource-manual-note]').textContent=manual?'Deine manuell gewählten Buchungszeiten werden gespeichert. Die Zeitscheiben zeigen den Berechnungsvorschlag.':'Beginn und Ende kannst du unabhängig vom berechneten Vorschlag ändern.';}
  function applyTimes(form,force=false){const plan=resourceTimePlan({kickoffAt:draft.match.kickoffAt,...readTiming(form)});for(const key of ['startsAt','endsAt']){if(force)draft.manualTimes[key]=false;if(!draft.manualTimes[key])form.elements[key].value=resourceLocalTime(plan[key]);}root.querySelector('[data-resource-plan]').innerHTML=timelineHtml(plan);showManualNote(form);updateConflictPreview(form);}
 

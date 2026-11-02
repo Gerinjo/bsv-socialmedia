@@ -36,6 +36,15 @@ export function resourceTeamGroup(team){
 }
 export function resourceMatchMinutes(team){return ({D:70,C:85,B:95,A:105,senior:105})[resourceTeamGroup(team)]||105;}
 export const RESOURCE_TIMING_DEFAULTS={meetingMinutes:15,changeBeforeMinutes:15,warmupMinutes:45,matchMinutes:105,cooldownMinutes:15,changeAfterMinutes:30,toleranceMinutes:20};
+export const RESOURCE_TIME_ROUNDING={intervalMinutes:15,catchMinutes:10};
+export function resourceTimeRounding(value,boundary){
+ const calculated=Date.parse(value),start=boundary==='start';
+ if(!Number.isFinite(calculated)||!['start','end'].includes(boundary))throw new Error('Bitte eine gültige Zeit und Rundungsrichtung angeben.');
+ const interval=RESOURCE_TIME_ROUNDING.intervalMinutes*60000,limit=RESOURCE_TIME_ROUNDING.catchMinutes*60000;
+ const candidate=(start?Math.floor(calculated/interval):Math.ceil(calculated/interval))*interval;
+ const at=value=>new Date(value).toISOString();
+ return {calculatedAt:at(calculated),earliestAt:at(calculated-(start?limit:0)),latestAt:at(calculated+(start?0:limit)),suggestedAt:at(Math.abs(candidate-calculated)<=limit?candidate:calculated)};
+}
 export function resourceCanBookMatch(match,now=Date.now()){
  return Boolean(match?.canBook&&match.isHome===false&&match.status==='scheduled'&&Date.parse(match.kickoffAt)>now);
 }
@@ -46,7 +55,8 @@ export function resourceTimePlan({kickoffAt,travelMinutes,returnMinutes=travelMi
  const events=[
   ['Treffpunkt beim BSV · Packen',meeting,timing.meetingMinutes],['Abfahrt beim BSV · Hinfahrt',departure,travelMinutes],['Ankunft am Spielort · Umziehen',arrival,timing.changeBeforeMinutes],['Aufwärmen',-timing.warmupMinutes,timing.warmupMinutes],['Anpfiff',0,null],['Voraussichtliches Spielende · Auslaufen / Nachspiel',gameEnd,timing.cooldownMinutes],['Umziehen nach dem Spiel',changeAfter,timing.changeAfterMinutes],['Rückfahrt',returnDeparture,returnMinutes],['Ankunft beim BSV · Toleranz',back,timing.toleranceMinutes],['Bus zurückgeben',end,null],
  ].map(([label,minutes,duration])=>({label,at:at(minutes),duration}));
- return {startsAt:at(meeting),endsAt:at(end),kickoffAt:new Date(kickoff).toISOString(),timing,events};
+ const rounding={...RESOURCE_TIME_ROUNDING,startsAt:resourceTimeRounding(at(meeting),'start'),endsAt:resourceTimeRounding(at(end),'end')};
+ return {startsAt:rounding.startsAt.suggestedAt,endsAt:rounding.endsAt.suggestedAt,kickoffAt:new Date(kickoff).toISOString(),timing,events,rounding};
 }
 export function resourceTimeSuggestion(input){
  const {startsAt,endsAt}=resourceTimePlan(input);return {startsAt,endsAt};
