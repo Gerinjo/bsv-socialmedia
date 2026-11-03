@@ -29,7 +29,7 @@ export function compensationReport(roster,plan){
  for(const team of roster.teams){const config=plan.teams[team.id];if(!config)continue;const assigned=roster.assignments.filter(a=>a.teamId===team.id&&compensationRole(a,team));const positions=[...assigned];for(const slot of (trainerOnlyTeam(team)?['trainer']:['trainer','co1']))if(!assigned.some(a=>a.slot===slot))positions.push({teamId:team.id,personId:null,slot,websiteRole:slot==='trainer'?'Trainer':'Co-Trainer'});
   const rows=positions.map(a=>{const person=people.get(a.personId),key=compensationKey(a),override=plan.assignments[key]||{license:'unknown',monthly:null,payments:null},role=compensationRole(a,team),vacant=!person,enabled=config.included&&(vacant?config.reserveVacancies:person.active!==false),payments=override.payments??config.payments,issues=[];let min=null,max=null;
    if(override.monthly!==null){min=max=override.monthly;}else if(config.age==='senior'){min=max=role==='trainer'?config.head:config.co;}else{const rate=plan.youthRates[config.age];if(rate){if(role==='co')min=max=rate.co;else{min=override.license==='valid'?rate.licensed:rate.base;max=override.license==='none'?rate.base:rate.licensed;}}}
-   if(enabled){if(min===null)issues.push('Monatsbetrag fehlt');if(payments===null)issues.push('Zahlungen fehlen');if(config.share===null)issues.push('BSV-Anteil fehlt');}
+   if(enabled){if(min===null)issues.push('Monatsbetrag fehlt');if(payments===null)issues.push('Vergütungsmonate fehlen');if(config.share===null)issues.push('BSV-Anteil fehlt');}
    const grossMin=enabled&&min!==null&&payments!==null?min*payments:null,grossMax=enabled&&max!==null&&payments!==null?max*payments:null;
    const monthlyMin=enabled&&min!==null&&config.share!==null?Math.round(min*config.share/100):null,monthlyMax=enabled&&max!==null&&config.share!==null?Math.round(max*config.share/100):null;
    const seasonMin=monthlyMin!==null&&payments!==null?monthlyMin*payments:null,seasonMax=monthlyMax!==null&&payments!==null?monthlyMax*payments:null;
@@ -44,7 +44,7 @@ export function compensationReport(roster,plan){
 export function compensationCsv(report){
  const amount=n=>n===null?'':(n/100).toFixed(2).replace('.',',');
  const cell=v=>'"'+String(v??'').replace(/^[=+\-@]/,"'$&").replaceAll('"','""')+'"';
- const rows=[['Mannschaft','Person','Funktion','Eingeplant','Lizenz','Zahlungen','BSV-Anteil %','Monatsbetrag min EUR','Monatsbetrag max EUR','BSV Saison min EUR','BSV Saison max EUR','Offene Angaben']];
+ const rows=[['Mannschaft','Person','Funktion','Eingeplant','Lizenz','Vergütungsmonate','BSV-Anteil %','Monatsbetrag min EUR','Monatsbetrag max EUR','BSV Saison min EUR','BSV Saison max EUR','Offene Angaben']];
  for(const t of report.teams)for(const r of t.rows)rows.push([t.label,r.name,r.websiteRole,r.enabled?'Ja':'Nein',r.license,r.payments,r.share,amount(r.rateMin),amount(r.rateMax),amount(r.seasonMin),amount(r.seasonMax),r.issues.join(', ')]);
  return '\ufeff'+rows.map(r=>r.map(cell).join(';')).join('\r\n');
 }

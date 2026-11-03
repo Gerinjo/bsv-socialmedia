@@ -231,10 +231,12 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
+        "npm:@pdf-lib/fontkit@1.1.1",
         "npm:@resvg/resvg-wasm@2.6.2",
         "npm:@xmldom/xmldom@0.9.12",
         "npm:cheerio@1.2.0",
         "npm:opentype.js@1.3.4",
+        "npm:pdf-lib@1.17.1",
         "npm:tesseract.js@7.0.0"
       ]
     }

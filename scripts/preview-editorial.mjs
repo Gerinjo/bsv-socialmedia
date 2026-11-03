@@ -3,6 +3,10 @@ import { renderNewsletterUnsubscribePage } from "../src/newsletter-unsubscribe.m
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 
+import {PDFDocument,rgb} from 'pdf-lib';
+import fontkit from '@pdf-lib/fontkit';
+import {renderTrainerContractPdf} from '../src/trainer-contract-pdf.mjs';
+
 const root = new URL("../", import.meta.url);
 const port = Number(process.env.PREVIEW_PORT || 4173);
 async function previewHtml() {
@@ -48,6 +52,11 @@ const files = new Map([
   ['/trainer-team-roles.mjs','src/trainer-team-roles.mjs'],
   ['/trainer-compensation-model.mjs','src/trainer-compensation.mjs'],
   ['/preview-trainer-compensation.mjs','admin-site/preview/trainer-compensation.mjs'],
+  ['/preview-trainer-contracts.mjs','admin-site/preview/trainer-contracts.mjs'],
+  ['/trainer-contracts-model.mjs','src/trainer-contracts.mjs'],
+  ['/trainer-contract-document.mjs','src/trainer-contract-document.mjs'],
+  ['/trainer-contracts.mjs','src/trainer-contracts.mjs'],
+  ['/trainer-compensation.mjs','src/trainer-compensation.mjs'],
   ['/employee-management-model.mjs','src/employee-management.mjs'],
   ['/preview-employee-management.mjs','admin-site/preview/employee-management.mjs'],
   ['/preview-trainer-management.mjs','admin-site/preview/trainer-management.mjs'],
@@ -88,6 +97,13 @@ const server = createServer(async (request, response) => {
     "Content-Security-Policy",
     `default-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; worker-src 'self' blob:; manifest-src 'self'; style-src 'unsafe-inline'; img-src 'self' data: http://localhost:${port} http://127.0.0.1:${port} https://bsvnordstern.de https://gerinjo.github.io; connect-src 'self' https://cdn.jsdelivr.net; frame-src blob:; base-uri 'none'; frame-ancestors 'none'; form-action 'none'`,
   );
+  if(request.method==='POST'&&new URL(request.url,'http://localhost').pathname==='/preview-contract-pdf'){
+    try{
+      let raw='';for await(const chunk of request){raw+=chunk;if(raw.length>100000)throw new Error('Too large');}
+      const {pages,options}=JSON.parse(raw),bytes=await renderTrainerContractPdf(pages,{PDFDocument,rgb,fontkit,regularBytes:await readFile(new URL('brand/fonts/NotoSans-Regular.ttf',root)),boldBytes:await readFile(new URL('brand/fonts/NotoSans-Black.ttf',root))},options);
+      response.setHeader('Content-Type','application/json');response.end(JSON.stringify({mime:'application/pdf',filename:'BSV-Vertrag-Vorschau.pdf',base64:Buffer.from(bytes).toString('base64')}));
+    }catch{response.writeHead(400);response.end();}return;
+  }
   if (request.method !== "GET") {
     response.writeHead(405);
     response.end();

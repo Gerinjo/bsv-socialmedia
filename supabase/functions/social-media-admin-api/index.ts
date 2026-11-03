@@ -1,3 +1,5 @@
+import {handleTrainerContracts} from '../_shared/trainer-contracts.mjs';
+import {contractPdf,inspectSignedContract} from '../_shared/trainer-contract-pdf.mjs';
 import {handleTrainerCompensation} from '../_shared/trainer-compensation.mjs';
 import { sponsorToday } from '../../../src/sponsor-editor.mjs';
 import { handleSponsorMagazineArtwork, sponsorArtworkPaths } from '../_shared/sponsor-magazine-artwork.mjs';
@@ -42,7 +44,7 @@ const homeVenues = new Set(['Hauptplatz', 'Nebenplatz', 'Kunstrasenplatz 1', 'Ku
 const crestStatuses = new Set(['missing', 'needs_review', 'approved', 'rejected']);
 const sponsorStatuses = new Set(['missing', 'needs_review', 'approved', 'rejected']);
 const sponsorContexts = new Set(['announcement', 'lineup', 'result', 'report', 'birthday', 'post', 'story']);
-const suiteAreas = ['social_media', 'sponsoring', 'editorial', 'referees', 'corporate_identity', 'club_crests', 'social_media_admin', 'user_management', 'cashbook', 'trainer_management', 'hall_training', 'resources', 'trainer_compensation'] as const;
+const suiteAreas = ['social_media', 'sponsoring', 'editorial', 'referees', 'corporate_identity', 'club_crests', 'social_media_admin', 'user_management', 'cashbook', 'trainer_management', 'hall_training', 'resources', 'trainer_compensation', 'trainer_contracts'] as const;
 type SuiteArea = typeof suiteAreas[number];
 const actionAreas: Record<string, SuiteArea> = {
   suite_activity_list: 'user_management',
@@ -698,6 +700,12 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       if(!hasArea('hall_training'))return json({error:'area_forbidden',area:'hall_training'},403);
       if(raw.length>4096)return json({error:'Die Anfrage ist zu groß.'},413);
       return json(await handleHallTraining(context.supabaseAdmin,userId,body));
+    }
+
+    if(action.startsWith('contract_')){
+      if(!hasArea('trainer_contracts'))return json({error:'area_forbidden',area:'trainer_contracts'},403);
+      if(raw.length>11500000)return json({error:'Die Anfrage ist zu groß.'},413);
+      return json(await handleTrainerContracts(context.supabaseAdmin,userId,body,{pdf:contractPdf,inspectSigned:inspectSignedContract}));
     }
 
     if(action.startsWith('salary_')){

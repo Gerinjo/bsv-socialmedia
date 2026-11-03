@@ -13,3 +13,7 @@ Prüfungen: Fachlogik (Altersklassen, Lizenzspannen, SG-Cent-Rundung, Mehrfachzu
 ## G- bis E-Jugend: ausschließlich Trainer
 
 Für U6 bis U11 gelten alle Trainerpositionen als Trainer, auch bei bisherigen `co1`/`co2`- oder weiteren Coach-Zuordnungen. Alle erhalten den jeweiligen Grundbetrag oder Lizenzsatz. Es gibt keine zusätzliche Co-Trainer-Stellenreserve in diesen Altersklassen. Bestehende Personen, Zuordnungskennungen und individuelle Betragsabweichungen bleiben erhalten. Die Mannschaftsverwaltung führt dafür eigene Trainerteam-Spalten und passende Bearbeitungsfelder. Auf der Homepage werden sowohl Fallback- als auch Live-Daten entsprechend dargestellt. Eine Datenbankregel normalisiert Rollen bei künftigen Änderungen; vorhandene abweichende Bezeichnungen werden mit Audit und Versionsfortschreibung korrigiert. Ab D-Jugend und bei Aktiven bleibt die Unterscheidung zwischen Trainer und Co-Trainer erhalten.
+
+## Vergütungsmonate und Auszahlungen
+
+Das Feld `payments` zählt die vergüteten Monate, nicht die Banküberweisungen. Die Oberfläche benennt es deshalb als Vergütungsmonate. Die Vertragsvorlage schließt August und Dezember standardmäßig aus und zahlt die zehn Monatsansprüche in drei Blöcken aus: 4 Monate Ende November, 3 Ende März, 3 Ende Juni. Die Vertragsverwaltung berechnet deren Termine und Beträge gesondert.

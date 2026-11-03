@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import api from '../supabase/functions/social-media-admin-api/index.ts';
+import {setResourceApiContext} from './support/resource-api-auth.ts';
+import {createTrainerContractDraft,validateTrainerContract} from '../src/trainer-contracts.mjs';
+import {handleTrainerContracts} from '../supabase/functions/_shared/trainer-contracts.mjs';
+const pid='10000000-0000-4000-8000-000000000001',tid='20000000-0000-4000-8000-000000000001',id='30000000-0000-4000-8000-000000000001';
+const roster:any={version:0,plan:null,teams:[{id:tid,slug:'u13-d1',name:'D1',version:1}],people:[{id:pid,name:'Test Trainer',active:true,version:1,street:'Teststraße 1',postcode:'78315',city:'Radolfzell',birth_date:'1990-01-01'}],assignments:[{personId:pid,teamId:tid,slot:'trainer',websiteRole:'Trainer'}],contracts:[],annualTotals:[]};
+function setup(areas=['trainer_contracts']){
+ const calls:any[]=[],member={role:'sm-team',is_active:true,is_blocked:false,access_areas:areas};let c:any={id,number:1,version:1,status:'draft',person_id:pid,team_id:tid,slot:'trainer',season:'2026/2027',snapshot:createTrainerContractDraft(roster,'2026/2027',pid,tid,'trainer')};
+ const q:any={select:()=>q,eq:()=>q,maybeSingle:async()=>({data:member})};
+ setResourceApiContext({userClaims:{sub:'contracts-actor'},supabaseAdmin:{from:()=>q,rpc:async(name:string,{actor,payload}:any)=>{assert.equal(name,'trainer_contract_request');assert.equal(actor,'contracts-actor');calls.push(payload);if(payload.action==='get')return {data:c};if(['list','source'].includes(payload.action))return {data:roster};if(payload.action==='save'){c={...c,snapshot:payload.snapshot,version:c.version+1};}return {data:{ok:true,id,version:c.version}};}}});return {calls,get record(){return c;}};
+}
+const post=(action:string,body={})=>api.fetch(new Request('https://example.test/admin',{method:'POST',body:JSON.stringify({action,season:'2026/2027',...body})}));
+Deno.test('contract API denies employee and salary grants before reading private contract data',async()=>{const s=setup(['trainer_management','trainer_compensation']);const r=await post('contract_list');assert.equal(r.status,403);assert.deepEqual(s.calls,[]);});
+Deno.test('contract API prepares canonical drafts without fabricating license, bank or precise salary',async()=>{const s=setup(),r=await post('contract_create',{personId:pid,teamId:tid,slot:'trainer',snapshot:{monthlyCents:1}});assert.equal(r.status,200);const saved=s.calls.find(c=>c.action==='create').snapshot;assert.equal(saved.monthlyCents,null);assert.equal(saved.license,'unknown');assert.equal(saved.financialConfirmed,false);assert.equal(saved.bank.iban,'');});
+Deno.test('contract API saves only editable details and recomputes the BSV amount',async()=>{const s=setup(),r=await post('contract_save',{id,version:1,details:{name:'Other identity',personId:id,source:{planVersion:999},grossMonthlyCents:10501,share:33.33,monthlyCents:999999}});assert.equal(r.status,200);assert.equal(s.record.snapshot.monthlyCents,3500);assert.equal(s.record.snapshot.name,'Test Trainer');assert.equal(s.record.snapshot.personId,pid);assert.equal(s.record.snapshot.source.planVersion,0);});
+Deno.test('contract API rejects stale saves and incomplete issue requests before generating files',async()=>{const s=setup();let r=await post('contract_save',{id,version:0,details:{}});assert.equal(r.status,409);r=await post('contract_issue',{id,version:1});assert.equal(r.status,400);assert.equal(s.calls.some(c=>['save','issue'].includes(c.action)),false);});
+Deno.test('lost issue responses retain the committed PDF, while confirmed conflicts clean up only the new orphan',async()=>{
+ for(const committed of [false,true]){
+  const snapshot=validateTrainerContract({...createTrainerContractDraft(roster,'2026/2027',pid,tid,'trainer'),license:'valid',grossMonthlyCents:10500,bank:{holder:'Test Trainer',name:'Testbank',iban:'DE89370400440532013000'},financialConfirmed:true}),c:any={id,number:1,version:1,status:'draft',person_id:pid,team_id:tid,slot:'trainer',season:'2026/2027',snapshot};let removed=0;const bytes=new TextEncoder().encode('%PDF-1.7\ntest'),storage={upload:async()=>({}),remove:async()=>{removed++;return {};}};
+  const db:any={storage:{from:()=>storage},rpc:async(_name:string,{payload}:any)=>{if(payload.action==='get')return {data:structuredClone(c)};if(payload.action==='source')return {data:roster};if(payload.action==='issue'){if(committed){c.document_path=payload.path;c.version++;c.status='issued';return {error:{message:'response lost'}};}return {data:{error:'conflict',status:409}};}throw Error('Unexpected action');}};
+  const call=handleTrainerContracts(db,'actor',{action:'contract_issue',id,version:1},{pdf:async()=>bytes});if(committed){assert.equal((await call).ok,true);assert.equal(removed,0);}else{await assert.rejects(()=>call,/conflict/);assert.equal(removed,1);}
+ }
+});

@@ -1,0 +1,50 @@
+begin;
+do $test$
+declare administrator uuid;ordinary uuid;member public.social_admins;ctx jsonb;p jsonb;t jsonb;a jsonb;s jsonb;r jsonb;cid uuid;cid2 uuid;count_before int;pv bigint;tv bigint;
+begin
+ select user_id into administrator from public.social_admins where role='admin' and is_active and not is_blocked limit 1;
+ select * into member from public.social_admins where role<>'admin' and is_active and not is_blocked limit 1;ordinary:=member.user_id;
+ if administrator is null or ordinary is null then raise exception 'Test actors missing';end if;
+ update public.social_admins set extra_access_areas=array_remove(extra_access_areas,'trainer_contracts') where user_id=ordinary;
+ r:=public.trainer_contract_request(ordinary,'{"action":"list","season":"2098/2099"}');if r->>'status'<>'403' then raise exception 'Contract access not isolated';end if;
+ r:=public.trainer_contract_request(gen_random_uuid(),' {"action":"list","season":"2098/2099"}');if r->>'status'<>'403' then raise exception 'Unknown actor accepted';end if;
+ ctx:=public.trainer_contract_request(administrator,'{"action":"source","season":"2098/2099"}');if ctx ? 'error' then raise exception 'Admin source denied';end if;
+ select value into a from jsonb_array_elements(ctx->'assignments') where value->>'slot'='trainer' limit 1;
+ select value into p from jsonb_array_elements(ctx->'people') where value->>'id'=a->>'personId';
+ select value into t from jsonb_array_elements(ctx->'teams') where value->>'id'=a->>'teamId';
+ s:=jsonb_build_object('templateVersion','2026-11-03.1','season','2098/2099','personId',p->>'id','teamId',t->>'id','slot','trainer','name','Vertragstest','teamName','Testteam','monthlyCents',10000,'paidMonths','[7,9,10,11,1,2,3,4,5,6]'::jsonb,'financialConfirmed',true,'source',jsonb_build_object('birthDate',coalesce(p->>'birth_date',''),'teamName',t->>'name','personVersion',(p->>'version')::bigint,'planVersion',0,'teamVersion',(t->>'version')::bigint));
+ r:=public.trainer_contract_request(administrator,jsonb_build_object('action','create','season','2098/2099','personId',p->>'id','teamId',t->>'id','slot','trainer','snapshot',s));if not coalesce((r->>'ok')::boolean,false) then raise exception 'Create failed: %',r;end if;cid:=(r->>'id')::uuid;
+ r:=public.trainer_contract_request(administrator,jsonb_build_object('action','create','season','2098/2099','personId',p->>'id','teamId',t->>'id','slot','trainer','snapshot',s));if r->>'status'<>'409' then raise exception 'Duplicate contract accepted';end if;
+ r:=public.trainer_contract_request(administrator,jsonb_build_object('action','save','id',cid,'version',0,'snapshot',s));if r->>'status'<>'409' then raise exception 'Lost update accepted';end if;
+ r:=public.trainer_contract_request(administrator,jsonb_build_object('action','save','id',cid,'version',1,'snapshot',s));if r->>'version'<>'2' then raise exception 'Draft save failed';end if;
+ update public.social_teams set trainer_version=trainer_version+1 where id=(t->>'id')::uuid;
+ r:=public.trainer_contract_request(administrator,jsonb_build_object('action','issue','id',cid,'version',2,'path',cid::text||'/issued/test.pdf','hash',repeat('a',64)));if r->>'status'<>'409' then raise exception 'Stale source accepted';end if;
+ update public.social_teams set trainer_version=(t->>'version')::bigint where id=(t->>'id')::uuid;
+ update public.social_people set birth_date='1900-01-01' where id=(p->>'id')::uuid;
+ r:=public.trainer_contract_request(administrator,jsonb_build_object('action','issue','id',cid,'version',2,'path',cid::text||'/issued/test.pdf','hash',repeat('a',64)));if r->>'status'<>'409' then raise exception 'Unversioned DOB change accepted';end if;
+ update public.social_people set birth_date=nullif(p->>'birth_date','')::date where id=(p->>'id')::uuid;
+ r:=public.trainer_contract_request(administrator,jsonb_build_object('action','issue','id',cid,'version',2,'path',cid::text||'/issued/test.pdf','hash',repeat('a',64)));if r->>'version'<>'3' then raise exception 'Issue failed: %',r;end if;
+ r:=public.trainer_contract_request(administrator,jsonb_build_object('action','save','id',cid,'version',3,'snapshot',s));if r->>'status'<>'409' then raise exception 'Issued snapshot mutable';end if;
+ r:=public.trainer_contract_request(administrator,jsonb_build_object('action','delete','id',cid,'version',3,'confirmed',true));if r->>'status'<>'400' then raise exception 'Issued archive deletable';end if;
+ r:=public.trainer_contract_request(administrator,jsonb_build_object('action','signed','id',cid,'version',3,'path',cid::text||'/signed/test.pdf','hash',repeat('b',64),'confirmed',false));if r->>'status'<>'400' then raise exception 'Signature receipt not confirmed';end if;
+ r:=public.trainer_contract_request(administrator,jsonb_build_object('action','signed','id',cid,'version',3,'path',cid::text||'/signed/test.pdf','hash',repeat('b',64),'confirmed',true));if r->>'version'<>'4' then raise exception 'Signed receipt failed';end if;
+ -- Explicit personal grant works through the same Suite user editor RPC.
+ r:=public.suite_users_request(administrator,jsonb_build_object('action','save_member','userId',ordinary,'firstName',member.first_name,'lastName',member.last_name,'username',member.username,'roleKey',member.suite_role_key,'extraAreas',to_jsonb(array_append(member.extra_access_areas,'trainer_contracts'))));if r ? 'error' then raise exception 'Grant through user editor failed: %',r;end if;
+ r:=public.trainer_contract_request(ordinary,'{"action":"list","season":"2098/2099"}');if r ? 'error' then raise exception 'Explicit contract right ineffective';end if;
+ update public.social_admins set is_blocked=true where user_id=ordinary;
+ r:=public.trainer_contract_request(ordinary,jsonb_build_object('action','get','id',cid));if r->>'status'<>'403' then raise exception 'Blocked actor read contract';end if;
+ -- December 2098 is paid with March 2099, and must reserve the 2099 allowance.
+ update private.trainer_contracts set snapshot=jsonb_set(jsonb_set(snapshot,'{paidMonths}','[12]'),'{monthlyCents}','330000') where id=cid;
+ ctx:=public.trainer_contract_request(administrator,'{"action":"source","season":"2098/2099"}');
+ if not exists(select 1 from jsonb_array_elements(ctx->'annualTotals') n where n->>'personId'=p->>'id' and n->>'year'='2099' and n->>'cents'='330000') then raise exception 'December payout assigned wrong allowance year';end if;
+ r:=public.trainer_contract_request(administrator,jsonb_build_object('action','cancel','id',cid,'version',4,'confirmed',true));if not coalesce((r->>'ok')::boolean,false) then raise exception 'Cancellation failed';end if;
+ s:=jsonb_set(jsonb_set(s,'{paidMonths}','[1]'),'{monthlyCents}','330001');
+ r:=public.trainer_contract_request(administrator,jsonb_build_object('action','create','season','2098/2099','personId',p->>'id','teamId',t->>'id','slot','trainer','snapshot',s));cid2:=(r->>'id')::uuid;
+ r:=public.trainer_contract_request(administrator,jsonb_build_object('action','issue','id',cid2,'version',1,'path',cid2::text||'/issued/test.pdf','hash',repeat('a',64)));if r->>'status'<>'400' then raise exception 'Allowance overrun accepted';end if;
+ if has_function_privilege('anon','public.trainer_contract_request(uuid,jsonb)','execute') or has_function_privilege('authenticated','public.trainer_contract_request(uuid,jsonb)','execute') then raise exception 'Contract RPC exposed';end if;
+ if has_table_privilege('anon','private.trainer_contracts','select') or has_table_privilege('authenticated','private.trainer_contracts','select') then raise exception 'Contract table exposed';end if;
+ if not exists(select 1 from storage.buckets where id='trainer-contracts' and not public) then raise exception 'Contract bucket public';end if;
+ if exists(select 1 from pg_class where oid in ('private.trainer_contracts'::regclass,'private.trainer_contract_audit'::regclass) and not relrowsecurity) then raise exception 'Contract RLS missing';end if;
+ if not exists(select 1 from private.trainer_contract_audit where contract_id=cid and action='signed') then raise exception 'Signature receipt not audited';end if;
+end $test$;
+rollback;
