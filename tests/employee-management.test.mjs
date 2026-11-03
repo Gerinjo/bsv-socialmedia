@@ -11,7 +11,7 @@ test('employee contact edits validate shared identity, revision, mail and phone 
  assert.equal(sent.actor,'authorized-actor');assert.deepEqual(sent.payload,{action:'save_contact',...v});assert.equal(sent.payload.active,undefined);
 });
 test('employees offer the six requested circles and reject invalid assignments',()=>{
- assert.deepEqual(EMPLOYEE_GROUPS.map(g=>g.key),['executive','board','trainers','teams','youth','supporters']);
+ assert.deepEqual(EMPLOYEE_GROUPS.map(g=>g.key),['teams','executive','board','trainers','youth','supporters']);
  assert.throws(()=>validateEmployeeAssignment({groupKey:'teams',version:0,roleLabel:'Trainer'}));
  assert.throws(()=>validateEmployeeAssignment({groupKey:'youth',version:0,roleLabel:'Jugendleiter',personId:'invalid'}));
  assert.throws(()=>validateEmployeeAssignment({groupKey:'board',version:0,roleLabel:'Role',firstName:'Anna'}));

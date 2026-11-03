@@ -1,8 +1,8 @@
 export const EMPLOYEE_GROUPS=[
+ {key:'teams',label:'Mannschaften',description:'Trainerteams, Mannschaftsbilder und Kontakte'},
  {key:'executive',label:'Geschäftsvorstandschaft',description:'Geschäftsführender Vorstand · § 13 der Satzung'},
  {key:'board',label:'Vorstandschaft',description:'Erweiterter Vorstand und weitere Vereinsaufgaben · § 14 der Satzung'},
  {key:'trainers',label:'Trainer',description:'Personendaten und Trainerrollen'},
- {key:'teams',label:'Mannschaften',description:'Trainerteams, Mannschaftsbilder und Kontakte'},
  {key:'youth',label:'Jugendausschuss',description:'Jugendleitung und Vertretung der Vereinsjugend · § 17 der Satzung'},
  {key:'supporters',label:'Förderverein',description:'Vorstandschaft und Unterstützer des Fördervereins'},
 ];
