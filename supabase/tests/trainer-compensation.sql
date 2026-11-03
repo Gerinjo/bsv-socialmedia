@@ -1,0 +1,34 @@
+begin;
+do $test$
+declare administrator uuid; ordinary uuid; r jsonb; fixture jsonb; senior_count int;
+begin
+ select user_id into administrator from public.social_admins where role='admin' and is_active and not is_blocked limit 1;
+ select user_id into ordinary from public.social_admins where role<>'admin' and is_active and not is_blocked limit 1;
+ if administrator is null or ordinary is null then raise exception 'Test identities missing';end if;
+ r:=public.trainer_compensation_request(gen_random_uuid(),jsonb_build_object('action','list','season','2098/2099'));
+ if (r->>'status')::int<>403 then raise exception 'Unknown actor accepted';end if;
+ r:=public.trainer_compensation_request(ordinary,jsonb_build_object('action','list','season','2098/2099'));
+ if (r->>'status')::int<>403 then raise exception 'Employee right exposed salary';end if;
+ r:=public.trainer_compensation_request(administrator,jsonb_build_object('action','list','season','2098/2099'));
+ if r ? 'error' then raise exception 'Admin denied: %',r;end if;
+ select count(*) into senior_count from jsonb_array_elements(r->'teams') t where t->>'slug' in ('herren-1','herren-2','frauen-1','frauen-2');
+ if senior_count<>4 then raise exception 'Senior team missing';end if;
+ if exists(select 1 from jsonb_array_elements(r->'people') p where p ? 'email' or p ? 'street' or p ? 'phone') then raise exception 'Unnecessary personal fields exposed';end if;
+ fixture:=jsonb_build_object('schemaVersion',1,'season','2098/2099','youthRates','{"bambini":{"base":3000,"licensed":5000,"co":0},"f":{"base":5000,"licensed":7500,"co":0},"e":{"base":5000,"licensed":7500,"co":0},"d":{"base":7000,"licensed":10500,"co":3500},"c":{"base":9000,"licensed":13500,"co":4500},"b":{"base":10000,"licensed":15000,"co":5000},"a":{"base":10000,"licensed":15000,"co":5000}}'::jsonb,'teams','{}'::jsonb,'assignments','{}'::jsonb);
+ r:=public.trainer_compensation_request(administrator,jsonb_build_object('action','save','season','2098/2099','version',0,'plan',fixture));
+ if r->>'version'<>'1' then raise exception 'Save failed: %',r;end if;
+ r:=public.trainer_compensation_request(administrator,jsonb_build_object('action','save','season','2098/2099','version',0,'plan',fixture));
+ if (r->>'status')::int<>409 then raise exception 'Concurrent save not rejected';end if;
+ update public.social_admins set extra_access_areas=extra_access_areas||'trainer_compensation'::text where user_id=ordinary;
+ r:=public.trainer_compensation_request(ordinary,jsonb_build_object('action','list','season','2098/2099'));
+ if r ? 'error' or r->>'version'<>'1' then raise exception 'Explicit financial grant did not work';end if;
+ update public.social_admins set is_blocked=true where user_id=ordinary;
+ r:=public.trainer_compensation_request(ordinary,jsonb_build_object('action','list','season','2098/2099'));
+ if (r->>'status')::int<>403 then raise exception 'Blocked member accepted';end if;
+ if has_function_privilege('anon','public.trainer_compensation_request(uuid,jsonb)','execute') or has_function_privilege('authenticated','public.trainer_compensation_request(uuid,jsonb)','execute') then raise exception 'RPC publicly callable';end if;
+ if has_table_privilege('authenticated','private.trainer_compensation_plans','select') or has_table_privilege('anon','private.trainer_compensation_plans','select') then raise exception 'Private salary table readable';end if;
+ if exists(select 1 from pg_class where oid in ('private.trainer_compensation_plans'::regclass,'private.trainer_compensation_audit'::regclass) and not relrowsecurity) then raise exception 'RLS missing';end if;
+ if not exists(select 1 from private.trainer_compensation_audit where season='2098/2099' and actor=administrator) then raise exception 'Save not audited';end if;
+end $test$;
+rollback;
+select count(*) as saved_test_plans from private.trainer_compensation_plans where season='2098/2099';

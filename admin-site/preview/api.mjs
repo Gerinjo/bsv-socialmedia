@@ -1,3 +1,4 @@
+import {compensationPreviewApi} from '/preview-trainer-compensation.mjs';
 import {resourcePreviewApi} from '/preview-resources.mjs';
 import {previewClubCrests,previewClubCrestAction} from '/preview-club-crests.mjs';
 import {hallTrainingPreviewApi} from '/preview-hall-training.mjs';
@@ -286,6 +287,7 @@ export async function editorialPreviewApi(method = "GET", body = {}, query = {})
   if(body.action?.startsWith('resource_'))return resourcePreviewApi(body,previewPersona);
   if(body.action?.startsWith('hall_'))return hallTrainingPreviewApi(body,previewPersona);
   if(body.action?.startsWith('employee_')){if(!previewAreas().includes('trainer_management'))throw new Error('Keine Berechtigung für Mitarbeiter.');return employeePreviewApi(body);}
+  if(body.action?.startsWith('salary_')){if(!previewAreas().includes('trainer_compensation'))throw new Error('Keine Berechtigung für Trainergehälter.');return compensationPreviewApi(body);}
   if(body.action?.startsWith('trainer_')){if(!previewAreas().includes('trainer_management'))throw new Error('Keine Berechtigung für die Trainerverwaltung.');return trainerPreviewApi(body);}
   if (body.action?.startsWith('cashbook_')) {
     if(!previewAreas().includes('cashbook'))throw new Error('Kein Recht für das Kassenbuch.');

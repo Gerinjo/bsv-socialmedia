@@ -1,3 +1,4 @@
+import {handleTrainerCompensation} from '../_shared/trainer-compensation.mjs';
 import { sponsorToday } from '../../../src/sponsor-editor.mjs';
 import { handleSponsorMagazineArtwork, sponsorArtworkPaths } from '../_shared/sponsor-magazine-artwork.mjs';
 import {handleResources} from '../_shared/resources.mjs';
@@ -41,7 +42,7 @@ const homeVenues = new Set(['Hauptplatz', 'Nebenplatz', 'Kunstrasenplatz 1', 'Ku
 const crestStatuses = new Set(['missing', 'needs_review', 'approved', 'rejected']);
 const sponsorStatuses = new Set(['missing', 'needs_review', 'approved', 'rejected']);
 const sponsorContexts = new Set(['announcement', 'lineup', 'result', 'report', 'birthday', 'post', 'story']);
-const suiteAreas = ['social_media', 'sponsoring', 'editorial', 'referees', 'corporate_identity', 'club_crests', 'social_media_admin', 'user_management', 'cashbook', 'trainer_management', 'hall_training', 'resources'] as const;
+const suiteAreas = ['social_media', 'sponsoring', 'editorial', 'referees', 'corporate_identity', 'club_crests', 'social_media_admin', 'user_management', 'cashbook', 'trainer_management', 'hall_training', 'resources', 'trainer_compensation'] as const;
 type SuiteArea = typeof suiteAreas[number];
 const actionAreas: Record<string, SuiteArea> = {
   suite_activity_list: 'user_management',
@@ -697,6 +698,12 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       if(!hasArea('hall_training'))return json({error:'area_forbidden',area:'hall_training'},403);
       if(raw.length>4096)return json({error:'Die Anfrage ist zu groß.'},413);
       return json(await handleHallTraining(context.supabaseAdmin,userId,body));
+    }
+
+    if(action.startsWith('salary_')){
+      if(!hasArea('trainer_compensation'))return json({error:'area_forbidden',area:'trainer_compensation'},403);
+      if(raw.length>300000)return json({error:'Die Anfrage ist zu groß.'},413);
+      return json(await handleTrainerCompensation(context.supabaseAdmin,userId,body));
     }
 
     if(action.startsWith('employee_')){
