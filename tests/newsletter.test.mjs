@@ -7,8 +7,8 @@ const snapshot = {kind:'newsletter',title:'Nordstern Post · Oktober',publishes_
 
 test('newsletter exports an email, retains branding and unsubscribe token, and matches plain text', () => {
   const mail = renderEditorialNewsletter(snapshot, template, {preview:false});
-  assert.match(mail.html, /newsletter-header/);
-  assert.match(mail.html, /teams-schuss.webp/);
+  assert.match(mail.html, /data-bsv-email-header/);
+  assert.match(mail.html, /email-header-organic.png/);
   assert.match(mail.html, /bsv-nordstern.png/);
   assert.match(mail.html, /Oktober 2026/);
   assert.match(mail.html, /href="https:\/\/bsvnordstern.de\/verein\/termine\?a=1&amp;b=2"/);
@@ -92,8 +92,8 @@ test('newsletter settings reach HTML, text and email metadata in the wider frame
     assert.ok(output.includes(settings.kicker));
   }
   assert.match(mail.html, /Erste Zeile.<br \/>Zweite Zeile./);
-  assert.match(mail.html, /max-width:720px[^"]*border:4px solid #17613a/);
-  assert.match(mail.html, /\[if mso\]><table[^>]*width="720"/);
+  assert.match(mail.html, /max-width:680px[^"]*box-shadow:0 10px 35px/);
+  assert.match(mail.html, /\[if mso\]><table[^>]*width="680"/);
   assert.ok(!mail.html.includes('{{BRAND}}'));
 });
 test('visibility settings remove header fields from HTML and text while stadium links remain', () => {

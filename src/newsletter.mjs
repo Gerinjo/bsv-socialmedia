@@ -1,3 +1,4 @@
+import {buildClubSponsorFooter} from './club-email.mjs';
 import {suiteBrandColors,suiteBrandRibbon,suiteBrandBackgroundText,SUITE_BRAND_DEFAULT} from './suite-brand.mjs';
 import {suiteBrandTheme} from './brand-themes.mjs';
 import {BRAND_THEME_VERSIONS} from './brand-theme-versions.mjs';
@@ -180,13 +181,15 @@ export function renderEditorialNewsletter(snapshot, template, { preview = true, 
   const ribbon = suiteBrandRibbon(snapshot.brand?.color_scheme || SUITE_BRAND_DEFAULT);
   const colors = snapshot.brand?.color_scheme ? suiteBrandColors(snapshot.brand.color_scheme) : SUITE_BRAND_DEFAULT;
   const hero=suiteBrandBackgroundText(colors);
+  if(!rows.some(row=>row.includes('data-newsletter-sponsors'))){const partners=newsletterSponsorSelection(sponsorPools?.general,`${snapshot.id}:footer:general`);if(partners.length){const footer=buildClubSponsorFooter(partners.map(p=>({...p,width:112,height:64,website:p.website||'https://bsvnordstern.de/werbepartner'})));rows.push(footer.html);text.push(footer.text);}}
   const values = {
     BRAND_RIBBON:ribbon.length ? `<tr data-brand-ribbon><td><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>${ribbon.map(color=>`<td bgcolor="${color}" width="16.666%" height="8" style="height:8px;font-size:0;line-height:0;background-color:${color};">&nbsp;</td>`).join('')}</tr></table></td></tr>` : '',
     TITLE:escape(title), PREHEADER:escape(preheader), EDITION:escape(['BSV Nordstern Radolfzell',edition].filter(Boolean).join(' · ')),
     BRAND:settings.showName && settings.name ? `<p class="newsletter-brand" style="margin:0 0 8px;color:${hero.accent};font-size:22px;line-height:28px;font-weight:bold;letter-spacing:1px;">✦ ${escape(settings.name)}</p>` : '',
     KICKER:settings.showKicker && settings.kicker ? `<p style="margin:0 0 18px;color:${hero.accent};font-size:12px;line-height:18px;font-weight:bold;letter-spacing:2px;">${escape(settings.kicker)}</p>` : '',
-    HEADLINE:settings.showHeadline && settings.headline ? `<h1 class="headline" style="margin:0 0 24px;color:${hero.ink};font-size:46px;line-height:50px;letter-spacing:-1px;overflow-wrap:anywhere;">${escape(settings.headline)}</h1>` : '',
+    HEADLINE:settings.showHeadline && settings.headline ? `<h1 class="event-header-title headline" style="margin:0 0 14px;color:${hero.ink};font-size:34px;line-height:1.15;letter-spacing:-1px;overflow-wrap:anywhere;">${escape(settings.headline)}</h1>` : '',
     INTRO:settings.showIntro && settings.intro ? `<p style="margin:0;color:${hero.ink};font-size:17px;line-height:27px;">${escape(settings.intro).replaceAll('\n','<br />')}</p>` : '',
+    THEME_IMAGE:suiteBrandTheme(snapshot.brand?.theme_key||'football')==='football'?'':`<tr><td align="center" style="padding:20px;background:#edf0e9;"><img src="https://suite.bsvnordstern.de/brand/themes/${suiteBrandTheme(snapshot.brand.theme_key)}-v${BRAND_THEME_VERSIONS[suiteBrandTheme(snapshot.brand.theme_key)]}.png" alt="Saisonale BSV-Illustration" height="220" style="display:block;height:220px;max-width:100%;object-fit:contain;"></td></tr>`,
     THEME_CAPTION:snapshot.brand?.theme_key==='girls_day'?`<p style="margin:24px 0 4px;color:${hero.ink};font:italic bold 28px Georgia,serif;">Girls’ Day</p><p style="margin:0;color:${hero.muted};font-size:11px;line-height:16px;">KI-generierte Illustration · fiktive Fußballerinnen</p>`:'',
     UNSUBSCRIBE_URL:escape(unsubscribeUrl),
     CONTENT:rows.join('\n'),
@@ -196,12 +199,13 @@ export function renderEditorialNewsletter(snapshot, template, { preview = true, 
   const rgba = [1,3,5].map(i=>parseInt(colors.background.slice(i,i+2),16)).join(',');
   const shell = theme === 'football' ? template : template.replaceAll('https://bsvnordstern.de/images/fussball/teams-schuss.webp',`https://suite.bsvnordstern.de/brand/themes/${theme}-v${BRAND_THEME_VERSIONS[theme]}.png`);
   const readableShell=shell.replace(/(?<!-)color:#ffffff;/g,`color:${hero.ink};`).replaceAll('color:#d7e5dc;',`color:${hero.muted};`).replaceAll('color:#c1d2c6;',`color:${hero.muted};`).replaceAll('color:#f4d638;',`color:${hero.accent};`);
-  const generated = readableShell.replace(/\{\{(TITLE|PREHEADER|EDITION|BRAND|KICKER|HEADLINE|INTRO|CONTENT|UNSUBSCRIBE_URL|BRAND_RIBBON|THEME_CAPTION)\}\}/g, (_, key) => values[key]);
+  const generated = readableShell.replace(/\{\{(TITLE|PREHEADER|EDITION|BRAND|KICKER|HEADLINE|INTRO|CONTENT|UNSUBSCRIBE_URL|BRAND_RIBBON|THEME_CAPTION|THEME_IMAGE)\}\}/g, (_, key) => values[key]);
   const html = snapshot.brand?.color_scheme ? generated
     .replace(/(style=")(.*?)(")/g,(_,open,style,close)=>open+style.replace(/#[0-9a-f]{6}/gi,hex=>palette[hex.toLowerCase()]||hex).replaceAll('rgba(9,47,32,',`rgba(${rgba},`)+close)
-    .replace(/bgcolor="#092f20"/g,`bgcolor="${colors.background}"`) : generated;
+    .replaceAll("background-image:url('https://bsvnordstern.de/images/onboarding/email-header-organic.png');",`background-image:linear-gradient(rgba(${rgba},.9),rgba(${rgba},.9)),url('https://bsvnordstern.de/images/onboarding/email-header-organic.png');`).replace(/bgcolor="#092f20"/g,`bgcolor="${colors.background}"`) : generated;
 
-  return { html, text: text.join('\n\n'), subject: title, preheader };
+  const emailHtml=snapshot.brand?.color_scheme&&hero.ink.toLowerCase()!=='#ffffff'?html.replace(/<v:fill\b[^>]*\/>/g,`<v:fill type="solid" color="${colors.background}"/>`):html;
+  return { html:emailHtml, text: text.join('\n\n'), subject: title, preheader };
 }
 
 export function renderNewsletterReader(snapshot, template, options = {}) {

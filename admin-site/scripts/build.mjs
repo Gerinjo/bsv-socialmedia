@@ -45,6 +45,7 @@ for (const [placeholder, source] of [
   ['__STADIUM_READER_ASSETS__', (await readFile(resolve(repoDir, 'src/stadium-reader-assets.mjs'), 'utf8')).replaceAll('</script', '<\\/script')],
   ['__STADIUM_READER_SCRIPT__', (await readFile(resolve(repoDir, 'src/stadium-reader.mjs'), 'utf8')).replace(/^import .*;\n/gm, '').replaceAll('</script', '<\\/script')],
   ['__NEWSLETTER_SCRIPT__',
+    (await readFile(resolve(repoDir,'src/club-email.mjs'),'utf8')).replace(/^export /gm,'')+'\n'+
     'const NEWSLETTER_UNSUBSCRIBE_LINK = ' + JSON.stringify(NEWSLETTER_UNSUBSCRIBE_LINK) + ';\n' + (await readFile(resolve(repoDir, 'src/newsletter.mjs'), 'utf8')).replace(/^import .*;\n/gm, '') + '\nconst newsletterAssets = ' + JSON.stringify({
       template: await readFile(resolve(repoDir, 'templates/newsletter.html'), 'utf8'),
     }).replaceAll('<', '\\u003c') + ';'],
@@ -127,6 +128,7 @@ ${(await readFile(resolve(repoDir,'src/brand-theme-versions.mjs'),'utf8')).repla
 ${(await readFile(resolve(repoDir,'src/brand-theme-assets.mjs'),'utf8')).replace(/^export /gm,'')}
 ${(await readFile(resolve(repoDir,'src/brand-themes.mjs'),'utf8')).replace(/^import .*;\n/gm,'').replace(/^export /gm,'')}
 const renderEditorialMagazine = ${renderEditorialMagazine.toString()};
+${(await readFile(resolve(repoDir,'src/club-email.mjs'),'utf8')).replace(/^export /gm,'')}
 const NEWSLETTER_UNSUBSCRIBE_LINK = ${JSON.stringify(NEWSLETTER_UNSUBSCRIBE_LINK)};
 const newsletterTemplate = ${JSON.stringify(await readFile(resolve(repoDir,'templates/newsletter.html'),'utf8'))};
 ${(await readFile(resolve(repoDir,'src/newsletter.mjs'),'utf8')).replace(/^import .*;\n/gm,'').replace(/^export /gm,'')}

@@ -7,6 +7,7 @@
     <meta name="color-scheme" content="light" />
     <title>{{TITLE}}</title>
     <style>
+@media only screen and (max-width:480px){.event-header-gutter{padding:26px 20px 32px!important}.event-header-title{font-size:27px!important;line-height:1.2!important}.event-header-logo{width:82px!important;height:auto!important}.event-header-logo-cell{width:96px!important;padding-left:12px!important}.bsv-email-content{padding:24px 20px!important}.bsv-email-sponsors{padding:20px 12px!important}}
       body { margin: 0; padding: 0; }
       table { border-collapse: collapse; }
       a { text-underline-offset: 3px; }
@@ -20,8 +21,8 @@
         .newsletter-header { background-position:center top,right 32px top !important; background-size:100% 100%,auto 320px !important; }
         .newsletter-brand { font-size:18px !important; line-height:24px !important; letter-spacing:0 !important; }
         .newsletter-crest-cell { width:64px !important; }
-        .newsletter-crest { width:64px !important; height:auto !important; }
-        .headline { font-size: 38px !important; line-height: 42px !important; }
+        .newsletter-crest { width:82px !important; height:auto !important; }
+        .headline { font-size: 27px !important; line-height: 1.2 !important; }
       }
     </style>
   </head>
@@ -36,39 +37,18 @@
     <table role="presentation" width="100%" style="width:100%;background-color:#edf0e9;">
       <tr>
         <td class="outer" align="center" style="padding:32px 12px;">
-          <!--[if mso]><table role="presentation" width="720" align="center"><tr><td><![endif]-->
-          <table class="newsletter-shell" role="presentation" width="100%" style="width:100%;max-width:720px;background-color:#ffffff;border:4px solid #17613a;">
+          <!--[if mso]><table role="presentation" width="680" align="center"><tr><td><![endif]-->
+          <table data-bsv-email-standard="1" class="newsletter-shell" role="presentation" width="100%" style="width:100%;max-width:680px;background-color:#ffffff;border-collapse:collapse;box-shadow:0 10px 35px rgba(9,47,32,.10);">
 {{BRAND_RIBBON}}
-            <tr>
-              <td class="newsletter-header" background="https://bsvnordstern.de/images/fussball/teams-schuss.webp" bgcolor="#092f20" style="border-top:6px solid #f4d638;background-color:#092f20;background-image:url('https://bsvnordstern.de/images/fussball/teams-schuss.webp');background-repeat:no-repeat;background-position:right 64px top;background-size:auto 400px;background-image:linear-gradient(90deg,#092f20 0%,#092f20 50%,rgba(9,47,32,0) 78%,#092f20 92%),url('https://bsvnordstern.de/images/fussball/teams-schuss.webp');background-position:center top,right 64px top;background-size:100% 100%,auto 400px;">
-                <table role="presentation" width="100%" style="width:100%;">
-                  <tr>
-                    <td class="section newsletter-masthead" style="padding:24px 40px;background-color:rgba(9,47,32,0.62);">
-                      <table role="presentation" width="100%" style="width:100%;table-layout:fixed;">
-                        <tr>
-                          <td valign="middle" style="padding-right:16px;vertical-align:middle;">
-                            {{BRAND}}
-                            <p style="margin:0;color:#d7e5dc;font-size:12px;line-height:20px;">{{EDITION}}</p>
-                          </td>
-                          <td class="newsletter-crest-cell" width="88" align="right" valign="middle" style="width:88px;text-align:right;vertical-align:middle;">
-                            <a href="https://bsvnordstern.de/" style="display:inline-block;text-decoration:none;"><img class="newsletter-crest" src="https://bsvnordstern.de/images/verein/wappen/bsv-nordstern.png" alt="Wappen des BSV Nordstern Radolfzell" width="88" height="83" style="display:block;width:88px;height:auto;border:0;" /></a>
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="section newsletter-hero" style="padding:32px 40px 40px;background-color:rgba(9,47,32,0.62);">
-                      {{KICKER}}
-                      {{HEADLINE}}
-                      {{INTRO}}
-                      {{THEME_CAPTION}}
-              </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-{{CONTENT}}
+<tr data-bsv-email-header><td bgcolor="#092f20" background="https://bsvnordstern.de/images/onboarding/email-header-organic.png" style="background-color:#092f20;background-image:url('https://bsvnordstern.de/images/onboarding/email-header-organic.png');background-size:cover;background-position:center;background-repeat:no-repeat;border-bottom:7px solid #f4d638;color:#ffffff;">
+<!--[if gte mso 9]><v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:680px"><v:fill type="frame" src="https://bsvnordstern.de/images/onboarding/email-header-organic.png" color="#092f20"/><v:textbox inset="0,0,0,0" style="mso-fit-shape-to-text:true"><![endif]-->
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td class="event-header-gutter" style="padding:34px 28px 40px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="table-layout:fixed;"><tr><td valign="middle" style="vertical-align:middle;overflow-wrap:anywhere;">
+<p style="margin:0 0 14px;font-size:11px;line-height:1.6;letter-spacing:1.5px;text-transform:uppercase;color:#f4d638;font-weight:700;">BSV Nordstern e.V.<br>Radolfzell · Seit 1956</p>
+{{BRAND}}<p style="margin:0 0 14px;color:#d7e5dc;font-size:12px;line-height:20px;">{{EDITION}}</p>{{KICKER}}{{HEADLINE}}{{INTRO}}{{THEME_CAPTION}}
+</td><td class="event-header-logo-cell" width="132" align="center" valign="middle" style="width:132px;padding-left:20px;text-align:center;vertical-align:middle;"><a href="https://bsvnordstern.de/" style="text-decoration:none;"><img class="event-header-logo newsletter-crest" src="https://bsvnordstern.de/images/verein/wappen/bsv-nordstern.png" width="112" height="106" alt="BSV Nordstern Radolfzell" style="display:block;width:112px;max-width:100%;height:auto;margin:0 auto;border:0;"></a></td></tr></table></td></tr></table>
+<!--[if gte mso 9]></v:textbox></v:rect><![endif]--></td></tr>
+{{THEME_IMAGE}}
+            {{CONTENT}}
             <tr>
               <td class="section" style="padding:28px 40px;background-color:#092f20;">
                 <p style="margin:0 0 16px;color:#ffffff;font-size:13px;line-height:21px;">

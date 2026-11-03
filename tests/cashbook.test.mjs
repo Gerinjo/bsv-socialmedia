@@ -1,3 +1,5 @@
+import {createClubEmailPreparer} from '../src/club-email-delivery.mjs';
+const prepareEmail=createClubEmailPreparer({loadSponsors:async()=>Array.from({length:4},(_,i)=>({id:'p'+i,name:'Partner '+i,website:'https://example.test',logo:'https://bsvnordstern.de/images/sponsors/test.png',width:112,height:64})),freezeSponsors:async(_k,s)=>s});
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { cashbookAmount, cashbookUsername, validateCashbookBooking, validateCashbookChange } from '../src/cashbook.mjs';
@@ -105,12 +107,12 @@ test('provisioning retry binds an existing Suite identity without resetting its 
 test('mail delivery claims a durable outbox item and supplies an idempotency key',async()=>{
   const actions=[];let fetched=0;
   const db={rpc:async(name,{payload})=>{assert.equal(name,'cashbook_alert_request');actions.push(payload);return {data:payload.action==='claim'&&actions.length===1?{id,lease_id:id,recipient:'jugendkasse@bsvnordstern.de',balance_cents:4999}:null};}};
-  const result=await deliverCashbookAlerts(db,{apiKey:'test',from:'BSV <test@example.org>',fetcher:async(url,options)=>{fetched++;assert.equal(options.headers['idempotency-key'],`cashbook-low-${id}`);const body=JSON.parse(options.body);assert.deepEqual(body.to,['jugendkasse@bsvnordstern.de']);assert.match(body.text,/49,99/);return new Response('{}');}});
+  const result=await deliverCashbookAlerts(db,{prepareEmail,apiKey:'test',from:'BSV <test@example.org>',fetcher:async(url,options)=>{fetched++;assert.equal(options.headers['idempotency-key'],`cashbook-low-${id}`);const body=JSON.parse(options.body);assert.deepEqual(body.to,['jugendkasse@bsvnordstern.de']);assert.match(body.text,/49,99/);return new Response('{}');}});
   assert.equal(fetched,1);assert.equal(result.sent,1);assert.equal(actions[1].action,'sent');assert.equal(actions[1].leaseId,id);
 });
 test('a mail failure schedules another attempt; missing settings leave the outbox untouched',async()=>{
   const actions=[];const db={rpc:async(name,{payload})=>{actions.push(payload);return {data:actions.length===1?{id,lease_id:id,recipient:'test@example.org',balance_cents:100}:null};}};
-  assert.equal((await deliverCashbookAlerts(db,{apiKey:'test',from:'test',fetcher:async()=>new Response('{}',{status:503})})).sent,0);assert.equal(actions[1].action,'failed');
+  assert.equal((await deliverCashbookAlerts(db,{prepareEmail,apiKey:'test',from:'test',fetcher:async()=>new Response('{}',{status:503})})).sent,0);assert.equal(actions[1].action,'failed');
   actions.length=0;assert.equal((await deliverCashbookAlerts(db,{})).configured,false);assert.equal(actions.length,0);
 });
 test('installable app shares the suite scope and both required PNG icon sizes',()=>{
@@ -161,10 +163,12 @@ test('settlement API strips forged fields, validates confirmation and delegates 
 test('transfer email explains amount, entry and owner confirmation with a separate stable provider idempotency key',async()=>{
   const actions=[];let fetched=0;
   const db={rpc:async(_,{payload})=>{actions.push(payload);return {data:payload.action==='claim'&&actions.length===1?{id,lease_id:id,kind:'advance_transferred',recipient:'trainer@example.org',person_name:'Max Trainer',team_name:'U15 C1',amount_cents:3425,sequence:7}:null}}};
-  const result=await deliverCashbookAlerts(db,{apiKey:'test',from:'BSV <test@example.org>',fetcher:async(url,options)=>{fetched++;assert.equal(options.headers['idempotency-key'],`cashbook-transfer-${id}`);const body=JSON.parse(options.body);assert.deepEqual(body.to,['trainer@example.org']);assert.match(body.subject,/Erstattung/);for(const value of ['34,25','Nr. 7','U15 C1','https://www.bsvnordstern.de/cs','Geld erhalten','Erstattung abgeschlossen'])assert.ok(body.text.includes(value),value);return new Response('{}')}});
+  const result=await deliverCashbookAlerts(db,{prepareEmail,apiKey:'test',from:'BSV <test@example.org>',fetcher:async(url,options)=>{fetched++;assert.equal(options.headers['idempotency-key'],`cashbook-transfer-${id}`);const body=JSON.parse(options.body);assert.deepEqual(body.to,['trainer@example.org']);assert.match(body.subject,/Erstattung/);for(const value of ['34,25','Nr. 7','U15 C1','https://www.bsvnordstern.de/cs','Geld erhalten','Erstattung abgeschlossen'])assert.ok(body.text.includes(value),value);return new Response('{}')}});
   assert.equal(result.sent,1);assert.equal(fetched,1);assert.equal(actions[1].action,'sent');assert.equal(actions[1].leaseId,id);
 });
 test('failed transfer notifications retain their lease-based retry rather than marking the settlement complete',async()=>{
   const actions=[];const db={rpc:async(_,{payload})=>{actions.push(payload);return {data:actions.length===1?{id,lease_id:id,kind:'advance_transferred',recipient:'trainer@example.org',person_name:'Max',team_name:'U15',amount_cents:1000,sequence:1}:null}}};
-  const result=await deliverCashbookAlerts(db,{apiKey:'test',from:'test',fetcher:async()=>new Response('{}',{status:429})});assert.equal(result.sent,0);assert.equal(actions[1].action,'failed');assert.equal(actions[1].leaseId,id);assert.equal(actions.some(action=>action.action==='confirm_received'),false);
+  const result=await deliverCashbookAlerts(db,{prepareEmail,apiKey:'test',from:'test',fetcher:async()=>new Response('{}',{status:429})});assert.equal(result.sent,0);assert.equal(actions[1].action,'failed');assert.equal(actions[1].leaseId,id);assert.equal(actions.some(action=>action.action==='confirm_received'),false);
 });
+
+test('cashbook retries preserve old plaintext and keep the new standard after its first prepared attempt',async()=>{for(const prepared of [false,true]){let claimed=false,body,preparations=0;const db={rpc:async(name,args)=>{if(name==='email_sponsor_snapshot_exists')return {data:prepared};if(args.payload.action==='claim'){if(claimed)return {data:null};claimed=true;return {data:{id:'prior-alert',attempts:2,recipient:'example@example.test',balance_cents:1000}};}return {data:{ok:true}};}};const r=await deliverCashbookAlerts(db,{apiKey:'fake',from:'BSV <example@example.test>',prepareEmail:async m=>{preparations++;return {...m,html:'STANDARD'};},fetcher:async(_url,opts)=>{body=JSON.parse(opts.body);return new Response('{}');}});assert.equal(r.sent,1);assert.equal(preparations,prepared?1:0);assert.equal(body.html,prepared?'STANDARD':undefined);}});

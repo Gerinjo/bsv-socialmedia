@@ -38,7 +38,7 @@ test('CSD rainbow is retained by all preview and download formats and by frozen 
 test('light BSV mail uses dark text on its pale header and footer and keeps article text intact',()=>{
  const colors=SUITE_BRAND_PALETTES.find(p=>p.key==='bsv_light').colors;
  const mail=renderEditorialNewsletter({kind:'newsletter',title:'Unser Verein',publishes_on:'2027-04-01',brand:{color_scheme:colors,theme_key:'girls_day'},articles:[{title:'Wiesengrün',body:'Unsere Farbe #092f20 bleibt im Text.',status:'ready'}]},template,{preview:false});
- assert.match(mail.html,new RegExp(`class="headline"[^>]*color:${colors.ink}`));
+ assert.match(mail.html,new RegExp(`class="[^"]*headline"[^>]*color:${colors.ink}`));
  assert.match(mail.html,new RegExp(`color:${colors.panel};font-size:12px;line-height:20px;`));
  assert.match(mail.html,/Unsere Farbe #092f20 bleibt im Text\./);assert.match(mail.html,/KI-generierte Illustration/);assert.doesNotMatch(mail.html,/\{\{THEME_CAPTION\}\}|<svg|data:image/);
 });

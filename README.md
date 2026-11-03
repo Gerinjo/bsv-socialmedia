@@ -150,3 +150,11 @@ Das **Kassenbuch der Jugendabteilung** ist ein eigener Bereich der Suite mit gem
 5. Erst nach erfolgreichen Freigabetests `INSTAGRAM_TEST_MODE=false` setzen.
 
 Die Details stehen in [docs/automation-architecture.md](docs/automation-architecture.md). Der kontrollierte Wechsel vom Test- in den Produktivbetrieb ist in [docs/howto-go-productive.md](docs/howto-go-productive.md) beschrieben.
+
+### Gemeinsamer E-Mail-Standard
+
+`src/club-email.mjs` übernimmt Header und Gestaltung der Girls-Cup-Anmeldebestätigung (organischer Hintergrund, Wappen rechts, gelber Abschluss, Outlook-Fallback). Die identische Website-Datei liegt in `bsv-website/supabase/functions/_shared/club-email.mjs`; beide Kopien und die entsprechenden `club-email-delivery.mjs` müssen bei Änderungen gemeinsam aktualisiert werden. Normale E-Mails erhalten eine horizontale Reihe mit vier unterschiedlichen freigegebenen Vereinspartnern. Die Auswahl kommt aus dem öffentlichen Sponsorfeed; nur der Pool wird zwischengespeichert. Ausfälle verhindern keine Nachricht wegen fehlender Bilder.
+
+Vorhandene spezifische Sponsorenblöcke haben Vorrang (Jugendveranstaltungen, Mitgliedschaft und Newsletterblöcke nach je zwei Artikeln). Abmeldebestätigungen behalten ihre ausdrücklich rein transaktionale Gestaltung ohne Werbung. Die private, ausschließlich durch service_role nutzbare Tabelle `email_sponsor_snapshots` speichert für Wiederholungen nur öffentliche Partnerdaten unter einem Hash des Idempotenzschlüssels. Sie enthält keine Empfänger oder Mailtexte. Neue Newsletter-Anmeldemails werden vor dem Einreihen fertig gerendert; bestehende Jobs behalten ihre gespeicherte Fassung.
+
+Tests: `tests/club-email.test.mjs`, SMTP-/Versandtests mit simuliertem Transport, `supabase/tests/club-email-standard.sql` (vollständiger Rollback), Desktop- und Mobilvorschauen. Es werden dabei keine E-Mails zugestellt.

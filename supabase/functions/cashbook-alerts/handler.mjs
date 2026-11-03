@@ -1,6 +1,7 @@
+import {prepareClubEmail,clubEmailSnapshotKey} from '../../../src/club-email-delivery.mjs';
 import { cashbookMoney } from '../../../src/cashbook.mjs';
 
-export async function deliverCashbookAlerts(db, { apiKey, from, fetcher = fetch }) {
+export async function deliverCashbookAlerts(db, { apiKey, from, fetcher = fetch, prepareEmail = prepareClubEmail }) {
   if (!apiKey || !from) return { configured: false, sent: 0 };
   let sent = 0;
   for (let index = 0; index < 10; index++) {
@@ -9,9 +10,13 @@ export async function deliverCashbookAlerts(db, { apiKey, from, fetcher = fetch 
     if (!alert) break;
     try {
       const transferred = alert.kind === 'advance_transferred';
-      const mail = transferred ? {subject: 'Kassenbuch: Deine Erstattung wurde überwiesen', text: `Hallo ${alert.person_name},\n\ndie Kasse hat die Überweisung deiner vorgestreckten Schiedsrichterkosten über ${cashbookMoney(alert.amount_cents)} bestätigt.\n\nMannschaft: ${alert.team_name}\nEintrag: Nr. ${alert.sequence}\n\nBitte prüfe dein Konto. Sobald das Geld angekommen ist, öffne https://www.bsvnordstern.de/cs und bestätige im Kassenbuch mit „Geld erhalten“. Erst danach ist die Erstattung abgeschlossen.\n\nVielen Dank!\nBSV Nordstern Radolfzell`} : {subject: 'Jugendkasse: Safe bitte wieder auffüllen', text: `Hallo Wiebke,\n\nder Geldbestand im Schiedsrichter-Safe ist unter 50,00 € gefallen. Zum Buchungszeitpunkt waren noch ${cashbookMoney(alert.balance_cents)} im Safe.\n\nBitte versorge den Safe wieder mit neuem Geld und erfasse die Einzahlung samt Foto im Kassenbuch. Den aktuellen Bestand findest du in der Vereins-App unter Kassenbuch.\n\nVielen Dank!\nBSV Nordstern Radolfzell`};
+      const originalMail = transferred ? {subject: 'Kassenbuch: Deine Erstattung wurde überwiesen', text: `Hallo ${alert.person_name},\n\ndie Kasse hat die Überweisung deiner vorgestreckten Schiedsrichterkosten über ${cashbookMoney(alert.amount_cents)} bestätigt.\n\nMannschaft: ${alert.team_name}\nEintrag: Nr. ${alert.sequence}\n\nBitte prüfe dein Konto. Sobald das Geld angekommen ist, öffne https://www.bsvnordstern.de/cs und bestätige im Kassenbuch mit „Geld erhalten“. Erst danach ist die Erstattung abgeschlossen.\n\nVielen Dank!\nBSV Nordstern Radolfzell`} : {subject: 'Jugendkasse: Safe bitte wieder auffüllen', text: `Hallo Wiebke,\n\nder Geldbestand im Schiedsrichter-Safe ist unter 50,00 € gefallen. Zum Buchungszeitpunkt waren noch ${cashbookMoney(alert.balance_cents)} im Safe.\n\nBitte versorge den Safe wieder mit neuem Geld und erfasse die Einzahlung samt Foto im Kassenbuch. Den aktuellen Bestand findest du in der Vereins-App unter Kassenbuch.\n\nVielen Dank!\nBSV Nordstern Radolfzell`};
+      const idempotencyKey=`cashbook-${transferred?'transfer':'low'}-${alert.id}`;
+      let useStandard=Number(alert.attempts||1)<=1;
+      if(!useStandard){const previous=await db.rpc('email_sponsor_snapshot_exists',{snapshot_key:await clubEmailSnapshotKey(idempotencyKey)});if(previous.error)throw previous.error;useStandard=previous.data===true;}
+      const mail=useStandard?await prepareEmail(originalMail,{idempotencyKey}):originalMail;
       const response = await fetcher('https://api.resend.com/emails', {
-        method: 'POST', headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json', 'idempotency-key': `cashbook-${transferred?'transfer':'low'}-${alert.id}` },
+        method: 'POST', headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json', 'idempotency-key': idempotencyKey },
         body: JSON.stringify({ from, to: [alert.recipient], ...mail }),
         signal: AbortSignal.timeout(15000),
       });
