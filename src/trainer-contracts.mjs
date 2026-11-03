@@ -11,11 +11,11 @@ export function contractCandidates(context,season){return compensationReport(con
 export function createTrainerContractDraft(context,season,personId,teamId,slot){
  compensationSeason(season);const row=contractCandidates(context,season).find(r=>r.personId===personId&&r.teamId===teamId&&r.slot===slot);
  if(!row||!row.enabled)throw new Error('Bitte eine aktive, eingeplante Trainerposition auswählen.');
- const p=row.person,start=season.slice(0,4)+'-07-01',end=season.slice(5)+'-06-30';
+ const p=row.person,sourceBank=p.personalBank??p.previousBank,start=season.slice(0,4)+'-07-01',end=season.slice(5)+'-06-30';
  return {templateVersion:TRAINER_CONTRACT_VERSION,season,personId,teamId,slot,name:p.name,street:p.street||'',postcode:p.postcode||'',city:p.city||'',email:p.email||'',birthDate:p.birth_date||'',guardianName:'',role:row.role==='trainer'?'Trainer':'Co-Trainer',teamName:row.teamName,start,end,
   monthlyCents:row.monthlyMin!==null&&row.monthlyMin===row.monthlyMax?row.monthlyMin:null,grossMonthlyCents:row.rateMin===row.rateMax?row.rateMin:null,share:row.share,license:row.license,
-  paidMonths:row.payments===10?[...TRAINER_CONTRACT_DEFAULT_MONTHS]:[],expectedPayments:row.payments,bank:{holder:p.previousBank?.holder||p.name,iban:p.previousBank?.iban||'',name:p.previousBank?.name||''},financialConfirmed:false,
-  source:{birthDate:p.birth_date||'',teamName:context.teams.find(t=>t.id===teamId)?.name||'',personVersion:p.version||0,planVersion:context.version||0,teamVersion:context.teams.find(t=>t.id===teamId)?.version||0},sourceIssues:[...row.issues,...(row.uncertain?['Lizenzstatus und Monatsbetrag klären']:[])]};
+  paidMonths:row.payments===10?[...TRAINER_CONTRACT_DEFAULT_MONTHS]:[],expectedPayments:row.payments,bank:{holder:sourceBank?.holder??p.name,iban:sourceBank?.iban??'',name:sourceBank?.name??''},financialConfirmed:false,
+  source:{personalVersion:p.personalVersion||0,birthDate:p.birth_date||'',teamName:context.teams.find(t=>t.id===teamId)?.name||'',personVersion:p.version||0,planVersion:context.version||0,teamVersion:context.teams.find(t=>t.id===teamId)?.version||0},sourceIssues:[...row.issues,...(row.uncertain?['Lizenzstatus und Monatsbetrag klären']:[])]};
 }
 export function validateTrainerContract(value){
  if(!value||value.templateVersion!==TRAINER_CONTRACT_VERSION)throw new Error('Bitte einen aktuellen Vertragsentwurf öffnen.');
@@ -29,7 +29,7 @@ export function validateTrainerContract(value){
  if(result.share!==null&&(typeof result.share!=='number'||!Number.isFinite(result.share)||result.share<0||result.share>100||Math.abs(result.share*100-Math.round(result.share*100))>.00001))throw new Error('Bitte den BSV-Anteil prüfen.');
  if(!['unknown','none','valid'].includes(result.license)||!Array.isArray(result.paidMonths)||result.paidMonths.some(m=>!TRAINER_CONTRACT_MONTHS.includes(m))||new Set(result.paidMonths).size!==result.paidMonths.length)throw new Error('Bitte Lizenz und Vergütungsmonate prüfen.');
  result.paidMonths=TRAINER_CONTRACT_MONTHS.filter(m=>result.paidMonths.includes(m));
- result.bank=Object.fromEntries(['holder','iban','name'].map(k=>{const s=result.bank?.[k];if(typeof s!=='string'||s.length>(k==='iban'?42:160)||/[\u0000-\u001f]/.test(s))throw new Error('Bitte die Bankverbindung prüfen.');return [k,s.trim()];}));result.bank.iban=result.bank.iban.replace(/\s/g,'').toUpperCase();
+ result.bank=Object.fromEntries(['holder','iban','name'].map(k=>{const s=result.bank?.[k];if(typeof s!=='string'||s.length>(k==='iban'?42:160)||/[\u0000-\u001f]/.test(s))throw new Error('Bitte die Bankverbindung prüfen.');return [k,s.trim()];}));result.bank.iban=result.bank.iban.replace(/[\s-]/g,'').toUpperCase();
  if(result.bank.iban&&!contractValidIban(result.bank.iban))throw new Error('Bitte eine gültige IBAN eingeben.');
  result.monthlyCents=result.grossMonthlyCents!==null&&result.share!==null?Math.round(result.grossMonthlyCents*result.share/100):null;
  result.financialConfirmed=result.financialConfirmed===true;return result;
@@ -55,7 +55,7 @@ export function trainerContractIssues(value){
  for(const month of value.paidMonths){const iso=contractMonthIso(value,month),last=new Date(Date.UTC(Number(iso.slice(0,4)),Number(iso.slice(5)),0)).toISOString().slice(0,10);if(iso+'-01'>value.end||last<value.start)issues.push('Vergütungsmonat liegt außerhalb der Laufzeit');}
  if(!value.financialConfirmed)issues.push('Vergütung und Vergütungsmonate bitte ausdrücklich prüfen');return [...new Set(issues)];
 }
-export function contractSourceChanged(snapshot,context){const p=context.people.find(p=>p.id===snapshot.personId),t=context.teams.find(t=>t.id===snapshot.teamId);return !p||p.active===false||!t||(p.birth_date||'')!==snapshot.source.birthDate||t.name!==snapshot.source.teamName||p.version!==snapshot.source.personVersion||(context.version||0)!==snapshot.source.planVersion||(t.version||0)!==snapshot.source.teamVersion||!context.assignments.some(a=>a.personId===snapshot.personId&&a.teamId===snapshot.teamId&&a.slot===snapshot.slot);}
+export function contractSourceChanged(snapshot,context){const p=context.people.find(p=>p.id===snapshot.personId),t=context.teams.find(t=>t.id===snapshot.teamId);return !p||(p.personalVersion||0)!==(snapshot.source.personalVersion||0)||p.active===false||!t||(p.birth_date||'')!==snapshot.source.birthDate||t.name!==snapshot.source.teamName||p.version!==snapshot.source.personVersion||(context.version||0)!==snapshot.source.planVersion||(t.version||0)!==snapshot.source.teamVersion||!context.assignments.some(a=>a.personId===snapshot.personId&&a.teamId===snapshot.teamId&&a.slot===snapshot.slot);}
 export function trainerContractAnnualIssues(snapshot,totals=[]){
  const proposed=new Map();for(const b of trainerContractBatches(snapshot))if(b.amount!==null)proposed.set(b.year,(proposed.get(b.year)||0)+b.amount);
  return [...proposed].filter(([year,cents])=>cents+Number(totals.find(t=>t.personId===snapshot.personId&&t.year===year)?.cents||0)>(year>=2026?330000:300000)).map(([year])=>'Die bekannten BSV-Vergütungen überschreiten den Übungsleiterfreibetrag im Auszahlungsjahr '+year+'. Diese Vertragsvorlage kann dafür nicht freigegeben werden.');

@@ -28,7 +28,7 @@ begin
  perform public.employee_management_request(actor,jsonb_build_object('action','save_assignment','groupKey','board','roleLabel','Trainer and employee','personId',person2,'version',0));
  insert into private.trainer_profiles(person_id,first_name,last_name,email,phone,qualification) values(person2,'Trainer','Contact Test','old@example.test','+49 111','Keep qualification');
  result:=public.employee_management_request(actor,jsonb_build_object('action','save_contact','personId',person2,'version',1,'contactSource','trainer','email','new@example.test','phone','+49 222','publicPhone',true));
- if result->>'ok'<>'true' or not exists(select 1 from private.trainer_profiles where person_id=person2 and email='new@example.test' and qualification='Keep qualification' and version=2) then raise exception 'Trainer contacts did not synchronize safely';end if;
+ if result->>'status'<>'403' or not exists(select 1 from private.trainer_profiles where person_id=person2 and email='old@example.test' and qualification='Keep qualification' and version=1) then raise exception 'Trainer contacts bypassed protected contract-data route';end if;
  insert into private.trainer_profiles(person_id,first_name,last_name) values(person,'Employee','Contact Test');
  if not exists(select 1 from private.trainer_profiles where person_id=person and email='employee-contacts-test@example.test' and phone='+49 123 456' and public_phone) then raise exception 'New trainer lost existing employee contacts';end if;
  raise notice 'Employee contacts: authorization, revisions, sharing, privacy and signed routing passed';

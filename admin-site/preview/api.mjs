@@ -6,7 +6,7 @@ import {hallTrainingPreviewApi} from '/preview-hall-training.mjs';
 import {editorialContactDirectory} from '/editorial-contacts.mjs';
 import {employeePreviewApi} from '/preview-employee-management.mjs';
 import {previewSuiteActivity} from '/preview-suite-activity.mjs';
-import {trainerPreviewApi} from '/preview-trainer-management.mjs';
+import {trainerPreviewApi,trainerPersonalPreviewApi} from '/preview-trainer-management.mjs';
 import {previewSuiteMembers,previewSuiteProfile,previewSuiteRoles,previewSuiteBrand,previewSuiteMutation,previewSetBrand} from '/preview-suite-users.mjs';
 import { refereePreviewApi } from '/preview-referees.mjs';
 import { cashbookPreviewApi,cashbookPreviewAdmin,cashbookPreviewMembers } from '/preview-cashbook.mjs';
@@ -287,10 +287,11 @@ export async function editorialPreviewApi(method = "GET", body = {}, query = {})
   if(body.action==='save_bsv_standard'){if(!previewAreas().includes('corporate_identity'))throw new Error('Keine Berechtigung');return previewSetBrand(body.colorScheme,body.themeKey);}
   if(body.action?.startsWith('resource_'))return resourcePreviewApi(body,previewPersona);
   if(body.action?.startsWith('hall_'))return hallTrainingPreviewApi(body,previewPersona);
-  if(body.action?.startsWith('employee_')){if(!previewAreas().includes('trainer_management'))throw new Error('Keine Berechtigung für Mitarbeiter.');return employeePreviewApi(body);}
+  if(body.action?.startsWith('employee_')){if(!previewAreas().includes('trainer_management'))throw new Error('Keine Berechtigung für Mitarbeiter.');const data=await employeePreviewApi(body);return body.action==='employee_list'?{...data,canViewPrivate:previewAreas().includes('trainer_contracts')}:data;}
   if(body.action?.startsWith('contract_')){if(!previewAreas().includes('trainer_contracts'))throw new Error('Keine Berechtigung für Trainerverträge.');return trainerContractsPreviewApi(body);}
   if(body.action?.startsWith('salary_')){if(!previewAreas().includes('trainer_compensation'))throw new Error('Keine Berechtigung für Trainergehälter.');return compensationPreviewApi(body);}
-  if(body.action?.startsWith('trainer_')){if(!previewAreas().includes('trainer_management'))throw new Error('Keine Berechtigung für die Trainerverwaltung.');return trainerPreviewApi(body);}
+  if(body.action?.startsWith('trainer_private_')){if(!previewAreas().includes('trainer_contracts'))throw new Error('Keine Berechtigung für Trainerverträge.');return trainerPersonalPreviewApi(body);}
+  if(body.action?.startsWith('trainer_')){if(!previewAreas().includes('trainer_management'))throw new Error('Keine Berechtigung für die Trainerverwaltung.');const data=await trainerPreviewApi(body);return body.action==='trainer_list'?{...data,canViewPrivate:previewAreas().includes('trainer_contracts')}:data;}
   if (body.action?.startsWith('cashbook_')) {
     if(!previewAreas().includes('cashbook'))throw new Error('Kein Recht für das Kassenbuch.');
     if(['cashbook_list','cashbook_book','cashbook_media','cashbook_edit','cashbook_cancel','cashbook_mark_transferred','cashbook_confirm_received'].includes(body.action))return cashbookPreviewApi({...body,action:body.action.replace('cashbook_','')},previewPersona);

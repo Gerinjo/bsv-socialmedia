@@ -1,4 +1,5 @@
 import {trainerSortedPeople,validateTrainerPerson,validateTrainerTeam,validateTrainerLifecycle} from '/trainer-management-model.mjs';
+import {validateTrainerPersonalDetails} from '/trainer-personal-data.mjs';
 import {trainerPreviewSeed} from '/preview-trainer-seed.mjs';
 const key='bsv-trainer-management-preview-v2';
 function state(){let data;try{data=JSON.parse(localStorage.getItem(key)||'null');}catch{}data||=structuredClone(trainerPreviewSeed);
@@ -6,8 +7,18 @@ function state(){let data;try{data=JSON.parse(localStorage.getItem(key)||'null')
  for(const a of data.assignments){a.personId=ids.get(a.personId)||a.personId;a.teamId=ids.get(a.teamId)||a.teamId;}
  if(ids.size)localStorage.setItem(key,JSON.stringify(data));return data;
 }
+export function trainerPreviewRaw(){return state();}
+export async function trainerPersonalPreviewApi(body){
+ const data=state(),p=data.people.find(p=>p.id===body.personId);if(!p)throw new Error('Trainerprofil nicht gefunden.');
+ const privateKey='bsv-trainer-personal-preview-v1',all=JSON.parse(localStorage.getItem(privateKey)||'{}'),d=all[p.id]||{version:0},details={};
+ for(const key of ['email','phone','mobile','street','postcode','city','notes'])details[key]=p[key]||'';details.birthDate=p.birth_date||'';details.bank={holder:p.name,iban:'',name:'',bic:''};Object.assign(details,d.details||{});
+ if(body.action==='trainer_private_get')return {personId:p.id,name:p.name,profileVersion:p.version,version:d.version,details,sources:{},imports:[],publicContact:{phone:p.mobile||p.phone||'',published:p.public_phone}};
+ if(body.action!=='trainer_private_save')throw new Error('Unbekannte Aktion.');
+ if(body.version!==d.version||body.profileVersion!==p.version)throw new Error('Die privaten Trainerdaten wurden inzwischen geändert. Bitte neu laden.');
+ all[p.id]={version:d.version+1,details:validateTrainerPersonalDetails(body.details)};if(body.publishPhone!==undefined&&body.publishPhone!==p.public_phone){p.public_phone=body.publishPhone;p.version++;localStorage.setItem(key,JSON.stringify(data));}localStorage.setItem(privateKey,JSON.stringify(all));return {ok:true,version:d.version+1};
+}
 export async function trainerPreviewApi(body){const data=state();const act=body.action.replace('trainer_','');
- if(act==='list'){let staff;try{staff=JSON.parse(localStorage.getItem('bsv-employee-management-preview-v1')||'null');}catch{}return {...data,people:trainerSortedPeople(data.people.map(p=>{const rolePhoto=staff?.assignments?.filter(a=>a.personId===p.id&&a.photo).sort((a,b)=>b.photoUpdated-a.photoUpdated)[0];return p.ownPhoto||!rolePhoto?{...p,photoInherited:false}:{...p,photo_url:rolePhoto.photo,photoInherited:true};}))};}
+ if(act==='list'){let staff;try{staff=JSON.parse(localStorage.getItem('bsv-employee-management-preview-v1')||'null');}catch{}return {...data,people:trainerSortedPeople(data.people.map(p=>{p={...p};for(const key of ['email','phone','mobile','street','postcode','city','birth_date','notes'])delete p[key];const rolePhoto=staff?.assignments?.filter(a=>a.personId===p.id&&a.photo).sort((a,b)=>b.photoUpdated-a.photoUpdated)[0];return p.ownPhoto||!rolePhoto?{...p,photoInherited:false}:{...p,photo_url:rolePhoto.photo,photoInherited:true};}))};}
  let result={ok:true};
  if(['set_active','delete_person'].includes(act)){
   const v=validateTrainerLifecycle(body),p=data.people.find(p=>p.id===v.personId);
@@ -17,7 +28,8 @@ export async function trainerPreviewApi(body){const data=state();const act=body.
   if(act==='set_active'){p.active=v.active;p.version++;p.updated_at=new Date().toISOString();result={ok:true,version:p.version};}
   else{data.people=data.people.filter(n=>n.id!==p.id);data.assignments=data.assignments.filter(a=>a.personId!==p.id);}
  }else if(act==='save_person'){
-  const v=validateTrainerPerson(body);let p=data.people.find(p=>p.id===v.personId);
+  if(['email','phone','mobile','street','postcode','city','birthDate','notes','publicPhone','publicEmail'].some(k=>Object.hasOwn(body,k)))throw new Error('Private Trainerdaten bitte im geschützten Bereich Vertragsdaten bearbeiten.');
+  const v=validateTrainerPerson(body);for(const k of ['email','phone','mobile','street','postcode','city','birthDate','notes','publicPhone','publicEmail'])delete v[k];let p=data.people.find(p=>p.id===v.personId);
   if(p&&p.version!==v.version)throw new Error('Die Person wurde inzwischen geändert. Bitte neu laden.');
   if(!p){p={id:crypto.randomUUID(),version:0,photo_url:null};data.people.push(p);}
   const map={firstName:'first_name',lastName:'last_name',websiteName:'website_name',birthDate:'birth_date',publicEmail:'public_email',publicPhone:'public_phone'};

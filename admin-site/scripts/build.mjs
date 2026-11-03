@@ -61,6 +61,7 @@ for (const [placeholder, source] of [
   ['__HALL_CSS__', await readFile(resolve(adminDir,'hall-training.css'),'utf8')],
   ['__TRAINER_ROLE_MODEL__',await readFile(resolve(repoDir,'src/trainer-team-roles.mjs'),'utf8')],
   ['__TRAINER_MODEL__', await readFile(resolve(repoDir,'src/trainer-management.mjs'),'utf8')],
+  ['__TRAINER_PERSONAL_MODEL__',(await readFile(resolve(repoDir,'src/trainer-personal-data.mjs'),'utf8')).replace(/^import .*;\n/gm,'').trimStart()],
   ['__TRAINER_SCRIPT__', await readFile(resolve(adminDir,'trainer-management.mjs'),'utf8')],
   ['__EMPLOYEE_MODEL__', await readFile(resolve(repoDir,'src/employee-management.mjs'),'utf8')],
   ['__EMPLOYEE_SCRIPT__', await readFile(resolve(adminDir,'employee-management.mjs'),'utf8')],

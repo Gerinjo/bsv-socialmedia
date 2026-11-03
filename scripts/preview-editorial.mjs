@@ -54,6 +54,7 @@ const files = new Map([
   ['/preview-trainer-compensation.mjs','admin-site/preview/trainer-compensation.mjs'],
   ['/preview-trainer-contracts.mjs','admin-site/preview/trainer-contracts.mjs'],
   ['/trainer-contracts-model.mjs','src/trainer-contracts.mjs'],
+  ['/trainer-personal-data.mjs','src/trainer-personal-data.mjs'],
   ['/trainer-contract-document.mjs','src/trainer-contract-document.mjs'],
   ['/trainer-contracts.mjs','src/trainer-contracts.mjs'],
   ['/trainer-compensation.mjs','src/trainer-compensation.mjs'],

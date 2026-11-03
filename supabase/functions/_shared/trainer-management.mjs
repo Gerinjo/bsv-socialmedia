@@ -1,6 +1,7 @@
 import {employeePhotoUrl} from './employee-management.mjs';
 import {TEAM_PHOTO_BUCKET,TRAINER_PHOTO_BUCKET,validateTrainerPerson,validateTrainerTeam,validateTrainerLifecycle} from '../../../src/trainer-management.mjs';
 import {decodeRefereeReceipt,receiptHash} from './referee-receipts.mjs';
+import {validateTrainerPersonalDetails} from '../../../src/trainer-personal-data.mjs';
 export async function trainerRpc(db,actor,payload){
  const {data,error}=await db.rpc('trainer_management_request',{actor,payload});
  if(error)throw Object.assign(new Error('Die Trainerdaten konnten nicht gespeichert oder geladen werden. Bitte die Eingaben prüfen und erneut versuchen.'),{status:400});
@@ -21,7 +22,12 @@ export async function handleTrainerManagement(db,actor,body){
   return data;
  }
  if(['set_active','delete_person'].includes(action))return trainerRpc(db,actor,{action,...validateTrainerLifecycle(body)});
- if(action==='save_person')return trainerRpc(db,actor,{action,...validateTrainerPerson(body)});
+ if(action==='save_person'){
+  const value=validateTrainerPerson(body);
+  // Missing private controls must never turn into blank writes through defaults.
+  for(const key of ['email','phone','mobile','street','postcode','city','birthDate','notes','publicPhone','publicEmail'])if(!Object.hasOwn(body,key))delete value[key];
+  return trainerRpc(db,actor,{action,...value});
+ }
  if(action==='save_team')return trainerRpc(db,actor,{action,...validateTrainerTeam(body)});
  if(['upload_team_photo','remove_team_photo'].includes(action)){
   if(!/^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i.test(body.teamId||'')||!Number.isSafeInteger(body.version)||body.version<1)throw new Error('Bitte eine gespeicherte Mannschaft auswählen.');
@@ -46,4 +52,18 @@ export async function handleTrainerManagement(db,actor,body){
   return trainerRpc(db,actor,{action:'save_photo',personId:body.personId,version:body.version,photoPath});
  }
  throw new Error('Unbekannte Traineraktion.');
+}
+export async function handleTrainerPersonalData(db,actor,body){
+ const action=String(body.action||'').replace(/^trainer_private_/,''),personId=body.personId;
+ if(!/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(personId||''))throw new Error('Bitte einen gespeicherten Trainer auswählen.');
+ if(!['get','save'].includes(action))throw new Error('Unbekannte Aktion für Vertragsdaten.');
+ let payload={action,personId};
+ if(action==='save'){
+  if(!Number.isSafeInteger(body.version)||body.version<0||!Number.isSafeInteger(body.profileVersion)||body.profileVersion<1)throw new Error('Bitte die Vertragsdaten neu laden.');
+  payload={...payload,version:body.version,profileVersion:body.profileVersion,details:validateTrainerPersonalDetails(body.details)};
+  if(body.publishPhone!==undefined){if(typeof body.publishPhone!=='boolean')throw new Error('Bitte die Telefonfreigabe prüfen.');payload.publishPhone=body.publishPhone;}
+ }
+ const {data,error}=await db.rpc('trainer_personal_request',{actor,payload});
+ if(error)throw Object.assign(new Error('Die privaten Trainerdaten konnten nicht geladen oder gespeichert werden.'),{status:503});
+ if(!data||data.error)throw Object.assign(new Error(data?.error||'Private Trainerdaten sind vorübergehend nicht verfügbar.'),{status:data?.status||503});return data;
 }

@@ -1,3 +1,4 @@
+import {handleTrainerPersonalData} from '../_shared/trainer-management.mjs';
 import {handleTrainerContracts} from '../_shared/trainer-contracts.mjs';
 import {contractPdf,inspectSignedContract} from '../_shared/trainer-contract-pdf.mjs';
 import {handleTrainerCompensation} from '../_shared/trainer-compensation.mjs';
@@ -718,6 +719,12 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       if(!hasArea('trainer_management'))return json({error:'area_forbidden',area:'trainer_management'},403);
       if(raw.length>7200000)return json({error:'Die Anfrage ist zu groß.'},413);
       return json(await handleEmployeeManagement(context.supabaseAdmin,userId,body));
+    }
+
+    if(action.startsWith('trainer_private_')){
+      if(!hasArea('trainer_contracts'))return json({error:'area_forbidden',area:'trainer_contracts'},403);
+      if(raw.length>20000)return json({error:'Die Anfrage ist zu groß.'},413);
+      return json(await handleTrainerPersonalData(context.supabaseAdmin,userId,body));
     }
 
     if (action.startsWith('trainer_')) {

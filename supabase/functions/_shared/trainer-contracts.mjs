@@ -35,7 +35,7 @@ export async function handleTrainerContracts(db,actor,body,{pdf,inspectSigned}={
  if(['delete','cancel'].includes(action))return rpc({action,id,version:c.version,confirmed:body.confirmed===true});
  if(['save','refresh'].includes(action)){
   if(c.status!=='draft')throw new Error('Freigegebene Verträge sind unveränderlich.');let snapshot;
-  if(action==='refresh'){const context=await rpc({action:'source',season:c.season});snapshot={...createTrainerContractDraft(context,c.season,c.person_id,c.team_id,c.slot),bank:c.snapshot.bank};}
+  if(action==='refresh'){const context=await rpc({action:'source',season:c.season});const draft=createTrainerContractDraft(context,c.season,c.person_id,c.team_id,c.slot);snapshot={...draft,bank:context.people.find(p=>p.id===c.person_id)?.personalBank?draft.bank:c.snapshot.bank};}
   else{const editable=['street','postcode','city','birthDate','guardianName','start','end','monthlyCents','grossMonthlyCents','share','license','paidMonths','bank','financialConfirmed'];snapshot={...c.snapshot};for(const key of editable)if(Object.hasOwn(body.details||{},key))snapshot[key]=body.details[key];}
   return rpc({action:'save',id,version:c.version,snapshot:validateTrainerContract(snapshot)});
  }
