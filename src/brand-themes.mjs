@@ -5,6 +5,7 @@ export const BSV_THEMES = [
   {key:'christmas',label:'Weihnachten',description:'Weihnachtsbaum mit Krippe & Geschenken'},
   {key:'easter',label:'Ostern',description:'Osterhase mit Ostereiern & Glocken'},
   {key:'summer',label:'Sommerferien',description:'Surferboy · Sommer am See'},
+  {key:'girls_day',label:'Girls’ Day',description:'Jubelnde Mädchen · gemeinsam im Team'},
 ];
 export function suiteBrandTheme(value = 'football') {
   if (!BSV_THEMES.some(theme => theme.key === value)) throw new Error('Bitte ein gültiges BSV-Theme auswählen.');

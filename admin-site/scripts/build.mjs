@@ -26,7 +26,7 @@ const visionOcr = await readFile(resolve(adminDir, 'vision-ocr.mjs'), 'utf8');
 const tesseract = await readFile(resolve(repoDir, 'node_modules/tesseract.js/dist/tesseract.min.js'), 'utf8');
 let coachHtml = await readFile(resolve(adminDir, 'referee-coach.html'), 'utf8');
 const brandAssets = {};
-for(const key of ['football','christmas','easter','summer'])for(const version of [...new Set([1,2,BRAND_THEME_VERSIONS[key]])])brandAssets[`/brand/themes/${key}-v${version}.png`]={type:'image/png',base64:true,body:(await readFile(resolve(adminDir,`assets/brand-themes/${key}-v${version}.png`))).toString('base64')};
+for(const key of Object.keys(BRAND_THEME_VERSIONS))for(const version of Array.from({length:BRAND_THEME_VERSIONS[key]},(_,index)=>index+1))brandAssets[`/brand/themes/${key}-v${version}.png`]={type:'image/png',base64:true,body:(await readFile(resolve(adminDir,`assets/brand-themes/${key}-v${version}.png`))).toString('base64')};
 const cashbookAssets = {
   ...brandAssets,
   '/kassenbuch/manifest.webmanifest': {type:'application/manifest+json',body:JSON.stringify(cashbookManifest)},

@@ -138,7 +138,7 @@ const server = createServer(async (request, response) => {
       response.setHeader('Content-Type','image/png');response.end(await readFile(new URL('admin-site/preview/receipt-example.png',root)));return;
     }
     if (path === '/kassenbuch' || path === '/kassenbuch/') {response.writeHead(302,{Location:'/?area=cashbook&previewUser=trainer'});response.end();return;}
-    if (path.startsWith('/kassenbuch/') || path === '/suite-sw.js') {
+    if (path.startsWith('/kassenbuch/') || path.startsWith('/brand/themes/') || path === '/suite-sw.js') {
       const assets=JSON.parse(await readFile(new URL('.preview/cashbook-assets.json',root),'utf8'));
       const asset=assets[path];if(asset){response.setHeader('Content-Type',asset.type);response.end(asset.base64?Buffer.from(asset.body,'base64'):asset.body);return;}
     }

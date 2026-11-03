@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {BRAND_THEME_VERSIONS} from '../src/brand-theme-versions.mjs';
 const assets=new URL('../admin-site/assets/brand-themes/',import.meta.url);
 const images={};
-for(const key of ['football','christmas','easter','summer']){
+for(const key of Object.keys(BRAND_THEME_VERSIONS)){
   const version=BRAND_THEME_VERSIONS[key];
   const source=fileURLToPath(new URL(`sources/${key}-v${version}.png`,assets));
   for(const extension of ['webp','png']){
