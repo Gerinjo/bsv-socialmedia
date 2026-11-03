@@ -168,6 +168,9 @@
   background: var(--accent-soft);
   border-color: var(--accent-border);
 }
+#editorialArea .ed-issue {
+  color: var(--ink);
+}
 .ed-newsletter-archive { margin-top: 18px; border-top: 1px solid var(--accent-border); padding-top: 16px; }
 .ed-newsletter-archive > summary { cursor: pointer; font-weight: 700; padding: 8px 0; }
 .ed-archive-row { display: flex; align-items: center; gap: 8px; }

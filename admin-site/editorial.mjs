@@ -30,7 +30,7 @@ export function createEditorialWorkspace(
     month = new Date()
       .toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" })
       .slice(0, 7),
-    filter = "",
+    filter = "stadium",
     loaded = false;
   let editing = null,
     editingIssue = null,
@@ -41,6 +41,8 @@ export function createEditorialWorkspace(
     rewriteAvailable = false;
   const expandedPlanGroups = new Set();
   let newsletterArchiveOpen = false;
+  let refreshRequest = 0;
+  const views = {};
   const $ = (selector) => root.querySelector(selector);
   const kindLabel = (kind) =>
     kind === "stadium" ? "Stadionheft" : "Newsletter";
@@ -64,10 +66,10 @@ export function createEditorialWorkspace(
   const call = (action, data = {}) =>
     api("POST", { action: `editorial_${action}`, ...data });
   root.innerHTML = `
-    <section class="panel editorial-hero"><div><span class="editorial-eyebrow">VEREINSREDAKTION</span><h2>Redaktion für Heft & Newsletter</h2><p>Stadionhefte und Newsletter gemeinsam planen, schreiben und fertigstellen.</p></div><button id="edNewIssue" class="primary-action">＋ Ausgabe anlegen</button></section>
-    <section class="panel"><div class="editorial-calendar-heading"><div><h3>Redaktionskalender</h3><div class="editorial-legend"><span class="ed-start">● Redaktionsstart</span><span class="ed-close">● Redaktionsschluss</span><span class="ed-publish">● Erscheinung</span><span>▰ Redaktionszeitraum</span></div></div><label>Ausgabeart<select id="edFilter"><option value="">Alle Ausgaben</option><option value="stadium">Stadionheft</option><option value="newsletter">Newsletter</option></select></label></div><div class="editorial-month-nav"><button class="ghost" id="edPrev" aria-label="Vorheriger Monat">←</button><h3 id="edMonth" aria-live="polite"></h3><button class="ghost" id="edNext" aria-label="Nächster Monat">→</button><button class="ghost" id="edToday">Heute</button></div><div class="editorial-calendar-scroll"><div id="edCalendar" class="editorial-calendar"></div></div></section>
-    <div class="editorial-columns"><section class="panel"><h3>Ausgaben</h3><div id="edIssues" aria-live="polite"></div></section><section class="panel" id="edDetail"><div class="empty">Lege die erste Ausgabe an oder wähle eine Ausgabe aus.</div></section></div>
-    <dialog id="edIssueDialog" aria-labelledby="edIssueHeading"><div class="dialog-header"><h2 id="edIssueHeading">Ausgabe anlegen</h2><button type="button" class="ghost" id="edIssueClose" aria-label="Schließen">✕</button></div><form id="edIssueForm" class="fields"><label>Ausgabeart<select name="kind"><option value="stadium">Stadionheft</option><option value="newsletter">Newsletter</option></select></label><label>Titel<input name="title" required maxlength="180" placeholder="Zum Beispiel: Nordstern · Heimspielausgabe 01"></label><label>Redaktionsstart<input name="starts_on" type="date" required></label><label>Redaktionsschluss<input name="closes_on" type="date" required></label><label>Erscheinungsdatum<input name="publishes_on" type="date" required></label><p class="small">Im Stadionheft werden Grußworte, Trainerbegrüßungen und Sportdaten als feste Beiträge angelegt. Newsletter starten mit einem freien Inhaltsplan.</p><div class="wide toolbar"><button type="submit">Ausgabe speichern</button><span id="edIssueMessage" role="status"></span></div></form></dialog>
+    <section class="panel editorial-hero"><div><span class="editorial-eyebrow">VEREINSREDAKTION</span><h2 id="edWorkspaceHeading">Stadionheft</h2><p id="edWorkspaceDescription">Heftausgaben planen, Beiträge bearbeiten und veröffentlichen.</p></div><button id="edNewIssue" class="primary-action">＋ Ausgabe anlegen</button></section>
+    <section class="panel"><div class="editorial-calendar-heading"><div><h3 id="edCalendarHeading">Heftkalender</h3><div class="editorial-legend"><span class="ed-start">● Redaktionsstart</span><span class="ed-close">● Redaktionsschluss</span><span class="ed-publish">● Erscheinung</span><span>▰ Redaktionszeitraum</span></div></div></div><div class="editorial-month-nav"><button class="ghost" id="edPrev" aria-label="Vorheriger Monat">←</button><h3 id="edMonth" aria-live="polite"></h3><button class="ghost" id="edNext" aria-label="Nächster Monat">→</button><button class="ghost" id="edToday">Heute</button></div><div class="editorial-calendar-scroll"><div id="edCalendar" class="editorial-calendar"></div></div></section>
+    <div class="editorial-columns"><section class="panel"><h3 id="edIssueListHeading">Stadionhefte</h3><div id="edIssues" aria-live="polite"></div></section><section class="panel" id="edDetail"><div class="empty">Lege die erste Ausgabe an oder wähle eine Ausgabe aus.</div></section></div>
+    <dialog id="edIssueDialog" aria-labelledby="edIssueHeading"><div class="dialog-header"><h2 id="edIssueHeading">Ausgabe anlegen</h2><button type="button" class="ghost" id="edIssueClose" aria-label="Schließen">✕</button></div><form id="edIssueForm" class="fields"><input type="hidden" name="kind" value="stadium"><label>Titel<input name="title" required maxlength="180" placeholder="Zum Beispiel: Nordstern · Heimspielausgabe 01"></label><label>Redaktionsstart<input name="starts_on" type="date" required></label><label>Redaktionsschluss<input name="closes_on" type="date" required></label><label>Erscheinungsdatum<input name="publishes_on" type="date" required></label><p class="small" id="edIssueKindHint">Im Stadionheft werden Grußworte, Trainerbegrüßungen und Sportdaten als feste Beiträge angelegt.</p><div class="wide toolbar"><button type="submit">Ausgabe speichern</button><span id="edIssueMessage" role="status"></span></div></form></dialog>
     <dialog id="edArticleDialog" aria-labelledby="edArticleHeading"><div class="dialog-header"><div><span class="editorial-eyebrow">TEXTREDAKTION</span><h2 id="edArticleHeading">Beitrag bearbeiten</h2></div><button type="button" class="ghost" id="edArticleClose" aria-label="Editor schließen">✕</button></div><form id="edArticleForm"><div class="fields"><label class="wide">Titel<input name="title" required maxlength="180"></label><label>Abteilung<select name="department_id"></select></label><label>Autor / Verantwortlich<input name="author" maxlength="180" placeholder="Name"></label><div><span class="small">Freigabestatus</span><p id="edApprovalStatus"></p><input type="hidden" name="status" value="draft"></div><div class="small" id="edSource"></div><fieldset class="wide ed-person-selection" id="edPersonSelection"><legend>Personen zum Beitrag auswählen</legend><p class="small">Bis zu vier Personen auswählen. Die passenden Bilder aus der Mitarbeiterverwaltung erscheinen beim Beitrag.</p><div id="edPersonCandidates"></div></fieldset><div class="wide ed-dictation" id="edDictation"><button type="button" class="ghost" id="edDictate" aria-pressed="false" aria-controls="edBody" aria-describedby="edDictationHint"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg><span>Diktieren</span></button><p class="small" id="edDictationHint"></p><p class="small" id="edDictationStatus" role="status" aria-live="polite"></p></div><label class="wide">Beitrag<textarea id="edBody" name="body" maxlength="30000" rows="15" spellcheck="true" lang="de" placeholder="Hier ist Platz für euren Beitrag …"></textarea></label><fieldset class="wide ed-gallery-editor" id="edGalleryEditor"><legend>Bildgruppen zum Beitrag</legend><p class="small">Jeder Upload bildet eine eigene Gruppe. Wähle je Gruppe ein Titelbild für die Heftseite. Ein Klick darauf öffnet alle Bilder der Gruppe.</p><div class="ed-team-photo-picker"><label>Mannschaftsbild auswählen<select id="edTeamPhotoSelect"><option value="">Mannschaftsbilder werden geladen …</option></select></label><p id="edTeamPhotoStatus" class="small" role="status"></p><img id="edTeamPhotoPreview" alt="" hidden style="max-width:100%;max-height:220px;object-fit:contain"><button id="edAddTeamPhoto" type="button" class="ghost">Mannschaftsbild zum Beitrag hinzufügen</button></div><div id="edGalleryGroups"></div><label>Neue Bildgruppe hinzufügen (bis 20 Bilder)<input id="edGalleryFiles" type="file" accept="image/jpeg,image/png,image/webp" multiple></label><p class="small">Bis zu 6 Gruppen. JPG, PNG oder WebP, bis 5 MB je Original. Fotos werden auf höchstens 1600 Pixel verkleinert.</p></fieldset></div><p class="small" id="edRewriteHint"></p><div class="toolbar"><button type="submit" id="edSaveArticle">Speichern & überarbeiten</button><button type="submit" class="ghost" id="edRetryRewrite" data-rewrite="true">Erneut überarbeiten</button><button type="button" class="ghost" id="edHistory">Original & Verlauf</button><button type="button" class="ghost hidden" id="edDeleteArticle">Beitrag löschen</button><button type="button" class="ghost hidden" id="edWaiveArticle">Verzicht</button><button type="button" class="primary-action" id="edApproveArticle">Beitrag freigeben</button><span class="small" id="edWordCount"></span></div><p id="edArticleMessage" role="status" aria-live="polite"></p><div id="edRevisionList"></div></form></dialog>
     <dialog id="edEventDialog" aria-labelledby="edEventHeading"><div class="dialog-header"><h2 id="edEventHeading">Veranstaltung ins Heft aufnehmen</h2><button class="ghost" id="edEventClose" type="button" aria-label="Schließen">✕</button></div><form id="edEventForm" class="fields"><label class="wide">Termin auswählen<select id="edEventSource"><option value="">Eigene Veranstaltung</option></select></label><label class="wide">Titel<input name="title" maxlength="180" required></label><label>Datum<input type="date" name="date" required></label><label>Uhrzeit<input type="time" name="time"></label><label class="wide">Ort<input name="location" maxlength="200"></label><label class="wide">Beschreibung im Heft<textarea name="description" required maxlength="30000" rows="6"></textarea></label><p class="small wide">Der Termin erscheint als eigener Beitrag im Heft und lässt sich in der Titelblatt-Karte für das Cover auswählen. Bitte bei wiederkehrenden Stories das gewünschte Veranstaltungsdatum prüfen. Der Beitrag muss anschließend freigegeben werden.</p><div class="toolbar wide"><button type="submit">Veranstaltung aufnehmen</button><span id="edEventMessage" role="status"></span></div></form></dialog>
     <dialog id="edNewsletterSourceDialog" aria-labelledby="edNewsletterSourceHeading"><div class="dialog-header"><h2 id="edNewsletterSourceHeading">Aus dem Stadionheft übernehmen</h2><button type="button" class="ghost" id="edNewsletterSourceClose" aria-label="Schließen">✕</button></div><form id="edNewsletterSourceForm"><label>Veröffentlichtes Stadionheft<select id="edNewsletterSourceIssue"></select></label><p class="small">Wähle die Artikel für deinen Newsletter. Die Vorschau unten zeigt die gekürzten Texte. Jeder Auszug erhält einen Link zur vollständigen Newsletter-Ausgabe.</p><p id="edNewsletterSourceInfo" class="small"></p><button type="button" class="ghost" id="edNewsletterSourceLatest" hidden>Aktuelle Heftfassung laden</button><div id="edNewsletterSourceArticles" class="ed-newsletter-source-list"></div><p id="edNewsletterSourceCount" class="small" aria-live="polite"></p><p id="edNewsletterSourceMessage" role="status"></p><div class="toolbar"><button id="edNewsletterSourceSave" type="submit">Artikelauswahl speichern</button></div></form></dialog>
@@ -494,7 +496,7 @@ export function createEditorialWorkspace(
   async function selectIssue(id, force = false) {
     if (!force && (busy || !canLeaveCover())) return;
     const request = ++selectionRequest;
-    const next = issues.find((issue) => issue.id === id);
+    const next = issues.find((issue) => issue.id === id && issue.kind === filter);
     if (!next) return;
     $("#edDetail").innerHTML =
       '<p class="empty" role="status">Beiträge werden geladen …</p>';
@@ -510,8 +512,19 @@ export function createEditorialWorkspace(
         $("#edDetail").textContent = error.message;
     }
   }
-  async function refresh() {
+  function workspaceHeading() {
+    const newsletter = filter === 'newsletter';
+    $('#edWorkspaceHeading').textContent = kindLabel(filter);
+    $('#edWorkspaceDescription').textContent = newsletter ? 'Newsletter planen, gestalten und für den Versand fertigstellen.' : 'Heftausgaben planen, Beiträge bearbeiten und veröffentlichen.';
+    $('#edNewIssue').textContent = `＋ ${kindLabel(filter)} anlegen`;
+    $('#edCalendarHeading').textContent = newsletter ? 'Newsletter-Kalender' : 'Heftkalender';
+    $('#edIssueListHeading').textContent = newsletter ? 'Newsletter-Ausgaben' : 'Stadionhefte';
+    $('#edIssueKindHint').textContent = newsletter ? 'Newsletter starten mit einem freien Inhaltsplan. Artikel aus veröffentlichten Stadionheften kannst du später übernehmen.' : 'Im Stadionheft werden Grußworte, Trainerbegrüßungen und Sportdaten als feste Beiträge angelegt.';
+  }
+  async function refresh(preferredId = selected?.id) {
+    const request = ++refreshRequest, kind = filter;
     const data = await call("list");
+    if (request !== refreshRequest || kind !== filter) return;
     issues = data.issues;
     departments = data.departments;
     teams = data.teams || [];
@@ -520,14 +533,12 @@ export function createEditorialWorkspace(
     loaded = true;
     calendar();
     issueList();
-    if (selected && issues.some((i) => i.id === selected.id))
-      await selectIssue(selected.id, true);
+    const next = issues.find(issue => issue.id === preferredId && issue.kind === filter) || issues.find(issue => issue.kind === filter && !(issue.kind === 'newsletter' && issue.published_at));
+    if (next) await selectIssue(next.id, true);
     else {
       selected = null;
       articles = [];
-      const next = issues.find(issue => !(issue.kind === 'newsletter' && issue.published_at));
-      if (next) await selectIssue(next.id, true);
-      else $('#edDetail').innerHTML = '<p class="empty">Wähle eine Ausgabe aus oder lege eine neue an.</p>';
+      $('#edDetail').innerHTML = '<p class="empty">Wähle eine Ausgabe aus oder lege eine neue an.</p>';
     }
   }
   function openIssue(issue = null) {
@@ -537,8 +548,9 @@ export function createEditorialWorkspace(
     form.reset();
     $("#edIssueMessage").textContent = "";
     $("#edIssueHeading").textContent = issue
-      ? "Ausgabe bearbeiten"
-      : "Ausgabe anlegen";
+      ? `${kindLabel(filter)} bearbeiten`
+      : `${kindLabel(filter)} anlegen`;
+    form.elements.kind.value = filter;
     form.elements.kind.disabled = Boolean(issue);
     if (issue)
       for (const key of [
@@ -816,7 +828,7 @@ export function createEditorialWorkspace(
     event.preventDefault();
     const form = event.currentTarget;
     const payload = Object.fromEntries(new FormData(form));
-    payload.kind = editingIssue?.kind || payload.kind;
+    payload.kind = editingIssue?.kind || filter;
     if (
       payload.starts_on > payload.closes_on ||
       payload.closes_on > payload.publishes_on
@@ -1221,11 +1233,6 @@ export function createEditorialWorkspace(
   }
 
   $("#edNewIssue").onclick = () => openIssue();
-  $("#edFilter").onchange = (event) => {
-    filter = event.target.value;
-    calendar();
-    issueList();
-  };
   function moveMonth(delta) {
     const date = new Date(`${month}-01T12:00:00Z`);
     date.setUTCMonth(date.getUTCMonth() + delta);
@@ -1240,18 +1247,35 @@ export function createEditorialWorkspace(
       .slice(0, 7);
     calendar();
   };
+  workspaceHeading();
   calendar();
   return {
     canLeave,
-    async open() {
-      if (busy || !canLeaveCover()) return;
+    async open({kind = filter} = {}) {
+      if (busy || !canLeaveCover() || !['stadium','newsletter'].includes(kind)) return;
+      let preferredId = selected?.id;
+      if (kind !== filter) {
+        views[filter] = {month, selectedId:selected?.id};
+        filter = kind;
+        preferredId = views[kind]?.selectedId;
+        month = views[kind]?.month || new Date().toLocaleDateString('sv-SE', {timeZone:'Europe/Berlin'}).slice(0,7);
+        selectionRequest++;
+        selected = null;
+        articles = [];
+        $('#edDetail').innerHTML = '<p class="empty" role="status">Ausgaben werden geladen …</p>';
+      }
+      workspaceHeading();
+      calendar();
+      issueList();
       try {
-        await refresh();
+        await refresh(preferredId);
       } catch (error) {
-        show(`Redaktion konnte nicht geladen werden: ${error.message}`, true);
+        if (kind !== filter) return;
+        show(`${kindLabel(filter)} konnte nicht geladen werden: ${error.message}`, true);
+        $('#edDetail').textContent = `${kindLabel(filter)} konnte nicht geladen werden. Bitte versuche es erneut.`;
         if (!loaded)
           $("#edIssues").textContent =
-            "Die Redaktion ist noch nicht verfügbar. Bitte wende dich an die Administration.";
+            `${kindLabel(filter)} ist noch nicht verfügbar. Bitte wende dich an die Administration.`;
       }
     },
   };
