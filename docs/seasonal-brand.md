@@ -36,3 +36,10 @@ Im BSV-Standard stehen neben den ursprünglichen Vereinsfarben fünf Vorschläge
 Als eigenes Theme `girls_day` stehen vier jubelnde, KI-generierte junge Fußballerinnen in Grün-Weiß zur Auswahl. Das freigestellte Original liegt unter `admin-site/assets/brand-themes/sources/girls_day-v1.png`, der verwendete Bildprompt direkt daneben. Die Suite bettet ein 480-Pixel-WebP in SVG-Vorschauen ein; Newsletter erhalten das dauerhafte PNG `/brand/themes/girls_day-v1.png`. Die Vereinshomepage verwendet ein transparentes 1024-Pixel-WebP. Die Auswahl ist unabhängig vom Girls’-Day-Farbschema und wird erst durch Speichern übernommen.
 
 Migration `20261103103932_girls_day_theme.sql` erweitert ausschließlich die erlaubten Theme-Schlüssel und die Validierung der bestehenden service-only Speicherfunktion. Aktuelles Theme, Farben, Berechtigungen und gespeicherte Veröffentlichungen werden nicht umgestellt. Die Speicherprüfung wurde in einer zurückgerollten Transaktion für gültiges Theme, unbekanntes Theme und fehlende Berechtigung geprüft.
+
+
+## BSV green palettes and Girls’ Day revision (2026-11-03)
+
+Two additional proposals, `bsv_meadow` and `bsv_light`, keep the BSV green identity. The light proposal uses a pale green hero with dark green foreground roles, including newsletter headers/footers and website links. Choosing a proposal remains a draft until the existing Save action.
+
+Girls’ Day v2 changes the players’ socks to black; the v1 image and durable newsletter URL remain available. SVG previews and newsletter headers add a crisp Girls’ Day title and visible AI disclosure. The website uses the football player’s desktop height calculation for this motif, with responsive sizing on smaller screens, a separate title badge, and the existing linked AI disclosure. The original edit prompt is stored beside the source PNG. No saved live theme or palette is activated during implementation or QA.
