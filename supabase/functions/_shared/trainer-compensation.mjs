@@ -1,3 +1,4 @@
+import {financialDirectoryPhotos} from './trainer-financial-photos.mjs';
 import {createCompensationPlan,validateCompensationPlan,compensationSeason} from '../../../src/trainer-compensation.mjs';
 export async function compensationRpc(db,actor,payload){
  const {data,error}=await db.rpc('trainer_compensation_request',{actor,payload});
@@ -12,7 +13,7 @@ export async function handleTrainerCompensation(db,actor,body){
   const data=await compensationRpc(db,actor,{action,season});
   const defaults=createCompensationPlan(data,season);
   data.plan=data.plan?validateCompensationPlan({...data.plan,teams:{...defaults.teams,...data.plan.teams}}):defaults;
-  return data;
+  return financialDirectoryPhotos(db,data);
  }
  if(action==='save'){
   if(!Number.isSafeInteger(body.version)||body.version<0)throw new Error('Ungültiger Datenstand. Bitte neu laden.');

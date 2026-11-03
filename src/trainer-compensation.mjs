@@ -48,3 +48,5 @@ export function compensationCsv(report){
  for(const t of report.teams)for(const r of t.rows)rows.push([t.label,r.name,r.websiteRole,r.enabled?'Ja':'Nein',r.license,r.payments,r.share,amount(r.rateMin),amount(r.rateMax),amount(r.seasonMin),amount(r.seasonMax),r.issues.join(', ')]);
  return '\ufeff'+rows.map(r=>r.map(cell).join(';')).join('\r\n');
 }
+
+export function compensationCategories(team,role){const age=team.compensationAge||compensationAge(team),female=/frauen|juniorinnen|mädchen|damen/i.test((team.slug||'')+' '+(team.name||''));return {department:age==='senior'?'Aktive':age?'Jugend':'Nicht zugeordnet',age:age==='senior'?'Aktive':{bambini:'Bambini',f:'F-Jugend',e:'E-Jugend',d:'D-Jugend',c:'C-Jugend',b:'B-Jugend',a:'A-Jugend'}[age]||'Ohne Altersklasse',gender:female?'Frauen / Mädchen':age||/herren|junioren/i.test((team.slug||'')+' '+(team.name||''))?'Herren / Jungen':'Nicht zugeordnet',roleLabel:role==='co'?'Co-Trainer':'Trainer',cooperation:/\bSG\b|Spielgemeinschaft/i.test(team.name||'')?'Spielgemeinschaft':'BSV-Mannschaft'};}

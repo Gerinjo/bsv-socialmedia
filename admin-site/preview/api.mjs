@@ -1,3 +1,4 @@
+import {trainerFinancePreviewApi} from '/preview-trainer-finances.mjs';
 import {contractPortalPreviewApi} from '/preview-trainer-contract-portal.mjs';
 import {trainerContractsPreviewApi} from '/preview-trainer-contracts.mjs';
 import {compensationPreviewApi} from '/preview-trainer-compensation.mjs';
@@ -291,6 +292,7 @@ export async function editorialPreviewApi(method = "GET", body = {}, query = {})
   if(body.action?.startsWith('employee_')){if(!previewAreas().includes('trainer_management'))throw new Error('Keine Berechtigung für Mitarbeiter.');const data=await employeePreviewApi(body);return body.action==='employee_list'?{...data,canViewPrivate:previewAreas().includes('trainer_contracts')}:data;}
   if(body.action?.startsWith('my_contract_'))return contractPortalPreviewApi(body,previewPersona,previewAreas().includes('trainer_contracts'));
   if(body.action?.startsWith('contract_')){if(!previewAreas().includes('trainer_contracts'))throw new Error('Keine Berechtigung für Trainerverträge.');return trainerContractsPreviewApi(body);}
+  if(body.action?.startsWith('finance_')){if(!previewAreas().some(a=>['trainer_contracts','trainer_compensation'].includes(a)))throw new Error('Keine Berechtigung für Trainerfinanzen.');return trainerFinancePreviewApi(body,previewAreas().includes('trainer_contracts'));}
   if(body.action?.startsWith('salary_')){if(!previewAreas().includes('trainer_compensation'))throw new Error('Keine Berechtigung für Trainergehälter.');return compensationPreviewApi(body);}
   if(body.action?.startsWith('trainer_private_')){if(!previewAreas().includes('trainer_contracts'))throw new Error('Keine Berechtigung für Trainerverträge.');return trainerPersonalPreviewApi(body);}
   if(body.action?.startsWith('trainer_')){if(!previewAreas().includes('trainer_management'))throw new Error('Keine Berechtigung für die Trainerverwaltung.');const data=await trainerPreviewApi(body);return body.action==='trainer_list'?{...data,canViewPrivate:previewAreas().includes('trainer_contracts')}:data;}

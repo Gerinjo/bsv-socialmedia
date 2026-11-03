@@ -1,3 +1,4 @@
+import {handleTrainerFinances} from '../_shared/trainer-finances.mjs';
 import {handleTrainerPersonalData} from '../_shared/trainer-management.mjs';
 import {handleTrainerContracts} from '../_shared/trainer-contracts.mjs';
 import {handleContractPortal} from '../_shared/trainer-contract-portal.mjs';
@@ -713,6 +714,12 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       if(!hasArea('trainer_contracts'))return json({error:'area_forbidden',area:'trainer_contracts'},403);
       if(raw.length>11500000)return json({error:'Die Anfrage ist zu groß.'},413);
       return json(await handleTrainerContracts(context.supabaseAdmin,userId,body,{pdf:contractPdf,inspectSigned:inspectSignedContract}));
+    }
+
+    if(action.startsWith('finance_')){
+      if(!hasAnyArea('trainer_compensation','trainer_contracts'))return json({error:'area_forbidden'},403);
+      if(raw.length>4096)return json({error:'Die Anfrage ist zu groß.'},413);
+      return json(await handleTrainerFinances(context.supabaseAdmin,userId,body));
     }
 
     if(action.startsWith('salary_')){

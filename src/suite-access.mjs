@@ -1,22 +1,13 @@
 export const SUITE_AREAS=['social_media','social_media_admin','sponsoring','editorial','referees','corporate_identity','club_crests','trainer_management','trainer_compensation','trainer_contracts','hall_training','resources','cashbook','user_management'];
-export const SUITE_AREA_LABELS={my_contract:'Mein Vertrag',social_media:'Social Media',social_media_admin:'Social Media · Administration',sponsoring:'Sponsoring',editorial:'Stadionheft & Newsletter',stadium:'Stadionheft',newsletter:'Newsletter',referees:'Schiedsrichter',corporate_identity:'Corporate Identity',club_crests:'Vereinswappen',trainer_management:'Ehrenamtliche',trainer_compensation:'Trainergehälter',trainer_contracts:'Trainerverträge',resources:'Ressourcenverwaltung',hall_training:'Hallentraining',cashbook:'Kassenbuch',user_management:'Benutzerverwaltung'};
-export function suitePermissionArea(area){return ['stadium','newsletter'].includes(area)?'editorial':area;}
+export const SUITE_AREA_LABELS={football_management:'Mannschaften & Trainer',trainer_assignments:'Zuordnung & Verträge',trainer_finances:'Auswertung Trainerfinanzen',my_contract:'Mein Vertrag',social_media:'Social Media',social_media_admin:'Social Media · Administration',sponsoring:'Sponsoring',editorial:'Stadionheft & Newsletter',stadium:'Stadionheft',newsletter:'Newsletter',referees:'Schiedsrichter',corporate_identity:'Corporate Identity',club_crests:'Vereinswappen',trainer_management:'Ehrenamtliche',trainer_compensation:'Gehaltskonzept',trainer_contracts:'Trainerverträge',resources:'Ressourcenverwaltung',hall_training:'Hallentraining',cashbook:'Kassenbuch',user_management:'Benutzerverwaltung'};
+export function suitePermissionArea(area){return ['stadium','newsletter'].includes(area)?'editorial':area==='football_management'?'trainer_management':area;}
 // Count sidebar functions, with Social Media administration inside its parent.
+export function suiteHasArea(areas=[],area){if(['trainer_assignments','trainer_finances'].includes(area))return areas.includes('trainer_compensation')||areas.includes('trainer_contracts');return areas.includes(suitePermissionArea(area));}
 export function suiteNavigationAreas(areas=[]){
- const allowed=new Set(areas.filter(area=>(SUITE_AREAS.includes(area)||area==='my_contract')));
- return ['corporate_identity','sponsoring','social_media','editorial','club_crests','trainer_management','trainer_compensation','trainer_contracts','my_contract','hall_training','resources','referees','cashbook','user_management']
-  .map(area=>area==='social_media'&&!allowed.has(area)&&allowed.has('social_media_admin')?'social_media_admin':area)
-  .filter(area=>allowed.has(area))
-  .flatMap(area=>area==='editorial'?['stadium','newsletter']:[area]);
+ const result=['corporate_identity','sponsoring','social_media','editorial','club_crests','trainer_management','football_management','trainer_compensation','trainer_assignments','trainer_finances','my_contract','hall_training','resources','referees','cashbook','user_management'].map(a=>a==='social_media'&&!areas.includes(a)&&areas.includes('social_media_admin')?'social_media_admin':a).filter(a=>suiteHasArea(areas,a));return result.flatMap(a=>a==='editorial'?['stadium','newsletter']:[a]);
 }
 export function suiteStartArea(areas=[],requested=''){
- const navigation=suiteNavigationAreas(areas);
- if(!navigation.length)return '';
- if(requested==='editorial')requested='stadium';
- const permission=suitePermissionArea(requested);
- if((SUITE_AREAS.includes(permission)||permission==='my_contract')&&areas.includes(permission))return requested;
- if(requested==='social_media'&&areas.includes('social_media_admin'))return 'social_media_admin';
- return navigation.length===1?navigation[0]:'welcome';
+ const navigation=suiteNavigationAreas(areas);if(!navigation.length)return '';if(requested==='editorial')requested='stadium';if(suiteHasArea(areas,requested))return requested;if(requested==='social_media'&&areas.includes('social_media_admin'))return 'social_media_admin';return navigation.length===1?navigation[0]:'welcome';
 }
 export const SUITE_ROLE_SEEDS=[
  {key:'admin',label:'Super-Admin',access_areas:[...SUITE_AREAS],protected:true},

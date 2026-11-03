@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {SUITE_AREAS,suiteNavigationAreas,suiteStartArea,suitePermissionArea} from '../src/suite-access.mjs';
 
 test('one sidebar function opens directly, multiple functions start at the welcome page',()=>{
- for(const area of SUITE_AREAS)assert.equal(suiteStartArea([area]),area==='editorial'?'welcome':area);
+ for(const area of SUITE_AREAS)assert.equal(suiteStartArea([area]),['editorial','trainer_management','trainer_compensation','trainer_contracts'].includes(area)?'welcome':area);
  assert.equal(suiteStartArea(['cashbook','trainer_management']),'welcome');
  assert.equal(suiteStartArea(['social_media','cashbook']),'welcome');
  assert.equal(suiteStartArea(SUITE_AREAS),'welcome');
@@ -38,3 +38,13 @@ test('explicit permitted links work, unavailable and unknown links use the safe 
  assert.equal(suiteStartArea(SUITE_AREAS,'unknown'),'welcome');
  assert.equal(suiteStartArea([],'cashbook'),'');
 });
+
+ test('football workflow entries reuse grants without granting private contract access',()=>{
+ assert.deepEqual(suiteNavigationAreas(['trainer_management']),['trainer_management','football_management']);
+ assert.deepEqual(suiteNavigationAreas(['trainer_compensation']),['trainer_compensation','trainer_assignments','trainer_finances']);
+ assert.deepEqual(suiteNavigationAreas(['trainer_contracts']),['trainer_assignments','trainer_finances']);
+ assert.equal(suitePermissionArea('football_management'),'trainer_management');
+ assert.equal(suiteStartArea(['trainer_management'],'football_management'),'football_management');
+ assert.equal(suiteStartArea(['trainer_compensation'],'trainer_contracts'),'welcome');
+ for(const a of ['trainer_assignments','trainer_finances'])assert.equal(suiteStartArea(['trainer_contracts'],a),a);
+ });

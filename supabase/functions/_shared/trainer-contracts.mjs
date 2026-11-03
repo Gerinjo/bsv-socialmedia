@@ -1,3 +1,4 @@
+import {financialDirectoryPhotos,financialRecordPhoto} from './trainer-financial-photos.mjs';
 import {compensationSeason} from '../../../src/trainer-compensation.mjs';
 import {createTrainerContractDraft,validateTrainerContract,trainerContractIssues,contractSourceChanged,contractCandidates,trainerContractAnnualIssues,TRAINER_CONTRACT_VERSION} from '../../../src/trainer-contracts.mjs';
 import {trainerContractDocument} from '../../../src/trainer-contract-document.mjs';
@@ -11,7 +12,7 @@ const publicRecord=c=>{const {document_path,signed_path,...rest}=c;return {...re
 export async function contractRpc(db,actor,payload){const {data,error}=await db.rpc('trainer_contract_request',{actor,payload});if(error)throw Object.assign(new Error('Der Vertrag konnte nicht geladen oder gespeichert werden.'),{status:503});if(!data||data.error)throw Object.assign(new Error(data?.error||'Vertragsverwaltung vorübergehend nicht verfügbar.'),{status:data?.status||503});return data;}
 export async function handleTrainerContracts(db,actor,body,{pdf,inspectSigned}={}){
  const action=String(body.action||'').replace(/^contract_/,''),rpc=payload=>contractRpc(db,actor,payload);
- if(action==='list')return rpc({action,season:compensationSeason(body.season)});
+ if(action==='list')return financialDirectoryPhotos(db,await rpc({action,season:compensationSeason(body.season)}));
  if(['create','prepare_all'].includes(action)){
   const season=compensationSeason(body.season),context=await rpc({action:'source',season});
   const create=async p=>{const snapshot=validateTrainerContract(createTrainerContractDraft(context,season,p.personId,p.teamId,p.slot));return rpc({action:'create',season,personId:p.personId,teamId:p.teamId,slot:p.slot,snapshot});};
@@ -23,7 +24,7 @@ export async function handleTrainerContracts(db,actor,body,{pdf,inspectSigned}={
   return {ok:results.every(r=>r.ok),results};
  }
  const id=uuid(body.id),c=await rpc({action:'get',id});
- if(action==='get')return publicRecord(c);
+ if(action==='get')return financialRecordPhoto(db,publicRecord(c));
  if(action==='download'){
   if(!['issued','signed'].includes(body.kind))throw new Error('Bitte eine Vertragsfassung auswählen.');const path=body.kind==='signed'?c.signed_path:c.document_path;
   if(!path)throw new Error('Diese Vertragsfassung liegt noch nicht vor.');
