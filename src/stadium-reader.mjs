@@ -1,4 +1,4 @@
-import {suiteBrandColors} from './suite-brand.mjs';
+import {suiteBrandColors,suiteBrandRibbon} from './suite-brand.mjs';
 import { stadiumReaderAssets } from "./stadium-reader-assets.mjs";
 export function renderEditorialMagazine(snapshot, preview = true) {
   snapshot = {...snapshot, articles: snapshot.articles.filter(article => article.status !== 'waived' && (article.kind !== 'coach' || article.status === 'ready' && article.body?.trim()))};
@@ -190,6 +190,8 @@ export function renderEditorialMagazine(snapshot, preview = true) {
   if(snapshot.brand?.color_scheme){
     const c=suiteBrandColors(snapshot.brand.color_scheme);
     brandStyle=`:root{--green:${c.panel};--yellow:${c.accent};--paper:${c.surface};--ink:${c.ink};--muted:${c.panel};--rule:${c.muted}}.photo-shade{background:linear-gradient(0deg,${c.panel} 1%,${c.panel}bc 25%,${c.panel}00 65%)}.cover-stories span{color:${c.accent}}`;
+    const ribbon=suiteBrandRibbon(c);
+    if(ribbon.length)brandStyle+=`#cover{border-top:8px solid transparent;border-image:linear-gradient(90deg,${ribbon.map((color,i)=>`${color} ${i*100/6}% ${(i+1)*100/6}%`).join(',')}) 1}`;
   }
   const boot = `const editions=[${safeJson(edition)}];const editionSponsorships={};\n${stadiumReaderAssets.advertisingScript}\n${stadiumReaderAssets.script}`;
   return stadiumReaderAssets.template

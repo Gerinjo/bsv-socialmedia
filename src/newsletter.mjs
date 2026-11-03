@@ -1,4 +1,4 @@
-import {suiteBrandColors,SUITE_BRAND_DEFAULT} from './suite-brand.mjs';
+import {suiteBrandColors,suiteBrandRibbon,SUITE_BRAND_DEFAULT} from './suite-brand.mjs';
 import {suiteBrandTheme} from './brand-themes.mjs';
 import {BRAND_THEME_VERSIONS} from './brand-theme-versions.mjs';
 import { NEWSLETTER_UNSUBSCRIBE_LINK } from './newsletter-unsubscribe.mjs';
@@ -177,7 +177,9 @@ export function renderEditorialNewsletter(snapshot, template, { preview = true, 
   text.push('\nNORDSTERN NEWS · UNSERE STADIONHEFTE\n\nMannschaften, Menschen und Geschichten aus dem Vereinsleben: Hier geht es zu unseren digitalen Stadionheften.\n\n' + magazineLinks.map(link => `${link.title}: ${link.url}`).join('\n'));
   const unsubscribeUrl = preview ? unsubscribePreviewUrl : NEWSLETTER_UNSUBSCRIBE_LINK;
   text.push('\nBSV Nordstern e.V. Radolfzell\nSchlesierstraße 43 · 78315 Radolfzell\ninfo@bsvnordstern.de\nImpressum https://bsvnordstern.de/impressum\nDatenschutz https://bsvnordstern.de/datenschutz\nNewsletter abmelden: ' + unsubscribeUrl);
+  const ribbon = suiteBrandRibbon(snapshot.brand?.color_scheme || SUITE_BRAND_DEFAULT);
   const values = {
+    BRAND_RIBBON:ribbon.length ? `<tr data-brand-ribbon><td><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>${ribbon.map(color=>`<td bgcolor="${color}" width="16.666%" height="8" style="height:8px;font-size:0;line-height:0;background-color:${color};">&nbsp;</td>`).join('')}</tr></table></td></tr>` : '',
     TITLE:escape(title), PREHEADER:escape(preheader), EDITION:escape(['BSV Nordstern Radolfzell',edition].filter(Boolean).join(' · ')),
     BRAND:settings.showName && settings.name ? `<p class="newsletter-brand" style="margin:0 0 8px;color:#f4d638;font-size:22px;line-height:28px;font-weight:bold;letter-spacing:1px;">✦ ${escape(settings.name)}</p>` : '',
     KICKER:settings.showKicker && settings.kicker ? `<p style="margin:0 0 18px;color:#f4d638;font-size:12px;line-height:18px;font-weight:bold;letter-spacing:2px;">${escape(settings.kicker)}</p>` : '',
@@ -191,7 +193,7 @@ export function renderEditorialNewsletter(snapshot, template, { preview = true, 
   const palette = {'#092f20':colors.background,'#17613a':colors.panel,'#f4d638':colors.accent,'#edf0e9':colors.surface,'#193c2c':colors.ink,'#d7e5dc':colors.muted,'#c1d2c6':colors.muted,'#dce4d9':colors.muted};
   const rgba = [1,3,5].map(i=>parseInt(colors.background.slice(i,i+2),16)).join(',');
   const shell = theme === 'football' ? template : template.replaceAll('https://bsvnordstern.de/images/fussball/teams-schuss.webp',`https://suite.bsvnordstern.de/brand/themes/${theme}-v${BRAND_THEME_VERSIONS[theme]}.png`);
-  const generated = shell.replace(/\{\{(TITLE|PREHEADER|EDITION|BRAND|KICKER|HEADLINE|INTRO|CONTENT|UNSUBSCRIBE_URL)\}\}/g, (_, key) => values[key]);
+  const generated = shell.replace(/\{\{(TITLE|PREHEADER|EDITION|BRAND|KICKER|HEADLINE|INTRO|CONTENT|UNSUBSCRIBE_URL|BRAND_RIBBON)\}\}/g, (_, key) => values[key]);
   const html = snapshot.brand?.color_scheme ? generated
     .replace(/(style=")(.*?)(")/g,(_,open,style,close)=>open+style.replace(/#[0-9a-f]{6}/gi,hex=>palette[hex.toLowerCase()]||hex).replaceAll('rgba(9,47,32,',`rgba(${rgba},`)+close)
     .replace(/bgcolor="#092f20"/g,`bgcolor="${colors.background}"`) : generated;
