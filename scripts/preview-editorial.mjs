@@ -45,6 +45,7 @@ const files = new Map([
   ['/preview-trainer-seed.mjs','admin-site/preview/trainer-seed.mjs'],
   ['/trainer-management-model.mjs','src/trainer-management.mjs'],
   ['/employee-role-seed.json','config/employee-role-seed.json'],
+  ['/trainer-team-roles.mjs','src/trainer-team-roles.mjs'],
   ['/trainer-compensation-model.mjs','src/trainer-compensation.mjs'],
   ['/preview-trainer-compensation.mjs','admin-site/preview/trainer-compensation.mjs'],
   ['/employee-management-model.mjs','src/employee-management.mjs'],
