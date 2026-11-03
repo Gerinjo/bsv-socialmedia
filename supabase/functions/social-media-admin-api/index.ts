@@ -1,6 +1,7 @@
 import {handleTrainerPersonalData} from '../_shared/trainer-management.mjs';
 import {handleTrainerContracts} from '../_shared/trainer-contracts.mjs';
-import {contractPdf,inspectSignedContract} from '../_shared/trainer-contract-pdf.mjs';
+import {handleContractPortal} from '../_shared/trainer-contract-portal.mjs';
+import {contractPdf,inspectSignedContract,mergeContractPdfs} from '../_shared/trainer-contract-pdf.mjs';
 import {handleTrainerCompensation} from '../_shared/trainer-compensation.mjs';
 import { sponsorToday } from '../../../src/sponsor-editor.mjs';
 import { handleSponsorMagazineArtwork, sponsorArtworkPaths } from '../_shared/sponsor-magazine-artwork.mjs';
@@ -701,6 +702,11 @@ const securedHandler = withSupabase({ auth: 'user' }, async (request, context) =
       if(!hasArea('hall_training'))return json({error:'area_forbidden',area:'hall_training'},403);
       if(raw.length>4096)return json({error:'Die Anfrage ist zu groß.'},413);
       return json(await handleHallTraining(context.supabaseAdmin,userId,body));
+    }
+
+    if(action.startsWith('my_contract_')){
+      if(raw.length>(['my_contract_guardian_upload','my_contract_guardian_waiver_upload'].includes(action)?11500000:220000))return json({error:'Die Anfrage ist zu groß.'},413);
+      return json(await handleContractPortal(context.supabaseAdmin,userId,body,{pdf:contractPdf,merge:mergeContractPdfs,inspectSigned:inspectSignedContract}));
     }
 
     if(action.startsWith('contract_')){

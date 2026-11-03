@@ -48,7 +48,7 @@ export async function handleTrainerContracts(db,actor,body,{pdf,inspectSigned}={
   const snapshot=validateTrainerContract(c.snapshot),issues=trainerContractIssues(snapshot);if(issues.length)throw new Error(issues.join(' · '));
   const context=await rpc({action:'source',season:c.season});if(contractSourceChanged(snapshot,context))throw Object.assign(new Error('Stammdaten oder Gehaltsplanung wurden geändert. Bitte die Quelldaten neu übernehmen.'),{status:409});
   const annualIssues=trainerContractAnnualIssues(snapshot,context.annualTotals);if(annualIssues.length)throw new Error(annualIssues.join(' · '));
-  const bytes=await pdf(trainerContractDocument(snapshot),{number:number(c),templateVersion:snapshot.templateVersion,draft:false});return storePdf('issued',bytes,{action:'issue'});
+  const bytes=await pdf(trainerContractDocument(snapshot).slice(0,6),{number:number(c),templateVersion:snapshot.templateVersion,draft:false});return storePdf('issued',bytes,{action:'issue'});
  }
  if(action==='upload_signed'){
   if(c.status!=='issued'||body.confirmed!==true)throw new Error('Bitte die erforderlichen Unterschriften am freigegebenen Vertrag bestätigen.');

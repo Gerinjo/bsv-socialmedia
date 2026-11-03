@@ -1,10 +1,10 @@
 export const SUITE_AREAS=['social_media','social_media_admin','sponsoring','editorial','referees','corporate_identity','club_crests','trainer_management','trainer_compensation','trainer_contracts','hall_training','resources','cashbook','user_management'];
-export const SUITE_AREA_LABELS={social_media:'Social Media',social_media_admin:'Social Media · Administration',sponsoring:'Sponsoring',editorial:'Stadionheft & Newsletter',stadium:'Stadionheft',newsletter:'Newsletter',referees:'Schiedsrichter',corporate_identity:'Corporate Identity',club_crests:'Vereinswappen',trainer_management:'Ehrenamtliche',trainer_compensation:'Trainergehälter',trainer_contracts:'Trainerverträge',resources:'Ressourcenverwaltung',hall_training:'Hallentraining',cashbook:'Kassenbuch',user_management:'Benutzerverwaltung'};
+export const SUITE_AREA_LABELS={my_contract:'Mein Vertrag',social_media:'Social Media',social_media_admin:'Social Media · Administration',sponsoring:'Sponsoring',editorial:'Stadionheft & Newsletter',stadium:'Stadionheft',newsletter:'Newsletter',referees:'Schiedsrichter',corporate_identity:'Corporate Identity',club_crests:'Vereinswappen',trainer_management:'Ehrenamtliche',trainer_compensation:'Trainergehälter',trainer_contracts:'Trainerverträge',resources:'Ressourcenverwaltung',hall_training:'Hallentraining',cashbook:'Kassenbuch',user_management:'Benutzerverwaltung'};
 export function suitePermissionArea(area){return ['stadium','newsletter'].includes(area)?'editorial':area;}
 // Count sidebar functions, with Social Media administration inside its parent.
 export function suiteNavigationAreas(areas=[]){
- const allowed=new Set(areas.filter(area=>SUITE_AREAS.includes(area)));
- return ['corporate_identity','sponsoring','social_media','editorial','club_crests','trainer_management','trainer_compensation','trainer_contracts','hall_training','resources','referees','cashbook','user_management']
+ const allowed=new Set(areas.filter(area=>(SUITE_AREAS.includes(area)||area==='my_contract')));
+ return ['corporate_identity','sponsoring','social_media','editorial','club_crests','trainer_management','trainer_compensation','trainer_contracts','my_contract','hall_training','resources','referees','cashbook','user_management']
   .map(area=>area==='social_media'&&!allowed.has(area)&&allowed.has('social_media_admin')?'social_media_admin':area)
   .filter(area=>allowed.has(area))
   .flatMap(area=>area==='editorial'?['stadium','newsletter']:[area]);
@@ -14,7 +14,7 @@ export function suiteStartArea(areas=[],requested=''){
  if(!navigation.length)return '';
  if(requested==='editorial')requested='stadium';
  const permission=suitePermissionArea(requested);
- if(SUITE_AREAS.includes(permission)&&areas.includes(permission))return requested;
+ if((SUITE_AREAS.includes(permission)||permission==='my_contract')&&areas.includes(permission))return requested;
  if(requested==='social_media'&&areas.includes('social_media_admin'))return 'social_media_admin';
  return navigation.length===1?navigation[0]:'welcome';
 }

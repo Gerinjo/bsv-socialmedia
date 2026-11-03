@@ -13,7 +13,7 @@ export function createTrainerContractDraft(context,season,personId,teamId,slot){
  if(!row||!row.enabled)throw new Error('Bitte eine aktive, eingeplante Trainerposition auswählen.');
  const p=row.person,sourceBank=p.personalBank??p.previousBank,start=season.slice(0,4)+'-07-01',end=season.slice(5)+'-06-30';
  return {templateVersion:TRAINER_CONTRACT_VERSION,season,personId,teamId,slot,name:p.name,street:p.street||'',postcode:p.postcode||'',city:p.city||'',email:p.email||'',birthDate:p.birth_date||'',guardianName:'',role:row.role==='trainer'?'Trainer':'Co-Trainer',teamName:row.teamName,start,end,
-  monthlyCents:row.monthlyMin!==null&&row.monthlyMin===row.monthlyMax?row.monthlyMin:null,grossMonthlyCents:row.rateMin===row.rateMax?row.rateMin:null,share:row.share,license:row.license,
+  monthlyCents:row.monthlyMin,grossMonthlyCents:row.rateMin,share:row.share,license:row.license,
   paidMonths:row.payments===10?[...TRAINER_CONTRACT_DEFAULT_MONTHS]:[],expectedPayments:row.payments,bank:{holder:sourceBank?.holder??p.name,iban:sourceBank?.iban??'',name:sourceBank?.name??''},financialConfirmed:false,
   source:{personalVersion:p.personalVersion||0,birthDate:p.birth_date||'',teamName:context.teams.find(t=>t.id===teamId)?.name||'',personVersion:p.version||0,planVersion:context.version||0,teamVersion:context.teams.find(t=>t.id===teamId)?.version||0},sourceIssues:[...row.issues,...(row.uncertain?['Lizenzstatus und Monatsbetrag klären']:[])]};
 }
@@ -59,4 +59,8 @@ export function contractSourceChanged(snapshot,context){const p=context.people.f
 export function trainerContractAnnualIssues(snapshot,totals=[]){
  const proposed=new Map();for(const b of trainerContractBatches(snapshot))if(b.amount!==null)proposed.set(b.year,(proposed.get(b.year)||0)+b.amount);
  return [...proposed].filter(([year,cents])=>cents+Number(totals.find(t=>t.personId===snapshot.personId&&t.year===year)?.cents||0)>(year>=2026?330000:300000)).map(([year])=>'Die bekannten BSV-Vergütungen überschreiten den Übungsleiterfreibetrag im Auszahlungsjahr '+year+'. Diese Vertragsvorlage kann dafür nicht freigegeben werden.');
+}
+
+export function contractSuggestedRate(context,snapshot,license){
+ const plan=contractPlan(context,snapshot.season),key=[snapshot.teamId,snapshot.personId,snapshot.slot].join(':');plan.assignments[key]={license,monthly:null,payments:null,...plan.assignments[key],license};const row=compensationReport(context,plan).teams.flatMap(t=>t.rows).find(r=>r.key===key);return row?{grossMonthlyCents:row.rateMin,monthlyCents:row.monthlyMin,share:row.share}:null;
 }

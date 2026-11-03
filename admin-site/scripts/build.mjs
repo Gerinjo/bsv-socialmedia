@@ -69,6 +69,8 @@ for (const [placeholder, source] of [
   ['__COMPENSATION_SCRIPT__',await readFile(resolve(adminDir,'trainer-compensation.mjs'),'utf8')],
   ['__COMPENSATION_CSS__',await readFile(resolve(adminDir,'trainer-compensation.css'),'utf8')],
   ['__CONTRACTS_MODEL__',(await readFile(resolve(repoDir,'src/trainer-contracts.mjs'),'utf8')).replace(/^import .*;\n/gm,'').trimStart()],
+  ['__CONTRACT_PORTAL_MODEL__',(await readFile(resolve(repoDir,'src/trainer-contract-portal.mjs'),'utf8')).replace(/^import .*;\n/gm,'').trimStart()],
+  ['__CONTRACT_PORTAL_SCRIPT__',await readFile(resolve(adminDir,'trainer-contract-portal.mjs'),'utf8')],
   ['__CONTRACTS_SCRIPT__',await readFile(resolve(adminDir,'trainer-contracts.mjs'),'utf8')],
   ['__CONTRACTS_CSS__',await readFile(resolve(adminDir,'trainer-contracts.css'),'utf8')],
   ['__EMPLOYEE_CSS__', await readFile(resolve(adminDir,'employee-management.css'),'utf8')],

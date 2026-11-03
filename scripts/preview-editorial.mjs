@@ -52,6 +52,8 @@ const files = new Map([
   ['/trainer-team-roles.mjs','src/trainer-team-roles.mjs'],
   ['/trainer-compensation-model.mjs','src/trainer-compensation.mjs'],
   ['/preview-trainer-compensation.mjs','admin-site/preview/trainer-compensation.mjs'],
+  ['/preview-trainer-contract-portal.mjs','admin-site/preview/trainer-contract-portal.mjs'],
+  ['/trainer-contract-portal-model.mjs','src/trainer-contract-portal.mjs'],
   ['/preview-trainer-contracts.mjs','admin-site/preview/trainer-contracts.mjs'],
   ['/trainer-contracts-model.mjs','src/trainer-contracts.mjs'],
   ['/trainer-personal-data.mjs','src/trainer-personal-data.mjs'],
@@ -98,6 +100,9 @@ const server = createServer(async (request, response) => {
     "Content-Security-Policy",
     `default-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; worker-src 'self' blob:; manifest-src 'self'; style-src 'unsafe-inline'; img-src 'self' data: http://localhost:${port} http://127.0.0.1:${port} https://bsvnordstern.de https://gerinjo.github.io; connect-src 'self' https://cdn.jsdelivr.net; frame-src blob:; base-uri 'none'; frame-ancestors 'none'; form-action 'none'`,
   );
+  if(request.method==='POST'&&new URL(request.url,'http://localhost').pathname==='/preview-contract-merge'){
+    try{let raw='';for await(const chunk of request){raw+=chunk;if(raw.length>16000000)throw new Error('Too large');}const files=JSON.parse(raw),out=await PDFDocument.create();for(const file of files){const input=await PDFDocument.load(Buffer.from(file.base64,'base64'));for(const page of await out.copyPages(input,input.getPageIndices()))out.addPage(page);}response.setHeader('Content-Type','application/json');response.end(JSON.stringify({mime:'application/pdf',filename:'BSV-Vertragsunterlagen.pdf',base64:Buffer.from(await out.save()).toString('base64')}));}catch{response.writeHead(400);response.end();}return;
+  }
   if(request.method==='POST'&&new URL(request.url,'http://localhost').pathname==='/preview-contract-pdf'){
     try{
       let raw='';for await(const chunk of request){raw+=chunk;if(raw.length>100000)throw new Error('Too large');}
