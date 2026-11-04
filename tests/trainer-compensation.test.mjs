@@ -1,9 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {COMPENSATION_RATES,compensationAge,createCompensationPlan,validateCompensationPlan,compensationReport,compensationCsv,compensationKey} from '../src/trainer-compensation.mjs';
+import {COMPENSATION_RATES,compensationAge,createCompensationPlan,validateCompensationPlan,compensationReport,compensationCsv,compensationKey,compensationCurrentSeason,compensationSeasonChoices} from '../src/trainer-compensation.mjs';
 import {handleTrainerCompensation} from '../supabase/functions/_shared/trainer-compensation.mjs';
 import {SUITE_AREAS,SUITE_ROLE_SEEDS,suiteNavigationAreas} from '../src/suite-access.mjs';
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
+test('season selection follows Berlin July rollover and retains every saved historical season',()=>{
+ assert.equal(compensationCurrentSeason(new Date('2026-06-30T21:59:59Z')),'2025/2026');assert.equal(compensationCurrentSeason(new Date('2026-06-30T22:00:00Z')),'2026/2027');
+ const choices=compensationSeasonChoices(['2015/2016','2024/2025','2026/2028','<script>'],'2026/2027',new Date('2026-11-04T12:00:00Z'));
+ assert.ok(choices.includes('2015/2016'));assert.ok(choices.includes('2027/2028'));assert.ok(!choices.includes('2026/2028'));assert.ok(!choices.includes('<script>'));assert.deepEqual(choices,[...choices].sort().reverse());
+});
 const roster={teams:[{id:id(1),slug:'u13-d1-junioren',name:'BSV D1',active:false},{id:id(2),slug:'frauen-2',name:'SG Frauen 2',active:false}],people:[{id:id(10),name:'Anna Trainer',active:true},{id:id(11),name:'Bea Co',active:true},{id:id(12),name:'Clara',active:true}],assignments:[{teamId:id(1),personId:id(10),slot:'trainer'},{teamId:id(1),personId:id(11),slot:'co1'},{teamId:id(2),personId:id(12),slot:'trainer'}]};
 test('photo rates, age classes, ten payments and inactive senior teams are included',()=>{
  assert.deepEqual(Object.values(COMPENSATION_RATES).map(r=>[r.base,r.licensed,r.co]),[[3000,5000,0],[5000,7500,0],[5000,7500,0],[7000,10500,3500],[9000,13500,4500],[10000,15000,5000],[10000,15000,5000]]);
@@ -37,4 +42,15 @@ test('API keeps financial permission errors and conflicts, validates before writ
 });
 test('CSV includes open fields and neutralizes spreadsheet formulas in names',()=>{
  const data={...roster,people:roster.people.map(p=>({...p,name:'=1+1'}))};const csv=compensationCsv(compensationReport(data,createCompensationPlan(data)));assert.match(csv,/"'=1\+1"/);assert.match(csv,/BSV Saison max EUR/);assert.match(csv,/Monatsbetrag fehlt/);assert.ok(csv.startsWith('\ufeff'));
+});
+
+test('saved season rates and individual overrides survive switching and new-team defaults without leaking into new seasons',async()=>{
+ const old=createCompensationPlan(roster,'2025/2026');old.youthRates.d={base:6000,licensed:9000,co:3000};old.teams[id(2)]={...old.teams[id(2)],head:20000,co:9000,payments:8,share:50};old.teams[id(99)]={...old.teams[id(2)],head:12345};old.assignments[compensationKey(roster.assignments[0])]={license:'valid',monthly:9900,payments:7};
+ const current=createCompensationPlan(roster,'2026/2027');current.teams[id(2)].head=30000;
+ const oldSnapshot=structuredClone(old),stored=new Map([['2025/2026',old],['2026/2027',current]]),added={id:id(3),slug:'herren-1',name:'Herren 1'},updatedRoster={...roster,teams:[...roster.teams,added]};
+ const db={rpc:async(_name,{payload})=>({data:{...updatedRoster,plan:stored.get(payload.season)||null,version:stored.has(payload.season)?4:0,seasons:[...stored.keys()],savedAt:stored.has(payload.season)?'2026-11-03T14:10:00Z':null}})};
+ const previous=await handleTrainerCompensation(db,'admin',{action:'salary_list',season:'2025/2026'});
+ assert.deepEqual(previous.plan.youthRates.d,{base:6000,licensed:9000,co:3000});assert.equal(previous.plan.teams[id(2)].head,20000);assert.equal(previous.plan.teams[id(2)].share,50);assert.equal(previous.plan.teams[id(2)].payments,8);assert.equal(previous.plan.teams[id(99)].head,12345);assert.equal(previous.plan.assignments[compensationKey(roster.assignments[0])].monthly,9900);assert.equal(previous.plan.teams[id(3)].head,null);assert.equal(previous.savedAt,'2026-11-03T14:10:00Z');assert.deepEqual(previous.seasons,['2025/2026','2026/2027']);
+ const next=await handleTrainerCompensation(db,'admin',{action:'salary_list',season:'2026/2027'});assert.equal(next.plan.teams[id(2)].head,30000);
+ const fresh=await handleTrainerCompensation(db,'admin',{action:'salary_list',season:'2027/2028'});assert.equal(fresh.version,0);assert.equal(fresh.savedAt,null);assert.equal(fresh.plan.teams[id(2)].head,null);assert.equal(fresh.plan.youthRates.d.base,7000);assert.deepEqual(stored.get('2025/2026'),oldSnapshot);
 });

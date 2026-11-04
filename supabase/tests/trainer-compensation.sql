@@ -1,24 +1,38 @@
 begin;
 do $test$
-declare administrator uuid; ordinary uuid; r jsonb; fixture jsonb; senior_count int;
+declare administrator uuid; ordinary uuid; r jsonb; fixture jsonb; senior_count int; senior_id text; previous_fixture jsonb;
 begin
  select user_id into administrator from public.social_admins where role='admin' and is_active and not is_blocked limit 1;
- select user_id into ordinary from public.social_admins where role<>'admin' and is_active and not is_blocked limit 1;
+ select user_id into ordinary from public.social_admins where role<>'admin' and is_active and not is_blocked and not ('trainer_compensation'=any(access_areas)) limit 1;
  if administrator is null or ordinary is null then raise exception 'Test identities missing';end if;
  r:=public.trainer_compensation_request(gen_random_uuid(),jsonb_build_object('action','list','season','2098/2099'));
  if (r->>'status')::int<>403 then raise exception 'Unknown actor accepted';end if;
  r:=public.trainer_compensation_request(ordinary,jsonb_build_object('action','list','season','2098/2099'));
- if (r->>'status')::int<>403 then raise exception 'Employee right exposed salary';end if;
+ if (r->>'status')::int<>403 or r ? 'seasons' or r ? 'savedAt' then raise exception 'Employee right exposed salary catalog';end if;
  r:=public.trainer_compensation_request(administrator,jsonb_build_object('action','list','season','2098/2099'));
  if r ? 'error' then raise exception 'Admin denied: %',r;end if;
  select count(*) into senior_count from jsonb_array_elements(r->'teams') t where t->>'slug' in ('herren-1','herren-2','frauen-1','frauen-2');
  if senior_count<>4 then raise exception 'Senior team missing';end if;
+ select t->>'id' into senior_id from jsonb_array_elements(r->'teams') t where t->>'slug'='herren-1';
+ if r->>'version'<>'0' or r->>'savedAt' is not null or (r->'seasons') ? '2098/2099' then raise exception 'Unsaved season presented as saved';end if;
  if exists(select 1 from jsonb_array_elements(r->'people') p where p ? 'email' or p ? 'street' or p ? 'phone') then raise exception 'Unnecessary personal fields exposed';end if;
  fixture:=jsonb_build_object('schemaVersion',1,'season','2098/2099','youthRates','{"bambini":{"base":3000,"licensed":5000,"co":0},"f":{"base":5000,"licensed":7500,"co":0},"e":{"base":5000,"licensed":7500,"co":0},"d":{"base":7000,"licensed":10500,"co":3500},"c":{"base":9000,"licensed":13500,"co":4500},"b":{"base":10000,"licensed":15000,"co":5000},"a":{"base":10000,"licensed":15000,"co":5000}}'::jsonb,'teams','{}'::jsonb,'assignments','{}'::jsonb);
+ fixture:=jsonb_set(fixture,'{teams}',jsonb_build_object(senior_id,jsonb_build_object('age','senior','included',true,'reserveVacancies',false,'payments',10,'share',100,'head',20000,'co',9000)));
  r:=public.trainer_compensation_request(administrator,jsonb_build_object('action','save','season','2098/2099','version',0,'plan',fixture));
  if r->>'version'<>'1' then raise exception 'Save failed: %',r;end if;
  r:=public.trainer_compensation_request(administrator,jsonb_build_object('action','save','season','2098/2099','version',0,'plan',fixture));
  if (r->>'status')::int<>409 then raise exception 'Concurrent save not rejected';end if;
+ previous_fixture:=jsonb_set(jsonb_set(fixture,'{season}','"2097/2098"'),'{youthRates,d,base}','6000');
+ previous_fixture:=jsonb_set(previous_fixture,array['teams',senior_id,'head'],'15000');
+ r:=public.trainer_compensation_request(administrator,jsonb_build_object('action','save','season','2097/2098','version',0,'plan',previous_fixture));
+ if r->>'version'<>'1' then raise exception 'Previous-season save failed';end if;
+ r:=public.trainer_compensation_request(administrator,jsonb_build_object('action','list','season','2098/2099'));
+ if r->'plan' is distinct from fixture or r->>'savedAt' is null or not ((r->'seasons') ?& array['2097/2098','2098/2099']) then raise exception 'Current season or saved catalog changed';end if;
+ r:=public.trainer_compensation_request(administrator,jsonb_build_object('action','list','season','2097/2098'));
+ if r->'plan' is distinct from previous_fixture or r->>'savedAt' is null then raise exception 'Historic values were overwritten';end if;
+ r:=public.trainer_compensation_request(administrator,jsonb_build_object('action','list','season','2096/2097'));
+ if r->>'version'<>'0' or r->>'savedAt' is not null or (r->'seasons') ? '2096/2097' then raise exception 'Reading new season created or copied data';end if;
+
  update public.social_admins set extra_access_areas=extra_access_areas||'trainer_compensation'::text where user_id=ordinary;
  r:=public.trainer_compensation_request(ordinary,jsonb_build_object('action','list','season','2098/2099'));
  if r ? 'error' or r->>'version'<>'1' then raise exception 'Explicit financial grant did not work';end if;
@@ -31,4 +45,4 @@ begin
  if not exists(select 1 from private.trainer_compensation_audit where season='2098/2099' and actor=administrator) then raise exception 'Save not audited';end if;
 end $test$;
 rollback;
-select count(*) as saved_test_plans from private.trainer_compensation_plans where season='2098/2099';
+select count(*) as saved_test_plans from private.trainer_compensation_plans where season in ('2096/2097','2097/2098','2098/2099');

@@ -9,6 +9,16 @@ export function compensationAge(team){
 }
 export function compensationTeamLabel(team){const labels={'herren-1':'Herren · 1. Mannschaft','herren-2':'Herren · 2. Mannschaft','frauen-1':'Frauen · 1. Mannschaft','frauen-2':'Frauen · 2. Mannschaft'};return labels[team.slug]||team.name;}
 export function compensationSeason(value){const s=String(value||'');if(!/^20\d{2}\/20\d{2}$/.test(s)||Number(s.slice(5))!==Number(s.slice(0,4))+1)throw new Error('Bitte eine Saison wie 2026/2027 angeben.');return s;}
+export function compensationCurrentSeason(now=new Date()){
+ const date=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Berlin',year:'numeric',month:'2-digit'}).format(now),year=Number(date.slice(0,4))-(Number(date.slice(5,7))<7?1:0);
+ return compensationSeason(year+'/'+(year+1));
+}
+export function compensationSeasonChoices(saved=[],selected=compensationCurrentSeason(),now=new Date()){
+ const current=Number(compensationCurrentSeason(now).slice(0,4)),seasons=new Set([compensationSeason(selected)]);
+ for(let year=Math.max(2000,current-2);year<=Math.min(2098,current+2);year++)seasons.add(year+'/'+(year+1));
+ for(const value of saved){try{seasons.add(compensationSeason(value));}catch{/* Ignore invalid catalog entries. */}}
+ return [...seasons].sort().reverse();
+}
 export function compensationRole(a,team){if(trainerOnlyTeam(team)&&a.slot!=='betreuer'&&/^(trainer|co[12]|extra-[1-9][0-9]?)$/.test(a.slot||''))return 'trainer';if(a.slot==='trainer')return 'trainer';if(/^co[12]$/.test(a.slot))return 'co';if(/^extra-/.test(a.slot)&&/trainer|coach/i.test(a.websiteRole||''))return 'co';return null;}
 export function compensationKey(a){return `${a.teamId}:${a.personId||'vacant'}:${a.slot}`;}
 export function createCompensationPlan(roster,season='2026/2027'){
