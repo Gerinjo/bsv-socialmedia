@@ -1,4 +1,4 @@
-import {employeePhotoUrl} from './employee-management.mjs';
+import {employeePhotos} from './employee-management.mjs';
 import {TEAM_PHOTO_BUCKET,TRAINER_PHOTO_BUCKET,validateTrainerPerson,validateTrainerTeam,validateTrainerLifecycle} from '../../../src/trainer-management.mjs';
 import {decodeRefereeReceipt,receiptHash} from './referee-receipts.mjs';
 import {validateTrainerPersonalDetails} from '../../../src/trainer-personal-data.mjs';
@@ -17,7 +17,10 @@ export async function handleTrainerManagement(db,actor,body){
  const action=String(body.action).replace(/^trainer_/,'');
  if(action==='list'){
   const data=await trainerRpc(db,actor,{action});
-  data.people=await Promise.all(data.people.map(async p=>{const {photo_path,website_photo_url,photoSource,...safe}=p;return {...safe,photo_url:photoSource?await employeePhotoUrl(db,photoSource):photo_path?await trainerPhotoUrl(db,photo_path):p.source_photo_url,photoInherited:photoSource?.inherited===true};}));
+  const source=p=>p.photoSource||(p.photo_path?{bucket:TRAINER_PHOTO_BUCKET,path:p.photo_path}:null);
+  const photos=await employeePhotos(db,data.people.map(source));
+  data.people=await Promise.all(data.people.map(async p=>{const {photo_path,website_photo_url,photoSource,...safe}=p;return {...safe,photo_url:source(p)?await photos.url(source(p)):p.source_photo_url,photoInherited:photoSource?.inherited===true};}));
+  await photos.save();
   data.teams=data.teams.map(({photoPath,...team})=>({...team,photo_url:photoPath?db.storage.from(TEAM_PHOTO_BUCKET).getPublicUrl(photoPath).data.publicUrl:null}));
   return data;
  }

@@ -1,5 +1,7 @@
 import {EMPLOYEE_PHOTO_BUCKET,validateEmployeeAssignment,validateEmployeePhoto,validateEmployeeContact} from '../../../src/employee-management.mjs';
 import {decodeRefereeReceipt,receiptHash} from './referee-receipts.mjs';
+import {portraitUrlResolver} from './portrait-url-cache.mjs';
+export function employeePhotos(db,sources){return portraitUrlResolver(db,sources,{variant:'original',sign:source=>employeePhotoUrl(db,source)});}
 export async function employeePhotoUrl(db,source){
  if(!source)return null;
  if(!source.path)return source.url||null;
@@ -18,7 +20,9 @@ export async function handleEmployeeManagement(db,actor,body){
  const action=String(body.action).replace(/^employee_/,'');
  if(action==='list'){
   const data=await employeeRpc(db,actor,{action});
-  data.assignments=await Promise.all(data.assignments.map(async({photoSource,...a})=>({...a,photo_url:await employeePhotoUrl(db,photoSource),photoInherited:photoSource?.inherited===true,hasOwnPhoto:Boolean(photoSource?.path&&!photoSource.inherited)})));
+  const photos=await employeePhotos(db,data.assignments.map(a=>a.photoSource));
+  data.assignments=await Promise.all(data.assignments.map(async({photoSource,...a})=>({...a,photo_url:await photos.url(photoSource),photoInherited:photoSource?.inherited===true,hasOwnPhoto:Boolean(photoSource?.path&&!photoSource.inherited)})));
+  await photos.save();
   return data;
  }
  if(action==='save_assignment')return employeeRpc(db,actor,{action,...validateEmployeeAssignment(body)});
