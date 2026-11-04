@@ -4,3 +4,5 @@
 [data-tc-full] svg{width:20px;height:20px;vertical-align:middle}.tc-row{flex-wrap:wrap}.tc-row>div:first-child{flex:1;min-width:180px}
 
 .tc-row>div:first-child{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:18px}.tc-row>div:first-child>h4,.tc-row>div:first-child>p,.tc-row>div:first-child>small{grid-column:1}.tc-row>div:first-child>.tcp-progress{grid-column:2;grid-row:1 / span 4;align-self:center}.tc-row h4{overflow-wrap:anywhere}@media(max-width:520px){.tc-row>div:first-child{width:100%;column-gap:10px}.tc-row>div:first-child>.tcp-progress{gap:5px}.tc-row .tcp-status{width:32px;height:32px}}
+
+.tcp-guardian{margin:18px 0}.tcp-guardian h4{margin:0 0 10px}.tcp-guardian.is-pending{background:#fff9eb;border-color:#d9b76b}.tcp-guardian.is-complete{background:#f1faf4;border-color:#9ccbad}.tcp-guardian form{display:grid;gap:14px;margin-top:18px}.tcp-guardian form>label{display:grid;gap:7px}.tcp-guardian form>.tc-confirm{display:flex;align-items:flex-start}.tcp-guardian form button{justify-self:start}.tcp-waiver small{display:block;line-height:1.55}

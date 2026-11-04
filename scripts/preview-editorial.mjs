@@ -5,7 +5,7 @@ import { readFile } from "node:fs/promises";
 
 import {PDFDocument,rgb} from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
-import {renderTrainerContractPdf} from '../src/trainer-contract-pdf.mjs';
+import {renderTrainerContractPdf,annotateTrainerContractPdf} from '../src/trainer-contract-pdf.mjs';
 
 const root = new URL("../", import.meta.url);
 const port = Number(process.env.PREVIEW_PORT || 4173);
@@ -107,8 +107,8 @@ const server = createServer(async (request, response) => {
   }
   if(request.method==='POST'&&new URL(request.url,'http://localhost').pathname==='/preview-contract-pdf'){
     try{
-      let raw='';for await(const chunk of request){raw+=chunk;if(raw.length>100000)throw new Error('Too large');}
-      const {pages,options}=JSON.parse(raw),bytes=await renderTrainerContractPdf(pages,{PDFDocument,rgb,fontkit,regularBytes:await readFile(new URL('brand/fonts/NotoSans-Regular.ttf',root)),boldBytes:await readFile(new URL('brand/fonts/NotoSans-Black.ttf',root))},options);
+      let raw='';for await(const chunk of request){raw+=chunk;if(raw.length>16000000)throw new Error('Too large');}
+      const {pages,options,baseFile,signatures}=JSON.parse(raw),deps={PDFDocument,rgb,fontkit,regularBytes:await readFile(new URL('brand/fonts/NotoSans-Regular.ttf',root)),boldBytes:await readFile(new URL('brand/fonts/NotoSans-Black.ttf',root))},bytes=baseFile?await annotateTrainerContractPdf(Buffer.from(baseFile.base64,'base64'),pages,signatures||[],deps,options):await renderTrainerContractPdf(pages,deps,options);
       response.setHeader('Content-Type','application/json');response.end(JSON.stringify({mime:'application/pdf',filename:'BSV-Vertrag-Vorschau.pdf',base64:Buffer.from(bytes).toString('base64')}));
     }catch{response.writeHead(400);response.end();}return;
   }

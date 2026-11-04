@@ -1,8 +1,21 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {contractPortalBatches,contractPortalStatus,validatePortalSubmission,validateContractInk,contractEvidencePages} from '../src/trainer-contract-portal.mjs';
+import {contractPortalBatches,contractPortalStatus,validatePortalSubmission,validateContractInk,contractEvidencePages,contractGuardianConsentPages} from '../src/trainer-contract-portal.mjs';
 const strokes=[[[.1,.5],[.2,.3],[.3,.6],[.4,.2],[.5,.5]]];
 const snapshot={name:'Example Coach',teamName:'C1',season:'2026/2027',start:'2026-07-01',end:'2027-06-30',paidMonths:[7,9,10,11,1,2,3,4,5,6],monthlyCents:10000,birthDate:'1990-01-01'};
 const c={id:'test',status:'issued',snapshot,season:snapshot.season,signatures:[]};
+test('maturity opens a decision period rather than a one-day submission deadline',()=>{
+ const b=contractPortalBatches(snapshot)[0];assert.equal(b.availableFrom,'2026-11-26');assert.equal(b.timelyUntil,'2027-11-26');
+ assert.equal(contractPortalBatches({...snapshot,start:'2026-11-30'})[0].availableFrom,'2026-11-30');
+ const body={part:'waiver_november',confirmed:true,place:'Radolfzell',strokes,values:{choice:'payout'}};
+ for(const today of ['2026-11-27','2027-01-15','2027-12-01'])assert.equal(validatePortalSubmission(body,c,{today}).values.payoutCents,40000);
+});
+test('one personal signature is not a completed minor contract; guardian consent is separate from all four electronic signatures',()=>{
+ const minor={...c,snapshot:{...snapshot,birthDate:'2010-01-01',guardianName:'Example Guardian'},signatures:[{part:'agreement'}]};
+ assert.equal(contractPortalStatus(minor).guardianRequired,true);assert.equal(contractPortalStatus(minor).trainerComplete,false);assert.equal(contractPortalStatus(minor).readyForFinalization,false);
+ const complete={...minor,signatures:['agreement','allowance','conduct','club'].map(part=>({part}))};
+ assert.equal(contractPortalStatus(complete).readyForFinalization,false);assert.equal(contractPortalStatus({...complete,guardianConfirmed:true}).readyForFinalization,true);
+ const template=contractGuardianConsentPages({...minor,documentHash:'a'.repeat(64)});assert.equal(template[0].blocks.filter(b=>b.kind==='signature').length,2);assert.ok(!template[0].blocks.some(b=>b.kind==='ink'));assert.match(JSON.stringify(template),/keinen Verzicht/);assert.match(JSON.stringify(template),/Vertretungsvollmacht/);
+});
 test('portal retains fixed November/March/June batches and removes periods before employment',()=>{assert.deepEqual(contractPortalBatches(snapshot).map(b=>b.amount),[40000,30000,30000]);assert.deepEqual(contractPortalBatches({...snapshot,start:'2027-01-01'}).map(b=>b.key),['maerz','juni']);});
 test('waivers cannot precede maturity or employment and require exactly one valid monetary choice',()=>{const body={part:'waiver_november',confirmed:true,place:'Radolfzell',strokes,values:{choice:'partial',payoutCents:15000}};assert.throws(()=>validatePortalSubmission(body,c,{today:'2026-11-25'}));const r=validatePortalSubmission(body,c,{today:'2026-11-26'});assert.equal(r.values.waivedCents,25000);for(const choice of ['constructor','toString','bad',null])assert.throws(()=>validatePortalSubmission({...body,values:{choice}},c,{today:'2026-12-01'}));assert.throws(()=>validatePortalSubmission(body,{...c,snapshot:{...snapshot,start:'2026-11-30'}},{today:'2026-11-27'}));});
 test('all three explicit trainer signatures, club and guardian approval determine completion',()=>{const signatures=['agreement','allowance','conduct','club'].map(part=>({part})),signed={...c,signatures};assert.equal(contractPortalStatus(signed).readyForFinalization,true);assert.equal(contractPortalStatus({...signed,status:'cancelled'}).contractComplete,false);assert.equal(contractPortalStatus({...signed,snapshot:{...snapshot,birthDate:'2010-01-01'}}).contractComplete,false);assert.equal(contractPortalStatus({...signed,snapshot:{...snapshot,birthDate:'2010-01-01'},guardianConfirmed:true}).readyForFinalization,true);});
