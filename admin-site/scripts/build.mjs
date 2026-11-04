@@ -6,7 +6,7 @@ import {BRAND_THEME_VERSIONS} from '../../src/brand-theme-versions.mjs';
 import { cashbookManifest, cashbookOfflineHtml } from '../../src/cashbook-pwa.mjs';
 const { renderEditorialMagazine } = await import('../../src/stadium-reader.mjs');
 const { stadiumReaderAssets } = await import('../../src/stadium-reader-assets.mjs');
-import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -33,6 +33,10 @@ const cashbookAssets = {
   '/suite-sw.js': {type:'application/javascript; charset=utf-8',body:await readFile(resolve(adminDir,'cashbook-sw.js'),'utf8')},
   '/kassenbuch/offline': {type:'text/html; charset=utf-8',body:cashbookOfflineHtml},
 };
+for (const name of await readdir(resolve(adminDir, 'assets/portraits'))) {
+  if (!name.endsWith('.png')) continue;
+  cashbookAssets[`/portraits/${name}`] = {type:'image/png',base64:true,cors:true,body:(await readFile(resolve(adminDir,'assets/portraits',name))).toString('base64')};
+}
 for (const size of [192,512]) cashbookAssets[`/kassenbuch/icon-${size}.png`] = {type:'image/png',base64:true,body:(await readFile(resolve(adminDir,`assets/cashbook-icon-${size}.png`))).toString('base64')};
 let html = await readFile(resolve(adminDir, 'admin-page.html'), 'utf8');
 for (const [placeholder, source] of [
@@ -141,7 +145,7 @@ export default {
     if (path === '/hallentraining' || path === '/hallentraining/') return Response.redirect(new URL('/?area=hall_training',request.url),302);
     if (path === '/kassenbuch' || path === '/kassenbuch/') return Response.redirect(new URL('/?area=cashbook',request.url),302);
     const asset = cashbookAssets[path];
-    if (asset) return new Response(asset.base64 ? Uint8Array.from(atob(asset.body),char=>char.charCodeAt(0)) : asset.body,{headers:{'content-type':asset.type,'cache-control':path.endsWith('.png')?'public, max-age=86400':'no-cache','x-content-type-options':'nosniff'}});
+    if (asset) return new Response(asset.base64 ? Uint8Array.from(atob(asset.body),char=>char.charCodeAt(0)) : asset.body,{headers:{'content-type':asset.type,'cache-control':path.endsWith('.png')?'public, max-age=86400':'no-cache','x-content-type-options':'nosniff',...(asset.cors?{'access-control-allow-origin':'*'}:{})}});
     if (new URL(request.url).pathname === '/newsletter/abmelden') return new Response(unsubscribeHtml,{headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-store','referrer-policy':'no-referrer','x-robots-tag':'noindex, nofollow','x-content-type-options':'nosniff','content-security-policy':"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; frame-src about:; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"}});
     const newsletterMatch = path.match(/^\\/newsletter\\/([0-9a-f-]{36})$/i);
     if (newsletterMatch) {
@@ -160,14 +164,14 @@ export default {
         const version = new URL(request.url).searchParams.get('version');
         const feed = await fetch('https://maejihwjzxkmthjavgnx.supabase.co/functions/v1/editorial-publications?id=' + match[1] + (version === null ? '' : '&version=' + encodeURIComponent(version)), {headers:{apikey:'sb_publishable_a3DnmtbBycRR4mWV4Jmz-w_RJobGli9'}});
         if (!feed.ok) return new Response(feed.status === 404 ? 'Diese Ausgabe ist noch nicht veröffentlicht.' : 'Die Ausgabe ist vorübergehend nicht verfügbar.', {status:feed.status,headers:{'cache-control':'no-store'}});
-        return new Response(renderEditorialMagazine(await feed.json(),false),{headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff','content-security-policy':\"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: https://maejihwjzxkmthjavgnx.supabase.co; base-uri 'none'; frame-ancestors 'none'\"}});
+        return new Response(renderEditorialMagazine(await feed.json(),false),{headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff','content-security-policy':\"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: https://suite.bsvnordstern.de https://maejihwjzxkmthjavgnx.supabase.co; base-uri 'none'; frame-ancestors 'none'\"}});
       } catch { return new Response('Die Ausgabe ist vorübergehend nicht verfügbar.',{status:503}); }
     }
     return new Response(/^\\/schiedsrichter\\/?$/.test(path) ? coachHtml : html, {
       headers: {
         'content-type': 'text/html; charset=utf-8',
         'cache-control': 'no-store',
-        'content-security-policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://esm.sh https://cdn.jsdelivr.net; connect-src 'self' https://maejihwjzxkmthjavgnx.supabase.co https://cdn.jsdelivr.net; worker-src 'self' blob:; frame-src blob:; img-src 'self' data: https://maejihwjzxkmthjavgnx.supabase.co https://gerinjo.github.io https://bsvnordstern.de; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'",
+        'content-security-policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://esm.sh https://cdn.jsdelivr.net; connect-src 'self' https://suite.bsvnordstern.de https://maejihwjzxkmthjavgnx.supabase.co https://cdn.jsdelivr.net; worker-src 'self' blob:; frame-src blob:; img-src 'self' data: https://suite.bsvnordstern.de https://maejihwjzxkmthjavgnx.supabase.co https://gerinjo.github.io https://bsvnordstern.de; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'",
         'x-content-type-options': 'nosniff',
         'referrer-policy': 'no-referrer',
       },
