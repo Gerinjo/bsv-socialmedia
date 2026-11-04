@@ -40,10 +40,13 @@ test('explicit permitted links work, unavailable and unknown links use the safe 
 });
 
  test('football workflow entries reuse grants without granting private contract access',()=>{
- assert.deepEqual(suiteNavigationAreas(['trainer_management']),['trainer_management','football_management']);
+ assert.deepEqual(suiteNavigationAreas(['trainer_management']),['trainer_management','football_management','football_trainers']);
  assert.deepEqual(suiteNavigationAreas(['trainer_compensation']),['trainer_compensation','trainer_assignments','trainer_finances']);
  assert.deepEqual(suiteNavigationAreas(['trainer_contracts']),['trainer_assignments','trainer_finances']);
  assert.equal(suitePermissionArea('football_management'),'trainer_management');
+ assert.equal(suitePermissionArea('football_trainers'),'trainer_management');
+ assert.equal(suiteStartArea(['trainer_management'],'football_trainers'),'football_trainers');
+ assert.equal(suiteNavigationAreas([...SUITE_AREAS,'my_contract'])[0],'my_contract');
  assert.equal(suiteStartArea(['trainer_management'],'football_management'),'football_management');
  assert.equal(suiteStartArea(['trainer_compensation'],'trainer_contracts'),'welcome');
  for(const a of ['trainer_assignments','trainer_finances'])assert.equal(suiteStartArea(['trainer_contracts'],a),a);
